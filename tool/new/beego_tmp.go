@@ -3,7 +3,7 @@ package new
 func BeegoInit() {
 	fc1 := &FileContent{
 		FileName: "user.go",
-		Dir:      "internal/server/beego/controllers",
+		Dir:      "internal/server/controllers",
 		Content: `package controllers
 
 import (
@@ -34,11 +34,11 @@ func (this *UserController) GetUserInfo() {
 
 	fc2 := &FileContent{
 		FileName: "routers.go",
-		Dir:      "internal/server/beego/routers",
+		Dir:      "internal/server/routers",
 		Content: `package routers
 
 import (
-	"{{PROPATH}}{{service_name}}/internal/server/beego/controllers"
+	"{{PROPATH}}{{service_name}}/internal/server/controllers"
 	"github.com/astaxie/beego"
 )
 
@@ -75,9 +75,9 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	"{{PROPATH}}{{service_name}}/internal/server/beego"
+	"{{PROPATH}}{{service_name}}/internal/server"
 	"github.com/jukylin/esim/container"
-	_ "{{PROPATH}}{{service_name}}/internal/server/beego/routers"
+	_ "{{PROPATH}}{{service_name}}/internal/server/routers"
 )
 
 // grpcCmd represents the grpc command
@@ -87,7 +87,7 @@ var beegoCmd = &cobra.Command{
 	Long: {{!}}提供外部调用的Restful api 接口{{!}},
 	Run: func(cmd *cobra.Command, args []string) {
 		esim := container.NewEsim()
-		beego.NewBeegoServer(esim)
+		server.NewBeegoServer(esim)
 	},
 }
 
@@ -109,14 +109,14 @@ func init() {
 
 	fc4 := &FileContent{
 		FileName: "beego.go",
-		Dir:      "internal/server/beego",
-		Content: `package beego
+		Dir:      "internal/server",
+		Content: `package server
 
 import (
 	"net/http"
 	"strings"
 
-	"{{PROPATH}}esim/pkg/server"
+	"github.com/jukylin/esim/server"
 	"github.com/astaxie/beego"
 	"github.com/opentracing-contrib/go-stdlib/nethttp"
 	"github.com/jukylin/esim/opentracing"
@@ -161,7 +161,7 @@ func getMwd(esim *container.Esim) []beego.MiddleWare {
 
 	fc5 := &FileContent{
 		FileName: "index.go",
-		Dir:      "internal/server/beego/controllers",
+		Dir:      "internal/server/controllers",
 		Content: `package controllers
 
 import (
@@ -176,7 +176,7 @@ type IndexController struct {
 
 // @router / [get]
 func (this *IndexController) Get() {
-	this.Data["json"] = map[string]interface{}{"Esim" : infra.NewInfr().String()}
+	this.Data["json"] = map[string]interface{}{"Esim" : infra.NewInfra().String()}
 	this.ServeJSON()
 }
 `,

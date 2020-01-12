@@ -3,7 +3,7 @@ package new
 func GinInit() {
 	fc1 := &FileContent{
 		FileName: "user.go",
-		Dir:      "internal/server/gin/controllers",
+		Dir:      "internal/server/controllers",
 		Content: `package controllers
 
 import (
@@ -38,11 +38,11 @@ func Esim(c *gin.Context)  {
 
 	fc2 := &FileContent{
 		FileName: "routers.go",
-		Dir:      "internal/server/gin/routers",
+		Dir:      "internal/server/routers",
 		Content: `package routers
 
 import (
-	"{{PROPATH}}{{service_name}}/internal/server/gin/controllers"
+	"{{PROPATH}}{{service_name}}/internal/server/controllers"
 	"github.com/gin-gonic/gin"
 
 )
@@ -79,7 +79,7 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 	"github.com/jukylin/esim/container"
-	"{{PROPATH}}{{service_name}}/internal/server/gin"
+	"{{PROPATH}}{{service_name}}/internal/server"
 )
 
 // grpcCmd represents the grpc command
@@ -89,7 +89,7 @@ var ginCmd = &cobra.Command{
 	Long: {{!}}提供外部调用的Restful api 接口{{!}},
 	Run: func(cmd *cobra.Command, args []string) {
 		esim := container.NewEsim()
-		gin.NewGinServer(esim)
+		server.NewGinServer(esim)
 	},
 }
 
@@ -111,15 +111,15 @@ func init() {
 
 	fc4 := &FileContent{
 		FileName: "gin.go",
-		Dir:      "internal/server/gin",
-		Content: `package gin
+		Dir:      "internal/server",
+		Content: `package server
 
 import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jukylin/esim/container"
-	"{{PROPATH}}{{service_name}}/internal/server/gin/routers"
+	"{{PROPATH}}{{service_name}}/internal/server/routers"
 	"github.com/jukylin/esim/server"
 )
 

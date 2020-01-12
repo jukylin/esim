@@ -3,7 +3,7 @@ package new
 func GrpcInit() {
 	fc1 := &FileContent{
 		FileName: "user.go",
-		Dir:      "internal/server/grpc/controllers",
+		Dir:      "internal/server/controllers",
 		Content: `package controllers
 
 import (
@@ -49,11 +49,11 @@ func (u *UserService) GetUserByUserName(ctx context.Context,
 
 	fc2 := &FileContent{
 		FileName: "routers.go",
-		Dir:      "internal/server/grpc/routers",
+		Dir:      "internal/server/routers",
 		Content: `package routers
 
 import (
-	"{{PROPATH}}{{service_name}}/internal/server/grpc/controllers"
+	"{{PROPATH}}{{service_name}}/internal/server/controllers"
 	"{{PROPATH}}{{service_name}}/internal/infra/third_party/protobuf/passport"
 	"google.golang.org/grpc"
 )
@@ -87,7 +87,7 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	"{{PROPATH}}{{service_name}}/internal/server/grpc"
+	"{{PROPATH}}{{service_name}}/internal/server"
 	"github.com/jukylin/esim/container"
 )
 
@@ -98,7 +98,7 @@ var grpcCmd = &cobra.Command{
 	Long: {{!}}提供内部调用的服务化接口{{!}},
 	Run: func(cmd *cobra.Command, args []string) {
 		esim := container.NewEsim()
-		grpc.NewGrpcServer(esim)
+		server.NewGrpcServer(esim)
 	},
 }
 
@@ -120,8 +120,8 @@ func init() {
 
 	fc4 := &FileContent{
 		FileName: "grpc.go",
-		Dir:      "internal/server/grpc",
-		Content: `package grpc
+		Dir:      "internal/server",
+		Content: `package server
 
 import (
 	"net"
@@ -129,7 +129,7 @@ import (
 
 	"google.golang.org/grpc/reflection"
 	"github.com/jukylin/esim/grpc"
-	"{{PROPATH}}{{service_name}}/internal/server/grpc/routers"
+	"{{PROPATH}}{{service_name}}/internal/server/routers"
 	"github.com/jukylin/esim/container"
 )
 
