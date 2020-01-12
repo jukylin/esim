@@ -31,19 +31,14 @@ jaeger_local_agent_host_port: '0.0.0.0:6831'
 
 #mysql
 dbs:
-- {db: 'config', dsn: 'root:Aa123456@tcp(120.25.93.207:3306)/config?charset=utf8&parseTime=True&loc=Local',
-  maxidle: 10, maxopen: 100, maxlifetime : 10}
-- {db: 'config_slave', dsn: 'root:Aa123456@tcp(120.25.93.207:3306)/config?charset=utf8&parseTime=True&loc=Local',
-  maxidle: 10, maxopen: 100, maxlifetime : 10}
-- {db: 'passport', dsn: 'root:Aa123456@tcp(120.25.93.207:3306)/passport?charset=utf8&parseTime=True&loc=Local',
-  maxidle: 10, maxopen: 100, maxlifetime: 10}
-- {db: 'passport_slave', dsn: 'root:Aa123456@tcp(120.25.93.207:3306)/passport?charset=utf8&parseTime=True&loc=Local',
-  maxidle: 10, maxopen: 100, maxlifetime: 10}
+//- {db: 'test', dsn: 'root:123456@tcp(0.0.0.0:3306)/config?charset=utf8&parseTime=True&loc=Local',
+//  maxidle: 10, maxopen: 100, maxlifetime : 10}
+//- {db: 'test_slave', dsn: 'root:123456@tcp(0.0.0.0:3306)/config?charset=utf8&parseTime=True&loc=Local',
 
 
 #mongodb
 #mgos:
-#- {db: 'push', uri: 'mongodb://120.25.93.207:27017/admin?connect=direct'}
+#- {db: 'test', uri: 'mongodb://0.0.0.0:27017/admin?connect=direct'}
 
 #ms
 mgo_connect_timeout : 500
@@ -108,18 +103,13 @@ jaeger_local_agent_host_port : '${TRACER_HOST_PORT}'
 
 #mysql
 dbs:
-- {db: 'config', dsn: '${MYSQL_ETC1_USERNAME}:${MYSQL_ETC1_PASSWORD}@tcp(${MYSQL_ETC1_MASTER_HOST}:3306)/config?charset=utf8&parseTime=True&loc=Local',
-  maxidle: 10, maxopen: 100}
-- {db: 'config_slave', dsn: '${MYSQL_ETC1_USERNAME}:${MYSQL_ETC1_PASSWORD}@tcp(${MYSQL_ETC1_SLAVE_HOST}:3306)/config?charset=utf8&parseTime=True&loc=Local',
-  maxidle: 10, maxopen: 100}
-- {db: 'passport', dsn: '${MYSQL_ETC1_USERNAME}:${MYSQL_ETC1_PASSWORD}@tcp(${MYSQL_ETC1_MASTER_HOST}:3306)/passport?charset=utf8&parseTime=True&loc=Local',
-  maxidle: 10, maxopen: 100}
-- {db: 'passport_slave', dsn: '${MYSQL_ETC1_USERNAME}:${MYSQL_ETC1_PASSWORD}@tcp(${MYSQL_ETC1_SLAVE_HOST}:3306)/passport?charset=utf8&parseTime=True&loc=Local',
-  maxidle: 10, maxopen: 100}
+//- {db: 'test', dsn: 'root:123456@tcp(0.0.0.0:3306)/config?charset=utf8&parseTime=True&loc=Local',
+//  maxidle: 10, maxopen: 100, maxlifetime : 10}
+//- {db: 'test_slave', dsn: 'root:123456@tcp(0.0.0.0:3306)/config?charset=utf8&parseTime=True&loc=Local',
 
 #mongodb
 #mgos:
-#- {db: 'push', uri: 'mongodb://120.25.93.207:27017/admin?connect=direct'}
+#- {db: 'test', uri: 'mongodb://0.0.0.0:27017/admin?connect=direct'}
 
 #ms
 mgo_connect_timeout : 500
@@ -185,18 +175,13 @@ jaeger_local_agent_host_port : '${TRACER_HOST_PORT}'
 
 #mysql
 dbs:
-- {db: 'config', dsn: '${MYSQL_ETC1_USERNAME}:${MYSQL_ETC1_PASSWORD}@tcp(${MYSQL_ETC1_MASTER_HOST}:3306)/config?charset=utf8&parseTime=True&loc=Local',
-  maxidle: 10, maxopen: 100}
-- {db: 'config_slave', dsn: '${MYSQL_ETC1_USERNAME}:${MYSQL_ETC1_PASSWORD}@tcp(${MYSQL_ETC1_SLAVE_HOST}:3306)/config?charset=utf8&parseTime=True&loc=Local',
-  maxidle: 10, maxopen: 100}
-- {db: 'passport', dsn: '${MYSQL_ETC1_USERNAME}:${MYSQL_ETC1_PASSWORD}@tcp(${MYSQL_ETC1_MASTER_HOST}:3306)/passport?charset=utf8&parseTime=True&loc=Local',
-  maxidle: 10, maxopen: 100}
-- {db: 'passport_slave', dsn: '${MYSQL_ETC1_USERNAME}:${MYSQL_ETC1_PASSWORD}@tcp(${MYSQL_ETC1_SLAVE_HOST}:3306)/passport?charset=utf8&parseTime=True&loc=Local',
-  maxidle: 10, maxopen: 100}
+//- {db: 'test', dsn: 'root:123456@tcp(0.0.0.0:3306)/config?charset=utf8&parseTime=True&loc=Local',
+//  maxidle: 10, maxopen: 100, maxlifetime : 10}
+//- {db: 'test_slave', dsn: 'root:123456@tcp(0.0.0.0:3306)/config?charset=utf8&parseTime=True&loc=Local',
 
 #mongodb
 #mgos:
-#- {db: 'push', uri: 'mongodb://120.25.93.207:27017/admin?connect=direct'}
+#- {db: 'test', uri: 'mongodb://0.0.0.0:27017/admin?connect=direct'}
 
 #ms
 mgo_connect_timeout : 500

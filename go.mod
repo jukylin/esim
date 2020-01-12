@@ -1,4 +1,4 @@
-module gitlab.etcchebao.cn/go_service/esim
+module github.com/jukylin/esim
 
 go 1.12
 
@@ -19,7 +19,6 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/opentracing-contrib/go-stdlib v0.0.0-20190519235532-cf7a6c988dc9
 	github.com/opentracing/opentracing-go v1.1.0
-	github.com/pierrec/lz4 v2.0.5+incompatible // indirect
 	github.com/prometheus/client_golang v1.1.0
 	github.com/prometheus/client_model v0.0.0-20190129233127-fd36f4220a90
 	github.com/spf13/cast v1.3.0
@@ -34,4 +33,6 @@ require (
 	go.uber.org/zap v1.10.0
 	golang.org/x/net v0.0.0-20191011234655-491137f69257
 	google.golang.org/grpc v1.24.0
+	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
+	gopkg.in/yaml.v2 v2.2.4 // indirect
 )
