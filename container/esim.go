@@ -1,12 +1,11 @@
 package container
 
 import (
+	"sync"
 	"github.com/google/wire"
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/prome"
-	"os"
-	"sync"
 )
 
 var esimOnce sync.Once
@@ -28,19 +27,7 @@ var esimSet = wire.NewSet(
 	provideProme,
 )
 
-var confFunc = func() config.Config {
-
-	options := config.ViperConfOptions{}
-
-	env := os.Getenv("ENV")
-	if env == "" {
-		env = "dev"
-	}
-
-	file := []string{"conf/monitoring.yaml", "conf/" + env + ".yaml"}
-	return config.NewViperConfig(options.WithConfigType("yaml"),
-		options.WithConfFile(file))
-}
+var confFunc func() config.Config
 
 func SetConfFunc(conf func() config.Config) {
 	confFunc = conf
