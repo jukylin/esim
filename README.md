@@ -161,7 +161,7 @@ infra.NewInfra().DB
 
 > 使用 module 包管理工具
 
-> go get gitlab.etcchebao.cn/go_service/esim
+> go get github.com/jukylin/esim
 
 ## 创建项目
 
