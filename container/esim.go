@@ -15,7 +15,7 @@ var onceEsim *Esim
 type Esim struct {
 	prometheus *prometheus.Prometheus
 
-	Log log.Logger
+	Logger log.Logger
 
 	Conf config.Config
 }
@@ -27,7 +27,9 @@ var esimSet = wire.NewSet(
 	providePrometheus,
 )
 
-var confFunc func() config.Config
+var confFunc  = func() config.Config {
+	return config.NewNullConfig()
+}
 
 func SetConfFunc(conf func() config.Config) {
 	confFunc = conf

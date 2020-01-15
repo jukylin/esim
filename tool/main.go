@@ -15,7 +15,7 @@ limitations under the License.
 */
 package main
 
-import "github.com/jukylin/esim/cmd"
+import "github.com/jukylin/esim/tool/cmd"
 
 func main() {
 	cmd.Execute()

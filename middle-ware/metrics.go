@@ -1,5 +1,5 @@
 
-package server
+package middle_ware
 
 import (
 	"github.com/prometheus/client_golang/prometheus"

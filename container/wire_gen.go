@@ -10,23 +10,23 @@ package container
 func initEsim() *Esim {
 	config := provideConf()
 	logger := provideLogger(config)
-	prome := provideProme(config, logger)
+	prometheus := providePrometheus(config, logger)
 	esim := &Esim{
-		prome: prome,
-		Log:   logger,
-		Conf:  config,
+		prometheus: prometheus,
+		Logger:     logger,
+		Conf:       config,
 	}
 	return esim
 }
 
 func NewMockEsim() *Esim {
 	config := provideMockConf()
-	prome := provideMockProme(config)
+	prometheus := provideMockProme(config)
 	logger := provideLogger(config)
 	esim := &Esim{
-		prome: prome,
-		Log:   logger,
-		Conf:  config,
+		prometheus: prometheus,
+		Logger:     logger,
+		Conf:       config,
 	}
 	return esim
 }
