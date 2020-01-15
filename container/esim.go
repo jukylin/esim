@@ -5,7 +5,7 @@ import (
 	"github.com/google/wire"
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
-	"github.com/jukylin/esim/prome"
+	"github.com/jukylin/esim/prometheus"
 )
 
 var esimOnce sync.Once
@@ -13,7 +13,7 @@ var onceEsim *Esim
 
 //esim init start
 type Esim struct {
-	prome *prome.Prome
+	prometheus *prometheus.Prometheus
 
 	Log log.Logger
 
@@ -24,7 +24,7 @@ var esimSet = wire.NewSet(
 	wire.Struct(new(Esim), "*"),
 	provideConf,
 	provideLogger,
-	provideProme,
+	providePrometheus,
 )
 
 var confFunc func() config.Config
@@ -36,15 +36,15 @@ func provideConf() config.Config {
 	return confFunc()
 }
 
-var promeFunc = func(conf config.Config, log log.Logger) *prome.Prome {
-	return prome.NewProme(conf, log)
+var prometheusFunc = func(conf config.Config, log log.Logger) *prometheus.Prometheus {
+	return prometheus.NewPrometheus(conf, log)
 }
 
-func SetPromeFunc(prome func(conf config.Config, log log.Logger) *prome.Prome) {
-	promeFunc = prome
+func SetPrometheusFunc(prometheus func(conf config.Config, log log.Logger) *prometheus.Prometheus) {
+	prometheusFunc = prometheus
 }
-func provideProme(conf config.Config, log log.Logger) *prome.Prome {
-	return promeFunc(conf, log)
+func providePrometheus(conf config.Config, log log.Logger) *prometheus.Prometheus {
+	return prometheusFunc(conf, log)
 }
 
 var loggerFunc = func(conf config.Config) log.Logger {
@@ -66,7 +66,7 @@ func provideLogger(conf config.Config) log.Logger {
 
 //esim init end
 
-//使用单例模式，避免多次初始化
+//使用单例模式，基础设施为全局资源
 func NewEsim() *Esim {
 	esimOnce.Do(func() {
 		onceEsim = initEsim()

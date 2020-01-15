@@ -12,8 +12,8 @@ func provideMockConf() config.Config {
 	return conf
 }
 
-func provideMockProme(conf config.Config) *prome.Prome {
-	return prome.NewNullProme()
+func provideMockProme(conf config.Config) *prometheus.Prome {
+	return prometheus.NewNullProme()
 }
 
 var MockSet = wire.NewSet(

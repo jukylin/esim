@@ -1,4 +1,4 @@
-package prome
+package prometheus
 
 import (
 	"net/http"
@@ -10,11 +10,11 @@ import (
 	"github.com/jukylin/esim/config"
 )
 
-type Prome struct {}
+type Prometheus struct {}
 
-func NewProme(conf config.Config, log log.Logger) *Prome {
+func NewPrometheus(conf config.Config, log log.Logger) *Prometheus {
 
-	prome := &Prome{}
+	prometheus := &Prometheus{}
 
 	prometheus_http_addr := conf.GetString("prometheus_http_addr")
 
@@ -28,13 +28,13 @@ func NewProme(conf config.Config, log log.Logger) *Prome {
 	}()
 	log.Infof("[prometheus] %s init success", prometheus_http_addr)
 
-	return prome
+	return prometheus
 }
 
 
-func NewNullProme() *Prome {
+func NewNullProme() *Prometheus {
 
-	prome := &Prome{}
+	prome := &Prometheus{}
 
 	return prome
 }
