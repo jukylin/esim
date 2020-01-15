@@ -3,7 +3,7 @@ package container
 import (
 	"github.com/google/wire"
 	"github.com/jukylin/esim/config"
-	"github.com/jukylin/esim/prome"
+	"github.com/jukylin/esim/prometheus"
 )
 
 func provideMockConf() config.Config {
@@ -12,7 +12,7 @@ func provideMockConf() config.Config {
 	return conf
 }
 
-func provideMockProme(conf config.Config) *prometheus.Prome {
+func provideMockProme(conf config.Config) *prometheus.Prometheus {
 	return prometheus.NewNullProme()
 }
 
