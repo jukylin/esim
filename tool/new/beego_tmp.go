@@ -3,7 +3,7 @@ package new
 func BeegoInit() {
 	fc1 := &FileContent{
 		FileName: "user.go",
-		Dir:      "internal/server/controllers",
+		Dir:      "internal/transports/http/controllers",
 		Content: `package controllers
 
 import (
@@ -34,11 +34,11 @@ func (this *UserController) GetUserInfo() {
 
 	fc2 := &FileContent{
 		FileName: "routers.go",
-		Dir:      "internal/server/routers",
+		Dir:      "internal/transports/http/routers",
 		Content: `package routers
 
 import (
-	"{{PROPATH}}{{service_name}}/internal/server/controllers"
+	"{{PROPATH}}{{service_name}}/internal/transports/http/controllers"
 	"github.com/astaxie/beego"
 )
 
@@ -53,77 +53,32 @@ func init() {
 `,
 	}
 
-	fc3 := &FileContent{
-		FileName: "beego.go",
-		Dir:      "cmd",
-		Content: `/*
-Copyright © 2019 NAME HERE <EMAIL ADDRESS>
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-package cmd
-
-import (
-	"github.com/spf13/cobra"
-	"{{PROPATH}}{{service_name}}/internal/server"
-	"github.com/jukylin/esim/container"
-	_ "{{PROPATH}}{{service_name}}/internal/server/routers"
-)
-
-// grpcCmd represents the grpc command
-var beegoCmd = &cobra.Command{
-	Use:   "beego",
-	Short: "提供外部调用的Restful api 接口",
-	Long: {{!}}提供外部调用的Restful api 接口{{!}},
-	Run: func(cmd *cobra.Command, args []string) {
-		esim := container.NewEsim()
-		server.NewBeegoServer(esim)
-	},
-}
-
-func init() {
-	rootCmd.AddCommand(beegoCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// grpcCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// grpcCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-}
-`,
-	}
-
 	fc4 := &FileContent{
 		FileName: "beego.go",
-		Dir:      "internal/server",
-		Content: `package server
+		Dir:      "internal/transports/http",
+		Content: `package http
 
 import (
 	"net/http"
 	"strings"
 
-	"github.com/jukylin/esim/server"
+	"github.com/jukylin/esim/middle-ware"
 	"github.com/astaxie/beego"
 	"github.com/opentracing-contrib/go-stdlib/nethttp"
 	"github.com/jukylin/esim/opentracing"
 	"github.com/jukylin/esim/container"
 )
 
-func NewBeegoServer(esim *container.Esim)  {
+type BeegoServer struct{
+	httpport string
+
+	esim *container.Esim
+}
+
+
+func NewBeegoServer(esim *container.Esim) *BeegoServer  {
+
+	beegoServer := &BeegoServer{}
 
 	httpport := esim.Conf.GetString("httpport")
 
@@ -132,7 +87,20 @@ func NewBeegoServer(esim *container.Esim)  {
 		httpport = ":"+httpport
 	}
 
-	beego.RunWithMiddleWares(httpport, getMwd(esim)...)
+	beegoServer.httpport = httpport
+	beegoServer.esim = esim
+
+	return beegoServer
+}
+
+
+func (this *BeegoServer) Start()  {
+	beego.RunWithMiddleWares(this.httpport, getMwd(this.esim)...)
+
+}
+
+func (this *BeegoServer) GracefulShutDown()  {
+	//beego do this itself
 }
 
 func getMwd(esim *container.Esim) []beego.MiddleWare {
@@ -143,14 +111,14 @@ func getMwd(esim *container.Esim) []beego.MiddleWare {
 
 	if esim.Conf.GetBool("http_tracer") == true{
 		mws = append(mws, func(handler http.Handler) http.Handler {
-			tracer := opentracing.NewTracer(serviceName, esim.Log)
+			tracer := opentracing.NewTracer(serviceName, esim.Logger)
 			return nethttp.Middleware(tracer, handler)
 		})
 	}
 
 	if esim.Conf.GetBool("http_metrics") == true {
 		mws = append(mws, func(handler http.Handler) http.Handler {
-			return server.Monitor(handler)
+			return middle_ware.Monitor(handler)
 		})
 	}
 
@@ -161,7 +129,7 @@ func getMwd(esim *container.Esim) []beego.MiddleWare {
 
 	fc5 := &FileContent{
 		FileName: "index.go",
-		Dir:      "internal/server/controllers",
+		Dir:      "internal/transports/http/controllers",
 		Content: `package controllers
 
 import (
@@ -182,5 +150,5 @@ func (this *IndexController) Get() {
 `,
 	}
 
-	Files = append(Files, fc1, fc2, fc3, fc4, fc5)
+	Files = append(Files, fc1, fc2, fc4, fc5)
 }

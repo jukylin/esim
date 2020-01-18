@@ -23,18 +23,48 @@ limitations under the License.
 package cmd
 
 import (
-  "fmt"
-  "os"
-  "github.com/spf13/cobra"
+	"fmt"
+	"os"
+	"github.com/spf13/cobra"
+	{{IMPORT_SERVER}}
+	"github.com/jukylin/esim"
+	"github.com/jukylin/esim/container"
+	"github.com/jukylin/esim/config"
 )
-
-
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-  Use:   "new",
-  Short: "",
-  Long: "",
+	Use:   "",
+	Short: "",
+	Long: "",
+	Run: func(cmd *cobra.Command, args []string) {
+
+		container.SetConfFunc(func() config.Config {
+			options := config.ViperConfOptions{}
+
+			env := os.Getenv("ENV")
+			if env == "" {
+				env = "dev"
+			}
+
+			gopath := os.Getenv("GOPATH")
+
+			monitFile := gopath + "/src/{{service_name}}/" + "conf/monitoring.yaml"
+			confFile := gopath + "/src/{{service_name}}/" + "conf/" + env + ".yaml"
+
+			file := []string{monitFile, confFile}
+			return config.NewViperConfig(options.WithConfigType("yaml"),
+				options.WithConfFile(file))
+		})
+
+		em := container.NewEsim()
+		app := esim.NewApp(em.Logger)
+
+		{{RUN_SERVER}}
+
+		app.Start()
+		app.AwaitSignal()
+	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

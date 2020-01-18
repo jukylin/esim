@@ -46,24 +46,6 @@ func NewInfra() *Infra {
 func provideEsim() *container.Esim {
 
 
-	container.SetConfFunc(func() config.Config {
-		options := config.ViperConfOptions{}
-
-		env := os.Getenv("ENV")
-		if env == "" {
-			env = "dev"
-		}
-
-		gopath := os.Getenv("GOPATH")
-
-		monitFile := gopath + "/src/{{service_name}}/" + "conf/monitoring.yaml"
-		confFile := gopath + "/src/{{service_name}}/" + "conf/" + env + ".yaml"
-
-		file := []string{monitFile, confFile}
-		return config.NewViperConfig(options.WithConfigType("yaml"),
-			options.WithConfFile(file))
-	})
-
 	return container.NewEsim()
 }
 

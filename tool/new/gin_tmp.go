@@ -3,7 +3,7 @@ package new
 func GinInit() {
 	fc1 := &FileContent{
 		FileName: "user.go",
-		Dir:      "internal/server/controllers",
+		Dir:      "internal/transports/http/controllers",
 		Content: `package controllers
 
 import (
@@ -38,7 +38,7 @@ func Esim(c *gin.Context)  {
 
 	fc2 := &FileContent{
 		FileName: "routers.go",
-		Dir:      "internal/server/routers",
+		Dir:      "internal/transports/http/routers",
 		Content: `package routers
 
 import (
@@ -58,72 +58,32 @@ func RegisterGinServer(en *gin.Engine)  {
 
 	fc3 := &FileContent{
 		FileName: "gin.go",
-		Dir:      "cmd",
-		Content: `/*
-Copyright © 2019 NAME HERE <EMAIL ADDRESS>
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-package cmd
-
-import (
-	"github.com/spf13/cobra"
-	"github.com/jukylin/esim/container"
-	"{{PROPATH}}{{service_name}}/internal/server"
-)
-
-// grpcCmd represents the grpc command
-var ginCmd = &cobra.Command{
-	Use:   "gin",
-	Short: "提供外部调用的Restful api 接口",
-	Long: {{!}}提供外部调用的Restful api 接口{{!}},
-	Run: func(cmd *cobra.Command, args []string) {
-		esim := container.NewEsim()
-		server.NewGinServer(esim)
-	},
-}
-
-func init() {
-	rootCmd.AddCommand(ginCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// grpcCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// grpcCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-}
-`,
-	}
-
-	fc4 := &FileContent{
-		FileName: "gin.go",
-		Dir:      "internal/server",
-		Content: `package server
+		Dir:      "internal/transports/http",
+		Content: `package http
 
 import (
 	"strings"
-
+	"net/http"
+	"context"
+	"time"
 	"github.com/gin-gonic/gin"
 	"github.com/jukylin/esim/container"
-	"{{PROPATH}}{{service_name}}/internal/server/routers"
-	"github.com/jukylin/esim/server"
+	"{{PROPATH}}{{service_name}}/internal/transports/http/routers"
+	"github.com/jukylin/esim/middle-ware"
+	"gitlab.etcchebao.cn/go_service/esim/pkg/log"
 )
 
-func NewGinServer(esim *container.Esim)  {
+type GinServer struct{
+	en *gin.Engine
+
+	addr string
+
+	logger log.Logger
+
+	server *http.Server
+}
+
+func NewGinServer(esim *container.Esim) *GinServer {
 
 	serviceName := esim.Conf.GetString("appname")
 	httpport := esim.Conf.GetString("httpport")
@@ -142,19 +102,44 @@ func NewGinServer(esim *container.Esim)  {
 	}
 
 	if esim.Conf.GetBool("http_tracer") == true{
-		en.Use(server.GinTracer(serviceName, esim.Log))
+		en.Use(middle_ware.GinTracer(serviceName, esim.Logger))
 	}
 
 	if esim.Conf.GetBool("http_metrics") == true {
-		en.Use(server.GinMonitor())
+		en.Use(middle_ware.GinMonitor())
 	}
 
-	routers.RegisterGinServer(en)
+	server := &GinServer{
+		en : en,
+		addr : httpport,
+	}
 
-	en.Run(httpport)
+	return server
+}
+
+
+func (this *GinServer) Start(){
+	routers.RegisterGinServer(this.en)
+
+	server := &http.Server{Addr: this.addr, Handler: this.en}
+	this.server = server
+	go func() {
+		if err := server.ListenAndServe(); err != nil{
+			this.logger.Fatalf("start http server err %s", err.Error())
+			return
+		}
+	}()
+}
+
+func (this *GinServer) GracefulShutDown()  {
+	ctx, cannel := context.WithTimeout(context.Background(), 3 * time.Second)
+	defer cannel()
+	if err := this.server.Shutdown(ctx); err != nil {
+		this.logger.Errorf("stop http server error %s", err.Error())
+	}
 }
 `,
 	}
 
-	Files = append(Files, fc1, fc2, fc3, fc4)
+	Files = append(Files, fc1, fc2, fc3)
 }

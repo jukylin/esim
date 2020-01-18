@@ -42,7 +42,7 @@ func Build(v *viper.Viper, log logger.Logger) error {
 		return errors.New("创建目录 " + serviceName + " 失败：" + err.Error())
 	}
 
-	tmpInit(v)
+	run_server, import_server := tmpInit(v)
 
 	currentDir := file_dir.GetCurrentDir()
 	if currentDir != ""{
@@ -67,10 +67,14 @@ func Build(v *viper.Viper, log logger.Logger) error {
 			}
 		}
 		fileName := dir + "/" + file.FileName
+		//before all replace
+		file.Content = strings.ReplaceAll(file.Content, "{{IMPORT_SERVER}}", import_server)
 
 		file.Content = strings.ReplaceAll(file.Content, "{{service_name}}", serviceName)
 		file.Content = strings.ReplaceAll(file.Content, "{{!}}", "`")
 		file.Content = strings.ReplaceAll(file.Content, "{{PROPATH}}", currentDir)
+
+		file.Content = strings.ReplaceAll(file.Content, "{{RUN_SERVER}}", run_server)
 
 		if file.FileName == "monitoring.yaml" {
 			if v.GetBool("monitoring") == false {
@@ -95,7 +99,7 @@ func Build(v *viper.Viper, log logger.Logger) error {
 	return nil
 }
 
-func tmpInit(v *viper.Viper) {
+func tmpInit(v *viper.Viper) (string, string) {
 	CmdInit()
 	ConfigInit()
 	DaoInit()
@@ -109,15 +113,26 @@ func tmpInit(v *viper.Viper) {
 	InfraInit()
 	RepoInit()
 
+	var run_server string
+	var import_server string
+
 	if v.GetBool("gin") == true {
 		GinInit()
+		run_server = "app.Trans = append(app.Trans, http.NewGinServer(em))\n"
+		import_server += "\"{{PROPATH}}{{service_name}}/internal/transports/http\"\n"
 	}
 
 	if v.GetBool("beego") == true {
 		BeegoInit()
+		run_server += "app.Trans = append(app.Trans, http.NewBeegoServer(em))\n"
+		import_server += "\"{{PROPATH}}{{service_name}}/internal/transports/http\"\n"
 	}
 
 	if v.GetBool("grpc") == true {
 		GrpcInit()
+		run_server += "app.Trans = append(app.Trans, grpc.NewGrpcServer(em))\n"
+		import_server += "\"{{PROPATH}}{{service_name}}/internal/transports/grpc\"\n"
 	}
+
+	return run_server, import_server
 }

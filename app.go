@@ -1,23 +1,18 @@
 package esim
 
 import (
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
-	"google.golang.org/grpc"
 	"gitlab.etcchebao.cn/go_service/esim/pkg/log"
-	"context"
-	"time"
+	"github.com/jukylin/esim/transports"
 )
 
 type APP struct{
 
 	logger log.Logger
 
-	Http *http.Server
-
-	Grpc *grpc.Server
+	Trans []transports.Transports
 }
 
 func NewApp(logger log.Logger) *APP {
@@ -29,8 +24,11 @@ func NewApp(logger log.Logger) *APP {
 	return app
 }
 
-func (this *APP) Stop()  {
-	
+
+func (this *APP) Start()  {
+	for _, tran := range this.Trans {
+		tran.Start()
+	}
 }
 
 func (this *APP) AwaitSignal() {
@@ -40,18 +38,14 @@ func (this *APP) AwaitSignal() {
 	select {
 	case s := <-c:
 		this.logger.Infof("receive a signal %s", s.String())
-		if this.Http != nil {
-			ctx, cannel := context.WithTimeout(context.Background(), 3 * time.Second)
-			defer cannel()
-			if err := this.Http.Shutdown(ctx); err != nil {
-				this.logger.Errorf("stop http server error %s", err.Error())
-			}
-		}
-
-		if this.Grpc != nil {
-			this.Grpc.GracefulStop();
-		}
-
+		this.stop()
 		os.Exit(0)
+	}
+}
+
+
+func (this *APP) stop()  {
+	for _, tran := range this.Trans {
+		tran.GracefulShutDown()
 	}
 }

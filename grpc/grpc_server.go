@@ -2,7 +2,7 @@ package grpc
 
 import (
 	"time"
-
+	"net"
 	"errors"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/grpc-ecosystem/go-grpc-middleware"
@@ -16,18 +16,23 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
+	"google.golang.org/grpc/reflection"
 )
 
 type GrpcServer struct {
 	Server *grpc.Server
 
-	log log.Logger
+	logger log.Logger
 
 	conf config.Config
 
 	unaryServerInterceptors []grpc.UnaryServerInterceptor
 
 	opts []grpc.ServerOption
+
+	target string
+
+	serviceName string
 }
 
 type ServerOption func(c *GrpcServer)
@@ -42,8 +47,8 @@ func NewGrpcServer(serviceName string, options ...ServerOption) *GrpcServer {
 		option(grpcServer)
 	}
 
-	if grpcServer.log == nil {
-		grpcServer.log = log.NewLogger()
+	if grpcServer.logger == nil {
+		grpcServer.logger = log.NewLogger()
 	}
 
 	if grpcServer.conf == nil {
@@ -76,7 +81,7 @@ func NewGrpcServer(serviceName string, options ...ServerOption) *GrpcServer {
 
 	unaryServerInterceptors := []grpc.UnaryServerInterceptor{}
 	if grpcServer.conf.GetBool("grpc_server_tracer") == true {
-		tracer := opentracing.NewTracer(serviceName, grpcServer.log)
+		tracer := opentracing.NewTracer(serviceName, grpcServer.logger)
 		unaryServerInterceptors = append(unaryServerInterceptors,
 			otgrpc.OpenTracingServerInterceptor(tracer))
 	}
@@ -128,9 +133,9 @@ func (ServerOptions) WithServerConf(conf config.Config) ServerOption {
 	}
 }
 
-func (ServerOptions) WithServerLogger(log log.Logger) ServerOption {
+func (ServerOptions) WithServerLogger(logger log.Logger) ServerOption {
 	return func(g *GrpcServer) {
-		g.log = log
+		g.logger = logger
 	}
 }
 
@@ -161,7 +166,7 @@ func (this *GrpcServer) checkServerSlow() grpc.UnaryServerInterceptor {
 		grpc_client_slow_time := this.conf.GetInt64("grpc_server_slow_time")
 		if grpc_client_slow_time != 0 {
 			if end_time.Sub(begin_time) > time.Duration(grpc_client_slow_time)*time.Millisecond {
-				this.log.Warnc(ctx, "slow server grpc_handle %s", info.FullMethod)
+				this.logger.Warnc(ctx, "slow server grpc_handle %s", info.FullMethod)
 			}
 		}
 
@@ -178,12 +183,12 @@ func (this *GrpcServer) serverDebug() grpc.UnaryServerInterceptor {
 	) (resp interface{}, err error) {
 
 		begin_time := time.Now()
-		this.log.Debugc(ctx, "grpc server start %s, req : %s", info.FullMethod, spew.Sdump(req))
+		this.logger.Debugc(ctx, "grpc server start %s, req : %s", info.FullMethod, spew.Sdump(req))
 
 		resp, err = handler(ctx, req)
 
 		end_time := time.Now()
-		this.log.Debugc(ctx, "grpc server end [%v] %s, resp : %s", end_time.Sub(begin_time).String(),
+		this.logger.Debugc(ctx, "grpc server end [%v] %s, resp : %s", end_time.Sub(begin_time).String(),
 			info.FullMethod, spew.Sdump(resp))
 
 		return resp, err
@@ -192,7 +197,7 @@ func (this *GrpcServer) serverDebug() grpc.UnaryServerInterceptor {
 
 func (this *GrpcServer) handelPanic() grpc_recovery.RecoveryHandlerFuncContext {
 	return func(ctx context.Context, p interface{}) (err error) {
-		this.log.Errorc(ctx, spew.Sdump(p))
+		this.logger.Errorc(ctx, spew.Sdump(p))
 		return errors.New(spew.Sdump("server panic : ", p))
 	}
 }
@@ -233,4 +238,29 @@ func panicArrayResp() grpc.UnaryServerInterceptor {
 		panic(arr)
 		return nil, err
 	}
+}
+
+
+func (this *GrpcServer) Start(){
+
+	lis, err := net.Listen("tcp", this.target)
+	if err != nil {
+		this.logger.Panicf("failed to listen: %s", err.Error())
+	}
+
+	// Register reflection service on gRPC server.
+	reflection.Register(this.Server)
+
+	this.logger.Infof("grpc server starting %s:%s",
+		this.serviceName, this.target)
+	go func() {
+		if err := this.Server.Serve(lis); err != nil {
+			this.logger.Panicf("failed to server: %s", err.Error())
+		}
+	}()
+}
+
+
+func (this *GrpcServer) GracefulShutDown()  {
+	this.Server.GracefulStop()
 }
