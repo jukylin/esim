@@ -26,7 +26,7 @@ import (
 	"fmt"
 	"os"
 	"github.com/spf13/cobra"
-	{{IMPORT_SERVER}}
+{{IMPORT_SERVER}}
 	"github.com/jukylin/esim"
 	"github.com/jukylin/esim/container"
 	"github.com/jukylin/esim/config"
@@ -60,7 +60,7 @@ var rootCmd = &cobra.Command{
 		em := container.NewEsim()
 		app := esim.NewApp(em.Logger)
 
-		{{RUN_SERVER}}
+{{RUN_SERVER}}
 
 		app.Start()
 		app.AwaitSignal()
