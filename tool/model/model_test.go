@@ -2,7 +2,7 @@ package model
 
 import (
 	"github.com/spf13/viper"
-	"github.com/jukylin/esim/file_dir"
+	"github.com/jukylin/esim/pkg/file_dir"
 	"os"
 	"testing"
 	"unsafe"
@@ -93,12 +93,13 @@ func TestExecPlugin(t *testing.T) {
 		t.Error(err.Error())
 		return
 	}
+
 	Clear(info)
 }
 
 func TestWriteContent(t *testing.T) {
-	modelName := "ProxySqlCommon"
-	modelPath := "../pkg/mysql"
+	modelName := "Test"
+	modelPath := getCurDir()
 
 	v := viper.New()
 	v.Set("sort", true)
@@ -112,24 +113,23 @@ func TestWriteContent(t *testing.T) {
 		return
 	}
 
-	//err = BuildPluginEnv(info, delModelFile)
-	//if err != nil{
-	//	t.Error(err.Error())
-	//	return
-	//}
+	err = BuildPluginEnv(info, delModelFile)
+	if err != nil{
+		t.Error(err.Error())
+		return
+	}
 
 	err = ExecPlugin(v, info)
 	if err != nil {
 		t.Error(err.Error())
 		return
 	}
-	//spew.Dump(info)
 	err = WriteContent(v, info)
 	if err != nil {
 		t.Error(err.Error())
 		return
 	}
-	//Clear(info)
+	Clear(info)
 }
 
 func TestClear(t *testing.T) {

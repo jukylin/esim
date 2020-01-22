@@ -1,25 +1,28 @@
 package model
 
-type Test struct {
-	a int32
+type Test struct{ 
+	g byte 
 
-	b int64
+	c int8 
 
-	c int8
+	i bool 
 
-	d int16
+	d int16 
 
-	e string
+	f float32 
 
-	f float32
+	a int32 
 
-	g byte
+	b int64 
 
-	h []int
+	m map[string]interface{} 
 
-	i bool
+	e string 
 
-	u [3]string
+	h []int 
 
-	m map[string]interface{}
-}
+	u [3]string 
+
+} 
+
+type Tests []Test

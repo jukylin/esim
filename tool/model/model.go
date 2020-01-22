@@ -16,10 +16,10 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"plugin"
 	"regexp"
 	"strconv"
 	"strings"
+	go_plugin "github.com/hashicorp/go-plugin"
 )
 
 var (
@@ -53,6 +53,12 @@ type Var struct {
 	doc  []string
 	val  string
 	name string
+}
+
+var HandshakeConfig = go_plugin.HandshakeConfig{
+	ProtocolVersion:  1,
+	MagicCookieKey:   "BASIC_PLUGIN",
+	MagicCookieValue: "hello",
 }
 
 type BuildPluginInfo struct {
@@ -411,36 +417,47 @@ func CopyFile(dstName, srcName string, packageName string) (bool, error) {
 }
 
 func ExecPlugin(v *viper.Viper, info *BuildPluginInfo) error {
-	p, err := plugin.Open(info.modelDir + "/plugin/plugin.so")
+
+	var pluginMap = map[string]go_plugin.Plugin{
+		"model": &ModelPlugin{},
+	}
+
+	// We're a host! Start by launching the plugin process.
+	client := go_plugin.NewClient(&go_plugin.ClientConfig{
+		HandshakeConfig: HandshakeConfig,
+		Plugins:         pluginMap,
+		Cmd:             exec.Command(info.modelDir + "/plugin/plugin"),
+	})
+	defer client.Kill()
+
+	// Connect via RPC
+	rpcClient, err := client.Client()
 	if err != nil {
 		return err
 	}
 
+	// Request the plugin
+	raw, err := rpcClient.Dispense("model")
+	if err != nil {
+		return err
+	}
+
+
+	model := raw.(Model)
+
 	if v.GetBool("sort") == true {
-		sort, err := p.Lookup("Sort")
-		if err != nil {
-			return err
-		}
-		sortFun := sort.(func() string)
 
 		re := &SortReturn{}
 
-		json.Unmarshal([]byte(sortFun()), re)
+		json.Unmarshal([]byte(model.Sort()), re)
 
 		info.newStruct = BuildNewStruct(info.modelName, re.Fields, info.oldFields)
 	}
 
 	if v.GetBool("pool") == true {
 
-		initField, err := p.Lookup("InitField")
-		if err != nil {
-			return err
-		}
-		initFieldFun := initField.(func() string)
-		initFields := initFieldFun()
-
 		initReturn := InitFieldsReturn{}
-		json.Unmarshal([]byte(initFields), &initReturn)
+		json.Unmarshal([]byte(model.InitField()), &initReturn)
 		//HandleNewStruct(info, newStrcut)
 		info.InitField = initReturn
 		HandleInitFieldsAndPool(v, info)
@@ -521,6 +538,8 @@ import (
 	"encoding/json"
 	"reflect"
 	"strings"
+	"github.com/hashicorp/go-plugin"
+	"github.com/jukylin/esim/tool/model"
 )
 
 
@@ -557,7 +576,7 @@ func (f Fields) Swap(i, j int) { f[i], f[j] = f[j], f[i] }
 	str += BuildInitField(structName)
 
 	file := dir + "/" + structName + "_plugin.go"
-	println(file)
+
 	err := ioutil.WriteFile(file, []byte(str), 0666)
 	if err != nil {
 		println(err.Error())
@@ -566,7 +585,7 @@ func (f Fields) Swap(i, j int) { f[i], f[j] = f[j], f[i] }
 }
 
 func GetSortBody(structName string, fields []db2entity.Field) string {
-	str := "func Sort() string { \r\n"
+	str := "func (ModelImp) Sort() string { \r\n"
 
 	str += "	" + strings.ToLower(structName) + " := " + structName + "{} \r\n"
 
@@ -628,7 +647,7 @@ func BuildNewStruct(structName string, fields Fields,
 func BuildInitField(structName string) string {
 	var str string
 	str = `
-func InitField() string {
+func (ModelImp) InitField() string {
 		` + strings.ToLower(structName) + ` := ` + structName + `{}
 
 		initReturn := &InitFieldsReturn{}
@@ -734,13 +753,30 @@ func KindToInit(refType reflect.Type, name string, specFilds *Fields) string {
 
 	return initStr
 }
+
+type ModelImp struct{}
+
+func main() {
+
+	plugin.Serve(&plugin.ServeConfig{
+		HandshakeConfig: model.HandshakeConfig,
+		Plugins: map[string]plugin.Plugin{
+			"model": &model.ModelPlugin{Impl: &ModelImp{}},
+		},
+
+		// A non-nil value here enables gRPC serving for this plugin...
+		GRPCServer: plugin.DefaultGRPCServer,
+	})
+}
+
+
 `
 
 	return str
 }
 
 func BuildPlugin(dir string) error {
-	cmd_line := fmt.Sprintf("go build --buildmode=plugin %s", dir)
+	cmd_line := fmt.Sprintf("go build -o plugin %s", dir)
 
 	println(cmd_line)
 
@@ -758,6 +794,7 @@ func BuildPlugin(dir string) error {
 		return err
 	}
 
+	os.Chmod(dir + "/plugin", 0777)
 	return nil
 }
 
