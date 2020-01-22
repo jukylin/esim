@@ -19,6 +19,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	log2 "log"
 	go_plugin "github.com/hashicorp/go-plugin"
 )
 
@@ -422,12 +423,15 @@ func ExecPlugin(v *viper.Viper, info *BuildPluginInfo) error {
 		"model": &ModelPlugin{},
 	}
 
+	log2.SetOutput(ioutil.Discard)
+
 	// We're a host! Start by launching the plugin process.
 	client := go_plugin.NewClient(&go_plugin.ClientConfig{
 		HandshakeConfig: HandshakeConfig,
 		Plugins:         pluginMap,
 		Cmd:             exec.Command(info.modelDir + "/plugin/plugin"),
 	})
+
 	defer client.Kill()
 
 	// Connect via RPC
@@ -538,6 +542,8 @@ import (
 	"encoding/json"
 	"reflect"
 	"strings"
+	"io/ioutil"
+	"log"
 	"github.com/hashicorp/go-plugin"
 	"github.com/jukylin/esim/tool/model"
 )
