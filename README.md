@@ -146,12 +146,9 @@ infra.NewInfra().DB
 
 > 前置条件:
 > 1. 在模型目录下
-> 2. 建议关闭module， ```export GO111MODULE=off```
+> 2. 开启 module， ```export GO111MODULE=on```
 > 3. 先备份模型所在文件
 
-> 注意：
-> 1. 受限于go的[plugin](https://mojotv.cn/go/golang-plugin-tutorial)机制，只支持linux/mac
-> 2. 优化的模型不能有太多第三方依赖，正常情况下可以满足业务的model优化。
 
 > 当项目进入到调优阶段，由于DDD将模型和数据分离，可以单独对模型进行优化。```model``` 命令可以自动对模型进行初始化，内存对齐，生成临时对象池，reset和释放model。很大程度的减少调优花费的时间和心智负担。
 
@@ -171,21 +168,14 @@ cd test
 ```
 
 
-## 启动Gin服务
+## 启动服务
 ```golang
-go run main.go gin
+go run main.go
 ```
 
 ### 访问
 
 > http://localhost:8080
-
-
-
-## 启动GRPC服务
-```
-go run main.go grpc
-```
 
 
 ## 配置

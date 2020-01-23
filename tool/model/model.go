@@ -450,7 +450,6 @@ func ExecPlugin(v *viper.Viper, info *BuildPluginInfo) error {
 		return err
 	}
 
-
 	model := raw.(Model)
 
 	if v.GetBool("sort") == true {
