@@ -44,7 +44,7 @@ func GenEntity(v *viper.Viper) error {
 
 		if v.GetBool("disdaotar") == false {
 			//dao 目录是否存在
-			existsdao, err := file_dir.IsExistsDir("./internal/infra/repo/dao")
+			existsdao, err := file_dir.IsExistsDir("./internal/infra/dao")
 			if err != nil {
 				log.Fatalf(err.Error())
 			}
@@ -133,7 +133,7 @@ func GenEntity(v *viper.Viper) error {
 
 		daotar := v.GetString("daotar")
 		if daotar == "" {
-			daotar = "internal/infra/repo/dao"
+			daotar = "internal/infra/dao"
 		}
 
 		daoDir := daotar + "/"
@@ -397,7 +397,7 @@ package repo
 import (
 	"context"
 	"{PROPATH}` + file_dir.GetParDir() + `/internal/domain/entity"
-	"{PROPATH}` + file_dir.GetParDir() + `/internal/infra/repo/dao"
+	"{PROPATH}` + file_dir.GetParDir() + `/internal/infra/dao"
 	"github.com/jukylin/esim/log"
 )
 
