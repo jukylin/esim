@@ -23,26 +23,29 @@ infrastructure|为各层提供技术支持，持久化，领域事件等
 - 函数第一个参数是ctx！函数第一个参数是ctx！函数第一个参数是ctx！
 
 - 命名
+
 &emsp; | Jaeger
 ---|---
 目录名 |小写/中横线
 函数名 |小驼峰
 文件名 |下划线
-变量| 小驼峰
-常量|小驼峰
-包名|当前目录名
-请求地址|*小写
-请求参数|小驼峰
-返回参数|小驼峰
+变量 | 小驼峰
+常量 | 小驼峰
+包名 | 当前目录名
+请求地址 | *小写
+请求参数 | 小驼峰
+返回参数 | 小驼峰
 
-目录 |定义|文件| 类 | 接口
----|---|---|---
+
+目录 | 定义 | 文件 | 类 | 接口
+---|---|---|---|---
 app |应用层|coupon.go | CouponService|无
 domain/service|领域服务 | coupon.go | CouponService|无
 domain/entity |实体| coupon.go | Coupon|无
-infra/event |领域事件|coupon.go | couponEvent | CouponEvent
-infra/repo|资源库|coupon.go| couponRepo |CouponRepo
+infra/event |领域事件|coupon.go | couponEventPub | CouponEvent
+infra/repo|资源库|coupon.go| couponDbRepo |CouponRepo
 infra/dao|数据访问对象| coupon.go| CouponDao |无
+
 
 ### 数据库设计规范小三样
 
