@@ -45,7 +45,7 @@ func (svc *UserService) GetUserInfo(ctx context.Context, username string) (user 
 		Dir:      "internal/app/dto",
 		Content: `package dto
 
-import "gitlab.etcchebao.cn/go_service/{{service_name}}/internal/domain/entity"
+import "{{service_name}}/internal/domain/entity"
 
 type User struct {
 

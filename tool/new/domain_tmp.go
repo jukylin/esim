@@ -20,5 +20,11 @@ type User struct {
 `,
 	}
 
-	Files = append(Files, fc1)
+	fc2 := &FileContent{
+		FileName: "README.md",
+		Dir:      "internal/domain/service",
+		Content:  `domain service`,
+	}
+
+	Files = append(Files, fc1, fc2)
 }
