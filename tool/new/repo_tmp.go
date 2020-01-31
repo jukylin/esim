@@ -10,7 +10,7 @@ import (
 	"context"
 	"github.com/jukylin/esim/log"
 	"{{PROPATH}}{{service_name}}/internal/domain/entity"
-	"{{PROPATH}}{{service_name}}/internal/infra/repo/dao"
+	"{{PROPATH}}{{service_name}}/internal/infra/dao"
 )
 
 type UserRepo interface {
