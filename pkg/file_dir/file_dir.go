@@ -83,8 +83,7 @@ func GetParDir() string {
 	if err != nil {
 		panic(err)
 	}
-	path := filepath.Dir(wd)
-
+	path := filepath.Dir(wd) + "/"
 	parDir := strings.Replace(wd, path, "", -1)
 
 	return parDir

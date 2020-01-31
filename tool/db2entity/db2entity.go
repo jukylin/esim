@@ -163,7 +163,7 @@ func GenEntity(v *viper.Viper) error {
 		}
 
 		repoTarget = repotar + "/" + table + ".go"
-		ex, err := file_dir.IsExistsFile(daoTarget)
+		ex, err := file_dir.IsExistsFile(repoTarget)
 		if err != nil {
 			log.Fatalf(err.Error())
 		}
@@ -281,7 +281,7 @@ package dao
 import (
 	"errors"
 	"context"
-	"{PROPATH}` + file_dir.GetParDir() + `/internal/domain/entity"
+	"` + file_dir.GetParDir() + `/internal/domain/entity"
 	"github.com/jinzhu/gorm"
 	"github.com/jukylin/esim/mysql"
 )
@@ -396,8 +396,8 @@ package repo
 
 import (
 	"context"
-	"{PROPATH}` + file_dir.GetParDir() + `/internal/domain/entity"
-	"{PROPATH}` + file_dir.GetParDir() + `/internal/infra/dao"
+	"` + file_dir.GetParDir() + `/internal/domain/entity"
+	"` + file_dir.GetParDir() + `/internal/infra/dao"
 	"github.com/jukylin/esim/log"
 )
 
@@ -408,7 +408,7 @@ type ` + structName + `Repo interface {
 
 type ` + tableName + `DbRepo struct{
 
-	log log.Logger
+	logger log.Logger
 
 	` + tableName + `Dao *dao.` + structName + `Dao
 }
@@ -433,7 +433,7 @@ func (this *` + tableName + `DbRepo) FindById(ctx context.Context, id int64) ent
 	` + tableName + `, err = this.` + tableName + `Dao.Find(ctx, "*", "id = ? ", id)
 
 	if err != nil{
-		this.log.Errorf(err.Error())
+		this.logger.Errorf(err.Error())
 		return ` + tableName + `
 	}
 
@@ -728,7 +728,7 @@ func getNewImportStr(newImports []string) string {
 func getProvideFunc(packageName, packageStrct string) string {
 	funcStr := `
 func provide` + packageStrct + `(esim *container.Esim) repo.` + packageStrct + ` {
-	return repo.New` + packageStrct + `(esim.Log)
+	return repo.New` + packageStrct + `(esim.Logger)
 }`
 
 	return funcStr

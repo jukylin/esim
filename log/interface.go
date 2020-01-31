@@ -6,7 +6,7 @@ type Logger interface {
 
 	Error(msg string)
 
-	Debugf(string,  ...interface{})
+	Debugf(string, ...interface{})
 
 	Infof(string, ...interface{})
 

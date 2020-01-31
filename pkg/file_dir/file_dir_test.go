@@ -93,3 +93,7 @@ func TestGetCurrentDir(t *testing.T)  {
 	currentDir := GetCurrentDir()
 	assert.NotEmpty(t, currentDir)
 }
+
+func TestGetParDir(t *testing.T)  {
+	assert.NotEmpty(t, GetParDir())
+}

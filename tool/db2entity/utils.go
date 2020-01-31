@@ -104,6 +104,10 @@ func Generate(columnTypes []columns, tableName string,
 	genMysqlInfo := generateMysqlTypes(columnTypes, 0, jsonAnnotation,
 		gormAnnotation, gureguTypes, v)
 
+	if genMysqlInfo.priKeyType == ""{
+		log.Panicf("没有身份标识")
+	}
+
 	genMysqlInfo.imports = append(genMysqlInfo.imports, "github.com/jinzhu/gorm")
 
 	//vars = append(vars, structName+"Obj = "+structName+"{}")
@@ -117,9 +121,9 @@ func Generate(columnTypes []columns, tableName string,
 		//genMysqlInfo.imports = append(genMysqlInfo.imports, "github.com/bet365/jingo")
 	}
 
-	if len(genMysqlInfo.autoTime.CurTimeStamp) > 0 || len(genMysqlInfo.autoTime.OnUpdateTimeStamp) > 0 {
+	//if len(genMysqlInfo.autoTime.CurTimeStamp) > 0 || len(genMysqlInfo.autoTime.OnUpdateTimeStamp) > 0 {
 		genMysqlInfo.imports = append(genMysqlInfo.imports, "github.com/jukylin/esim/log")
-	}
+	//}
 
 	if len(genMysqlInfo.imports) > 0 {
 		importstr = "import ("
@@ -300,7 +304,7 @@ func stringifyFirstChar(str string) string {
 }
 
 func getBeforeCreate(structName string, body string) string {
-	beforeCreateStr := "//自动增加时间和 trim \n"
+	beforeCreateStr := "\n //自动增加时间和 trim \n"
 	beforeCreateStr += `func (this *` + structName + `) BeforeCreate(scope *gorm.Scope) (err error) {
 
 		switch scope.Value.(type){
@@ -309,7 +313,7 @@ func getBeforeCreate(structName string, body string) string {
 
 			` + body + `
 		default:
-			log.Warnf("unknown type")
+			log.L.Warnf("unknown type")
 		}
 
 	return
@@ -375,11 +379,12 @@ func getBeforeCreateBody(getbeforeBody generateMysqlInfo, v *viper.Viper, struct
 func getBeforeUpdateBody(getbeforeBody generateMysqlInfo, v *viper.Viper, structName string) string {
 	var getbeforeBodyStr string
 
-	getbeforeBodyStr += `val, ok := scope.InstanceGet("gorm:update_attrs")
+
+	if len(getbeforeBody.autoTime.OnUpdateTimeStamp) > 0 {
+		getbeforeBodyStr += `val, ok := scope.InstanceGet("gorm:update_attrs")
 	if ok {
 		switch val.(type) {
 		case map[string]interface{}:`
-	if len(getbeforeBody.autoTime.OnUpdateTimeStamp) > 0 {
 
 		getbeforeBodyStr += "\n mapVal := val.(map[string]interface{})\n"
 
@@ -388,12 +393,15 @@ func getBeforeUpdateBody(getbeforeBody generateMysqlInfo, v *viper.Viper, struct
 			getbeforeBodyStr += "mapVal[\"" + v + "\"] = time.Now()\n"
 			getbeforeBodyStr += "}\n\n"
 		}
-	}
 
-	getbeforeBodyStr += `default:
-			log.Warnf("unknown type")
+		getbeforeBodyStr += `default:
+			log.L.Warnf("unknown type")
 		}
 	}`
+
+	}
+
+
 
 	return getbeforeBodyStr
 }
@@ -422,7 +430,7 @@ func getAfterFind(structName, body string, hasData bool) string {
 			}
 		}
 	default:
-		log.Warnf("unknown type")
+		log.L.Warnf("unknown type")
 	}
 `
 	}
