@@ -8,7 +8,6 @@ func InfraInit() {
 
 import (
 	"sync"
-	"os"
 	"github.com/google/wire"
 	"github.com/jukylin/esim/container"
 	"github.com/jukylin/esim/mysql"
@@ -55,7 +54,7 @@ func provideDb(esim *container.Esim) mysql.MysqlClient {
 	mysqlClientOptions := mysql.MysqlClientOptions{}
 	mysqlClent := mysql.NewMysqlClient(
 		mysqlClientOptions.WithConf(esim.Conf),
-		mysqlClientOptions.WithLogger(esim.Log),
+		mysqlClientOptions.WithLogger(esim.Logger),
 	)
 
 	return mysqlClent
@@ -64,7 +63,7 @@ func provideDb(esim *container.Esim) mysql.MysqlClient {
 
 
 func provideUserRepo(esim *container.Esim) repo.UserRepo {
-	return repo.NewUserRepo(esim.Log)
+	return repo.NewUserRepo(esim.Logger)
 }
 `,
 	}
