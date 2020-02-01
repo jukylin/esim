@@ -14,6 +14,12 @@ import (
 	"{{PROPATH}}{{service_name}}/internal/infra/repo"
 )
 
+//Do not change the function name and var name
+//  infraOnce
+//  onceInfra
+//  infraSet
+//  NewInfra
+
 var infraOnce sync.Once
 var onceInfra *Infra
 
