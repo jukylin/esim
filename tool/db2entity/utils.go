@@ -105,7 +105,7 @@ func Generate(columnTypes []columns, tableName string,
 		gormAnnotation, gureguTypes, v)
 
 	if genMysqlInfo.priKeyType == ""{
-		log.Panicf("没有身份标识")
+		log.Fatalf("没有身份标识")
 	}
 
 	genMysqlInfo.imports = append(genMysqlInfo.imports, "github.com/jinzhu/gorm")
@@ -166,6 +166,11 @@ func Generate(columnTypes []columns, tableName string,
 		src = fmt.Sprintf("%s\n%s", src, delKeyFunc)
 	} else {
 		log.Warnf("匹配不到del字段")
+		delKeyFunc := "// delete field\n" +
+			"func (" + strings.ToLower(string(structName[0])) + " *" + structName + ") DelKey() string {\n" +
+			"	return \"\" " +
+			"} \n \n"
+		src = fmt.Sprintf("%s\n%s", src, delKeyFunc)
 	}
 
 	//if v.GetBool("hasdata") == true {
@@ -306,16 +311,7 @@ func stringifyFirstChar(str string) string {
 func getBeforeCreate(structName string, body string) string {
 	beforeCreateStr := "\n //自动增加时间和 trim \n"
 	beforeCreateStr += `func (this *` + structName + `) BeforeCreate(scope *gorm.Scope) (err error) {
-
-		switch scope.Value.(type){
-		case *` + structName + `:
-			val := scope.Value.(*` + structName + `)
-
 			` + body + `
-		default:
-			log.L.Warnf("unknown type")
-		}
-
 	return
 	}
 
@@ -366,11 +362,20 @@ func getBeforeCreateBody(getbeforeBody generateMysqlInfo, v *viper.Viper, struct
 	}
 
 	if len(getbeforeBody.autoTime.CurTimeStamp) > 0 {
+		getbeforeBodyStr += `
+		switch scope.Value.(type){
+		case *` + structName + `:
+			val := scope.Value.(*` + structName + `)
+		`
 		for _, v := range getbeforeBody.autoTime.CurTimeStamp {
 			getbeforeBodyStr += "if val." + v + ".Unix() < 0 {\n"
 			getbeforeBodyStr += "val." + v + " = time.Now()\n"
 			getbeforeBodyStr += "}\n\n"
 		}
+		getbeforeBodyStr += `
+		default:
+			log.L.Warnf("unknown type")
+		}`
 	}
 
 	return getbeforeBodyStr

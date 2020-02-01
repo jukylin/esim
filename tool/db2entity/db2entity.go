@@ -415,7 +415,7 @@ type ` + tableName + `DbRepo struct{
 
 func New` + structName + `DbRepo(logger log.Logger) ` + structName + `DbRepo {
 	repo := &` + tableName + `Repo{
-		log : logger,
+		logger : logger,
 	}
 
 	if repo.` + tableName + `Dao == nil{
@@ -515,7 +515,11 @@ func Inject(structName string, fieldName, packageName, packageStrct string,
 			return
 		}
 
-		ExecGoFmt(infrFile, infrDir)
+		err = ExecGoFmt(infrFile, infrDir)
+		if err != nil {
+			log.Fatalf(err.Error())
+		}
+
 
 		//先整理下源文件
 		ioutil.WriteFile(infrDir+infrFile, formatSrc, 0755)
@@ -535,8 +539,15 @@ func Inject(structName string, fieldName, packageName, packageStrct string,
 		//语法检查
 		ioutil.WriteFile(infrDir+infrFile, []byte(source), 0755)
 
-		ExecGoFmt(infrFile, infrDir)
-		ExecWire(infrDir)
+		err = ExecGoFmt(infrFile, infrDir)
+		if err != nil {
+			log.Fatalf(err.Error())
+		}
+
+		err = ExecWire(infrDir)
+		if err != nil {
+			log.Fatalf(err.Error())
+		}
 
 		log.Infof("注入成功")
 
@@ -757,7 +768,7 @@ func GetFirstToUpper(str string) string {
 	return strings.ToUpper(string(str[0])) + str[1:]
 }
 
-func ExecGoFmt(file string, dir string) {
+func ExecGoFmt(file string, dir string) error {
 	cmd_line := fmt.Sprintf("go fmt %s", file)
 
 	log.Infof(cmd_line)
@@ -772,12 +783,11 @@ func ExecGoFmt(file string, dir string) {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
-	if err != nil {
-		log.Errorf(err.Error())
-	}
+
+	return err
 }
 
-func ExecWire(dir string) {
+func ExecWire(dir string) error {
 	cmd_line := fmt.Sprintf("wire")
 
 	log.Infof("dir %s, %s", dir, cmd_line)
@@ -792,7 +802,6 @@ func ExecWire(dir string) {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
-	if err != nil {
-		log.Errorf(err.Error())
-	}
+
+	return err
 }

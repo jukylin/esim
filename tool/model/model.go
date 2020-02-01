@@ -183,7 +183,10 @@ func HandleModel(v *viper.Viper) error {
 		return err
 	}
 
-	db2entity.ExecGoFmt(info.modelFileName, info.modelDir)
+	err = db2entity.ExecGoFmt(info.modelFileName, info.modelDir)
+	if err != nil{
+		return err
+	}
 
 	err = Clear(info)
 	return err
