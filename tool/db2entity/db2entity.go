@@ -265,6 +265,12 @@ func GenEntity(v *viper.Viper) error {
 		goPath := os.Getenv("GOPATH") + "/src/"
 		//项目路径
 		proPath := strings.Replace(pwd, goPath, "", -1)
+
+		err = file_dir.EsimBackUpFile(goPath + "/" + proPath + "/internal/infra/infra.go")
+		if err != nil{
+			log.Warnf("backup err %s:%s", proPath + "/internal/infra/infra.go", err.Error())
+		}
+
 		Inject("infra", st, pk,
 			st+"Repo", st+"DbRepo", proPath+"/internal/infra/repo")
 	}
@@ -519,7 +525,6 @@ func Inject(structName string, fieldName, packageName, interName string,
 		if err != nil {
 			log.Fatalf(err.Error())
 		}
-
 
 		//先整理下源文件
 		ioutil.WriteFile(infrDir+infrFile, formatSrc, 0755)

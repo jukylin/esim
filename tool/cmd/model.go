@@ -15,7 +15,7 @@ var modelCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		err := model.HandleModel(v)
 		if err != nil {
-			log.L.Error(err.Error())
+			log.Log.Error(err.Error())
 		}
 	},
 }
