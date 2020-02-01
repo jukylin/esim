@@ -24,17 +24,17 @@ CRUD文件被放到 infra/dao/table.go下
 func init() {
 	rootCmd.AddCommand(db2entityCmd)
 
-	db2entityCmd.Flags().StringP("host", "H", os.Getenv("ESIM_HOST"), "Host to check mariadb status of")
+	db2entityCmd.Flags().StringP("host", "H", os.Getenv("ESIM_DB_HOST"), "Host to check mariadb status of")
 
-	db2entityCmd.Flags().StringP("port", "P", os.Getenv("ESIM_PORT"), "Specify a port to connect to")
+	db2entityCmd.Flags().StringP("port", "P", os.Getenv("ESIM_DB_PORT"), "Specify a port to connect to")
 
 	db2entityCmd.Flags().StringP("table", "t", "", "Table to build struct from")
 
 	db2entityCmd.Flags().StringP("database", "d", "", "Database to for connection")
 
-	db2entityCmd.Flags().StringP("user", "u", os.Getenv("ESIM_USER"), "user to connect to database")
+	db2entityCmd.Flags().StringP("user", "u", os.Getenv("ESIM_DB_USER"), "user to connect to database")
 
-	db2entityCmd.Flags().StringP("password", "p", os.Getenv("ESIM_PASSWORD"), "password to connect to database")
+	db2entityCmd.Flags().StringP("password", "p", os.Getenv("ESIM_DB_PASSWORD"), "password to connect to database")
 
 	db2entityCmd.Flags().StringP("package", "", "", "name to set for package")
 

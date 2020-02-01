@@ -167,27 +167,38 @@ func (RedisClientOptions) WithProxy(proxyConn ...func() interface{}) Option {
 }
 
 //使用原生redisgo
-func (r *redisClient) GetRedisConn() redis.Conn {
+func (this *redisClient) GetRedisConn() redis.Conn {
 
-	rc := r.client.Get()
+	rc := this.client.Get()
 
 	return rc
 }
 
-func (r *redisClient) GetCtxRedisConn() ContextConn {
+func (this *redisClient) GetCtxRedisConn() ContextConn {
 
-	rc := r.client.Get()
-	mediatorProxy := NewMediatorProxy()
-	mediatorProxy.NextProxy(rc)
+	rc := this.client.Get()
+
+	facadeProxy := NewFacadeProxy()
+	facadeProxy.NextProxy(rc)
 
 	var firstProxy ContextConn
-	if r.proxyNum > 0 {
-		firstProxy = r.proxyInses[len(r.proxyInses) - 1].(ContextConn)
-		firstProxy.(RedisProxy).NextProxy(mediatorProxy)
+	if this.proxyNum > 0 && rc.Err() == nil{
+		firstProxy = this.proxyInses[len(this.proxyInses) - 1].(ContextConn)
+		firstProxy.(proxy.Proxy).NextProxy(facadeProxy)
 	}else{
-		firstProxy = mediatorProxy
+		firstProxy = facadeProxy
 	}
 
 	return firstProxy
 }
 
+
+
+func (this *redisClient) Close() {
+	this.client.Close()
+}
+
+func (this *redisClient) Ping() error {
+	conn := this.client.Get()
+	return conn.Err()
+}
