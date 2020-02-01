@@ -7,7 +7,7 @@ import (
 	"github.com/martinusso/inflect"
 	"github.com/spf13/viper"
 	"github.com/jukylin/esim/tool/db2entity"
-	"github.com/jukylin/esim/pkg/file_dir"
+	"github.com/jukylin/esim/pkg/file-dir"
 	logger "github.com/jukylin/esim/log"
 	"go/ast"
 	"go/parser"

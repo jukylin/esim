@@ -2,7 +2,7 @@ package model
 
 import (
 	"github.com/spf13/viper"
-	"github.com/jukylin/esim/pkg/file_dir"
+	"github.com/jukylin/esim/pkg/file-dir"
 	"os"
 	"testing"
 	"unsafe"

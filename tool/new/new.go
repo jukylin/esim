@@ -3,7 +3,7 @@ package new
 import (
 	"errors"
 	"github.com/spf13/viper"
-	"github.com/jukylin/esim/pkg/file_dir"
+	"github.com/jukylin/esim/pkg/file-dir"
 	logger "github.com/jukylin/esim/log"
 	"io/ioutil"
 	"os"
