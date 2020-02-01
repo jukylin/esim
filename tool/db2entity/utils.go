@@ -374,7 +374,7 @@ func getBeforeCreateBody(getbeforeBody generateMysqlInfo, v *viper.Viper, struct
 		}
 		getbeforeBodyStr += `
 		default:
-			log.L.Warnf("unknown type")
+			log.Log.Warnf("unknown type")
 		}`
 	}
 
@@ -400,7 +400,7 @@ func getBeforeUpdateBody(getbeforeBody generateMysqlInfo, v *viper.Viper, struct
 		}
 
 		getbeforeBodyStr += `default:
-			log.L.Warnf("unknown type")
+			log.Log.Warnf("unknown type")
 		}
 	}`
 
@@ -435,7 +435,7 @@ func getAfterFind(structName, body string, hasData bool) string {
 			}
 		}
 	default:
-		log.L.Warnf("unknown type")
+		log.Log.Warnf("unknown type")
 	}
 `
 	}
