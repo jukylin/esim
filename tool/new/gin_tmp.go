@@ -112,6 +112,7 @@ func NewGinServer(esim *container.Esim) *GinServer {
 	server := &GinServer{
 		en : en,
 		addr : httpport,
+		logger: esim.Logger,
 	}
 
 	return server
