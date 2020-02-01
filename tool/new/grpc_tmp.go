@@ -10,7 +10,7 @@ import (
 	"context"
 	"encoding/json"
 	gp "{{PROPATH}}{{service_name}}/internal/infra/third_party/protobuf/passport"
-	"{{PROPATH}}{{service_name}}/internal/app"
+	"{{PROPATH}}{{service_name}}/internal/app/service"
 	"{{PROPATH}}{{service_name}}/internal/infra"
 	"github.com/tidwall/gjson"
 )
@@ -24,7 +24,7 @@ func (u *UserService) GetUserByUserName(ctx context.Context,
 	grpcReply := &gp.GrpcReplyMap{}
 	userName := request.GetUsername()
 
-	svc := app.NewUserSvc(infra.NewInfra())
+	svc := service.NewUserSvc(infra.NewInfra())
 	userInfo := svc.GetUserInfo(ctx, userName)
 
 	grpcReply.Code = 0;
@@ -53,7 +53,7 @@ func (u *UserService) GetUserByUserName(ctx context.Context,
 		Content: `package routers
 
 import (
-	"{{PROPATH}}{{service_name}}/internal/server/controllers"
+	"{{PROPATH}}{{service_name}}/internal/transports/grpc/controllers"
 	"{{PROPATH}}{{service_name}}/internal/infra/third_party/protobuf/passport"
 	"google.golang.org/grpc"
 )

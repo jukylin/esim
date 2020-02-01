@@ -7,10 +7,10 @@ func BeegoInit() {
 		Content: `package controllers
 
 import (
-	"{{PROPATH}}{{service_name}}/internal/app"
+	"{{PROPATH}}{{service_name}}/internal/app/service"
 	"github.com/astaxie/beego"
 	"{{PROPATH}}{{service_name}}/internal/infra"
-	"{{PROPATH}}{{service_name}}/internal/domain/dto"
+	"{{PROPATH}}{{service_name}}/internal/app/dto"
 )
 
 // Operations about Users
@@ -22,7 +22,7 @@ type UserController struct {
 func (this *UserController) GetUserInfo() {
 	username := this.GetString("username")
 
-	svc := app.NewUserSvc(infra.NewInfra())
+	svc := service.NewUserSvc(infra.NewInfra())
 
 	user := svc.GetUserInfo(this.Ctx.Request.Context(), username)
 

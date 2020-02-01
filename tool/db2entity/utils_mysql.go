@@ -133,7 +133,9 @@ func generateMysqlTypes(columns []columns, depth int,
 			autoTime.OnUpdateTimeStamp = append(autoTime.OnUpdateTimeStamp, column.COLUMN_NAME)
 		}
 
-		structure += "\n\n //" + column.COLUMN_COMMENT
+		if column.COLUMN_COMMENT != "" {
+			structure += "\n\n //" + column.COLUMN_COMMENT
+		}
 
 		var annotations []string
 		if gormAnnotation == true {

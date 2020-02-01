@@ -4,7 +4,7 @@ func ServiceInit() {
 	fc1 := &FileContent{
 		FileName: "user.go",
 		Dir:      "internal/app/service",
-		Content: `package app
+		Content: `package service
 
 import (
 	"context"

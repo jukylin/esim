@@ -9,15 +9,15 @@ func GinInit() {
 import (
 	"net/http"
 	"github.com/gin-gonic/gin"
-	"{{PROPATH}}{{service_name}}/internal/app"
+	"{{PROPATH}}{{service_name}}/internal/app/service"
 	"{{PROPATH}}{{service_name}}/internal/infra"
-	"{{PROPATH}}{{service_name}}/internal/domain/dto"
+	"{{PROPATH}}{{service_name}}/internal/app/dto"
 )
 
 func Demo(c *gin.Context) {
 
 	username := c.GetString("username")
-	svc := app.NewUserSvc(infra.NewInfra())
+	svc := service.NewUserSvc(infra.NewInfra())
 	info := svc.GetUserInfo(c.Request.Context(), username)
 
 	c.JSON(http.StatusOK, gin.H{
@@ -42,7 +42,7 @@ func Esim(c *gin.Context)  {
 		Content: `package routers
 
 import (
-	"{{PROPATH}}{{service_name}}/internal/server/controllers"
+	"{{PROPATH}}{{service_name}}/internal/transports/http/controllers"
 	"github.com/gin-gonic/gin"
 
 )
