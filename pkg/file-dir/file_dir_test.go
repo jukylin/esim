@@ -97,3 +97,7 @@ func TestGetCurrentDir(t *testing.T)  {
 func TestGetParDir(t *testing.T)  {
 	assert.NotEmpty(t, GetParDir())
 }
+
+func TestBackUpFile(t *testing.T) {
+	BackUpFile("")
+}

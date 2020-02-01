@@ -107,3 +107,22 @@ func GetCurrentDir() string {
 
 	return parDir
 }
+
+
+func BackUpFile(backFile string) error {
+	backUpPath := os.Getenv("GOPATH") + "/pkg/esim/"
+	strings.TrimLeft(backFile, "./")
+	strings.TrimLeft(backFile, "/")
+
+	input, err := ioutil.ReadFile(backFile)
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(backUpPath + backFile, input, 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
