@@ -47,9 +47,9 @@ func provideEsim() *container.Esim {
 }
 `
 
-	handleInject(src, "Infra", "UserDao",
-		"passport", "UserDao", "github.com/jukylin/esim/db2entity")
-
+	src = handleInject(src, "Infra", "UserDao",
+		"passport", "UserRepo", "UserDbRepo","github.com/jukylin/esim/db2entity")
+	println(src)
 }
 
 //func TestGoFmt(t *testing.T)  {

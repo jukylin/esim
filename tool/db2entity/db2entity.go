@@ -266,7 +266,7 @@ func GenEntity(v *viper.Viper) error {
 		//项目路径
 		proPath := strings.Replace(pwd, goPath, "", -1)
 		Inject("infra", st, pk,
-			st+"Repo", proPath+"/internal/infra/repo")
+			st+"Repo", st+"DbRepo", proPath+"/internal/infra/repo")
 	}
 
 	return nil
@@ -489,8 +489,8 @@ func GetFirstToLower(str string) string {
 	return strings.ToLower(string(str[0]))
 }
 
-func Inject(structName string, fieldName, packageName, packageStrct string,
-	importStr string) {
+func Inject(structName string, fieldName, packageName, interName string,
+	instName string, importStr string) {
 
 	infrDir := "./internal/infra/"
 
@@ -527,7 +527,7 @@ func Inject(structName string, fieldName, packageName, packageStrct string,
 		srcStr := string(formatSrc)
 
 		source := handleInject(srcStr, "Infra",
-			fieldName, packageName, packageStrct, importStr)
+			fieldName, packageName, interName, instName, importStr)
 
 		//整理，写入
 		//formatSrc, err = format.Source([]byte(source))
@@ -556,8 +556,8 @@ func Inject(structName string, fieldName, packageName, packageStrct string,
 	}
 }
 
-func handleInject(srcStr string, structName string, fieldName, packageName, packageStrct string,
-	importStr string) string {
+func handleInject(srcStr string, structName string, fieldName, packageName, interName string,
+	instName string, importStr string) string {
 
 	fset := token.NewFileSet() // positions are relative to fset
 	f, err := parser.ParseFile(fset, "", srcStr, parser.ParseComments)
@@ -572,7 +572,7 @@ func handleInject(srcStr string, structName string, fieldName, packageName, pack
 	var oldImportStr string
 	var newImportStr string
 
-	provideFunc := getProvideFunc(packageName, packageStrct)
+	provideFunc := getProvideFunc(interName, instName)
 
 	var oldSet string
 	var newSet string
@@ -594,7 +594,7 @@ func handleInject(srcStr string, structName string, fieldName, packageName, pack
 							hasStruct = true
 							oldStruct = srcStr[GenDecl.Pos()-1 : GenDecl.End()]
 							oldFields := GetOldFields(GenDecl, srcStr)
-							newFields := append(oldFields, Field{Filed: packageStrct + " repo." + packageStrct})
+							newFields := append(oldFields, Field{Filed: interName + " repo." + interName})
 							newStruct = getNewStruct(structName, newFields)
 						}
 					}
@@ -610,7 +610,7 @@ func handleInject(srcStr string, structName string, fieldName, packageName, pack
 								oldSet = srcStr[GenDecl.TokPos-1 : GenDecl.End()]
 								oldArgs = append(oldArgs, "var infraSet = wire.NewSet(")
 								oldArgs = append(oldArgs, getSet(GenDecl, srcStr)...)
-								newArgs := append(oldArgs, "provide"+packageStrct+",")
+								newArgs := append(oldArgs, "provide"+instName+",")
 								newArgs = append(newArgs, ")")
 								newSet = getNewSet(newArgs)
 							}
@@ -736,10 +736,10 @@ func getNewImportStr(newImports []string) string {
 	return importStr
 }
 
-func getProvideFunc(packageName, packageStrct string) string {
+func getProvideFunc(interName, instName string) string {
 	funcStr := `
-func provide` + packageStrct + `(esim *container.Esim) repo.` + packageStrct + ` {
-	return repo.New` + packageStrct + `(esim.Logger)
+func provide` + instName + `(esim *container.Esim) repo.` + interName + ` {
+	return repo.New` + instName + `(esim.Logger)
 }`
 
 	return funcStr
