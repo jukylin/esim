@@ -177,6 +177,7 @@ func (this *redisClient) GetRedisConn() redis.Conn {
 	return rc
 }
 
+//Recommended
 func (this *redisClient) GetCtxRedisConn() ContextConn {
 
 	rc := this.client.Get()
