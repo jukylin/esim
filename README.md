@@ -142,16 +142,21 @@ infra.NewInfra().DB
 
 > 前置条件：
 > 1. 在项目根目录下
+> 2. 配置环境变量 
 
-> 由于DDD开发方式多了很多目录，文件，导致这部分工作变得很繁琐，所以```db2entity``` 从数据库的表开始，自动建立实体，生成简单的CRUD语句和资源库的接口与实现，并把生成的资源库注入到基础设施。
+```linux
+export ESIM_DB_HOST=127.0.0.1
+export ESIM_DB_PORT=3306
+export ESIM_DB_USER=root 
+export ESIM_DB_PASSWORD=123456
+```
+> 由于DDD开发方式多了很多目录，文件，导致这部分工作变得很繁琐，所以```db2entity``` 从mysql数据库的表开始，自动建立实体，生成简单的CRUD语句和资源库的接口与实现，并把生成的资源库注入到基础设施。
 
 - esim model -m modelname
 
 > 前置条件:
 > 1. 在模型目录下
 > 2. 开启 module， ```export GO111MODULE=on```
-> 3. 先备份模型所在文件
-
 
 > 当项目进入到调优阶段，由于DDD将模型和数据分离，可以单独对模型进行优化。```model``` 命令可以自动对模型进行初始化，内存对齐，生成临时对象池，reset和释放model。很大程度的减少调优花费的时间和心智负担。
 
