@@ -11,7 +11,7 @@ import (
 	jaeger "github.com/uber/jaeger-client-go"
 )
 
-var L Logger
+var Log Logger
 
 type logger struct {
 	debug bool
@@ -72,6 +72,8 @@ func NewLogger(options ...Option) Logger {
 	zapLogger, _ := zapConfig.Build()
 	logger.logger = zapLogger
 	logger.sugar = zapLogger.Sugar()
+
+	Log = logger
 
 	return logger
 }

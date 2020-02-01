@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"strings"
+	"github.com/jukylin/esim/log"
 )
 
 
@@ -108,11 +109,35 @@ func GetCurrentDir() string {
 	return parDir
 }
 
-
+//BackUpFile backup files to os.Getenv("GOPATH") + "/pkg/esim/"
+// Overwrite as soon as the file exists
 func BackUpFile(backFile string) error {
+
+	if backFile == ""{
+		return errors.New("没有文件")
+	}
+
+	dir := filepath.Dir(backFile)
 	backUpPath := os.Getenv("GOPATH") + "/pkg/esim/"
-	strings.TrimLeft(backFile, "./")
-	strings.TrimLeft(backFile, "/")
+
+	targetPath := backUpPath + dir
+
+	exists, err := IsExistsDir(targetPath)
+	if err != nil{
+		return err
+	}
+
+	if exists == false {
+		err = os.Mkdir(targetPath, 0777)
+		if err != nil {
+			return err
+		}
+	}
+
+	_, err = CreateFile(backUpPath + backFile)
+	if err != nil{
+		return err
+	}
 
 	input, err := ioutil.ReadFile(backFile)
 	if err != nil {
@@ -123,6 +148,8 @@ func BackUpFile(backFile string) error {
 	if err != nil {
 		return err
 	}
+
+	log.Log.Infof("%s backup to %s", backFile, backUpPath)
 
 	return nil
 }

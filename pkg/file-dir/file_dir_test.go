@@ -4,6 +4,7 @@ import (
 	"testing"
 	"os"
 	"github.com/stretchr/testify/assert"
+	"github.com/jukylin/esim/log"
 )
 
 
@@ -99,5 +100,7 @@ func TestGetParDir(t *testing.T)  {
 }
 
 func TestBackUpFile(t *testing.T) {
-	BackUpFile("")
+	log.NewLogger()
+	err := BackUpFile("./test/esim.txt")
+	assert.NoError(t, err)
 }
