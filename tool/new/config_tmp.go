@@ -31,9 +31,9 @@ jaeger_local_agent_host_port: '0.0.0.0:6831'
 
 #mysql
 dbs:
-//- {db: 'test', dsn: 'root:123456@tcp(0.0.0.0:3306)/config?charset=utf8&parseTime=True&loc=Local',
-//  maxidle: 10, maxopen: 100, maxlifetime : 10}
-//- {db: 'test_slave', dsn: 'root:123456@tcp(0.0.0.0:3306)/config?charset=utf8&parseTime=True&loc=Local',
+#- {db: 'test', dsn: 'root:123456@tcp(0.0.0.0:3306)/config?charset=utf8&parseTime=True&loc=Local',
+#  maxidle: 10, maxopen: 100, maxlifetime : 10}
+#- {db: 'test_slave', dsn: 'root:123456@tcp(0.0.0.0:3306)/config?charset=utf8&parseTime=True&loc=Local',
 
 
 #mongodb
@@ -103,9 +103,9 @@ jaeger_local_agent_host_port : '${TRACER_HOST_PORT}'
 
 #mysql
 dbs:
-//- {db: 'test', dsn: 'root:123456@tcp(0.0.0.0:3306)/config?charset=utf8&parseTime=True&loc=Local',
-//  maxidle: 10, maxopen: 100, maxlifetime : 10}
-//- {db: 'test_slave', dsn: 'root:123456@tcp(0.0.0.0:3306)/config?charset=utf8&parseTime=True&loc=Local',
+#- {db: 'test', dsn: 'root:123456@tcp(0.0.0.0:3306)/config?charset=utf8&parseTime=True&loc=Local',
+#  maxidle: 10, maxopen: 100, maxlifetime : 10}
+#- {db: 'test_slave', dsn: 'root:123456@tcp(0.0.0.0:3306)/config?charset=utf8&parseTime=True&loc=Local',
 
 #mongodb
 #mgos:
@@ -175,9 +175,9 @@ jaeger_local_agent_host_port : '${TRACER_HOST_PORT}'
 
 #mysql
 dbs:
-//- {db: 'test', dsn: 'root:123456@tcp(0.0.0.0:3306)/config?charset=utf8&parseTime=True&loc=Local',
-//  maxidle: 10, maxopen: 100, maxlifetime : 10}
-//- {db: 'test_slave', dsn: 'root:123456@tcp(0.0.0.0:3306)/config?charset=utf8&parseTime=True&loc=Local',
+#- {db: 'test', dsn: 'root:123456@tcp(0.0.0.0:3306)/config?charset=utf8&parseTime=True&loc=Local',
+#  maxidle: 10, maxopen: 100, maxlifetime : 10}
+##- {db: 'test_slave', dsn: 'root:123456@tcp(0.0.0.0:3306)/config?charset=utf8&parseTime=True&loc=Local',
 
 #mongodb
 #mgos:

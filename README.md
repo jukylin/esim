@@ -420,7 +420,10 @@ infra.NewInfra().DB.GetDb(ctx, "db").Table("table").Where("username = ?", userna
 	Select([]string{"id"}).First(&user)
 ```
 
+## Opentracing
+> Esim使用[Jaeger](https://www.jaegertracing.io/)实现分布式追踪，默认为关闭状态。
 
+>开启需要使用jaeger-client-go自带的[环境变量](https://github.com/jaegertracing/jaeger-client-go#environment-variables)
 
 
   [1]: https://imgconvert.csdnimg.cn/aHR0cHM6Ly9hdGEyLWltZy5jbi1oYW5nemhvdS5vc3MtcHViLmFsaXl1bi1pbmMuY29tL2EzM2I4MGJjYWM1ZWM3M2QwZDEzNThkNmI0OWExMTljLnBuZw?x-oss-process=image/format,png

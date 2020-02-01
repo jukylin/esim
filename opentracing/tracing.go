@@ -20,11 +20,8 @@ func NewTracer(serviceName string, logger log.Logger) opentracing.Tracer {
 	}
 
 	cfg.ServiceName = serviceName
-	//default close tracer
-	if cfg.Sampler.Type == "" {
-		cfg.Disabled = true
-	}
-
+	//cfg.Sampler.Type = "const"
+	//cfg.Sampler.Param = 1
 	tracer, _, err = cfg.NewTracer(jaegerconfig.Logger(logger))
 	if err != nil{
 		logger.Panicf(err.Error())
