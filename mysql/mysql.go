@@ -26,7 +26,7 @@ type mysqlClient struct {
 
 	conf config.Config
 
-	log log.Logger
+	logger log.Logger
 
 	proxyOptions []interface{}
 
@@ -62,8 +62,8 @@ func NewMysqlClient(options ...Option) *mysqlClient {
 			onceClient.conf = config.NewNullConfig()
 		}
 
-		if onceClient.log == nil {
-			onceClient.log = log.NewLogger()
+		if onceClient.logger == nil {
+			onceClient.logger = log.NewLogger()
 		}
 
 		onceClient.init()
@@ -78,9 +78,9 @@ func (MysqlClientOptions) WithConf(conf config.Config) Option {
 	}
 }
 
-func (MysqlClientOptions) WithLogger(log log.Logger) Option {
+func (MysqlClientOptions) WithLogger(logger log.Logger) Option {
 	return func(m *mysqlClient) {
-		m.log = log
+		m.logger = logger
 	}
 }
 
@@ -97,24 +97,24 @@ func (MysqlClientOptions) WithProxy(proxy ...func() interface{}) Option {
 }
 
 // initializes mysqlClient.
-func (m *mysqlClient) init() {
+func (this *mysqlClient) init() {
 
 	dbConfigs := []DbConfig{}
-	err := m.conf.UnmarshalKey("dbs", &dbConfigs)
+	err := this.conf.UnmarshalKey("dbs", &dbConfigs)
 	if err != nil {
-		m.log.Panicf("Fatal error config file: %s \n", err.Error())
+		this.logger.Panicf("Fatal error config file: %s \n", err.Error())
 	}
 
-	if len(m.dbConfigs) > 0 {
-		dbConfigs = append(dbConfigs, m.dbConfigs...)
+	if len(this.dbConfigs) > 0 {
+		dbConfigs = append(dbConfigs, this.dbConfigs...)
 	}
 
 	for _, dbConfig := range dbConfigs {
 		var DB *gorm.DB
-		if len(m.proxy) == 0 {
+		if len(this.proxy) == 0 {
 			DB, err = gorm.Open("mysql", dbConfig.Dsn)
 			if err != nil {
-				m.log.Panicf("[db] %s init error : %s", dbConfig.Db, err.Error())
+				this.logger.Panicf("[db] %s init error : %s", dbConfig.Db, err.Error())
 			}
 
 			DB.DB().SetMaxIdleConns(dbConfig.MaxIdle)
@@ -124,19 +124,19 @@ func (m *mysqlClient) init() {
 
 			dbSQL, err := sql.Open("mysql", dbConfig.Dsn)
 			if err != nil {
-				m.log.Panicf("[db] %s init error : %s", dbConfig.Db, err.Error())
+				this.logger.Panicf("[db] %s init error : %s", dbConfig.Db, err.Error())
 			}
 
-			firstProxy := proxy.NewProxyFactory().GetFirstInstance("db_" + dbConfig.Db, dbSQL, m.proxy...)
+			firstProxy := proxy.NewProxyFactory().GetFirstInstance("db_" + dbConfig.Db, dbSQL, this.proxy...)
 
 			DB, err = gorm.Open("mysql", firstProxy)
 			if err != nil {
-				m.log.Panicf("[db] %s ping error : %s", dbConfig.Db, err.Error())
+				this.logger.Panicf("[db] %s ping error : %s", dbConfig.Db, err.Error())
 			}
 
 			err = dbSQL.Ping()
 			if err != nil {
-				m.log.Panicf("[db] %s ping error : %s", dbConfig.Db, err.Error())
+				this.logger.Panicf("[db] %s ping error : %s", dbConfig.Db, err.Error())
 			}
 
 			dbSQL.SetMaxIdleConns(dbConfig.MaxIdle)
@@ -144,53 +144,71 @@ func (m *mysqlClient) init() {
 			dbSQL.SetConnMaxLifetime(time.Duration(dbConfig.MaxLifetime))
 		}
 
-		m.setDb(dbConfig.Db, DB)
+		this.setDb(dbConfig.Db, DB)
 
-		if m.conf.GetBool("debug") == true {
+		if this.conf.GetBool("debug") == true {
 			DB.LogMode(true)
 		}
 
 		//DB.SetLogger(log.L)
-		m.log.Infof("[mysql] %s init success", dbConfig.Db)
+		this.logger.Infof("[mysql] %s init success", dbConfig.Db)
 	}
 }
 
 
-func (m *mysqlClient) setDb(db_name string, gdb *gorm.DB) bool {
+func (this *mysqlClient) setDb(db_name string, gdb *gorm.DB) bool {
 	db_name = strings.ToLower(db_name)
 
 	//m.mysqlLock.Lock()
-	m.dbs[db_name] = gdb
+	this.dbs[db_name] = gdb
 	//m.mysqlLock.Unlock()
 	return true
 }
 
-func (m *mysqlClient) GetDb(db_name string) *gorm.DB {
-	return m.getDb(nil, db_name)
+func (this *mysqlClient) GetDb(db_name string) *gorm.DB {
+	return this.getDb(nil, db_name)
 }
 
-func (m *mysqlClient) getDb(ctx context.Context, db_name string) *gorm.DB {
+func (this *mysqlClient) getDb(ctx context.Context, db_name string) *gorm.DB {
 	db_name = strings.ToLower(db_name)
 
 	//m.mysqlLock.RLock()
-	if db, ok := m.dbs[db_name]; ok {
+	if db, ok := this.dbs[db_name]; ok {
 		//m.mysqlLock.RUnlock()
 		return db
 	} else {
 		//m.mysqlLock.RUnlock()
-		m.log.Errorf("[db] %s not found", db_name)
+		this.logger.Errorf("[db] %s not found", db_name)
 		return nil
 	}
 }
 
-func (m *mysqlClient) GetCtxDb(ctx context.Context, db_name string) *gorm.DB {
-	return m.getDb(ctx, db_name)
+func (this *mysqlClient) GetCtxDb(ctx context.Context, db_name string) *gorm.DB {
+	return this.getDb(ctx, db_name)
 }
 
-//ping first db
-func (m *mysqlClient) Ping() error {
-	for _, db := range m.dbs {
-		return db.DB().Ping()
+
+func (this *mysqlClient) Ping() []error {
+	var errs []error
+	var err error
+	for _, db := range this.dbs {
+		err = db.DB().Ping()
+		if err != nil{
+			errs = append(errs, err)
+		}
 	}
-	return nil
+	return errs
+}
+
+
+func (this *mysqlClient) Close() {
+	var err error
+	for _, db := range this.dbs {
+		err = db.DB().Close()
+		if err != nil{
+			this.logger.Errorf(err.Error())
+		}
+	}
+
+	return
 }

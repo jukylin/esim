@@ -6,6 +6,7 @@ import (
 	"syscall"
 	"gitlab.etcchebao.cn/go_service/esim/pkg/log"
 	"github.com/jukylin/esim/transports"
+	"github.com/jukylin/esim/infra"
 )
 
 type APP struct{
@@ -13,6 +14,8 @@ type APP struct{
 	logger log.Logger
 
 	Trans []transports.Transports
+
+	Infra infra.Infra
 }
 
 func NewApp(logger log.Logger) *APP {
@@ -48,4 +51,6 @@ func (this *APP) stop()  {
 	for _, tran := range this.Trans {
 		tran.GracefulShutDown()
 	}
+
+	this.Infra.Close()
 }

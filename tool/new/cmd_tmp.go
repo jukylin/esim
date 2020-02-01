@@ -30,6 +30,7 @@ import (
 	"github.com/jukylin/esim"
 	"github.com/jukylin/esim/container"
 	"github.com/jukylin/esim/config"
+	"{{service_name}}/internal/infra"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -61,6 +62,8 @@ var rootCmd = &cobra.Command{
 		app := esim.NewApp(em.Logger)
 
 {{RUN_SERVER}}
+
+		app.Infra = infra.NewInfra()
 
 		app.Start()
 		app.AwaitSignal()

@@ -11,5 +11,7 @@ type MysqlClient interface {
 
 	GetCtxDb(context.Context, string) *gorm.DB
 
-	Ping() error
+	Ping() []error
+
+	Close()
 }

@@ -119,19 +119,19 @@ func tmpInit(v *viper.Viper) (string, string) {
 	if v.GetBool("gin") == true {
 		GinInit()
 		run_server = "		app.Trans = append(app.Trans, http.NewGinServer(em))\n"
-		import_server += "		\"{{PROPATH}}{{service_name}}/internal/transports/http\"\n"
+		import_server += "	\"{{PROPATH}}{{service_name}}/internal/transports/http\"\n"
 	}
 
 	if v.GetBool("beego") == true {
 		BeegoInit()
 		run_server += "		app.Trans = append(app.Trans, http.NewBeegoServer(em))\n"
-		import_server += "		\"{{PROPATH}}{{service_name}}/internal/transports/http\"\n"
+		import_server += "	\"{{PROPATH}}{{service_name}}/internal/transports/http\"\n"
 	}
 
 	if v.GetBool("grpc") == true {
 		GrpcInit()
 		run_server += "		app.Trans = append(app.Trans, grpc.NewGrpcServer(em))\n"
-		import_server += "		\"{{PROPATH}}{{service_name}}/internal/transports/grpc\"\n"
+		import_server += "	\"{{PROPATH}}{{service_name}}/internal/transports/grpc\"\n"
 	}
 
 	return run_server, import_server

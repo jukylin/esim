@@ -11,7 +11,6 @@ import (
 	"github.com/google/wire"
 	"github.com/jukylin/esim/container"
 	"github.com/jukylin/esim/mysql"
-	"github.com/jukylin/esim/config"
 	"{{PROPATH}}{{service_name}}/internal/infra/repo"
 )
 
@@ -40,6 +39,24 @@ func NewInfra() *Infra {
 	})
 
 	return onceInfra
+}
+
+// Close close the infra when app stop
+func (this *Infra) Close()  {
+
+	this.DB.Close()
+}
+
+func (this *Infra) HealthCheck() []error {
+	var errs []error
+	var err error
+
+	dbErrs := this.DB.Ping()
+	if err != nil{
+		errs = append(errs, dbErrs...)
+	}
+
+	return errs
 }
 
 func provideEsim() *container.Esim {
