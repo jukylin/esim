@@ -22,7 +22,7 @@ type redisClient struct {
 
 	conf config.Config
 
-	log elog.Logger
+	logger elog.Logger
 
 	proxyNum int
 
@@ -53,8 +53,8 @@ func newPoolRedis(options ...Option) *redisClient {
 			onceRedisClient.conf = config.NewNullConfig()
 		}
 
-		if onceRedisClient.log == nil {
-			onceRedisClient.log = elog.NewLogger()
+		if onceRedisClient.logger == nil {
+			onceRedisClient.logger = elog.NewLogger()
 		}
 
 		onceRedisClient.proxyNum = len(onceRedisClient.proxyConn)
@@ -115,13 +115,13 @@ func newPoolRedis(options ...Option) *redisClient {
 					redis.DialConnectTimeout(time.Duration(redis_conn_time_out)*time.Millisecond))
 
 				if err != nil {
-					onceRedisClient.log.Panicf("redis.Dial err: %s", err.Error())
+					onceRedisClient.logger.Panicf("redis.Dial err: %s", err.Error())
 					return nil, err
 				}
 				if redis_etc1_password != "" {
 					if _, err := c.Do("AUTH", redis_etc1_password); err != nil {
 						c.Close()
-						onceRedisClient.log.Panicf("redis.AUTH err: %s", err.Error())
+						onceRedisClient.logger.Panicf("redis.AUTH err: %s", err.Error())
 						return nil, err
 					}
 				}
@@ -140,9 +140,12 @@ func newPoolRedis(options ...Option) *redisClient {
 		if onceRedisClient.conf.GetString("runmode") == "pro" {
 			//conn success ？
 			rc := onceRedisClient.client.Get()
+			if rc.Err() != nil{
+				onceRedisClient.logger.Panicf(rc.Err().Error())
+			}
 			rc.Close()
 		}
-		onceRedisClient.log.Infof("[redis] init success %s : %s", redis_etc1_host, redis_etc1_port)
+		onceRedisClient.logger.Infof("[redis] init success %s : %s", redis_etc1_host, redis_etc1_port)
 	})
 
 	return onceRedisClient
@@ -154,9 +157,9 @@ func (RedisClientOptions) WithConf(conf config.Config) Option {
 	}
 }
 
-func (RedisClientOptions) WithLogger(log elog.Logger) Option {
+func (RedisClientOptions) WithLogger(logger elog.Logger) Option {
 	return func(r *redisClient) {
-		r.log = log
+		r.logger = logger
 	}
 }
 
