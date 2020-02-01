@@ -64,7 +64,7 @@ var HandshakeConfig = go_plugin.HandshakeConfig{
 }
 
 type BuildPluginInfo struct {
-	//模型目录
+	//模型目录 绝对路径
 	modelDir string
 
 	filesName []string
@@ -176,6 +176,11 @@ func HandleModel(v *viper.Viper) error {
 	err = ExecPlugin(v, info)
 	if err != nil {
 		return err
+	}
+
+	err = file_dir.EsimBackUpFile(info.modelDir + "/" + info.modelFileName)
+	if err != nil{
+		log.Warnf("backup err %s:%s", info.modelDir + "/" + info.modelFileName, err.Error())
 	}
 
 	err = WriteContent(v, info)

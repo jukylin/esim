@@ -119,20 +119,20 @@ func EsimBackUpFile(backFile string) error {
 	}
 
 	dir := filepath.Dir(backFile)
+	relativeDir := strings.Replace(dir, os.Getenv("GOPATH") + "/src/", "", -1)
+
 	backUpPath := os.Getenv("GOPATH") + "/pkg/esim/"
 
-	targetPath := backUpPath + dir
+	targetPath := backUpPath + relativeDir
 
 	exists, err := IsExistsDir(targetPath)
 	if err != nil{
-		println(1)
 		return err
 	}
 
 	if exists == false {
 		err = CreateDir(targetPath)
 		if err != nil {
-			println(2)
 			return err
 		}
 	}
@@ -140,27 +140,23 @@ func EsimBackUpFile(backFile string) error {
 	relativePath := strings.Replace(backFile, os.Getenv("GOPATH") + "/src/", "", -1)
 	fileExists, err := IsExistsFile(backUpPath + relativePath)
 	if err != nil{
-		println(3)
 		return err
 	}
 
 	if fileExists == false {
 		_, err = CreateFile(backUpPath + relativePath)
 		if err != nil {
-			println(4)
 			return err
 		}
 	}
 
 	input, err := ioutil.ReadFile(backFile)
 	if err != nil {
-		println(5)
 		return err
 	}
 
 	err = ioutil.WriteFile(backUpPath + relativePath, input, 0644)
 	if err != nil {
-		println(6)
 		return err
 	}
 
