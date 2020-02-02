@@ -1,10 +1,15 @@
 package grpc
 
-import "google.golang.org/grpc"
+import (
+	"google.golang.org/grpc"
+	"github.com/jukylin/esim/log"
+)
 
 // Collect the grpc.ClientConn instances
 type ClientConn struct{
 	conns []*grpc.ClientConn
+
+	logger log.Logger
 }
 
 
@@ -13,8 +18,10 @@ type ClientState struct{
 }
 
 
-func NewClientConn() *ClientConn {
-	connClose := &ClientConn{}
+func NewClientConn(logger log.Logger) *ClientConn {
+	connClose := &ClientConn{
+		logger:logger,
+	}
 	return connClose
 }
 
@@ -33,8 +40,12 @@ func (this *ClientConn) CollectConn(conn *grpc.ClientConn)  {
 
 //Close unity closes the grpc.ClientConn instances
 func (this *ClientConn) Close()  {
+	var err error
 	for _, conn := range this.conns {
-		conn.Close()
+		err = conn.Close()
+		if err != nil {
+			this.logger.Errorf("%s colse err : %s", conn.Target(), err.Error())
+		}
 	}
 }
 

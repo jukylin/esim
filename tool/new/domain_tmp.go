@@ -3,7 +3,7 @@ package new
 func ModelInit() {
 	fc1 := &FileContent{
 		FileName: "user.go",
-		Dir:      "internal/domain/entity",
+		Dir:      "internal/domain/user/entity",
 		Content: `package entity
 
 type User struct {
@@ -22,7 +22,7 @@ type User struct {
 
 	fc2 := &FileContent{
 		FileName: "README.md",
-		Dir:      "internal/domain/service",
+		Dir:      "internal/domain/user/service",
 		Content:  `domain service`,
 	}
 

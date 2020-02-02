@@ -9,7 +9,7 @@ func ServiceInit() {
 import (
 	"context"
 	"{{PROPATH}}{{service_name}}/internal/infra"
-	"{{PROPATH}}{{service_name}}/internal/domain/entity"
+	"{{PROPATH}}{{service_name}}/internal/domain/user/entity"
 )
 
 type UserService struct {
@@ -45,7 +45,7 @@ func (svc *UserService) GetUserInfo(ctx context.Context, username string) (user 
 		Dir:      "internal/app/dto",
 		Content: `package dto
 
-import "{{service_name}}/internal/domain/entity"
+import "{{service_name}}/internal/domain/user/entity"
 
 type User struct {
 
