@@ -39,7 +39,7 @@ infrastructure|为各层提供技术支持，持久化，领域事件等
 
 目录 | 定义 | 文件 | 类 | 接口
 ---|---|---|---|---
-app |应用层|coupon.go | CouponService|无
+app/service |应用层|coupon.go | CouponService|无
 domain/service|领域服务 | coupon.go | CouponService|无
 domain/entity |实体| coupon.go | Coupon|无
 infra/event |领域事件|coupon.go | couponEventPub | CouponEvent
