@@ -19,11 +19,13 @@ func NewClientConn() *ClientConn {
 }
 
 
-// clientConn := NewClientConn()
-// client := grpc.NewClient(clientOptions)
-// ctx := context.Background()
-// conn := client.DialContext(ctx, ":50051")
-// clientConn.CollectConn(conn)
+// Examples：
+// 		client := grpc.NewClient(clientOptions)
+// 		ctx := context.Background()
+// 		conn := client.DialContext(ctx, ":50051")
+//
+// 		clientConn := NewClientConn()
+// 		clientConn.CollectConn(conn)
 func (this *ClientConn) CollectConn(conn *grpc.ClientConn)  {
 	this.conns = append(this.conns, conn)
 }
