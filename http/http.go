@@ -12,11 +12,11 @@ import (
 )
 
 type httpClient struct {
-	*http.Client
+	client *http.Client
 
 	transports []func() interface{}
 
-	log log.Logger
+	logger log.Logger
 }
 
 type Option func(c *httpClient)
@@ -30,25 +30,25 @@ func NewHttpClient(options ...Option) HttpClient {
 	}
 
 	client := &http.Client{}
-	httpClient.Client = client
+	httpClient.client = client
 
 	for _, option := range options {
 		option(httpClient)
 	}
 
 	if httpClient.transports == nil {
-		httpClient.Client.Transport = http.DefaultTransport
+		httpClient.client.Transport = http.DefaultTransport
 	}else{
-		httpClient.Client.Transport = proxy.NewProxyFactory().
+		httpClient.client.Transport = proxy.NewProxyFactory().
 			GetFirstInstance("http", http.DefaultTransport, httpClient.transports...).(http.RoundTripper)
 	}
 
-	if httpClient.Timeout <= 0 {
-		httpClient.Client.Timeout = 3 * time.Second
+	if httpClient.client.Timeout <= 0 {
+		httpClient.client.Timeout = 3 * time.Second
 	}
 
-	if httpClient.log == nil {
-		httpClient.log = log.NewLogger()
+	if httpClient.logger == nil {
+		httpClient.logger = log.NewLogger()
 	}
 
 	return httpClient
@@ -60,32 +60,38 @@ func (ClientOptions) WithProxy(proxy ...func () interface{}) Option {
 	}
 }
 
+
 func (ClientOptions) WithTimeOut(timeout time.Duration) Option {
 	return func(hc *httpClient) {
-		hc.Client.Timeout = timeout * time.Second
+		hc.client.Timeout = timeout * time.Second
 	}
 }
 
-func (ClientOptions) WithLogger(log log.Logger) Option {
+
+func (ClientOptions) WithLogger(logger log.Logger) Option {
 	return func(hc *httpClient) {
-		hc.log = log
+		hc.logger = logger
 	}
 }
+
 
 func (this *httpClient) Do(ctx context.Context, req *http.Request) (*http.Response, error) {
-	resp, err := this.Client.Do(req)
+	resp, err := this.client.Do(req)
 	return resp, err
 }
+
 
 func (this *httpClient) Get(ctx context.Context, url string) (resp *http.Response, err error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
+
 	req = req.WithContext(ctx)
-	resp, err = this.Client.Do(req)
+	resp, err = this.client.Do(req)
 	return resp, err
 }
+
 
 func (this *httpClient) Post(ctx context.Context, url, contentType string, body io.Reader) (resp *http.Response, err error) {
 	req, err := http.NewRequest("POST", url, body)
@@ -97,9 +103,11 @@ func (this *httpClient) Post(ctx context.Context, url, contentType string, body 
 	return this.Do(ctx, req)
 }
 
+
 func (this *httpClient) PostForm(ctx context.Context, url string, data url.Values) (resp *http.Response, err error) {
 	return this.Post(ctx, url, "application/x-www-form-urlencoded", strings.NewReader(data.Encode()))
 }
+
 
 func (this *httpClient) Head(ctx context.Context, url string) (resp *http.Response, err error) {
 	req, err := http.NewRequest("HEAD", url, nil)
@@ -108,4 +116,9 @@ func (this *httpClient) Head(ctx context.Context, url string) (resp *http.Respon
 	}
 	req = req.WithContext(ctx)
 	return this.Do(ctx, req)
+}
+
+
+func (this *httpClient) CloseIdleConnections(ctx context.Context) {
+	this.client.CloseIdleConnections()
 }
