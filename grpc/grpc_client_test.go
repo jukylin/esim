@@ -24,14 +24,15 @@ func TestNewGrpcClient(t *testing.T) {
 	memConfig.Set("debug", true)
 	memConfig.Set("grpc_client_debug", true)
 
-	clientOptions := ClientOptions{}
-	grpcClient := NewGrpcClient(
-		clientOptions.WithClientLogger(logger),
-		clientOptions.WithClientConf(memConfig),
+	clientOptional := ClientOptionals{}
+	clientOptions := NewClientOptions(
+		clientOptional.WithLogger(logger),
+		clientOptional.WithConf(memConfig),
 	)
 
 	ctx := context.Background()
-	conn := grpcClient.DialContext(ctx, ":50051")
+	client := NewClient(clientOptions)
+	conn := client.DialContext(ctx, ":50051")
 
 	defer conn.Close()
 	c := pb.NewGreeterClient(conn)
@@ -63,18 +64,19 @@ func TestSlowClient(t *testing.T) {
 	memConfig.Set("grpc_client_check_slow", true)
 	memConfig.Set("grpc_client_slow_time", 10)
 
-	clientOptions := ClientOptions{}
-	grpcClient := NewGrpcClient(
-		clientOptions.WithClientLogger(logger),
-		clientOptions.WithClientConf(memConfig),
-		clientOptions.WithClientDialOptions(
+	clientOptional := ClientOptionals{}
+	clientOptions := NewClientOptions(
+		clientOptional.WithLogger(logger),
+		clientOptional.WithConf(memConfig),
+		clientOptional.WithDialOptions(
 			grpc.WithBlock(),
 			grpc.WithChainUnaryInterceptor(slowRequest),
 			),
 	)
 
 	ctx := context.Background()
-	conn := grpcClient.DialContext(ctx, ":50051")
+	client := NewClient(clientOptions)
+	conn := client.DialContext(ctx, ":50051")
 
 	defer conn.Close()
 	c := pb.NewGreeterClient(conn)
@@ -104,14 +106,15 @@ func TestServerPanic(t *testing.T) {
 	memConfig.Set("debug", true)
 	memConfig.Set("grpc_client_debug", true)
 
-	clientOptions := ClientOptions{}
-	grpcClient := NewGrpcClient(
-		clientOptions.WithClientLogger(logger),
-		clientOptions.WithClientConf(memConfig),
+	clientOptional := ClientOptionals{}
+	clientOptions := NewClientOptions(
+		clientOptional.WithLogger(logger),
+		clientOptional.WithConf(memConfig),
 	)
 
 	ctx := context.Background()
-	conn := grpcClient.DialContext(ctx, ":50051")
+	client := NewClient(clientOptions)
+	conn := client.DialContext(ctx, ":50051")
 
 	defer conn.Close()
 	c := pb.NewGreeterClient(conn)
@@ -142,14 +145,16 @@ func TestServerPanicArr(t *testing.T) {
 	memConfig.Set("debug", true)
 	memConfig.Set("grpc_client_debug", true)
 
-	clientOptions := ClientOptions{}
-	grpcClient := NewGrpcClient(
-		clientOptions.WithClientLogger(logger),
-		clientOptions.WithClientConf(memConfig),
+
+	clientOptional := ClientOptionals{}
+	clientOptions := NewClientOptions(
+		clientOptional.WithLogger(logger),
+		clientOptional.WithConf(memConfig),
 	)
 
 	ctx := context.Background()
-	conn := grpcClient.DialContext(ctx, ":50051")
+	client := NewClient(clientOptions)
+	conn := client.DialContext(ctx, ":50051")
 
 	defer conn.Close()
 	c := pb.NewGreeterClient(conn)
