@@ -21,7 +21,19 @@ var mysqlDuration = prometheus.NewHistogramVec(
 	[]string{"sql"},
 )
 
+
+var mysqlStats = prometheus.NewGaugeVec(
+	prometheus.GaugeOpts {
+		Namespace: "mysql_stats",
+		Subsystem: "blob_storage",
+		Name:      "ops_queued",
+		Help:      "Number of blob storage operations waiting to be processed.",
+	},
+	[]string{"db", "stats"},
+)
+
 func init() {
 	prometheus.MustRegister(mysqlTotal)
 	prometheus.MustRegister(mysqlDuration)
+	prometheus.MustRegister(mysqlStats)
 }

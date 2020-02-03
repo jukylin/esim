@@ -36,6 +36,8 @@ func init() {
 
 	db2entityCmd.Flags().StringP("password", "p", os.Getenv("ESIM_DB_PASSWORD"), "password to connect to database")
 
+	db2entityCmd.Flags().StringP("boubcxt", "b", "", "name to set for bounded context")
+
 	db2entityCmd.Flags().StringP("package", "", "", "name to set for package")
 
 	db2entityCmd.Flags().StringP("struct", "s", "", "name to set for struct")
@@ -54,7 +56,7 @@ func init() {
 
 	db2entityCmd.Flags().BoolP("mar", "", true, "Marshaler to json")
 
-	db2entityCmd.Flags().StringP("etar", "", "internal/domain/entity", "Save entity file path")
+	db2entityCmd.Flags().StringP("etar", "", "", "Save entity file path")
 
 	db2entityCmd.Flags().BoolP("disetar", "", false, "disable Save model")
 

@@ -106,8 +106,24 @@ func GenEntity(v *viper.Viper) error {
 
 		etar = v.GetString("etar")
 
+		if v.GetString("boubcxt") == ""{
+			log.Fatalf("boubcxt is empty")
+		}
+
 		if etar == "" {
-			etar = "internal/domain/entity"
+			etar = "internal/domain/"+v.GetString("boubcxt")+"/entity"
+		}
+
+		dirExists, err := file_dir.IsExistsDir(etar)
+		if err != nil{
+			log.Fatalf(err.Error())
+		}
+
+		if dirExists == false{
+			err = file_dir.CreateDir(etar)
+			if err != nil{
+				log.Fatalf(err.Error())
+			}
 		}
 
 		entityDir = etar + "/"

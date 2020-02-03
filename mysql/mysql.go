@@ -11,6 +11,7 @@ import (
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/proxy"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var mysqlOnce sync.Once
@@ -31,6 +32,10 @@ type mysqlClient struct {
 	proxyOptions []interface{}
 
 	dbConfigs []DbConfig
+
+	closeChan chan bool
+
+	stateTicker time.Duration
 }
 
 type Option func(c *mysqlClient)
@@ -52,6 +57,8 @@ func NewMysqlClient(options ...Option) *mysqlClient {
 			dbs:       make(map[string]*gorm.DB),
 			mysqlLock: new(sync.RWMutex),
 			proxy: make([]func () interface{}, 0),
+			stateTicker : 10 * time.Second,
+			closeChan: make(chan bool, 1),
 		}
 
 		for _, option := range options {
@@ -95,6 +102,13 @@ func (MysqlClientOptions) WithProxy(proxy ...func() interface{}) Option {
 		m.proxy = append(m.proxy, proxy...)
 	}
 }
+
+func (MysqlClientOptions) WithStateTicker(stateTicker time.Duration) Option {
+	return func(m *mysqlClient) {
+		m.stateTicker = stateTicker
+	}
+}
+
 
 // initializes mysqlClient.
 func (this *mysqlClient) init() {
@@ -150,6 +164,7 @@ func (this *mysqlClient) init() {
 			DB.LogMode(true)
 		}
 
+		go this.GetStats()
 		//DB.SetLogger(log.L)
 		this.logger.Infof("[mysql] %s init success", dbConfig.Db)
 	}
@@ -209,6 +224,47 @@ func (this *mysqlClient) Close() {
 			this.logger.Errorf(err.Error())
 		}
 	}
+
+	this.closeChan <- true
+	close(this.closeChan)
+	return
+}
+
+
+func (this *mysqlClient) GetStats() {
+
+	ticker := time.NewTicker(this.stateTicker)
+	var stats sql.DBStats
+
+	for {
+		select {
+		case <- ticker.C:
+			for db_name, db := range this.dbs {
+
+				stats = db.DB().Stats()
+
+				maxOpenConnLab := prometheus.Labels{"db": db_name, "stats" : "max_open_conn"}
+				mysqlStats.With(maxOpenConnLab).Set(float64(stats.MaxOpenConnections))
+
+				openConnLab := prometheus.Labels{"db": db_name, "stats" : "open_conn"}
+				mysqlStats.With(openConnLab).Set(float64(stats.OpenConnections))
+
+				inUseLab := prometheus.Labels{"db": db_name, "stats" : "in_use"}
+				mysqlStats.With(inUseLab).Set(float64(stats.InUse))
+
+				idleLab := prometheus.Labels{"db": db_name, "stats" : "idle"}
+				mysqlStats.With(idleLab).Set(float64(stats.Idle))
+
+				waitCountLab := prometheus.Labels{"db": db_name, "stats" : "wait_count"}
+				mysqlStats.With(waitCountLab).Set(float64(stats.WaitCount))
+			}
+		case <- this.closeChan:
+			this.logger.Infof("stop get stats")
+			break;
+		}
+	}
+
+	ticker.Stop()
 
 	return
 }

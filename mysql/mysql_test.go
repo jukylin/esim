@@ -8,6 +8,9 @@ import (
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
 	"github.com/stretchr/testify/assert"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_model/go"
+	"time"
 )
 
 var (
@@ -50,6 +53,8 @@ func TestInitAndSingleInstance(t *testing.T)  {
 	assert.True(t, ok)
 
 	assert.Equal(t, mysqlClient, NewMysqlClient())
+
+	mysqlClient.Close()
 }
 
 
@@ -86,6 +91,8 @@ func TestProxyPatternWithTwoInstance(t *testing.T)  {
 	us := &UserStruct{}
 	db2.Table("user").First(us)
 	assert.Len(t, db1.GetErrors(), 0)
+
+	mysqlClient.Close()
 }
 
 func TestMulProxyPatternWithOneInstance(t *testing.T)  {
@@ -135,6 +142,8 @@ func TestMulProxyPatternWithOneInstance(t *testing.T)  {
 	assert.False(t, spyProxy2.QueryRowWasCalled)
 	assert.False(t, spyProxy2.ExecWasCalled)
 	assert.False(t, spyProxy2.PrepareWasCalled)
+
+	mysqlClient.Close()
 }
 
 
@@ -181,6 +190,8 @@ func TestMulProxyPatternWithTwoInstance(t *testing.T)  {
 	db2.Table("user").First(us)
 
 	assert.Len(t, db2.GetErrors(), 0)
+
+	mysqlClient.Close()
 }
 
 
@@ -218,6 +229,8 @@ func BenchmarkParallelGetDB(b *testing.B) {
 		}
 	})
 
+	mysqlClient.Close()
+
 	b.StopTimer()
 }
 
@@ -248,4 +261,38 @@ func TestDummyProxy_Exec(t *testing.T) {
 	assert.Len(t, db.GetErrors(), 0)
 
 	assert.Equal(t, db.RowsAffected, int64(0))
+
+	mysqlClient.Close()
+}
+
+func TestMysqlClient_GetStats(t *testing.T) {
+	mysqlClientOptions := MysqlClientOptions{}
+
+	mysqlClient := NewMysqlClient(
+		mysqlClientOptions.WithDbConfig([]DbConfig{test1Config}),
+		mysqlClientOptions.WithStateTicker(1000 * time.Millisecond),
+		)
+	ctx := context.Background()
+	db := mysqlClient.GetCtxDb(ctx, "test_1")
+	assert.NotNil(t, db)
+
+	time.Sleep(2000 * time.Millisecond)
+
+	ts := &TestStruct{}
+
+	lab := prometheus.Labels{"db": "test_1", "stats": "max_open_conn"}
+	c, _ := mysqlStats.GetMetricWith(lab)
+	metric := &io_prometheus_client.Metric{}
+	c.Write(metric)
+	assert.Equal(t, float64(100), metric.Gauge.GetValue())
+
+	db.Table("test").First(ts)
+
+	labIdle := prometheus.Labels{"db": "test_1", "stats": "idle"}
+	c, _ = mysqlStats.GetMetricWith(labIdle)
+	metric = &io_prometheus_client.Metric{}
+	c.Write(metric)
+	assert.Equal(t, float64(1), metric.Gauge.GetValue())
+
+	mysqlClient.Close()
 }
