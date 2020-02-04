@@ -80,7 +80,6 @@ func (this *ProxyFactory) GetInstances(realName string, proxys ...func() interfa
 
 	proxyNum := len(proxys)
 	var proxyInses []interface{}
-
 	if proxyNum > 0 {
 		proxyInses = make([]interface{}, proxyNum)
 		for k, proxyFunc := range proxys {
@@ -92,12 +91,15 @@ func (this *ProxyFactory) GetInstances(realName string, proxys ...func() interfa
 		}
 
 		for k, proxyIns := range proxyInses {
-			if k+1 >= proxyNum{
+			if proxyNum == 1 {
+				proxyIns.(Proxy).NextProxy(proxyInses[k])
+				this.logger.Infof("[%s] %s init [%p]", realName, proxyIns.(Proxy).ProxyName(), proxyIns)
+			} else if k+1 < proxyNum{
+				proxyIns.(Proxy).NextProxy(proxyInses[k+1])
+				this.logger.Infof("[%s] %s init [%p]", realName, proxyIns.(Proxy).ProxyName(), proxyIns)
+			}else{
 				continue
 			}
-
-			proxyIns.(Proxy).NextProxy(proxyInses[k+1])
-			this.logger.Infof("[%s] %s init [%p]", realName, proxyIns.(Proxy).ProxyName(), proxyIns)
 		}
 	}
 

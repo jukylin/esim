@@ -2,13 +2,12 @@ package mysql
 
 import (
 	"database/sql"
-	"github.com/jinzhu/gorm"
 	"github.com/jukylin/esim/log"
 )
 
 //last proxy
 type dummyProxy struct {
-	nextProxy gorm.SQLCommon
+	nextProxy SqlCommon
 
 	logger log.Logger
 
@@ -27,7 +26,7 @@ func newDummyProxy(logger log.Logger, name string) *dummyProxy {
 
 //implement Proxy interface
 func (this *dummyProxy) NextProxy(db interface{}) {
-	this.nextProxy = db.(gorm.SQLCommon)
+	this.nextProxy = db.(SqlCommon)
 }
 
 //implement Proxy interface
@@ -54,6 +53,10 @@ func (this *dummyProxy) Query(query string, args ...interface{}) (*sql.Rows, err
 func (this *dummyProxy) QueryRow(query string, args ...interface{}) *sql.Row {
 	row := &sql.Row{}
 	return row
+}
+
+func (this *dummyProxy) Close() error {
+	return this.nextProxy.Close()
 }
 
 // implement sql.Result interface

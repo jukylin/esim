@@ -10,6 +10,7 @@ import (
 	"github.com/jukylin/esim/config"
 	elog "github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/proxy"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var poolRedisOnce sync.Once
@@ -27,6 +28,10 @@ type redisClient struct {
 	proxyNum int
 
 	proxyInses []interface{}
+
+	stateTicker time.Duration
+
+	closeChan chan bool
 }
 
 
@@ -43,6 +48,8 @@ func newPoolRedis(options ...Option) *redisClient {
 
 		onceRedisClient = &redisClient{
 			proxyConn: make([]func () interface{}, 0),
+			stateTicker : 10 * time.Second,
+			closeChan: make(chan bool, 1),
 		}
 
 		for _, option := range options {
@@ -145,6 +152,9 @@ func newPoolRedis(options ...Option) *redisClient {
 			}
 			rc.Close()
 		}
+
+		go onceRedisClient.Stats()
+
 		onceRedisClient.logger.Infof("[redis] init success %s : %s", redis_etc1_host, redis_etc1_port)
 	})
 
@@ -166,6 +176,12 @@ func (RedisClientOptions) WithLogger(logger elog.Logger) Option {
 func (RedisClientOptions) WithProxy(proxyConn ...func() interface{}) Option {
 	return func(r *redisClient) {
 		r.proxyConn = append(r.proxyConn, proxyConn...)
+	}
+}
+
+func (RedisClientOptions) WithStateTicker(stateTicker time.Duration) Option {
+	return func(r *redisClient) {
+		r.stateTicker = stateTicker
 	}
 }
 
@@ -200,9 +216,36 @@ func (this *redisClient) GetCtxRedisConn() ContextConn {
 
 func (this *redisClient) Close() {
 	this.client.Close()
+	this.closeChan <- true
 }
 
 func (this *redisClient) Ping() error {
 	conn := this.client.Get()
 	return conn.Err()
+}
+
+
+func (this *redisClient) Stats() {
+	ticker := time.NewTicker(this.stateTicker)
+	var stats redis.PoolStats
+
+	for {
+		select {
+		case <- ticker.C:
+
+			stats = this.client.Stats()
+
+			activeCountLab := prometheus.Labels{"stats" : "active_count"}
+			redisStats.With(activeCountLab).Set(float64(stats.ActiveCount))
+
+			idleCountLab := prometheus.Labels{"stats" : "idle_count"}
+			redisStats.With(idleCountLab).Set(float64(stats.IdleCount))
+
+		case <- this.closeChan:
+			this.logger.Infof("stop stats")
+			goto Stop
+		}
+	}
+Stop:
+	ticker.Stop()
 }

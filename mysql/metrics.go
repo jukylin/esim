@@ -24,10 +24,8 @@ var mysqlDuration = prometheus.NewHistogramVec(
 
 var mysqlStats = prometheus.NewGaugeVec(
 	prometheus.GaugeOpts {
-		Namespace: "mysql_stats",
-		Subsystem: "blob_storage",
-		Name:      "ops_queued",
-		Help:      "Number of blob storage operations waiting to be processed.",
+		Name:      "mysql_stats",
+		Help:      "database statistics",
 	},
 	[]string{"db", "stats"},
 )

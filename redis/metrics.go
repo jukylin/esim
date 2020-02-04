@@ -22,7 +22,16 @@ var redisDuration = prometheus.NewHistogramVec(
 	[]string{"cmd"},
 )
 
+var redisStats = prometheus.NewGaugeVec(
+	prometheus.GaugeOpts {
+		Name:      "redis_stats",
+		Help:      "pool's statistics",
+	},
+	[]string{"stats"},
+)
+
 func init() {
 	prometheus.MustRegister(redisTotal)
 	prometheus.MustRegister(redisDuration)
+	prometheus.MustRegister(redisStats)
 }

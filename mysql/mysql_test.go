@@ -237,7 +237,7 @@ func BenchmarkParallelGetDB(b *testing.B) {
 func TestDummyProxy_Exec(t *testing.T) {
 	mysqlClientOptions := MysqlClientOptions{}
 	memConfig := config.NewMemConfig()
-	memConfig.Set("debug", true)
+	//memConfig.Set("debug", true)
 
 	mysqlClient := NewMysqlClient(
 		mysqlClientOptions.WithDbConfig([]DbConfig{test1Config}),
@@ -251,10 +251,10 @@ func TestDummyProxy_Exec(t *testing.T) {
 			}),
 		)
 	ctx := context.Background()
-	db := mysqlClient.GetCtxDb(ctx, "test_2")
+	db := mysqlClient.GetCtxDb(ctx, "test_1")
 	assert.NotNil(t, db)
 
-	db, ok := mysqlClient.dbs["test_2"]
+	db, ok := mysqlClient.dbs["test_1"]
 	assert.True(t, ok)
 
 	db.Table("user").Create(&UserStruct{})
@@ -266,27 +266,25 @@ func TestDummyProxy_Exec(t *testing.T) {
 }
 
 func TestMysqlClient_GetStats(t *testing.T) {
+
 	mysqlClientOptions := MysqlClientOptions{}
 
 	mysqlClient := NewMysqlClient(
 		mysqlClientOptions.WithDbConfig([]DbConfig{test1Config}),
-		mysqlClientOptions.WithStateTicker(1000 * time.Millisecond),
+		mysqlClientOptions.WithStateTicker(10 * time.Millisecond),
 		)
 	ctx := context.Background()
 	db := mysqlClient.GetCtxDb(ctx, "test_1")
 	assert.NotNil(t, db)
 
-	time.Sleep(2000 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 
-	ts := &TestStruct{}
 
 	lab := prometheus.Labels{"db": "test_1", "stats": "max_open_conn"}
 	c, _ := mysqlStats.GetMetricWith(lab)
 	metric := &io_prometheus_client.Metric{}
 	c.Write(metric)
 	assert.Equal(t, float64(100), metric.Gauge.GetValue())
-
-	db.Table("test").First(ts)
 
 	labIdle := prometheus.Labels{"db": "test_1", "stats": "idle"}
 	c, _ = mysqlStats.GetMetricWith(labIdle)

@@ -2,12 +2,11 @@ package mysql
 
 import (
 	"database/sql"
-	"github.com/jinzhu/gorm"
 	"github.com/jukylin/esim/log"
 )
 
 type spyProxy struct {
-	nextProxy gorm.SQLCommon
+	nextProxy SqlCommon
 
 	ExecWasCalled bool
 
@@ -34,7 +33,7 @@ func newSpyProxy(logger log.Logger, name string) *spyProxy {
 
 //implement Proxy interface
 func (this *spyProxy) NextProxy(db interface{}) {
-	this.nextProxy = db.(gorm.SQLCommon)
+	this.nextProxy = db.(SqlCommon)
 }
 
 //implement Proxy interface
@@ -69,4 +68,8 @@ func (this *spyProxy) QueryRow(query string, args ...interface{}) *sql.Row {
 	this.logger.Infof("%s QueryRowWasCalled %s", this.name, query)
 	row := this.nextProxy.QueryRow(query, args...)
 	return row
+}
+
+func (this *spyProxy) Close() error {
+	return this.nextProxy.Close()
 }

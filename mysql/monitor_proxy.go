@@ -2,7 +2,6 @@ package mysql
 
 import (
 	"database/sql"
-	"github.com/jinzhu/gorm"
 	opentracing2 "github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/jukylin/esim/config"
@@ -15,7 +14,7 @@ type monitorProxy struct {
 	//proxy name
 	name string
 
-	nextProxy gorm.SQLCommon
+	nextProxy SqlCommon
 
 	tracer opentracing2.Tracer
 
@@ -78,7 +77,7 @@ func (MonitorProxyOptions) WithTracer(tracer opentracing2.Tracer) MonitorProxyOp
 
 //implement Proxy interface
 func (this *monitorProxy) NextProxy(db interface{}) {
-	this.nextProxy = db.(gorm.SQLCommon)
+	this.nextProxy = db.(SqlCommon)
 }
 
 //implement Proxy interface
@@ -115,6 +114,10 @@ func (this *monitorProxy) QueryRow(query string, args ...interface{}) *sql.Row {
 	this.after(query, startTime)
 
 	return row
+}
+
+func (this *monitorProxy) Close() error {
+	return this.nextProxy.Close()
 }
 
 func (this *monitorProxy) registerAfterEvent() {

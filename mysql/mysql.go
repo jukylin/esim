@@ -124,8 +124,9 @@ func (this *mysqlClient) init() {
 	}
 
 	for _, dbConfig := range dbConfigs {
-		var DB *gorm.DB
 		if len(this.proxy) == 0 {
+			var DB *gorm.DB
+
 			DB, err = gorm.Open("mysql", dbConfig.Dsn)
 			if err != nil {
 				this.logger.Panicf("[db] %s init error : %s", dbConfig.Db, err.Error())
@@ -134,8 +135,14 @@ func (this *mysqlClient) init() {
 			DB.DB().SetMaxIdleConns(dbConfig.MaxIdle)
 			DB.DB().SetMaxOpenConns(dbConfig.MaxOpen)
 			DB.DB().SetConnMaxLifetime(time.Duration(dbConfig.MaxLifetime))
-		} else {
 
+			this.setDb(dbConfig.Db, DB)
+
+			if this.conf.GetBool("debug") == true {
+				DB.LogMode(true)
+			}
+		} else {
+			var DB *gorm.DB
 			dbSQL, err := sql.Open("mysql", dbConfig.Dsn)
 			if err != nil {
 				this.logger.Panicf("[db] %s init error : %s", dbConfig.Db, err.Error())
@@ -156,15 +163,15 @@ func (this *mysqlClient) init() {
 			dbSQL.SetMaxIdleConns(dbConfig.MaxIdle)
 			dbSQL.SetMaxOpenConns(dbConfig.MaxOpen)
 			dbSQL.SetConnMaxLifetime(time.Duration(dbConfig.MaxLifetime))
+
+			this.setDb(dbConfig.Db, DB)
+
+			if this.conf.GetBool("debug") == true {
+				DB.LogMode(true)
+			}
 		}
 
-		this.setDb(dbConfig.Db, DB)
-
-		if this.conf.GetBool("debug") == true {
-			DB.LogMode(true)
-		}
-
-		go this.GetStats()
+		go this.Stats()
 		//DB.SetLogger(log.L)
 		this.logger.Infof("[mysql] %s init success", dbConfig.Db)
 	}
@@ -219,19 +226,18 @@ func (this *mysqlClient) Ping() []error {
 func (this *mysqlClient) Close() {
 	var err error
 	for _, db := range this.dbs {
-		err = db.DB().Close()
+		err = db.Close()
 		if err != nil{
 			this.logger.Errorf(err.Error())
 		}
 	}
 
-	this.closeChan <- true
-	close(this.closeChan)
+	//this.closeChan <- true
 	return
 }
 
 
-func (this *mysqlClient) GetStats() {
+func (this *mysqlClient) Stats() {
 
 	ticker := time.NewTicker(this.stateTicker)
 	var stats sql.DBStats
@@ -259,11 +265,12 @@ func (this *mysqlClient) GetStats() {
 				mysqlStats.With(waitCountLab).Set(float64(stats.WaitCount))
 			}
 		case <- this.closeChan:
-			this.logger.Infof("stop get stats")
-			break;
+			this.logger.Infof("stop stats")
+			goto Stop
 		}
 	}
 
+Stop:
 	ticker.Stop()
 
 	return

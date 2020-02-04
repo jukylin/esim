@@ -3,11 +3,14 @@ package redis
 import (
 	"testing"
 	"context"
+	"sync"
+	"time"
 	"github.com/stretchr/testify/assert"
 	"github.com/jukylin/esim/log"
 	"github.com/bilibili/kratos/pkg/cache/redis"
 	"github.com/jukylin/esim/config"
-	"sync"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_model/go"
 )
 
 //使用 proxyConn 代理请求
@@ -30,6 +33,7 @@ func TestGetProxyConn(t *testing.T){
 	assert.IsTypef(t, NewMonitorProxy(), conn, "MonitorProxy type")
 	assert.NotNil(t, conn)
 	conn.Close()
+	redisClent.Close()
 }
 
 
@@ -42,6 +46,7 @@ func TestGetNotProxyConn(t *testing.T){
 	assert.IsTypef(t, NewFacadeProxy(), conn, "MediatorProxy type")
 	assert.NotNil(t, conn)
 	conn.Close()
+	redisClent.Close()
 }
 
 func TestMonitorProxy_Do(t *testing.T) {
@@ -70,6 +75,7 @@ func TestMonitorProxy_Do(t *testing.T) {
 	_, err := redis.String(conn.Do(ctx, "get", "name"))
 	assert.Nil(t, err)
 	conn.Close()
+	redisClent.Close()
 }
 
 
@@ -103,8 +109,9 @@ func TestMulLevelProxy_Do(t *testing.T) {
 	conn.Do(ctx, "get", "name")
 	assert.True(t, spyProxy.DoWasCalled)
 	conn.Close()
-}
 
+	redisClent.Close()
+}
 
 
 func TestMulGo_Do(t *testing.T) {
@@ -145,10 +152,11 @@ func TestMulGo_Do(t *testing.T) {
 		wg.Done()
 	}()
 	wg.Wait()
+
+	redisClent.Close()
 }
 
 func Benchmark_MulGo_Do(b *testing.B) {
-	poolRedisOnce = sync.Once{}
 
 	redisClientOptions := RedisClientOptions{}
 	memConfig := config.NewMemConfig()
@@ -185,5 +193,40 @@ func Benchmark_MulGo_Do(b *testing.B) {
 			wg.Wait()
 		}
 	})
+	redisClent.Close()
+}
+
+func TestRedisClient_Stats(t *testing.T) {
+
+	redisClientOptions := RedisClientOptions{}
+	memConfig := config.NewMemConfig()
+	memConfig.Set("debug", true)
+
+	redisClent := NewRedisClient(
+		redisClientOptions.WithConf(memConfig),
+		redisClientOptions.WithStateTicker(10 * time.Microsecond),
+	)
+
+	time.Sleep(100 * time.Millisecond)
+
+	ctx := context.Background()
+	conn := redisClent.GetCtxRedisConn()
+	conn.Do(ctx, "get", "name")
+	conn.Close()
+
+	conn.Do(ctx, "get", "name")
+	conn.Close()
+
+	conn.Do(ctx, "get", "name")
+	conn.Close()
+
+	lab := prometheus.Labels{"stats": "active_count"}
+	c, _ := redisStats.GetMetricWith(lab)
+	metric := &io_prometheus_client.Metric{}
+	c.Write(metric)
+	assert.True(t, metric.Gauge.GetValue() >= 0)
+
+
+	redisClent.Close()
 }
 
