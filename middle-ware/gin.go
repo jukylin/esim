@@ -4,8 +4,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/jukylin/esim/opentracing"
-	"github.com/jukylin/esim/log"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/gin-gonic/gin"
 	opentracing2 "github.com/opentracing/opentracing-go"
@@ -23,8 +21,7 @@ func GinMonitor() gin.HandlerFunc {
 	}
 }
 
-func GinTracer(serviceName string, logger log.Logger) gin.HandlerFunc {
-	tracer := opentracing.NewTracer(serviceName, logger)
+func GinTracer(tracer opentracing2.Tracer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		spContext, _ := tracer.Extract(opentracing2.HTTPHeaders,
 			opentracing2.HTTPHeadersCarrier(c.Request.Header))

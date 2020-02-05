@@ -85,7 +85,6 @@ type GinServer struct{
 
 func NewGinServer(esim *container.Esim) *GinServer {
 
-	serviceName := esim.Conf.GetString("appname")
 	httpport := esim.Conf.GetString("httpport")
 
 	in := strings.Index(httpport, ":")
@@ -102,7 +101,7 @@ func NewGinServer(esim *container.Esim) *GinServer {
 	}
 
 	if esim.Conf.GetBool("http_tracer") == true{
-		en.Use(middle_ware.GinTracer(serviceName, esim.Logger))
+		en.Use(middle_ware.GinTracer(esim.Tracer))
 	}
 
 	if esim.Conf.GetBool("http_metrics") == true {

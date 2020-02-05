@@ -65,7 +65,6 @@ import (
 	"github.com/jukylin/esim/middle-ware"
 	"github.com/astaxie/beego"
 	"github.com/opentracing-contrib/go-stdlib/nethttp"
-	"github.com/jukylin/esim/opentracing"
 	"github.com/jukylin/esim/container"
 )
 
@@ -107,12 +106,9 @@ func getMwd(esim *container.Esim) []beego.MiddleWare {
 
 	var mws []beego.MiddleWare
 
-	serviceName := esim.Conf.GetString("appname")
-
 	if esim.Conf.GetBool("http_tracer") == true{
 		mws = append(mws, func(handler http.Handler) http.Handler {
-			tracer := opentracing.NewTracer(serviceName, esim.Logger)
-			return nethttp.Middleware(tracer, handler)
+			return nethttp.Middleware(esim.Tracer, handler)
 		})
 	}
 

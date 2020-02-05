@@ -10,7 +10,7 @@ import (
 	"context"
 	"github.com/jinzhu/gorm"
 	"github.com/jukylin/esim/mysql"
-	"{{PROPATH}}{{service_name}}/internal/domain/entity"
+	"{{PROPATH}}{{service_name}}/internal/domain/user/entity"
 )
 
 type UserDao struct {
