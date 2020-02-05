@@ -14,9 +14,9 @@ import (
 )
 
 var poolRedisOnce sync.Once
-var onceRedisClient *redisClient
+var onceRedisClient *RedisClient
 
-type redisClient struct {
+type RedisClient struct {
 	client *redis.Pool
 
 	proxyConn []func() interface{}
@@ -35,18 +35,18 @@ type redisClient struct {
 }
 
 
-type Option func(c *redisClient)
+type Option func(c *RedisClient)
 
 type RedisClientOptions struct{}
 
-func NewRedisClient(options ...Option) *redisClient {
+func NewRedisClient(options ...Option) *RedisClient {
 	return newPoolRedis(options...)
 }
 
-func newPoolRedis(options ...Option) *redisClient {
+func newPoolRedis(options ...Option) *RedisClient {
 	poolRedisOnce.Do(func() {
 
-		onceRedisClient = &redisClient{
+		onceRedisClient = &RedisClient{
 			proxyConn: make([]func () interface{}, 0),
 			stateTicker : 10 * time.Second,
 			closeChan: make(chan bool, 1),
@@ -162,31 +162,31 @@ func newPoolRedis(options ...Option) *redisClient {
 }
 
 func (RedisClientOptions) WithConf(conf config.Config) Option {
-	return func(r *redisClient) {
+	return func(r *RedisClient) {
 		r.conf = conf
 	}
 }
 
 func (RedisClientOptions) WithLogger(logger elog.Logger) Option {
-	return func(r *redisClient) {
+	return func(r *RedisClient) {
 		r.logger = logger
 	}
 }
 
 func (RedisClientOptions) WithProxy(proxyConn ...func() interface{}) Option {
-	return func(r *redisClient) {
+	return func(r *RedisClient) {
 		r.proxyConn = append(r.proxyConn, proxyConn...)
 	}
 }
 
 func (RedisClientOptions) WithStateTicker(stateTicker time.Duration) Option {
-	return func(r *redisClient) {
+	return func(r *RedisClient) {
 		r.stateTicker = stateTicker
 	}
 }
 
 //使用原生redisgo
-func (this *redisClient) GetRedisConn() redis.Conn {
+func (this *RedisClient) GetRedisConn() redis.Conn {
 
 	rc := this.client.Get()
 
@@ -194,7 +194,7 @@ func (this *redisClient) GetRedisConn() redis.Conn {
 }
 
 //Recommended
-func (this *redisClient) GetCtxRedisConn() ContextConn {
+func (this *RedisClient) GetCtxRedisConn() ContextConn {
 
 	rc := this.client.Get()
 
@@ -214,18 +214,18 @@ func (this *redisClient) GetCtxRedisConn() ContextConn {
 
 
 
-func (this *redisClient) Close() {
+func (this *RedisClient) Close() {
 	this.client.Close()
 	this.closeChan <- true
 }
 
-func (this *redisClient) Ping() error {
+func (this *RedisClient) Ping() error {
 	conn := this.client.Get()
 	return conn.Err()
 }
 
 
-func (this *redisClient) Stats() {
+func (this *RedisClient) Stats() {
 	ticker := time.NewTicker(this.stateTicker)
 	var stats redis.PoolStats
 

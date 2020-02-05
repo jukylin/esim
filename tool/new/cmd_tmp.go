@@ -27,9 +27,7 @@ import (
 	"os"
 	"github.com/spf13/cobra"
 {{IMPORT_SERVER}}
-	"github.com/jukylin/esim"
-	"github.com/jukylin/esim/container"
-	"github.com/jukylin/esim/config"
+	"{{service_name}}/internal"
 	"{{service_name}}/internal/infra"
 )
 
@@ -40,33 +38,14 @@ var rootCmd = &cobra.Command{
 	Long: "",
 	Run: func(cmd *cobra.Command, args []string) {
 
-		container.SetConfFunc(func() config.Config {
-			options := config.ViperConfOptions{}
-
-			env := os.Getenv("ENV")
-			if env == "" {
-				env = "dev"
-			}
-
-			gopath := os.Getenv("GOPATH")
-
-			monitFile := gopath + "/src/{{service_name}}/" + "conf/monitoring.yaml"
-			confFile := gopath + "/src/{{service_name}}/" + "conf/" + env + ".yaml"
-
-			file := []string{monitFile, confFile}
-			return config.NewViperConfig(options.WithConfigType("yaml"),
-				options.WithConfFile(file))
-		})
-
-		em := container.NewEsim()
-		app := esim.NewApp(em.Logger)
+		app := internal.NewApp()
 
 {{RUN_SERVER}}
-
 		app.Infra = infra.NewInfra()
 
 		app.Start()
 		app.AwaitSignal()
+
 	},
 }
 

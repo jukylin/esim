@@ -15,7 +15,7 @@ import (
 	dc "github.com/ory/dockertest/v3/docker"
 )
 
-var client *redisClient
+var client *RedisClient
 
 func TestMain(m *testing.M) {
 	logger := log.NewLogger()

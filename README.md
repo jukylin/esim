@@ -364,17 +364,10 @@ replyData, err = client.GetUserByUserName(ctx, getUserByUserNameRequest)
 
 ```golang
 func provideRedis(esim *container.Esim) redis.RedisClient {
-	proxyConnOptions := redis.ProxyConnOptions{}
-
-	proxyConn := redis.NewProxyConn(
-		proxyConnOptions.WithConf(esim.Conf),
-		proxyConnOptions.WithLogger(esim.Log))
-
 	redisClientOptions := redis.RedisClientOptions{}
 	redisClent := redis.NewRedisClient(
+		redisClientOptions.WithLogger(esim.Logger),
 		redisClientOptions.WithConf(esim.Conf),
-		redisClientOptions.WithLogger(esim.Log),
-		redisClientOptions.WithProxyConn(proxyConn),
 	)
 
 	return redisClent
@@ -387,10 +380,10 @@ func provideRedis(esim *container.Esim) redis.RedisClient {
 
 "gitlab.etcchebao.cn/go_service/esim/pkg/redis"
 
-conn := infra.NewInfra().Redsi.GetCtxRedisConn(ctx)
+conn := infra.NewInfra().Redsi.GetCtxRedisConn()
 defer conn.Close()
 key := "username:"+username
-exists, err := redis.Bool(conn.Do("exists", key))
+exists, err := redis.Bool(conn.Do(ctx, "exists", key))
 ```
 
 ## Mysql

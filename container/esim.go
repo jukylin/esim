@@ -6,6 +6,8 @@ import (
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/prometheus"
+	"github.com/opentracing/opentracing-go"
+	eot "github.com/jukylin/esim/opentracing"
 )
 
 var esimOnce sync.Once
@@ -18,6 +20,8 @@ type Esim struct {
 	Logger log.Logger
 
 	Conf config.Config
+
+	Tracer opentracing.Tracer
 }
 
 var esimSet = wire.NewSet(
@@ -25,12 +29,12 @@ var esimSet = wire.NewSet(
 	provideConf,
 	provideLogger,
 	providePrometheus,
+	provideTracer,
 )
 
 var confFunc  = func() config.Config {
 	return config.NewNullConfig()
 }
-
 func SetConfFunc(conf func() config.Config) {
 	confFunc = conf
 }
@@ -41,13 +45,13 @@ func provideConf() config.Config {
 var prometheusFunc = func(conf config.Config, log log.Logger) *prometheus.Prometheus {
 	return prometheus.NewPrometheus(conf, log)
 }
-
 func SetPrometheusFunc(prometheus func(conf config.Config, log log.Logger) *prometheus.Prometheus) {
 	prometheusFunc = prometheus
 }
 func providePrometheus(conf config.Config, log log.Logger) *prometheus.Prometheus {
 	return prometheusFunc(conf, log)
 }
+
 
 var loggerFunc = func(conf config.Config) log.Logger {
 	var loggerOptions log.LoggerOptions
@@ -58,12 +62,22 @@ var loggerFunc = func(conf config.Config) log.Logger {
 	)
 	return logger
 }
-
 func SetLogger(log func(config.Config) log.Logger) {
 	loggerFunc = log
 }
 func provideLogger(conf config.Config) log.Logger {
 	return loggerFunc(conf)
+}
+
+
+var tracerFunc = func(conf config.Config, logger log.Logger) opentracing.Tracer {
+	return eot.NewTracer(conf.GetString("appname"), logger)
+}
+func SetTracer(tracer func(conf config.Config, logger log.Logger) opentracing.Tracer) {
+	tracerFunc = tracer
+}
+func provideTracer(conf config.Config, logger log.Logger) opentracing.Tracer {
+	return tracerFunc(conf, logger)
 }
 
 //esim init end

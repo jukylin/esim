@@ -17,6 +17,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/reflection"
+	opentracing2 "github.com/opentracing/opentracing-go"
 )
 
 type GrpcServer struct {
@@ -33,6 +34,8 @@ type GrpcServer struct {
 	target string
 
 	serviceName string
+
+	tracer opentracing2.Tracer
 }
 
 type ServerOption func(c *GrpcServer)
@@ -53,6 +56,10 @@ func NewGrpcServer(serviceName string, options ...ServerOption) *GrpcServer {
 
 	if grpcServer.conf == nil {
 		grpcServer.conf = config.NewNullConfig()
+	}
+
+	if grpcServer.tracer == nil {
+		grpcServer.tracer = opentracing2.NoopTracer{}
 	}
 
 	keepAliveServer := keepalive.ServerParameters{}
@@ -81,9 +88,8 @@ func NewGrpcServer(serviceName string, options ...ServerOption) *GrpcServer {
 
 	unaryServerInterceptors := []grpc.UnaryServerInterceptor{}
 	if grpcServer.conf.GetBool("grpc_server_tracer") == true {
-		tracer := opentracing.NewTracer(serviceName, grpcServer.logger)
 		unaryServerInterceptors = append(unaryServerInterceptors,
-			otgrpc.OpenTracingServerInterceptor(tracer))
+			otgrpc.OpenTracingServerInterceptor(grpcServer.tracer))
 	}
 
 	if grpcServer.conf.GetBool("grpc_server_metrics") == true {
@@ -148,6 +154,13 @@ func (ServerOptions) WithUnarySrvItcp(options ...grpc.UnaryServerInterceptor) Se
 func (ServerOptions) WithGrpcServerOption(options ...grpc.ServerOption) ServerOption {
 	return func(g *GrpcServer) {
 		g.opts = options
+	}
+}
+
+
+func (ServerOptions) WithTracer(tracer opentracing2.Tracer) ServerOption {
+	return func(g *GrpcServer) {
+		g.tracer = tracer
 	}
 }
 
