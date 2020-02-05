@@ -41,7 +41,9 @@ func (this *FacadeProxy) ProxyName() string {
 
 func (this *FacadeProxy) Close() error {
 	err := this.nextConn.Close()
-
+	if err == redis.ErrNil {
+		err = nil
+	}
 	return err
 }
 

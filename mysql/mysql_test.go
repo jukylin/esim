@@ -109,7 +109,7 @@ func TestMain(m *testing.M) {
 	if err := pool.Purge(resource); err != nil {
 		logger.Fatalf("Could not purge resource: %s", err)
 	}
-
+	resource.Expire(60)
 	os.Exit(code)
 }
 

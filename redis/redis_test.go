@@ -5,13 +5,67 @@ import (
 	"context"
 	"sync"
 	"time"
+	"os"
 	"github.com/stretchr/testify/assert"
 	"github.com/jukylin/esim/log"
-	"github.com/bilibili/kratos/pkg/cache/redis"
 	"github.com/jukylin/esim/config"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_model/go"
+	"github.com/ory/dockertest/v3"
+	dc "github.com/ory/dockertest/v3/docker"
 )
+
+var client *redisClient
+
+func TestMain(m *testing.M) {
+	logger := log.NewLogger()
+
+	pool, err := dockertest.NewPool("")
+	if err != nil {
+		logger.Fatalf("Could not connect to docker: %s", err)
+	}
+	opt := &dockertest.RunOptions{
+		Repository: "redis",
+		Tag: "latest",
+	}
+
+	resource, err := pool.RunWithOptions(opt, func(hostConfig *dc.HostConfig) {
+		hostConfig.PortBindings = map[dc.Port][]dc.PortBinding{
+			"6379/tcp": {{HostIP: "", HostPort: "6379"}},
+		}
+	})
+	if err != nil {
+		logger.Fatalf("Could not start resource: %s", err)
+	}
+
+	if err = pool.Retry(func() error {
+		client = NewRedisClient()
+		err = client.Ping()
+		if err != nil{
+			return err
+		}
+		ctx := context.Background()
+		conn := client.GetCtxRedisConn()
+		conn.Do( ctx, "set", "name", "test")
+		conn.Do( ctx, "set", "version", "2.0")
+		conn.Close()
+		return nil
+	}); err != nil {
+		logger.Fatalf("Could not connect to docker: %s", err)
+	}
+
+	code := m.Run()
+
+	client.Close()
+
+	// You can't defer this because os.Exit doesn't care for defer
+	if err := pool.Purge(resource); err != nil {
+		logger.Fatalf("Could not purge resource: %s", err)
+	}
+
+	resource.Expire(60)
+	os.Exit(code)
+}
 
 //使用 proxyConn 代理请求
 func TestGetProxyConn(t *testing.T){
@@ -39,14 +93,13 @@ func TestGetProxyConn(t *testing.T){
 
 func TestGetNotProxyConn(t *testing.T){
 	poolRedisOnce = sync.Once{}
-	redisClent := NewRedisClient()
 
-	conn := redisClent.GetCtxRedisConn()
+	conn := client.GetCtxRedisConn()
 
 	assert.IsTypef(t, NewFacadeProxy(), conn, "MediatorProxy type")
 	assert.NotNil(t, conn)
 	conn.Close()
-	redisClent.Close()
+	client.Close()
 }
 
 func TestMonitorProxy_Do(t *testing.T) {
@@ -72,10 +125,10 @@ func TestMonitorProxy_Do(t *testing.T) {
 
 	conn := redisClent.GetCtxRedisConn()
 
-	_, err := redis.String(conn.Do(ctx, "get", "name"))
+	_, err := String(conn.Do(ctx, "get", "name"))
 	assert.Nil(t, err)
-	conn.Close()
-	redisClent.Close()
+	//conn.Close()
+	//redisClent.Close()
 }
 
 
@@ -136,7 +189,7 @@ func TestMulGo_Do(t *testing.T) {
 
 	go func() {
 		conn := redisClent.GetRedisConn()
-		name, err := redis.String(conn.Do( "get", "name"))
+		name, err := String(conn.Do( "get", "name"))
 		assert.Nil(t, err)
 		assert.Equal(t, "test", name)
 		conn.Close()
@@ -145,7 +198,7 @@ func TestMulGo_Do(t *testing.T) {
 
 	go func() {
 		conn := redisClent.GetRedisConn()
-		version, err := redis.String(conn.Do("get", "version"))
+		version, err := String(conn.Do("get", "version"))
 		assert.Nil(t, err)
 		assert.Equal(t, "2.0", version)
 		conn.Close()
@@ -174,7 +227,7 @@ func Benchmark_MulGo_Do(b *testing.B) {
 			for j := 0; j < b.N; j++ {
 				go func() {
 					conn := redisClent.GetCtxRedisConn()
-					name, err := redis.String(conn.Do(ctx, "get", "name"))
+					name, err := String(conn.Do(ctx, "get", "name"))
 					assert.Nil(b, err)
 					assert.Equal(b, "test", name)
 					conn.Close()
@@ -183,7 +236,7 @@ func Benchmark_MulGo_Do(b *testing.B) {
 
 				go func() {
 					conn := redisClent.GetCtxRedisConn()
-					version, err := redis.String(conn.Do(ctx, "get", "version"))
+					version, err := String(conn.Do(ctx, "get", "version"))
 					assert.Nil(b, err)
 					assert.Equal(b, "2.0", version)
 					conn.Close()

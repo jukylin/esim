@@ -22,44 +22,52 @@ import (
 
 //refer redis.Int
 func Int(reply interface{}, err error) (int, error) {
-	return redis.Int(reply, err)
+	rep, err := redis.Int(reply, err)
+	return rep, decorError(err)
 }
 
 //refer redis.Int64
 func Int64(reply interface{}, err error) (int64, error) {
-	return redis.Int64(reply, err)
+	rep, err := redis.Int64(reply, err)
+	return rep, decorError(err)
 }
 
 
 //refer redis.Uint64
 func Uint64(reply interface{}, err error) (uint64, error) {
-	return redis.Uint64(reply, err)
+	rep, err := redis.Uint64(reply, err)
+	return rep, decorError(err)
 }
 
 //refer redis.Float64
 func Float64(reply interface{}, err error) (float64, error) {
-	return redis.Float64(reply, err)
+	rep, err :=  redis.Float64(reply, err)
+	return rep, decorError(err)
 }
 
 //refer redis.String
 func String(reply interface{}, err error) (string, error) {
-	return redis.String(reply, err)
+	rep, err := redis.String(reply, err)
+	return rep, decorError(err)
 }
 
 //refer redis.Bytes
 func Bytes(reply interface{}, err error) ([]byte, error) {
-	return redis.Bytes(reply, err)
+	rep, err := redis.Bytes(reply, err)
+	return rep, decorError(err)
 }
 
 //refer redis.Bool
 func Bool(reply interface{}, err error) (bool, error) {
-	return redis.Bool(reply, err)
+	rep, err := redis.Bool(reply, err)
+	return rep, decorError(err)
 }
 
 
 //refer redis.Values
 func Values(reply interface{}, err error) ([]interface{}, error) {
-	return redis.Values(reply, err)
+	rep, err := redis.Values(reply, err)
+	return rep, decorError(err)
 }
 
 //refer redis.Float64s
@@ -116,4 +124,13 @@ func Struct(result interface{}, err error, v ...interface{}) error {
 	 err = json.Unmarshal(bytes, &v)
 
 	 return err
+}
+
+//decorError implement decoration redis.ErrNil
+func decorError(err error) error {
+	if err == redis.ErrNil {
+		err = nil
+	}
+
+	return err
 }
