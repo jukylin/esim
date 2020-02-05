@@ -21,8 +21,6 @@ var onceClient *mysqlClient
 type mysqlClient struct {
 	dbs map[string]*gorm.DB
 
-	mysqlLock *sync.RWMutex
-
 	proxy []func () interface{}
 
 	conf config.Config
@@ -36,6 +34,9 @@ type mysqlClient struct {
 	closeChan chan bool
 
 	stateTicker time.Duration
+
+	//for integration tests
+	db *sql.DB
 }
 
 type Option func(c *mysqlClient)
@@ -55,7 +56,6 @@ func NewMysqlClient(options ...Option) *mysqlClient {
 
 		onceClient = &mysqlClient{
 			dbs:       make(map[string]*gorm.DB),
-			mysqlLock: new(sync.RWMutex),
 			proxy: make([]func () interface{}, 0),
 			stateTicker : 10 * time.Second,
 			closeChan: make(chan bool, 1),
@@ -110,6 +110,12 @@ func (MysqlClientOptions) WithStateTicker(stateTicker time.Duration) Option {
 }
 
 
+func (MysqlClientOptions) WithDB(db *sql.DB) Option {
+	return func(m *mysqlClient) {
+		m.db = db
+	}
+}
+
 // initializes mysqlClient.
 func (this *mysqlClient) init() {
 
@@ -127,7 +133,12 @@ func (this *mysqlClient) init() {
 		if len(this.proxy) == 0 {
 			var DB *gorm.DB
 
-			DB, err = gorm.Open("mysql", dbConfig.Dsn)
+			if this.db != nil{
+				DB, err = gorm.Open("mysql", this.db)
+			}else{
+				DB, err = gorm.Open("mysql", dbConfig.Dsn)
+			}
+
 			if err != nil {
 				this.logger.Panicf("[db] %s init error : %s", dbConfig.Db, err.Error())
 			}
@@ -143,9 +154,15 @@ func (this *mysqlClient) init() {
 			}
 		} else {
 			var DB *gorm.DB
-			dbSQL, err := sql.Open("mysql", dbConfig.Dsn)
-			if err != nil {
-				this.logger.Panicf("[db] %s init error : %s", dbConfig.Db, err.Error())
+			var dbSQL *sql.DB
+
+			if this.db == nil{
+				dbSQL, err = sql.Open("mysql", dbConfig.Dsn)
+				if err != nil {
+					this.logger.Panicf("[db] %s init error : %s", dbConfig.Db, err.Error())
+				}
+			}else{
+				dbSQL = this.db
 			}
 
 			firstProxy := proxy.NewProxyFactory().GetFirstInstance("db_" + dbConfig.Db, dbSQL, this.proxy...)
@@ -248,7 +265,6 @@ func (this *mysqlClient) Stats() {
 			for db_name, db := range this.dbs {
 
 				stats = db.DB().Stats()
-
 				maxOpenConnLab := prometheus.Labels{"db": db_name, "stats" : "max_open_conn"}
 				mysqlStats.With(maxOpenConnLab).Set(float64(stats.MaxOpenConnections))
 

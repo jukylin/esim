@@ -4,7 +4,9 @@ go 1.12
 
 require (
 	github.com/bilibili/kratos v0.3.1
+	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
 	github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd // indirect
+	github.com/containerd/continuity v0.0.0-20200107194136-26c1120b8d41 // indirect
 	github.com/davecgh/go-spew v1.1.1
 	github.com/garyburd/redigo v1.6.0
 	github.com/gin-gonic/gin v1.4.0
@@ -19,6 +21,9 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/opentracing-contrib/go-stdlib v0.0.0-20190519235532-cf7a6c988dc9
 	github.com/opentracing/opentracing-go v1.1.0
+	github.com/ory/dockertest v3.3.5+incompatible
+	github.com/ory/dockertest/v3 v3.5.4
+	github.com/pierrec/lz4 v2.0.5+incompatible // indirect
 	github.com/prometheus/client_golang v1.1.0
 	github.com/prometheus/client_model v0.0.0-20190129233127-fd36f4220a90
 	github.com/spf13/cast v1.3.0
@@ -34,5 +39,4 @@ require (
 	golang.org/x/net v0.0.0-20191011234655-491137f69257
 	google.golang.org/grpc v1.24.0
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
-	gopkg.in/yaml.v2 v2.2.4 // indirect
 )

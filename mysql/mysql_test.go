@@ -4,23 +4,35 @@ import (
 	"testing"
 	"context"
 	"sync"
-
+	"time"
+	"os"
+	"database/sql"
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_model/go"
-	"time"
+	"github.com/ory/dockertest/v3"
+	dc "github.com/ory/dockertest/v3/docker"
 )
 
 var (
-	test1Config = DbConfig{}
-	test2Config = DbConfig{}
+	test1Config = DbConfig{
+		Db : "test_1",
+		Dsn : "root:123456@tcp(localhost:3306)/test_1?charset=utf8&parseTime=True&loc=Local",
+		MaxIdle : 10,
+		MaxOpen : 100}
+
+	test2Config = DbConfig{
+		Db : "test_2",
+		Dsn : "root:123456@tcp(localhost:3306)/test_1?charset=utf8&parseTime=True&loc=Local",
+		MaxIdle : 10,
+		MaxOpen : 100}
 )
 
 type TestStruct struct{
 	Id int `json:"id"`
-	Name string `json:"name"`
+	Title string `json:"title"`
 }
 
 type UserStruct struct{
@@ -28,26 +40,91 @@ type UserStruct struct{
 	Username string `json:"username"`
 }
 
-func init()  {
-	test1Config.Db = "test_1"
-	test1Config.Dsn = "root:123456@tcp(0.0.0.0:3306)/test_1?charset=utf8&parseTime=True&loc=Local"
-	test1Config.MaxIdle = 10
-	test1Config.MaxOpen = 100
+var db *sql.DB
 
-	test2Config.Db = "test_2"
-	test2Config.Dsn = "root:123456@tcp(0.0.0.0:3306)/test_2?charset=utf8&parseTime=True&loc=Local"
-	test2Config.MaxIdle = 10
-	test2Config.MaxOpen = 100
+func TestMain(m *testing.M) {
+	logger := log.NewLogger()
+
+	pool, err := dockertest.NewPool("")
+	if err != nil {
+		logger.Fatalf("Could not connect to docker: %s", err)
+	}
+
+	opt := &dockertest.RunOptions{
+		Repository: "mysql",
+		Tag: "latest",
+		Env: []string{"MYSQL_ROOT_PASSWORD=123456"},
+		}
+
+	// pulls an image, creates a container based on it and runs it
+	resource, err := pool.RunWithOptions(opt, func(hostConfig *dc.HostConfig) {
+					hostConfig.PortBindings = map[dc.Port][]dc.PortBinding{
+						"3306/tcp": {{HostIP: "", HostPort: "3306"}},
+					}
+				})
+	if err != nil {
+		logger.Fatalf("Could not start resource: %s", err)
+	}
+
+	if err := pool.Retry(func() error {
+		var err error
+		db, err = sql.Open("mysql", "root:123456@tcp(0.0.0.0:3306)/mysql?charset=utf8&parseTime=True&loc=Local")
+		if err != nil {
+			return err
+		}
+		db.SetMaxOpenConns(100)
+
+		return db.Ping()
+	}); err != nil {
+		logger.Fatalf("Could not connect to docker: %s", err)
+	}
+
+	sqls := []string{
+		`create database test_1;`,
+		`CREATE TABLE IF NOT EXISTS test_1.test(
+		  id int not NULL auto_increment,
+		  title VARCHAR(10) not NULL DEFAULT '',
+		  PRIMARY KEY (id)
+		)engine=innodb;`,
+		`create database test_2;`,
+		`CREATE TABLE IF NOT EXISTS test_2.user(
+		  id int not NULL auto_increment,
+		  username VARCHAR(10) not NULL DEFAULT '',
+			PRIMARY KEY (id)
+		)engine=innodb;`,}
+
+	for _, execSql := range sqls {
+		res, err := db.Exec(execSql)
+		if err != nil {
+			logger.Errorf(err.Error())
+		}
+		_, err = res.RowsAffected()
+		if err != nil {
+			logger.Errorf(err.Error())
+		}
+	}
+	code := m.Run()
+	db.Close()
+	// You can't defer this because os.Exit doesn't care for defer
+	if err := pool.Purge(resource); err != nil {
+		logger.Fatalf("Could not purge resource: %s", err)
+	}
+
+	os.Exit(code)
 }
 
 func TestInitAndSingleInstance(t *testing.T)  {
 
 	mysqlClientOptions := MysqlClientOptions{}
 
-	mysqlClient := NewMysqlClient(mysqlClientOptions.WithDbConfig([]DbConfig{test1Config}))
+	mysqlClient := NewMysqlClient(
+		mysqlClientOptions.WithDbConfig([]DbConfig{test1Config}),
+		mysqlClientOptions.WithDB(db),
+	)
 	ctx := context.Background()
-	db := mysqlClient.GetCtxDb(ctx, "test_1")
-	assert.NotNil(t, db)
+	db1 := mysqlClient.GetCtxDb(ctx, "test_1")
+	db1.Exec("use test_1;")
+	assert.NotNil(t, db1)
 
 	_, ok := mysqlClient.dbs["test_1"]
 	assert.True(t, ok)
@@ -78,6 +155,7 @@ func TestProxyPatternWithTwoInstance(t *testing.T)  {
 
 	ctx := context.Background()
 	db1 := mysqlClient.GetCtxDb(ctx, "test_1")
+	db1.Exec("use test_1;")
 	assert.NotNil(t, db1)
 
 	ts := &TestStruct{}
@@ -86,6 +164,7 @@ func TestProxyPatternWithTwoInstance(t *testing.T)  {
 	assert.Len(t, db1.GetErrors(), 0)
 
 	db2 := mysqlClient.GetCtxDb(ctx, "test_2")
+	db2.Exec("use test_2;")
 	assert.NotNil(t, db2)
 
 	us := &UserStruct{}
@@ -126,6 +205,7 @@ func TestMulProxyPatternWithOneInstance(t *testing.T)  {
 
 	ctx := context.Background()
 	db1 := mysqlClient.GetCtxDb(ctx, "test_1")
+	db1.Exec("use test_1;")
 	assert.NotNil(t, db1)
 
 	ts := &TestStruct{}
@@ -135,12 +215,12 @@ func TestMulProxyPatternWithOneInstance(t *testing.T)  {
 
 	assert.True(t, spyProxy1.QueryWasCalled)
 	assert.False(t, spyProxy1.QueryRowWasCalled)
-	assert.False(t, spyProxy1.ExecWasCalled)
+	assert.True(t, spyProxy1.ExecWasCalled)
 	assert.False(t, spyProxy1.PrepareWasCalled)
 
 	assert.True(t, spyProxy2.QueryWasCalled)
 	assert.False(t, spyProxy2.QueryRowWasCalled)
-	assert.False(t, spyProxy2.ExecWasCalled)
+	assert.True(t, spyProxy2.ExecWasCalled)
 	assert.False(t, spyProxy2.PrepareWasCalled)
 
 	mysqlClient.Close()
@@ -176,6 +256,7 @@ func TestMulProxyPatternWithTwoInstance(t *testing.T)  {
 
 	ctx := context.Background()
 	db1 := mysqlClient.GetCtxDb(ctx, "test_1")
+	db1.Exec("use test_1;")
 	assert.NotNil(t, db1)
 
 	ts := &TestStruct{}
@@ -184,6 +265,7 @@ func TestMulProxyPatternWithTwoInstance(t *testing.T)  {
 	assert.Len(t, db1.GetErrors(), 0)
 
 	db2 := mysqlClient.GetCtxDb(ctx, "test_2")
+	db2.Exec("use test_2;")
 	assert.NotNil(t, db2)
 
 	us := &UserStruct{}
@@ -235,6 +317,8 @@ func BenchmarkParallelGetDB(b *testing.B) {
 }
 
 func TestDummyProxy_Exec(t *testing.T) {
+	mysqlOnce = sync.Once{}
+
 	mysqlClientOptions := MysqlClientOptions{}
 	memConfig := config.NewMemConfig()
 	//memConfig.Set("debug", true)
@@ -246,26 +330,25 @@ func TestDummyProxy_Exec(t *testing.T) {
 			func() interface{} {
 				return newSpyProxy(log.NewLogger(), "spyProxy")
 			},
-			func() interface{} {
-				return newDummyProxy(log.NewLogger(), "dummyProxy")
-			}),
+			//func() interface{} {
+			//	return newDummyProxy(log.NewLogger(), "dummyProxy")
+			//},
+			),
 		)
 	ctx := context.Background()
-	db := mysqlClient.GetCtxDb(ctx, "test_1")
-	assert.NotNil(t, db)
+	db1 := mysqlClient.GetCtxDb(ctx, "test_1")
+	db1.Exec("use test_1;")
+	assert.NotNil(t, db1)
 
-	db, ok := mysqlClient.dbs["test_1"]
-	assert.True(t, ok)
+	db1.Table("test").Create(&TestStruct{})
 
-	db.Table("user").Create(&UserStruct{})
-	assert.Len(t, db.GetErrors(), 0)
-
-	assert.Equal(t, db.RowsAffected, int64(0))
+	assert.Equal(t, db1.RowsAffected, int64(0))
 
 	mysqlClient.Close()
 }
 
 func TestMysqlClient_GetStats(t *testing.T) {
+	mysqlOnce = sync.Once{}
 
 	mysqlClientOptions := MysqlClientOptions{}
 
@@ -274,11 +357,11 @@ func TestMysqlClient_GetStats(t *testing.T) {
 		mysqlClientOptions.WithStateTicker(10 * time.Millisecond),
 		)
 	ctx := context.Background()
-	db := mysqlClient.GetCtxDb(ctx, "test_1")
-	assert.NotNil(t, db)
+	db1 := mysqlClient.GetCtxDb(ctx, "test_1")
+	db1.Exec("use test_1;")
+	assert.NotNil(t, db1)
 
 	time.Sleep(100 * time.Millisecond)
-
 
 	lab := prometheus.Labels{"db": "test_1", "stats": "max_open_conn"}
 	c, _ := mysqlStats.GetMetricWith(lab)
