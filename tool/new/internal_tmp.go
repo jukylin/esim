@@ -37,8 +37,8 @@ func NewApp() *APP {
 
 		gopath := os.Getenv("GOPATH")
 
-		monitFile := gopath + "/src/{{service_name}}/" + "conf/monitoring.yaml"
-		confFile := gopath + "/src/{{service_name}}/" + "conf/" + env + ".yaml"
+		monitFile := gopath + "/src/{{PROPATH}}{{service_name}}/" + "conf/monitoring.yaml"
+		confFile := gopath + "/src/{{PROPATH}}{{service_name}}/" + "conf/" + env + ".yaml"
 
 		file := []string{monitFile, confFile}
 		return config.NewViperConfig(options.WithConfigType("yaml"),
