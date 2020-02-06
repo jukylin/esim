@@ -80,7 +80,6 @@ import (
 
 func NewGrpcServer(esim *container.Esim) *grpc.GrpcServer {
 
-	serviceName := esim.Conf.GetString("appname")
 	target := esim.Conf.GetString("grpc_server_tcp")
 
 	in := strings.Index(target, ":")
@@ -91,7 +90,7 @@ func NewGrpcServer(esim *container.Esim) *grpc.GrpcServer {
 	serverOptions := grpc.ServerOptions{}
 
 	//grpc服务初始化
-	grpcServer :=  grpc.NewGrpcServer(serviceName,
+	grpcServer :=  grpc.NewGrpcServer(target,
 		serverOptions.WithServerConf(esim.Conf),
 		serverOptions.WithServerLogger(esim.Logger),
 		serverOptions.WithUnarySrvItcp(),

@@ -41,9 +41,11 @@ type ServerOption func(c *GrpcServer)
 
 type ServerOptions struct{}
 
-func NewGrpcServer(serviceName string, options ...ServerOption) *GrpcServer {
+func NewGrpcServer(target string, options ...ServerOption) *GrpcServer {
 
 	grpcServer := &GrpcServer{}
+
+	grpcServer.target = target
 
 	for _, option := range options {
 		option(grpcServer)
