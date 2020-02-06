@@ -16,7 +16,7 @@ import (
 	"github.com/jukylin/esim/config"
 )
 
-type APP struct{
+type App struct{
 
 	*container.Esim
 
@@ -25,7 +25,7 @@ type APP struct{
 	Infra *infra.Infra
 }
 
-func NewApp() *APP {
+func NewApp() *App {
 
 	container.SetConfFunc(func() config.Config {
 		options := config.ViperConfOptions{}
@@ -47,7 +47,7 @@ func NewApp() *APP {
 
 	esim := container.NewEsim()
 
-	app := &APP{
+	app := &App{
 		Esim: esim,
 	}
 
@@ -55,13 +55,13 @@ func NewApp() *APP {
 }
 
 
-func (this *APP) Start()  {
+func (this *App) Start()  {
 	for _, tran := range this.Trans {
 		tran.Start()
 	}
 }
 
-func (this *APP) AwaitSignal() {
+func (this *App) AwaitSignal() {
 	c := make(chan os.Signal, 1)
 	signal.Reset(syscall.SIGTERM, syscall.SIGINT)
 	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
@@ -74,7 +74,7 @@ func (this *APP) AwaitSignal() {
 }
 
 
-func (this *APP) stop()  {
+func (this *App) stop()  {
 	for _, tran := range this.Trans {
 		tran.GracefulShutDown()
 	}
