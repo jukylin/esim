@@ -4,7 +4,7 @@ func InternalInit() {
 	fc1 := &FileContent{
 		FileName: "app.go",
 		Dir:      "internal",
-		Content: `package internal
+		Content: `package {{service_name}}
 
 import (
 	"os"

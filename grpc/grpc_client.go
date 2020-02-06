@@ -149,8 +149,11 @@ func (ClientOptionals) WithDialOptions(options ...grpc.DialOption) ClientOptiona
 func NewClient(clientOptions *ClientOptions) *GrpcClient {
 
 	grpcClient := &GrpcClient{}
-
-	grpcClient.clientOpts = clientOptions
+	if clientOptions == nil {
+		grpcClient.clientOpts = &ClientOptions{}
+	}else{
+		grpcClient.clientOpts = clientOptions
+	}
 
 	return grpcClient
 }

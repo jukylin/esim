@@ -28,6 +28,10 @@ func Build(v *viper.Viper, log logger.Logger) error {
 		return errors.New("请输入 service_name")
 	}
 
+	if strings.Contains(serviceName, ".") == true{
+		return errors.New("服务名称不能包含【.】")
+	}
+
 	exists, err := file_dir.IsExistsDir("./" + serviceName)
 	if exists {
 		return errors.New("创建目录 " + serviceName + " 失败：目录已存在")
