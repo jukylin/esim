@@ -38,7 +38,7 @@ var rootCmd = &cobra.Command{
 	Long: "",
 	Run: func(cmd *cobra.Command, args []string) {
 
-		app := internal.NewApp()
+		app := {{service_name}}.NewApp()
 
 {{RUN_SERVER}}
 		app.Infra = infra.NewInfra()

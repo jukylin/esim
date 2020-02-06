@@ -11,7 +11,7 @@ import (
 	"os/signal"
 	"syscall"
 	"github.com/jukylin/esim/transports"
-	"github.com/jukylin/esim/infra"
+	"{{PROPATH}}{{service_name}}/internal/infra"
 	"github.com/jukylin/esim/container"
 	"github.com/jukylin/esim/config"
 )
@@ -22,7 +22,7 @@ type APP struct{
 
 	Trans []transports.Transports
 
-	Infra infra.Infra
+	Infra *infra.Infra
 }
 
 func NewApp() *APP {
