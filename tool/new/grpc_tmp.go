@@ -105,5 +105,36 @@ func NewGrpcServer(esim *container.Esim) *grpc.GrpcServer {
 `,
 	}
 
-	Files = append(Files, fc1, fc2, fc3)
+	fc4 := &FileContent{
+		FileName: "component_test.go",
+		Dir:      "internal/transports/grpc/component-test",
+		Content: `package compnent_test
+
+import (
+	"os"
+	"testing"
+	"{{PROPATH}}{{service_name}}/internal"
+	"{{PROPATH}}{{service_name}}/internal/transports/grpc"
+	"{{PROPATH}}{{service_name}}/internal/infra"
+)
+
+var app *{{service_name}}.App
+
+func TestMain(m *testing.M) {
+
+	app = {{service_name}}.NewApp()
+
+	app.Trans = append(app.Trans, grpc.NewGrpcServer(app.Esim))
+
+	app.Infra = infra.NewInfra()
+
+	app.Start()
+	code := m.Run()
+
+	os.Exit(code)
+}
+`,
+	}
+
+	Files = append(Files, fc1, fc2, fc3, fc4)
 }

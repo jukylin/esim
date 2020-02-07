@@ -61,11 +61,12 @@ func init() {
 import (
 	"net/http"
 	"strings"
-
+	"time"
 	"github.com/jukylin/esim/middle-ware"
 	"github.com/astaxie/beego"
 	"github.com/opentracing-contrib/go-stdlib/nethttp"
 	"github.com/jukylin/esim/container"
+	_ "test2/internal/transports/http/routers"
 )
 
 type BeegoServer struct{
@@ -94,8 +95,10 @@ func NewBeegoServer(esim *container.Esim) *BeegoServer  {
 
 
 func (this *BeegoServer) Start()  {
-	beego.RunWithMiddleWares(this.httpport, getMwd(this.esim)...)
-
+	go func() {
+		beego.RunWithMiddleWares(this.httpport, getMwd(this.esim)...)
+	}()
+	time.Sleep(100 * time.Millisecond)
 }
 
 func (this *BeegoServer) GracefulShutDown()  {
@@ -146,5 +149,36 @@ func (this *IndexController) Get() {
 `,
 	}
 
-	Files = append(Files, fc1, fc2, fc4, fc5)
+	fc6 := &FileContent{
+		FileName: "component_test.go",
+		Dir:      "internal/transports/http/component-test",
+		Content: `package compnent_test
+
+import (
+	"os"
+	"testing"
+	"{{PROPATH}}{{service_name}}/internal"
+	"{{PROPATH}}{{service_name}}/internal/transports/http"
+	"{{PROPATH}}{{service_name}}/internal/infra"
+)
+
+var app *{{service_name}}.App
+
+func TestMain(m *testing.M) {
+
+	app = {{service_name}}.NewApp()
+
+	app.Trans = append(app.Trans, http.NewBeegoServer(app.Esim))
+
+	app.Infra = infra.NewInfra()
+
+	app.Start()
+	code := m.Run()
+
+	os.Exit(code)
+}
+`,
+	}
+
+	Files = append(Files, fc1, fc2, fc4, fc5, fc6)
 }
