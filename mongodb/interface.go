@@ -7,15 +7,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type MgoClient interface {
-
-	GetColl(string, string) *mongo.Collection
-
-	GetCtx(ctx context.Context) context.Context
-
-	Ping(*mongo.Client) error
-}
-
 
 type MonitorEvent interface {
 

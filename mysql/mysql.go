@@ -16,9 +16,9 @@ import (
 
 var mysqlOnce sync.Once
 
-var onceClient *mysqlClient
+var onceClient *MysqlClient
 
-type mysqlClient struct {
+type MysqlClient struct {
 	dbs map[string]*gorm.DB
 
 	proxy []func () interface{}
@@ -39,7 +39,7 @@ type mysqlClient struct {
 	db *sql.DB
 }
 
-type Option func(c *mysqlClient)
+type Option func(c *MysqlClient)
 
 type MysqlClientOptions struct{}
 
@@ -51,10 +51,10 @@ type DbConfig struct {
 	MaxLifetime int    `json:"max_lifetime",yaml:"maxlifetime"`
 }
 
-func NewMysqlClient(options ...Option) *mysqlClient {
+func NewMysqlClient(options ...Option) *MysqlClient {
 	mysqlOnce.Do(func() {
 
-		onceClient = &mysqlClient{
+		onceClient = &MysqlClient{
 			dbs:       make(map[string]*gorm.DB),
 			proxy: make([]func () interface{}, 0),
 			stateTicker : 10 * time.Second,
@@ -80,44 +80,44 @@ func NewMysqlClient(options ...Option) *mysqlClient {
 }
 
 func (MysqlClientOptions) WithConf(conf config.Config) Option {
-	return func(m *mysqlClient) {
+	return func(m *MysqlClient) {
 		m.conf = conf
 	}
 }
 
 func (MysqlClientOptions) WithLogger(logger log.Logger) Option {
-	return func(m *mysqlClient) {
+	return func(m *MysqlClient) {
 		m.logger = logger
 	}
 }
 
 func (MysqlClientOptions) WithDbConfig(dbConfigs []DbConfig) Option {
-	return func(m *mysqlClient) {
+	return func(m *MysqlClient) {
 		m.dbConfigs = dbConfigs
 	}
 }
 
 func (MysqlClientOptions) WithProxy(proxy ...func() interface{}) Option {
-	return func(m *mysqlClient) {
+	return func(m *MysqlClient) {
 		m.proxy = append(m.proxy, proxy...)
 	}
 }
 
 func (MysqlClientOptions) WithStateTicker(stateTicker time.Duration) Option {
-	return func(m *mysqlClient) {
+	return func(m *MysqlClient) {
 		m.stateTicker = stateTicker
 	}
 }
 
 
 func (MysqlClientOptions) WithDB(db *sql.DB) Option {
-	return func(m *mysqlClient) {
+	return func(m *MysqlClient) {
 		m.db = db
 	}
 }
 
 // initializes mysqlClient.
-func (this *mysqlClient) init() {
+func (this *MysqlClient) init() {
 
 	dbConfigs := []DbConfig{}
 	err := this.conf.UnmarshalKey("dbs", &dbConfigs)
@@ -195,7 +195,7 @@ func (this *mysqlClient) init() {
 }
 
 
-func (this *mysqlClient) setDb(db_name string, gdb *gorm.DB) bool {
+func (this *MysqlClient) setDb(db_name string, gdb *gorm.DB) bool {
 	db_name = strings.ToLower(db_name)
 
 	//m.mysqlLock.Lock()
@@ -204,11 +204,11 @@ func (this *mysqlClient) setDb(db_name string, gdb *gorm.DB) bool {
 	return true
 }
 
-func (this *mysqlClient) GetDb(db_name string) *gorm.DB {
+func (this *MysqlClient) GetDb(db_name string) *gorm.DB {
 	return this.getDb(nil, db_name)
 }
 
-func (this *mysqlClient) getDb(ctx context.Context, db_name string) *gorm.DB {
+func (this *MysqlClient) getDb(ctx context.Context, db_name string) *gorm.DB {
 	db_name = strings.ToLower(db_name)
 
 	//m.mysqlLock.RLock()
@@ -222,12 +222,12 @@ func (this *mysqlClient) getDb(ctx context.Context, db_name string) *gorm.DB {
 	}
 }
 
-func (this *mysqlClient) GetCtxDb(ctx context.Context, db_name string) *gorm.DB {
+func (this *MysqlClient) GetCtxDb(ctx context.Context, db_name string) *gorm.DB {
 	return this.getDb(ctx, db_name)
 }
 
 
-func (this *mysqlClient) Ping() []error {
+func (this *MysqlClient) Ping() []error {
 	var errs []error
 	var err error
 	for _, db := range this.dbs {
@@ -240,7 +240,7 @@ func (this *mysqlClient) Ping() []error {
 }
 
 
-func (this *mysqlClient) Close() {
+func (this *MysqlClient) Close() {
 	var err error
 	for _, db := range this.dbs {
 		err = db.Close()
@@ -254,7 +254,7 @@ func (this *mysqlClient) Close() {
 }
 
 
-func (this *mysqlClient) Stats() {
+func (this *MysqlClient) Stats() {
 
 	ticker := time.NewTicker(this.stateTicker)
 	var stats sql.DBStats

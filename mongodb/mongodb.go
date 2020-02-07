@@ -15,9 +15,9 @@ import (
 )
 
 var mgoOnce sync.Once
-var onceMgoClient *mgoClient
+var onceMgoClient *MgoClient
 
-type mgoClient struct {
+type MgoClient struct {
 	Mgos map[string]*mongo.Client
 
 	mgoLock *sync.RWMutex
@@ -39,13 +39,13 @@ type mongoBackEvent struct {
 	failedEvent *event.CommandFailedEvent
 }
 
-type Option func(c *mgoClient)
+type Option func(c *MgoClient)
 
 type MgoClientOptions struct{}
 
-func NewMongo(options ...Option) *mgoClient {
+func NewMongo(options ...Option) *MgoClient {
 	mgoOnce.Do(func() {
-		onceMgoClient = &mgoClient{
+		onceMgoClient = &MgoClient{
 			Mgos:    make(map[string]*mongo.Client),
 			mgoLock: new(sync.RWMutex),
 		}
@@ -69,25 +69,25 @@ func NewMongo(options ...Option) *mgoClient {
 }
 
 func (MgoClientOptions) WithConf(conf config.Config) Option {
-	return func(m *mgoClient) {
+	return func(m *MgoClient) {
 		m.conf = conf
 	}
 }
 
 func (MgoClientOptions) WithLogger(log log.Logger) Option {
-	return func(m *mgoClient) {
+	return func(m *MgoClient) {
 		m.log = log
 	}
 }
 
 func (MgoClientOptions) WithDbConfig(dbConfigs []MgoConfig) Option {
-	return func(m *mgoClient) {
+	return func(m *MgoClient) {
 		m.mgoConfig = dbConfigs
 	}
 }
 
 func (MgoClientOptions) WithMonitorEvent(mongoEvent ...func() MonitorEvent) Option {
-	return func(m *mgoClient) {
+	return func(m *MgoClient) {
 		m.monitorEvents = mongoEvent
 	}
 }
@@ -99,7 +99,7 @@ type MgoConfig struct {
 	Uri string `json:"uri",yaml:"uri"`
 }
 
-func (m *mgoClient) init() {
+func (m *MgoClient) init() {
 
 	mgoConfigs := []MgoConfig{}
 	err := m.conf.UnmarshalKey("mgos", &mgoConfigs)
@@ -193,7 +193,7 @@ func (m *mgoClient) init() {
 	}
 }
 
-func (m *mgoClient) initMonitorMulLevelEvent(db_name string) MonitorEvent {
+func (m *MgoClient) initMonitorMulLevelEvent(db_name string) MonitorEvent {
 	eventNum := len(m.monitorEvents)
 	var firstProxy MonitorEvent
 	proxyInses := make([]MonitorEvent, eventNum)
@@ -221,7 +221,7 @@ func (m *mgoClient) initMonitorMulLevelEvent(db_name string) MonitorEvent {
 	return firstProxy
 }
 
-func (m *mgoClient) setMgo(mgo_name string, gdb *mongo.Client) bool {
+func (m *MgoClient) setMgo(mgo_name string, gdb *mongo.Client) bool {
 	mgo_name = strings.ToLower(mgo_name)
 
 	m.mgoLock.Lock()
@@ -230,7 +230,7 @@ func (m *mgoClient) setMgo(mgo_name string, gdb *mongo.Client) bool {
 	return true
 }
 
-func (m *mgoClient) GetColl(dataBase, coll string) *mongo.Collection {
+func (m *MgoClient) GetColl(dataBase, coll string) *mongo.Collection {
 	dataBase = strings.ToLower(dataBase)
 	if mgo, ok := m.Mgos[dataBase]; ok {
 		return mgo.Database(dataBase).Collection(coll)
@@ -241,16 +241,16 @@ func (m *mgoClient) GetColl(dataBase, coll string) *mongo.Collection {
 	}
 }
 
-func (m *mgoClient) poolEvent(pev *event.PoolEvent) {
+func (m *MgoClient) poolEvent(pev *event.PoolEvent) {
 }
 
-func (m *mgoClient) Ping(client *mongo.Client) error {
+func (m *MgoClient) Ping(client *mongo.Client) error {
 	ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
 	return client.Ping(ctx, readpref.Primary())
 }
 
 //mongodb 的上下文
-func (m *mgoClient) GetCtx(ctx context.Context) context.Context {
+func (m *MgoClient) GetCtx(ctx context.Context) context.Context {
 	var command string
 	return context.WithValue(ctx, "command", &command)
 }

@@ -11,7 +11,7 @@ import (
 	"github.com/jukylin/esim/proxy"
 )
 
-type httpClient struct {
+type HttpClient struct {
 	client *http.Client
 
 	transports []func() interface{}
@@ -19,13 +19,13 @@ type httpClient struct {
 	logger log.Logger
 }
 
-type Option func(c *httpClient)
+type Option func(c *HttpClient)
 
 type ClientOptions struct{}
 
-func NewHttpClient(options ...Option) HttpClient {
+func NewHttpClient(options ...Option) *HttpClient {
 
-	httpClient := &httpClient{
+	httpClient := &HttpClient{
 		transports: make([]func() interface{}, 0),
 	}
 
@@ -55,33 +55,33 @@ func NewHttpClient(options ...Option) HttpClient {
 }
 
 func (ClientOptions) WithProxy(proxy ...func () interface{}) Option {
-	return func(hc *httpClient) {
+	return func(hc *HttpClient) {
 		hc.transports = append(hc.transports, proxy...)
 	}
 }
 
 
 func (ClientOptions) WithTimeOut(timeout time.Duration) Option {
-	return func(hc *httpClient) {
+	return func(hc *HttpClient) {
 		hc.client.Timeout = timeout * time.Second
 	}
 }
 
 
 func (ClientOptions) WithLogger(logger log.Logger) Option {
-	return func(hc *httpClient) {
+	return func(hc *HttpClient) {
 		hc.logger = logger
 	}
 }
 
 
-func (this *httpClient) Do(ctx context.Context, req *http.Request) (*http.Response, error) {
+func (this *HttpClient) Do(ctx context.Context, req *http.Request) (*http.Response, error) {
 	resp, err := this.client.Do(req)
 	return resp, err
 }
 
 
-func (this *httpClient) Get(ctx context.Context, url string) (resp *http.Response, err error) {
+func (this *HttpClient) Get(ctx context.Context, url string) (resp *http.Response, err error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
@@ -93,7 +93,7 @@ func (this *httpClient) Get(ctx context.Context, url string) (resp *http.Respons
 }
 
 
-func (this *httpClient) Post(ctx context.Context, url, contentType string, body io.Reader) (resp *http.Response, err error) {
+func (this *HttpClient) Post(ctx context.Context, url, contentType string, body io.Reader) (resp *http.Response, err error) {
 	req, err := http.NewRequest("POST", url, body)
 	if err != nil {
 		return nil, err
@@ -104,12 +104,12 @@ func (this *httpClient) Post(ctx context.Context, url, contentType string, body 
 }
 
 
-func (this *httpClient) PostForm(ctx context.Context, url string, data url.Values) (resp *http.Response, err error) {
+func (this *HttpClient) PostForm(ctx context.Context, url string, data url.Values) (resp *http.Response, err error) {
 	return this.Post(ctx, url, "application/x-www-form-urlencoded", strings.NewReader(data.Encode()))
 }
 
 
-func (this *httpClient) Head(ctx context.Context, url string) (resp *http.Response, err error) {
+func (this *HttpClient) Head(ctx context.Context, url string) (resp *http.Response, err error) {
 	req, err := http.NewRequest("HEAD", url, nil)
 	if err != nil {
 		return nil, err
@@ -119,6 +119,6 @@ func (this *httpClient) Head(ctx context.Context, url string) (resp *http.Respon
 }
 
 
-func (this *httpClient) CloseIdleConnections(ctx context.Context) {
+func (this *HttpClient) CloseIdleConnections(ctx context.Context) {
 	this.client.CloseIdleConnections()
 }
