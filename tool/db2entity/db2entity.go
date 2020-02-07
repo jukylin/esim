@@ -310,7 +310,7 @@ import (
 
 
 type ` + structName + `Dao struct{
-	mysql mysql.MysqlClient
+	mysql *mysql.MysqlClient
 }
 
 func New` + structName + `Dao() *` + structName + `Dao {

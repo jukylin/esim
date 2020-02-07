@@ -26,7 +26,7 @@ var onceInfra *Infra
 type Infra struct {
 	*container.Esim
 
-	DB mysql.MysqlClient
+	DB *mysql.MysqlClient
 
 	UserRepo repo.UserRepo
 }
@@ -72,7 +72,7 @@ func provideEsim() *container.Esim {
 }
 
 
-func provideDb(esim *container.Esim) mysql.MysqlClient {
+func provideDb(esim *container.Esim) *mysql.MysqlClient {
 
 	mysqlClientOptions := mysql.MysqlClientOptions{}
 	mysqlClent := mysql.NewMysqlClient(
