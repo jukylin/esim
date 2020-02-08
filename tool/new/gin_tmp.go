@@ -144,7 +144,9 @@ func (this *GinServer) GracefulShutDown()  {
 	fc4 := &FileContent{
 		FileName: "component_test.go",
 		Dir:      "internal/transports/http/component-test",
-		Content: `package compnent_test
+		Content: `// +build compnent_test
+
+package compnent_test
 
 import (
 	"os"
@@ -169,7 +171,16 @@ func TestMain(m *testing.M) {
 	app.Infra = infra.NewInfra()
 
 	app.Start()
+	errs := app.Infra.HealthCheck()
+	if len(errs) > 0{
+		for _, err := range errs {
+			app.Logger.Errorf(err.Error())
+		}
+	}
+
 	code := m.Run()
+
+	app.Infra.Close()
 
 	os.Exit(code)
 }
