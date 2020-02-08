@@ -19,6 +19,7 @@ type HttpClient struct {
 	logger log.Logger
 }
 
+
 type Option func(c *HttpClient)
 
 type ClientOptions struct{}

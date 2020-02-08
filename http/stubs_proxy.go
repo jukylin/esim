@@ -2,8 +2,6 @@ package http
 
 import (
 	"net/http"
-	"io/ioutil"
-	"bytes"
 	"github.com/jukylin/esim/log"
 )
 
@@ -11,47 +9,64 @@ type stubsProxy struct {
 
 	name string
 
-	log log.Logger
+	logger log.Logger
 
 	nextTransport http.RoundTripper
+
+	respFunc func(r *http.Request) *http.Response
 }
 
-type stubsProxyOption func(c *stubsProxy)
 
-type stubsProxyOptions struct{}
+type StubsProxyOption func(c *stubsProxy)
 
-func NewStubsProxy(logger log.Logger, name string) *stubsProxy {
+
+type StubsProxyOptions struct{}
+
+
+func NewStubsProxy(options ...StubsProxyOption) *stubsProxy {
 	stubsProxy := &stubsProxy{}
 
-	if logger == nil{
-		stubsProxy.log = log.NewLogger()
-	}else{
-		stubsProxy.log = logger
+	for _, option := range options {
+		option(stubsProxy)
 	}
 
-	stubsProxy.name = name
 
 	return stubsProxy
 }
+
+
+func (StubsProxyOptions) WithRespFunc(respFunc func(*http.Request) *http.Response) StubsProxyOption {
+	return func(s *stubsProxy) {
+		s.respFunc = respFunc
+	}
+}
+
+
+func (StubsProxyOptions) WithName(name string) StubsProxyOption {
+	return func(s *stubsProxy) {
+		s.name = name
+	}
+}
+
+
+func (StubsProxyOptions) WithLogger(logger log.Logger) StubsProxyOption {
+	return func(s *stubsProxy) {
+		s.logger = logger
+	}
+}
+
 
 func (this *stubsProxy) NextProxy(tripper interface{})  {
 	this.nextTransport = tripper.(http.RoundTripper)
 }
 
+
 func (this *stubsProxy) ProxyName() string {
 	return this.name
 }
 
+
 // RoundTrip implements the RoundTripper interface.
 func (this *stubsProxy) RoundTrip(req *http.Request) (*http.Response, error) {
-	resp := &http.Response{}
-	if req.URL.String() == "127.0.0.1"{
-		resp.StatusCode = 200
-	}else if req.URL.String() == "127.0.0.2"{
-		resp.StatusCode = 300
-	}
-
-	resp.Body = ioutil.NopCloser(bytes.NewReader([]byte{}))
-
-	return resp, nil
+	return this.respFunc(req), nil
 }

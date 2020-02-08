@@ -2,21 +2,32 @@ package http
 
 import (
 	"testing"
-	"github.com/jukylin/esim/log"
 	"context"
+	"net/http"
+	"io/ioutil"
+	"bytes"
+	"github.com/jukylin/esim/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/jukylin/esim/config"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_model/go"
 )
 
+var logger log.Logger
+
+func TestMain(m *testing.M) {
+	loggerOptions := log.LoggerOptions{}
+	logger = log.NewLogger(loggerOptions.WithDebug(true))
+
+	m.Run()
+}
+
 func TestMulLevelRoundTrip(t *testing.T)  {
 
-	logger := log.NewLogger()
 
 	clientOptions := ClientOptions{}
 	httpClient := NewHttpClient(
-		clientOptions.WithLogger(log.NewLogger()),
+		clientOptions.WithLogger(logger),
 		clientOptions.WithProxy(
 			func() interface {} {
 				return NewSpyProxy(logger, "spyProxy1")
@@ -25,7 +36,25 @@ func TestMulLevelRoundTrip(t *testing.T)  {
 				return NewSpyProxy(logger, "spyProxy2")
 			},
 			func() interface {} {
-				return NewStubsProxy(logger, "stubsProxy1")
+				stubsProxyOptions := StubsProxyOptions{}
+				stubsProxy := NewStubsProxy(
+					stubsProxyOptions.WithRespFunc(func(request *http.Request) *http.Response {
+							resp := &http.Response{}
+							if request.URL.String() == "127.0.0.1"{
+								resp.StatusCode = 200
+							}else if request.URL.String() == "127.0.0.2"{
+								resp.StatusCode = 300
+							}
+
+							resp.Body = ioutil.NopCloser(bytes.NewReader([]byte{}))
+
+							return resp
+						}),
+				stubsProxyOptions.WithName("stubsProxy1"),
+				stubsProxyOptions.WithLogger(logger),
+				)
+
+				return stubsProxy
 			},
 			),
 	)
@@ -54,8 +83,6 @@ func TestMulLevelRoundTrip(t *testing.T)  {
 
 
 func TestMonitorProxy(t *testing.T)  {
-	loggerOptions := log.LoggerOptions{}
-	logger := log.NewLogger(loggerOptions.WithDebug(true))
 	memConfig := config.NewMemConfig()
 	memConfig.Set("debug", true)
 	memConfig.Set("http_client_metrics", true)
@@ -72,7 +99,25 @@ func TestMonitorProxy(t *testing.T)  {
 					monitorProxyOptions.WithLogger(logger))
 			},
 			func() interface {} {
-				return NewStubsProxy(logger, "stubsProxy1")
+				stubsProxyOptions := StubsProxyOptions{}
+				stubsProxy := NewStubsProxy(
+					stubsProxyOptions.WithRespFunc(func(request *http.Request) *http.Response {
+						resp := &http.Response{}
+						if request.URL.String() == "127.0.0.1"{
+							resp.StatusCode = 200
+						}else if request.URL.String() == "127.0.0.2"{
+							resp.StatusCode = 300
+						}
+
+						resp.Body = ioutil.NopCloser(bytes.NewReader([]byte{}))
+
+						return resp
+					}),
+					stubsProxyOptions.WithName("stubsProxy1"),
+					stubsProxyOptions.WithLogger(logger),
+				)
+
+				return stubsProxy
 			},
 		),
 	)
@@ -100,8 +145,6 @@ func TestMonitorProxy(t *testing.T)  {
 
 
 func TestTimeoutProxy(t *testing.T)  {
-	loggerOptions := log.LoggerOptions{}
-	logger := log.NewLogger(loggerOptions.WithDebug(true))
 	memConfig := config.NewMemConfig()
 	memConfig.Set("debug", true)
 	memConfig.Set("http_client_check_slow", true)
@@ -122,8 +165,26 @@ func TestTimeoutProxy(t *testing.T)  {
 				return NewSlowProxy(logger, "slowProxy")
 			},
 			func() interface {} {
-				return NewStubsProxy(logger, "stubsProxy1")
-			},
+					stubsProxyOptions := StubsProxyOptions{}
+					stubsProxy := NewStubsProxy(
+						stubsProxyOptions.WithRespFunc(func(request *http.Request) *http.Response {
+							resp := &http.Response{}
+							if request.URL.String() == "127.0.0.1"{
+								resp.StatusCode = 200
+							}else if request.URL.String() == "127.0.0.2"{
+								resp.StatusCode = 300
+							}
+
+							resp.Body = ioutil.NopCloser(bytes.NewReader([]byte{}))
+
+							return resp
+						}),
+						stubsProxyOptions.WithName("stubsProxy1"),
+						stubsProxyOptions.WithLogger(logger),
+					)
+
+					return stubsProxy
+				},
 		),
 	)
 
