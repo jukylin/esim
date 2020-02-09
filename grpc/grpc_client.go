@@ -109,7 +109,7 @@ func NewClientOptions(options ...ClientOptional) *ClientOptions {
 		opts = append(opts, grpc.WithChainUnaryInterceptor(clientOptions.clientDebug()))
 	}
 
-	clientOptions.opts = opts
+	clientOptions.opts = append(opts, clientOptions.opts...)
 
 	return clientOptions
 }
@@ -226,12 +226,26 @@ func (this *ClientOptions) clientDebug() func(ctx context.Context,
 	}
 }
 
+
+func ClientStubs(stubsFunc func(ctx context.Context, method string, req, reply interface{},
+	cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error) func(ctx context.Context,
+	method string, req, reply interface{}, cc *grpc.ClientConn,
+	invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+	return func(ctx context.Context, method string, req, reply interface{},
+		cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+			err := stubsFunc(ctx, method, req, reply, cc, invoker, opts...)
+		return err
+	}
+}
+
+
 func slowRequest(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn,
 	invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 	time.Sleep(20 * time.Millisecond)
 	err := invoker(ctx, method, req, reply, cc, opts...)
 	return err
 }
+
 
 func timeoutRequest(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn,
 	invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {

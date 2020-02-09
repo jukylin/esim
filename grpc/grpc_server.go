@@ -17,6 +17,7 @@ import (
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/reflection"
 	opentracing2 "github.com/opentracing/opentracing-go"
+	"google.golang.org/grpc/examples/helloworld/helloworld"
 )
 
 type GrpcServer struct {
@@ -235,25 +236,37 @@ func panicResp() grpc.UnaryServerInterceptor {
 		info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler,
 	) (resp interface{}, err error) {
-		panic("is a test")
-		return nil, err
+
+		if req.(*helloworld.HelloRequest).Name == "call_panic"{
+			panic("is a test")
+		}else if req.(*helloworld.HelloRequest).Name == "call_panic_arr" {
+			var arr [1]string
+			arr[0] = "is a test"
+			panic(arr)
+		}
+		resp, err = handler(ctx, req)
+
+		return resp, err
 	}
 }
 
-func panicArrayResp() grpc.UnaryServerInterceptor {
+
+
+func ServerStubs(stubsFunc func(
+	ctx context.Context,
+	req interface{},
+	info *grpc.UnaryServerInfo,
+	handler grpc.UnaryHandler,
+) (resp interface{}, err error)) grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
 		req interface{},
 		info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler,
 	) (resp interface{}, err error) {
-		var arr [1]string
-		arr[0] = "is a test"
-		panic(arr)
-		return nil, err
+		return stubsFunc(ctx, req, info, handler)
 	}
 }
-
 
 func (this *GrpcServer) Start(){
 
