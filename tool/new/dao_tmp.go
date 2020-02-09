@@ -14,7 +14,7 @@ import (
 )
 
 type UserDao struct {
-	mysql mysql.MysqlClient
+	mysql *mysql.MysqlClient
 }
 
 func NewUserDao() *UserDao {

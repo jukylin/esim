@@ -40,8 +40,9 @@ var rootCmd = &cobra.Command{
 
 		app := {{service_name}}.NewApp()
 
-{{RUN_SERVER}}
 		app.Infra = infra.NewInfra()
+
+{{RUN_SERVER}}
 
 		app.Start()
 		app.AwaitSignal()

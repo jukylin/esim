@@ -93,7 +93,6 @@ import (
 	"context"
 	"time"
 	"github.com/gin-gonic/gin"
-	"github.com/jukylin/esim/container"
 	"{{PROPATH}}{{service_name}}/internal/transports/http/routers"
 	"github.com/jukylin/esim/middle-ware"
 	"github.com/jukylin/esim/log"

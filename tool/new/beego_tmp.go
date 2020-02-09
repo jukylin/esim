@@ -45,6 +45,8 @@ import (
 func init() {
 	beego.Router("/", &controllers.IndexController{})
 
+	beego.Router("/ping", &controllers.PingController{})
+
 	ns := beego.NewNamespace("/v1",
 		beego.NSAutoRouter(&controllers.UserController{}),
 	)
@@ -66,7 +68,7 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/opentracing-contrib/go-stdlib/nethttp"
 	"github.com/jukylin/esim/container"
-	_ "test2/internal/transports/http/routers"
+	_ "{{PROPATH}}{{service_name}}/internal/transports/http/routers"
 )
 
 type BeegoServer struct{
@@ -146,6 +148,24 @@ func (this *IndexController) Get() {
 	this.Data["json"] = map[string]interface{}{"Esim" : infra.NewInfra().String()}
 	this.ServeJSON()
 }
+
+type PingController struct {
+	beego.Controller
+}
+
+// @router / [get]
+func (this *PingController) Get() {
+	errs := infra.NewInfra().HealthCheck()
+	if len(errs) > 0{
+		for _, err := range errs {
+			infra.NewInfra().Logger.Errorf(err.Error())
+		}
+		this.Abort("500")
+	}else{
+		this.Data["json"] = map[string]interface{}{"msg" : "success"}
+		this.ServeJSON()
+	}
+}
 `,
 	}
 
@@ -170,9 +190,9 @@ func TestMain(m *testing.M) {
 
 	app = {{service_name}}.NewApp()
 
-	app.Trans = append(app.Trans, http.NewBeegoServer(app.Esim))
-
 	app.Infra = infra.NewInfra()
+
+	app.Trans = append(app.Trans, http.NewBeegoServer(app.Esim))
 
 	app.Start()
 
