@@ -179,9 +179,13 @@ package compnent_test
 import (
 	"os"
 	"testing"
+	"context"
+	"io/ioutil"
 	"{{PROPATH}}{{service_name}}/internal"
 	"{{PROPATH}}{{service_name}}/internal/transports/http"
 	"{{PROPATH}}{{service_name}}/internal/infra"
+	http_client "github.com/jukylin/esim/http"
+	"github.com/stretchr/testify/assert"
 )
 
 var app *{{service_name}}.App
@@ -208,6 +212,27 @@ func TestMain(m *testing.M) {
 	app.Infra.Close()
 
 	os.Exit(code)
+}
+
+func TestControllers_Esim(t *testing.T)  {
+
+	client := http_client.NewHttpClient()
+	ctx := context.Background()
+	resp, err := client.Get(ctx, "http://localhost:"+ app.Conf.GetString("httpport"))
+
+	if err != nil{
+		app.Logger.Errorf(err.Error())
+	}
+
+	defer resp.Body.Close()
+
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil{
+		app.Logger.Errorf(err.Error())
+	}
+	println(string(body))
+	assert.Equal(t, 200, resp.StatusCode)
 }
 `,
 	}

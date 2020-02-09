@@ -321,7 +321,7 @@ import (
 
 
 
-func initControllers(app *test2.App) *Controllers {
+func initControllers(app *{{service_name}}.App) *Controllers {
 	wire.Build(controllersSet)
 	return nil
 }
@@ -345,7 +345,7 @@ import (
 
 // Injectors from wire.go:
 
-func initControllers(app *test2.App) *Controllers {
+func initControllers(app *{{service_name}}.App) *Controllers {
 	pingController := providePingController(app)
 	esimController := provideEsimController(app)
 	demoController := provideDemoController(app)
