@@ -26,6 +26,9 @@ func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloRe
 }
 
 func TestMain(m *testing.M) {
+
+	logger = log.NewLogger()
+
 	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {
 		logger.Fatalf("failed to listen: %v", err)
