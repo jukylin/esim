@@ -215,7 +215,7 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-
+//go test -v -tags="component_test"
 func TestControllers_Esim(t *testing.T)  {
 
 	client := http_client.NewHttpClient()
