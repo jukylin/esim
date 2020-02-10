@@ -41,7 +41,7 @@ func (this *UserDao) Find(ctx context.Context, squery, wquery interface{},
 args ...interface{}) (entity.User, error) {
 	var user entity.User
 	user.ID = 1
-	user.UserNmae = "demo"
+	user.UserName = "demo"
 	user.PassWord = "123456"
 
 	return user, nil

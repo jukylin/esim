@@ -12,7 +12,7 @@ type User struct {
 	ID int {{!}}gorm:"column:id;primary_key"{{!}}
 
 	//优惠券号码
-	UserNmae string {{!}}gorm:"column:user_name"{{!}}
+	UserName string {{!}}gorm:"column:user_name"{{!}}
 
 	//密码
 	PassWord string {{!}}gorm:"column:pass_word"{{!}}

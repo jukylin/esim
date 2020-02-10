@@ -126,9 +126,9 @@ func TestMain(m *testing.M) {
 
 	app = {{service_name}}.NewApp()
 
-	app.Trans = append(app.Trans, grpc.NewGrpcServer(app.Esim))
-
 	app.Infra = infra.NewInfra()
+
+	app.Trans = append(app.Trans, grpc.NewGrpcServer(app.Esim))
 
 	app.Start()
 
