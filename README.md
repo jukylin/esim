@@ -172,19 +172,28 @@ export ESIM_DB_PASSWORD=123456
 
 ```golang
 esim new -s test
-cd test
 ```
 
+### 浏览器访问
 
-## 启动服务
+#### 启动服务
 ```golang
+cd test
+
 go run main.go
 ```
 
-### 访问
+#### 访问
 
 > http://localhost:8080
 
+
+### 使用组合测试 [推荐]
+
+```
+cd  test/internal/transports/http/component-test/
+go test -v -tags="component_test"
+```
 
 ## 配置
 - 配置文件
@@ -243,7 +252,7 @@ func provideLogger(conf config.Config) log.Logger {
 ```golang
 infra.NewInfra().Logger.Infof("info %s", "test")
 
-infra.NewInfra().LLoggerog.Infoc(ctx, "info %s", "test")
+infra.NewInfra().Logger.Infoc(ctx, "info %s", "test")
 ```
 
 
