@@ -11,6 +11,7 @@ import (
 	"github.com/google/wire"
 	"github.com/jukylin/esim/container"
 	"github.com/jukylin/esim/mysql"
+	"github.com/jukylin/esim/grpc"
 	"{{PROPATH}}{{service_name}}/internal/infra/repo"
 )
 
@@ -28,6 +29,8 @@ type Infra struct {
 
 	DB *mysql.MysqlClient
 
+	GrpcClient *grpc.GrpcClient
+
 	UserRepo repo.UserRepo
 }
 
@@ -36,6 +39,7 @@ var infraSet = wire.NewSet(
 	provideEsim,
 	provideDb,
 	provideUserRepo,
+	provideGrpcClient,
 )
 
 
@@ -66,8 +70,6 @@ func (this *Infra) HealthCheck() []error {
 }
 
 func provideEsim() *container.Esim {
-
-
 	return container.NewEsim()
 }
 
@@ -87,6 +89,18 @@ func provideDb(esim *container.Esim) *mysql.MysqlClient {
 
 func provideUserRepo(esim *container.Esim) repo.UserRepo {
 	return repo.NewUserRepo(esim.Logger)
+}
+
+func provideGrpcClient(esim *container.Esim) *grpc.GrpcClient {
+	clientOptional := grpc.ClientOptionals{}
+	clientOptions := grpc.NewClientOptions(
+		clientOptional.WithLogger(esim.Logger),
+		clientOptional.WithConf(esim.Conf),
+	)
+
+	grpcClient := grpc.NewClient(clientOptions)
+
+	return grpcClient
 }
 `,
 	}
@@ -125,10 +139,12 @@ package infra
 func initInfra() *Infra {
 	esim := provideEsim()
 	mysqlClient := provideDb(esim)
+	grpcClient := provideGrpcClient(esim)
 	userRepo := provideUserRepo(esim)
 	infra := &Infra{
 		Esim:     esim,
 		DB:       mysqlClient,
+		GrpcClient: grpcClient,
 		UserRepo: userRepo,
 	}
 	return infra

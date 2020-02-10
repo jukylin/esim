@@ -108,16 +108,19 @@ func NewGrpcServer(esim *container.Esim) *grpc.GrpcServer {
 	fc4 := &FileContent{
 		FileName: "component_test.go",
 		Dir:      "internal/transports/grpc/component-test",
-		Content: `// +build compnent_test
+		Content: `// +build component_test
 
-package compnent_test
+package component_test
 
 import (
 	"os"
 	"testing"
+	"context"
 	"{{PROPATH}}{{service_name}}/internal"
 	"{{PROPATH}}{{service_name}}/internal/transports/grpc"
 	"{{PROPATH}}{{service_name}}/internal/infra"
+	gp "{{PROPATH}}{{service_name}}/internal/infra/third_party/protobuf/passport"
+	"github.com/stretchr/testify/assert"
 )
 
 var app *{{service_name}}.App
@@ -144,6 +147,25 @@ func TestMain(m *testing.M) {
 	app.Infra.Close()
 
 	os.Exit(code)
+}
+
+//go test -v -tags="component_test"
+func TestUserService_GetUserByUserName(t *testing.T)  {
+	ctx := context.Background()
+
+	conn := app.Infra.GrpcClient.DialContext(ctx, ":" + app.Conf.GetString("grpc_server_tcp"))
+
+	client := gp.NewUserInfoClient(conn)
+
+	req := &gp.GetUserByUserNameRequest{}
+	req.Username = "demo"
+	reply, err := client.GetUserByUserName(ctx, req)
+	if err != nil{
+		app.Logger.Errorf(err.Error())
+	}else {
+		assert.Equal(t, "demo", reply.Data["UserName"])
+		assert.Equal(t, int32(0), reply.Code)
+	}
 }
 `,
 	}

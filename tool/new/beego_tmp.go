@@ -172,9 +172,9 @@ func (this *PingController) Get() {
 	fc6 := &FileContent{
 		FileName: "component_test.go",
 		Dir:      "internal/transports/http/component-test",
-		Content: `// +build compnent_test
+		Content: `// +build component_test
 
-package compnent_test
+package component_test
 
 import (
 	"os"
