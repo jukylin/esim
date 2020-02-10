@@ -8,11 +8,10 @@ func GrpcInit() {
 
 import (
 	"context"
-	"encoding/json"
 	gp "{{PROPATH}}{{service_name}}/internal/infra/third_party/protobuf/passport"
 	"{{PROPATH}}{{service_name}}/internal/application"
 	"{{PROPATH}}{{service_name}}/internal/infra"
-	"github.com/tidwall/gjson"
+	"{{PROPATH}}{{service_name}}/internal/transports/grpc/dto"
 )
 
 type DemoController struct {
@@ -23,26 +22,15 @@ type DemoController struct {
 
 
 func (this *DemoController) GetUserByUserName(ctx context.Context,
-	request *gp.GetUserByUserNameRequest) (*gp.GrpcReplyMap, error) {
-	grpcReply := &gp.GrpcReplyMap{}
+	request *gp.GetUserByUserNameRequest) (*gp.GrpcUserReply, error) {
+	grpcReply := &gp.GrpcUserReply{}
 	userName := request.GetUsername()
 
 	userInfo := this.userSvc.GetUserInfo(ctx, userName)
 
 	grpcReply.Code = 0;
-	userInfoJson, err := json.Marshal(userInfo)
-	if err != nil {
-		grpcReply.Code = -1;
-		grpcReply.Msg = err.Error();
-		return grpcReply, nil
-	}
 
-	grpcReply.Data = make(map[string]string)
-
-	gjson.Parse(string(userInfoJson)).ForEach(func(key, value gjson.Result) bool {
-		grpcReply.Data[key.String()] = value.String()
-		return true
-	})
+	grpcReply.Data = dto.NewUserInfo(userInfo)
 
 	return grpcReply, nil
 }
@@ -274,7 +262,10 @@ func initControllers(app *{{service_name}}.App) *Controllers {
 		Dir:      "internal/transports/grpc/dto",
 		Content: `package dto
 
-import "{{service_name}}/internal/domain/user/entity"
+import (
+	"{{PROPATH}}{{service_name}}/internal/domain/user/entity"
+	"{{PROPATH}}{{service_name}}/internal/infra/third_party/protobuf/passport"
+)
 
 type User struct {
 
@@ -285,12 +276,11 @@ type User struct {
 	PassWord string {{!}}json:"pass_word"{{!}}
 }
 
-func NewUser(user entity.User) User {
-	dto := User{}
-
-	dto.UserName = user.UserName
-	dto.PassWord = user.PassWord
-	return dto
+func NewUserInfo(user entity.User) *passport.Info {
+	info := &passport.Info{}
+	info.UserName = user.UserName
+	info.PassWord = user.PassWord
+	return info
 }`,
 	}
 
