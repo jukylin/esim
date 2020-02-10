@@ -10,7 +10,7 @@ import (
 	"context"
 	"encoding/json"
 	gp "{{PROPATH}}{{service_name}}/internal/infra/third_party/protobuf/passport"
-	"{{PROPATH}}{{service_name}}/internal/app/service"
+	"{{PROPATH}}{{service_name}}/internal/application"
 	"{{PROPATH}}{{service_name}}/internal/infra"
 	"github.com/tidwall/gjson"
 )
@@ -18,7 +18,7 @@ import (
 type DemoController struct {
 	infra *infra.Infra
 
-	userSvc *service.UserService
+	userSvc *application.UserService
 }
 
 
@@ -182,13 +182,13 @@ func TestUserService_GetUserByUserName(t *testing.T)  {
 import (
 	"{{PROPATH}}{{service_name}}/internal"
 	"github.com/google/wire"
-	"{{PROPATH}}{{service_name}}/internal/app/service"
+	"{{PROPATH}}{{service_name}}/internal/application"
 )
 
 
 type Controllers struct {
 
-	App *test2.App
+	App *{{service_name}}.App
 
 	Demo *DemoController
 }
@@ -200,15 +200,15 @@ var controllersSet = wire.NewSet(
 )
 
 
-func NewControllers(app *test2.App) *Controllers {
+func NewControllers(app *{{service_name}}.App) *Controllers {
 	controllers := initControllers(app)
 	return controllers
 }
 
 
-func provideDemoController(app *test2.App) *DemoController {
+func provideDemoController(app *{{service_name}}.App) *DemoController {
 
-	userSvc := service.NewUserSvc(app.Infra)
+	userSvc := application.NewUserSvc(app.Infra)
 
 	demoController := &DemoController{}
 	demoController.infra = app.Infra
@@ -269,6 +269,30 @@ func initControllers(app *{{service_name}}.App) *Controllers {
 `,
 	}
 
+	fc8 := &FileContent{
+		FileName: "user.go",
+		Dir:      "internal/transports/grpc/dto",
+		Content: `package dto
 
-	Files = append(Files, fc1, fc2, fc3, fc4, fc5, fc6, fc7)
+import "{{service_name}}/internal/domain/user/entity"
+
+type User struct {
+
+	//用户名称
+	UserName string {{!}}json:"user_name"{{!}}
+
+	//密码
+	PassWord string {{!}}json:"pass_word"{{!}}
+}
+
+func NewUser(user entity.User) User {
+	dto := User{}
+
+	dto.UserName = user.UserName
+	dto.PassWord = user.PassWord
+	return dto
+}`,
+	}
+
+	Files = append(Files, fc1, fc2, fc3, fc4, fc5, fc6, fc7, fc8)
 }

@@ -9,15 +9,15 @@ func GinInit() {
 import (
 	"net/http"
 	"github.com/gin-gonic/gin"
-	"{{PROPATH}}{{service_name}}/internal/app/service"
+	"{{PROPATH}}{{service_name}}/internal/application"
 	"{{PROPATH}}{{service_name}}/internal/infra"
-	"{{PROPATH}}{{service_name}}/internal/app/dto"
+	"{{PROPATH}}{{service_name}}/internal/transports/http/dto"
 )
 
 type DemoController struct {
 	infra *infra.Infra
 
-	UserSvc *service.UserService
+	UserSvc *application.UserService
 }
 
 func (this *DemoController) Demo(c *gin.Context) {
@@ -247,7 +247,7 @@ func TestControllers_Esim(t *testing.T)  {
 import (
 	"{{PROPATH}}{{service_name}}/internal"
 	"github.com/google/wire"
-	"{{PROPATH}}{{service_name}}/internal/app/service"
+	"{{PROPATH}}{{service_name}}/internal/application"
 )
 
 
@@ -295,7 +295,7 @@ func provideEsimController(app *{{service_name}}.App) *EsimController {
 
 func provideDemoController(app *{{service_name}}.App) *DemoController {
 
-	userSvc := service.NewUserSvc(app.Infra)
+	userSvc := application.NewUserSvc(app.Infra)
 
 	demoController := &DemoController{}
 	demoController.infra = app.Infra
@@ -361,5 +361,30 @@ func initControllers(app *{{service_name}}.App) *Controllers {
 `,
 	}
 
-	Files = append(Files, fc1, fc2, fc3, fc4, fc5, fc6, fc7)
+	fc8 := &FileContent{
+		FileName: "user.go",
+		Dir:      "internal/transports/http/dto",
+		Content: `package dto
+
+import "{{service_name}}/internal/domain/user/entity"
+
+type User struct {
+
+	//用户名称
+	UserName string {{!}}json:"user_name"{{!}}
+
+	//密码
+	PassWord string {{!}}json:"pass_word"{{!}}
+}
+
+func NewUser(user entity.User) User {
+	dto := User{}
+
+	dto.UserName = user.UserName
+	dto.PassWord = user.PassWord
+	return dto
+}`,
+	}
+
+	Files = append(Files, fc1, fc2, fc3, fc4, fc5, fc6, fc7, fc8)
 }

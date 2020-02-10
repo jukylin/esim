@@ -7,10 +7,10 @@ func BeegoInit() {
 		Content: `package controllers
 
 import (
-	"{{PROPATH}}{{service_name}}/internal/app/service"
+	"{{PROPATH}}{{service_name}}/internal/application"
 	"github.com/astaxie/beego"
 	"{{PROPATH}}{{service_name}}/internal/infra"
-	"{{PROPATH}}{{service_name}}/internal/app/dto"
+	"{{PROPATH}}{{service_name}}/internal/transports/http/dto"
 )
 
 // Operations about Users
@@ -22,7 +22,7 @@ type UserController struct {
 func (this *UserController) GetUserInfo() {
 	username := this.GetString("username")
 
-	svc := service.NewUserSvc(infra.NewInfra())
+	svc := application.NewUserSvc(infra.NewInfra())
 
 	user := svc.GetUserInfo(this.Ctx.Request.Context(), username)
 
@@ -238,5 +238,30 @@ func TestControllers_Esim(t *testing.T)  {
 `,
 	}
 
-	Files = append(Files, fc1, fc2, fc4, fc5, fc6)
+	fc7 := &FileContent{
+		FileName: "user.go",
+		Dir:      "internal/transports/http/dto",
+		Content: `package dto
+
+import "{{service_name}}/internal/domain/user/entity"
+
+type User struct {
+
+	//用户名称
+	UserName string {{!}}json:"user_name"{{!}}
+
+	//密码
+	PassWord string {{!}}json:"pass_word"{{!}}
+}
+
+func NewUser(user entity.User) User {
+	dto := User{}
+
+	dto.UserName = user.UserName
+	dto.PassWord = user.PassWord
+	return dto
+}`,
+	}
+
+	Files = append(Files, fc1, fc2, fc4, fc5, fc6, fc7)
 }
