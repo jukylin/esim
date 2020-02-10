@@ -27,7 +27,7 @@ func init() {
 
 	protocCmd.Flags().StringP("target", "t", "internal/infra/third_party/protobuf", "生成的源码保存路径")
 
-	protocCmd.Flags().BoolP("mock", "m", true, "生成 mock 文件")
+	protocCmd.Flags().BoolP("mock", "m", false, "生成 mock 文件")
 
 	protocCmd.Flags().StringP("package", "p", "", "package名称")
 

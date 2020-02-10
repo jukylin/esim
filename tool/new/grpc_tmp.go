@@ -145,6 +145,7 @@ func TestUserService_GetUserByUserName(t *testing.T)  {
 	ctx := context.Background()
 
 	conn := app.Infra.GrpcClient.DialContext(ctx, ":" + app.Conf.GetString("grpc_server_tcp"))
+	defer conn.Close()
 
 	client := gp.NewUserInfoClient(conn)
 

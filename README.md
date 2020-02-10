@@ -254,17 +254,9 @@ infra.NewInfra().Log.Infoc(ctx, "info %s", "test")
 - provide
 
 ```golang
-func provideHttp(esim *container.Esim) http.HttpClient {
-	proxyTransportOptions := http.ProxyTransportOptions{}
-
-	proxyTransport := http.NewProxyTransport(
-		proxyTransportOptions.WithConf(esim.Conf),
-		proxyTransportOptions.WithLogger(esim.Log),
-	)
-
+func provideHttp(esim *container.Esim) *http.HttpClient {
 	clientOptions := http.ClientOptions{}
 	httpClent := http.NewHttpClient(
-		clientOptions.WithTransport(proxyTransport),
 		clientOptions.WithTimeOut(esim.Conf.GetDuration("http_client_time_out")),
 	)
 
@@ -328,7 +320,7 @@ res := coll.FindOne(inf.Mgo.GetCtx(c.Request.Context()), filter).Decode(&info)
 - provide
 
 ```golang
-func provideGrpcClient(esim *container.Esim) grpc.GrpcClient {
+func provideGrpcClient(esim *container.Esim) *grpc.GrpcClient {
 
 	options := grpc.ClientOptions{}
 	grpcClient := grpc.NewGrpcClient(
@@ -363,7 +355,7 @@ replyData, err = client.GetUserByUserName(ctx, getUserByUserNameRequest)
 - provide
 
 ```golang
-func provideRedis(esim *container.Esim) redis.RedisClient {
+func provideRedis(esim *container.Esim) *redis.RedisClient {
 	redisClientOptions := redis.RedisClientOptions{}
 	redisClent := redis.NewRedisClient(
 		redisClientOptions.WithLogger(esim.Logger),
@@ -392,18 +384,11 @@ exists, err := redis.Bool(conn.Do(ctx, "exists", key))
 - provide
 
 ```golang
-func provideDb(esim *container.Esim) mysql.MysqlClient {
-	proxySqlCommonOptions := mysql.ProxySqlCommonOptions{}
-
-	proxy := mysql.NewProxySqlCommon
+func provideDb(esim *container.Esim) *mysql.MysqlClient {
 	mysqlClientOptions := mysql.MysqlClientOptions{}
 	mysqlClent := mysql.NewMysqlClient(
 		mysqlClientOptions.WithConf(esim.Conf),
-		mysqlClientOptions.WithLogger(esim.Log),
-		mysqlClientOptions.WithProxySqlCommon(proxy),
-		mysqlClientOptions.WithProxySqlCommonOptions(
-			proxySqlCommonOptions.WithLogger(esim.Log),
-			proxySqlCommonOptions.WithConf(esim.Conf)),
+		mysqlClientOptions.WithLogger(esim.Logger),
 	)
 
 	return mysqlClent
