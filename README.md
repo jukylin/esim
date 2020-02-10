@@ -188,7 +188,7 @@ go run main.go
 > http://localhost:8080
 
 
-### 使用组合测试 [推荐]
+### 使用组件测试 [推荐]
 
 ```
 cd  test/internal/transports/http/component-test/
