@@ -241,9 +241,9 @@ func provideLogger(conf config.Config) log.Logger {
 - reference
 
 ```golang
-infra.NewInfra().Log.Infof("info %s", "test")
+infra.NewInfra().Logger.Infof("info %s", "test")
 
-infra.NewInfra().Log.Infoc(ctx, "info %s", "test")
+infra.NewInfra().LLoggerog.Infoc(ctx, "info %s", "test")
 ```
 
 
@@ -269,7 +269,9 @@ func provideHttp(esim *container.Esim) *http.HttpClient {
 ```golang
 import "gitlab.etcchebao.cn/go_service/esim/pkg/http"
 
-resp, err := nfra.NewInfra().Http.GetCtx(ctx, "http://www.baidu.com")
+resp, err := infra.NewInfra().Http.GetCtx(ctx, "http://www.baidu.com")
+defer resp.Body.Close()
+
 ```
 
 
