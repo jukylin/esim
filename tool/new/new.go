@@ -122,7 +122,7 @@ func tmpInit(v *viper.Viper) (string, string) {
 
 	if v.GetBool("gin") == true {
 		GinInit()
-		run_server = "		app.Trans = append(app.Trans, http.NewGinServer(app.Esim))\n"
+		run_server = "		app.Trans = append(app.Trans, http.NewGinServer(app))\n"
 		import_server += "	\"{{PROPATH}}{{service_name}}/internal/transports/http\"\n"
 	}
 
@@ -134,7 +134,7 @@ func tmpInit(v *viper.Viper) (string, string) {
 
 	if v.GetBool("grpc") == true {
 		GrpcInit()
-		run_server += "		app.Trans = append(app.Trans, grpc.NewGrpcServer(app.Esim))\n"
+		run_server += "		app.Trans = append(app.Trans, grpc.NewGrpcServer(app))\n"
 		import_server += "	\"{{PROPATH}}{{service_name}}/internal/transports/grpc\"\n"
 	}
 
