@@ -59,7 +59,7 @@ type User struct {
 func NewUser(user entity.User) User {
 	dto := User{}
 
-	dto.UserName = user.UserNmae
+	dto.UserName = user.UserName
 	dto.PassWord = user.PassWord
 	return dto
 }`,
