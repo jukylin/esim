@@ -86,6 +86,7 @@ func NewGrpcServer(app *{{service_name}}.App) *grpc.GrpcServer {
 		serverOptions.WithServerLogger(app.Logger),
 		serverOptions.WithUnarySrvItcp(),
 		serverOptions.WithGrpcServerOption(),
+		serverOptions.WithTracer(app.Tracer),
 	)
 
 	//注册grpc路由
