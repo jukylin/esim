@@ -120,7 +120,7 @@ func TestMain(m *testing.M) {
 
 	app = {{service_name}}.NewApp()
 
-	app.Infra = infra.NewInfra()
+	app.Infra = infra.NewStubsInfra()
 
 	app.Trans = append(app.Trans, grpc.NewGrpcServer(app))
 
@@ -155,7 +155,7 @@ func TestUserService_GetUserByUserName(t *testing.T)  {
 	if err != nil{
 		app.Logger.Errorf(err.Error())
 	}else {
-		assert.Equal(t, "demo", reply.Data["UserName"])
+		assert.Equal(t, "demo", reply.Data.UserName)
 		assert.Equal(t, int32(0), reply.Code)
 	}
 }

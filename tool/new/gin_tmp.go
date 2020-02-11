@@ -196,7 +196,7 @@ func TestMain(m *testing.M) {
 
 	app = {{service_name}}.NewApp()
 
-	app.Infra = infra.NewInfra()
+	app.Infra = infra.NewStubsInfra()
 
 	app.Trans = append(app.Trans, http.NewGinServer(app))
 
@@ -233,7 +233,7 @@ func TestControllers_Esim(t *testing.T)  {
 	if err != nil{
 		app.Logger.Errorf(err.Error())
 	}
-	println(string(body))
+	app.Logger.Debugf(string(body))
 	assert.Equal(t, 200, resp.StatusCode)
 }
 `,
@@ -249,7 +249,6 @@ import (
 	"github.com/google/wire"
 	"{{PROPATH}}{{service_name}}/internal/application"
 )
-
 
 
 type Controllers struct {

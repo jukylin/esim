@@ -8,11 +8,14 @@ func InfraInit() {
 
 import (
 	"sync"
+	"context"
 	"github.com/google/wire"
 	"github.com/jukylin/esim/container"
 	"github.com/jukylin/esim/mysql"
 	"github.com/jukylin/esim/grpc"
 	"{{PROPATH}}{{service_name}}/internal/infra/repo"
+	egrpc "github.com/jukylin/esim/grpc"
+	_grpc "google.golang.org/grpc"
 )
 
 //Do not change the function name and var name
@@ -36,16 +39,24 @@ type Infra struct {
 
 var infraSet = wire.NewSet(
 	wire.Struct(new(Infra), "*"),
-	provideEsim,
 	provideDb,
 	provideUserRepo,
-	provideGrpcClient,
 )
 
 
 func NewInfra() *Infra {
 	infraOnce.Do(func() {
-		onceInfra = initInfra()
+		esim  := container.NewEsim()
+		onceInfra = initInfra(esim, provideGrpcClient(esim))
+	})
+
+	return onceInfra
+}
+
+func NewStubsInfra() *Infra {
+	infraOnce.Do(func() {
+		esim  := container.NewEsim()
+		onceInfra = initInfra(esim, provideStubsGrpcClient(esim))
 	})
 
 	return onceInfra
@@ -69,10 +80,6 @@ func (this *Infra) HealthCheck() []error {
 	return errs
 }
 
-func provideEsim() *container.Esim {
-	return container.NewEsim()
-}
-
 
 func provideDb(esim *container.Esim) *mysql.MysqlClient {
 
@@ -86,10 +93,10 @@ func provideDb(esim *container.Esim) *mysql.MysqlClient {
 }
 
 
-
 func provideUserRepo(esim *container.Esim) repo.UserRepo {
 	return repo.NewUserRepo(esim.Logger)
 }
+
 
 func provideGrpcClient(esim *container.Esim) *grpc.GrpcClient {
 	clientOptional := grpc.ClientOptionals{}
@@ -102,8 +109,30 @@ func provideGrpcClient(esim *container.Esim) *grpc.GrpcClient {
 
 	return grpcClient
 }
+
+
+func provideStubsGrpcClient(esim *container.Esim) *grpc.GrpcClient {
+	clientOptional := grpc.ClientOptionals{}
+	clientOptions := grpc.NewClientOptions(
+		clientOptional.WithLogger(esim.Logger),
+		clientOptional.WithConf(esim.Conf),
+		clientOptional.WithDialOptions(_grpc.WithUnaryInterceptor(
+			egrpc.ClientStubs(func(ctx context.Context, method string, req, reply interface{}, cc *_grpc.ClientConn, invoker _grpc.UnaryInvoker, opts ..._grpc.CallOption) error {
+				esim.Logger.Infof(method)
+
+				err := invoker(ctx, method, req, reply, cc, opts...)
+				return err
+			}),
+		),),
+	)
+
+	grpcClient := grpc.NewClient(clientOptions)
+
+	return grpcClient
+}
 `,
 	}
+
 
 	fc2 := &FileContent{
 		FileName: "wire.go",
@@ -114,15 +143,18 @@ package infra
 
 import (
 	"github.com/google/wire"
+	"github.com/jukylin/esim/grpc"
+	"github.com/jukylin/esim/container"
 )
 
 
-func initInfra() *Infra {
+func initInfra(esim *container.Esim,grpc *grpc.GrpcClient) *Infra {
 	wire.Build(infraSet)
 	return nil
 }
 `,
 	}
+
 
 	fc3 := &FileContent{
 		FileName: "wire_gen.go",
@@ -134,17 +166,20 @@ func initInfra() *Infra {
 
 package infra
 
+import (
+	"github.com/jukylin/esim/container"
+	"github.com/jukylin/esim/grpc"
+)
+
 // Injectors from wire.go:
 
-func initInfra() *Infra {
-	esim := provideEsim()
+func initInfra(esim *container.Esim, grpc2 *grpc.GrpcClient) *Infra {
 	mysqlClient := provideDb(esim)
-	grpcClient := provideGrpcClient(esim)
 	userRepo := provideUserRepo(esim)
 	infra := &Infra{
 		Esim:     esim,
 		DB:       mysqlClient,
-		GrpcClient: grpcClient,
+		GrpcClient: grpc2,
 		UserRepo: userRepo,
 	}
 	return infra

@@ -194,7 +194,7 @@ func TestMain(m *testing.M) {
 
 	app = {{service_name}}.NewApp()
 
-	app.Infra = infra.NewInfra()
+	app.Infra = infra.NewStubsInfra()
 
 	app.Trans = append(app.Trans, http.NewBeegoServer(app.Esim))
 
