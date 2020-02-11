@@ -232,7 +232,7 @@ func TestControllers_Esim(t *testing.T)  {
 	if err != nil{
 		app.Logger.Errorf(err.Error())
 	}
-	println(string(body))
+	app.Logger.Debugf(string(body))
 	assert.Equal(t, 200, resp.StatusCode)
 }
 `,
