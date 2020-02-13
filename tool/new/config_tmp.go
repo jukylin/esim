@@ -226,6 +226,8 @@ grpc_server_slow_time : 500
 grpc_server_tracer : {{bool}}
 #启动metrice true/false
 grpc_server_metrics : {{bool}}
+#启动debug true/false
+grpc_server_debug: {{bool}}
 
 #grpc 客户端
 #开启慢检查 true/false
@@ -236,6 +238,8 @@ grpc_client_slow_time : 500
 grpc_client_tracer : {{bool}}
 #启动metrice true/false
 grpc_client_metrics : {{bool}}
+#启动debug true/false
+grpc_client_debug: {{bool}}
 
 #mysql
 #开启慢检查 true/false

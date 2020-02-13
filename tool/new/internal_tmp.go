@@ -23,13 +23,15 @@ type App struct{
 	Trans []transports.Transports
 
 	Infra *infra.Infra
+
+	confPath string
 }
 
 type Option func(c *App)
 
 type AppOptions struct{}
 
-func NewApp() *App {
+func NewApp(options ...Option) *App {
 
 	app := &App{}
 
@@ -57,11 +59,16 @@ func NewApp() *App {
 			options.WithConfFile(file))
 	})
 
-	app.Esim := container.NewEsim()
+	app.Esim = container.NewEsim()
 
 	return app
 }
 
+func (AppOptions) WithConfPath(confPath string) Option {
+	return func(app *App) {
+		app.confPath = confPath
+	}
+}
 
 func (this *App) Start()  {
 	for _, tran := range this.Trans {
