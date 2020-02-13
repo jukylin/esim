@@ -194,7 +194,8 @@ var app *{{service_name}}.App
 
 func TestMain(m *testing.M) {
 
-	app = {{service_name}}.NewApp()
+	appOptions := {{service_name}}.AppOptions{}
+	app = {{service_name}}.NewApp(appOptions.WithConfPath("../../../../conf/"))
 
 	app.Infra = infra.NewStubsInfra()
 

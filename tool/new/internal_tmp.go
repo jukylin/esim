@@ -25,7 +25,21 @@ type App struct{
 	Infra *infra.Infra
 }
 
+type Option func(c *App)
+
+type AppOptions struct{}
+
 func NewApp() *App {
+
+	app := &App{}
+
+	for _, option := range options {
+		option(app)
+	}
+
+	if app.confPath == ""{
+		app.confPath = "conf/"
+	}
 
 	container.SetConfFunc(func() config.Config {
 		options := config.ViperConfOptions{}
@@ -35,21 +49,15 @@ func NewApp() *App {
 			env = "dev"
 		}
 
-		gopath := os.Getenv("GOPATH")
-
-		monitFile := gopath + "/src/{{PROPATH}}{{service_name}}/" + "conf/monitoring.yaml"
-		confFile := gopath + "/src/{{PROPATH}}{{service_name}}/" + "conf/" + env + ".yaml"
+		monitFile := app.confPath + "monitoring.yaml"
+		confFile := app.confPath  + env + ".yaml"
 
 		file := []string{monitFile, confFile}
 		return config.NewViperConfig(options.WithConfigType("yaml"),
 			options.WithConfFile(file))
 	})
 
-	esim := container.NewEsim()
-
-	app := &App{
-		Esim: esim,
-	}
+	app.Esim := container.NewEsim()
 
 	return app
 }
