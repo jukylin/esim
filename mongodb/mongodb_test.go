@@ -1,8 +1,11 @@
 package mongodb
 
 import (
+	"os"
 	"testing"
 	"context"
+	"sync"
+
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/config"
 	"go.mongodb.org/mongo-driver/bson"
@@ -16,7 +19,7 @@ type User struct{
 }
 
 
-var db *mgo.Session
+var client *MgoClient
 
 func TestMain(m *testing.M) {
 	logger := log.NewLogger()
@@ -26,29 +29,51 @@ func TestMain(m *testing.M) {
 		logger.Fatalf("Could not connect to docker: %s", err)
 	}
 
-	resource, err := pool.Run("mongo", "3.0", nil)
-	if err != nil {
-		logger.Fatalf("Could not start resource: %s", err)
+	opt := &dockertest.RunOptions{
+		Repository: "mongo",
+		Tag: "latest",
 	}
 
+	// pulls an image, creates a container based on it and runs it
+	resource, err := pool.RunWithOptions(opt, func(hostConfig *dc.HostConfig) {
+		hostConfig.PortBindings = map[dc.Port][]dc.PortBinding{
+			"27017/tcp": {{HostIP: "", HostPort: "27017"}},
+		}
+	})
+
 	if err := pool.Retry(func() error {
-		client := NewMongo()
-		return client.Ping()[0]
+		mgoClientOptions := MgoClientOptions{}
+		client = NewMongo(
+			mgoClientOptions.WithDbConfig([]MgoConfig{
+				{
+					"test",
+					"mongodb://127.0.0.1:27017",
+				},
+			}))
+		if len(client.Ping()) > 0{
+			return client.Ping()[0]
+		}else{
+			return nil
+		}
 	}); err != nil {
 		logger.Fatalf("Could not connect to docker: %s", err)
 	}
 
 	code := m.Run()
-	db.Close()
+
+	client.Close()
+
 	// You can't defer this because os.Exit doesn't care for defer
 	if err := pool.Purge(resource); err != nil {
 		logger.Fatalf("Could not purge resource: %s", err)
 	}
 	resource.Expire(60)
+
 	os.Exit(code)
 }
 
 func TestGetColl(t *testing.T)  {
+	mgoOnce = sync.Once{}
 
 	logger := log.NewLogger()
 	conf := config.NewMemConfig()
@@ -71,15 +96,17 @@ func TestGetColl(t *testing.T)  {
 
 	filter := bson.M{"phone": "123456"}
 	coll.Find(ctx, filter)
-
 	_, ok := ctx.Value("command").(*string)
 	if ok == false{
 		t.Error("command not exists")
 	}
+	mongoClient.Close()
 }
 
 
 func TestWithMonitorEvent(t *testing.T)  {
+	mgoOnce = sync.Once{}
+
 	loggerOptions := log.LoggerOptions{}
 	logger := log.NewLogger(loggerOptions.WithDebug(true))
 	conf := config.NewMemConfig()
@@ -113,10 +140,13 @@ func TestWithMonitorEvent(t *testing.T)  {
 	u := User{}
 	filter := bson.M{"phone": "123456"}
 	coll.FindOne(ctx, filter).Decode(u)
+	mongoClient.Close()
 }
 
 
 func TestMulEvent(t *testing.T)  {
+	mgoOnce = sync.Once{}
+
 	loggerOptions := log.LoggerOptions{}
 	logger := log.NewLogger(loggerOptions.WithDebug(true))
 	conf := config.NewMemConfig()
@@ -153,4 +183,5 @@ func TestMulEvent(t *testing.T)  {
 	u := User{}
 	filter := bson.M{"phone": "123456"}
 	coll.FindOne(ctx, filter).Decode(u)
+	mongoClient.Close()
 }

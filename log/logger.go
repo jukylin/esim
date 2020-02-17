@@ -67,7 +67,6 @@ func NewLogger(options ...Option) Logger {
 		zapConfig.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	} else {
 		zapConfig.Encoding = "json"
-		zapConfig.InitialFields = map[string]interface{}{"service_name": logger.conf.GetString("appname")}
 	}
 	zapLogger, _ := zapConfig.Build()
 	logger.logger = zapLogger

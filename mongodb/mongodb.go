@@ -71,7 +71,7 @@ func (MgoClientOptions) WithConf(conf config.Config) Option {
 	}
 }
 
-func (MgoClientOptions) Withloggerger(logger log.Logger) Option {
+func (MgoClientOptions) WithLogger(logger log.Logger) Option {
 	return func(m *MgoClient) {
 		m.logger = logger
 	}
@@ -256,7 +256,9 @@ func (this *MgoClient) Close()  {
 
 	for _, db := range this.Mgos {
 		err = db.Disconnect(ctx)
-		this.logger.Errorf(err.Error())
+		if err != nil {
+			this.logger.Errorf(err.Error())
+		}
 	}
 }
 
