@@ -32,43 +32,12 @@ func TestMain(m *testing.M) {
 	}
 
 	if err := pool.Retry(func() error {
-		var err error
-		db, err = mgo.Dial(fmt.Sprintf("localhost:%s", resource.GetPort("27017/tcp")))
-		if err != nil {
-			return err
-		}
-
 		client := NewMongo()
-		client.Ping()
-		return db.Ping()
+		return client.Ping()[0]
 	}); err != nil {
 		logger.Fatalf("Could not connect to docker: %s", err)
 	}
 
-	sqls := []string{
-		`create database test_1;`,
-		`CREATE TABLE IF NOT EXISTS test_1.test(
-		  id int not NULL auto_increment,
-		  title VARCHAR(10) not NULL DEFAULT '',
-		  PRIMARY KEY (id)
-		)engine=innodb;`,
-		`create database test_2;`,
-		`CREATE TABLE IF NOT EXISTS test_2.user(
-		  id int not NULL auto_increment,
-		  username VARCHAR(10) not NULL DEFAULT '',
-			PRIMARY KEY (id)
-		)engine=innodb;`,}
-
-	for _, execSql := range sqls {
-		res, err := db.Exec(execSql)
-		if err != nil {
-			logger.Errorf(err.Error())
-		}
-		_, err = res.RowsAffected()
-		if err != nil {
-			logger.Errorf(err.Error())
-		}
-	}
 	code := m.Run()
 	db.Close()
 	// You can't defer this because os.Exit doesn't care for defer

@@ -177,7 +177,7 @@ func (this *MgoClient) init() {
 		if err != nil {
 			this.logger.Panicf("conn mongo error: %s , uri: %s \n", err.Error(), mgo.Uri)
 		}
-		
+
 		err = client.Ping(ctx, readpref.Primary())
 		if err != nil {
 			this.logger.Panicf("ping mongo error: %s , uri: %s \n", err.Error(), mgo.Uri)
@@ -246,8 +246,18 @@ func (this *MgoClient) Ping() []error {
 			errs = append(errs, err)
 		}
 	}
+
 	return errs
-	
+}
+
+func (this *MgoClient) Close()  {
+	var err error
+	ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
+
+	for _, db := range this.Mgos {
+		err = db.Disconnect(ctx)
+		this.logger.Errorf(err.Error())
+	}
 }
 
 //mongodb 的上下文
