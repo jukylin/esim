@@ -7,11 +7,11 @@ import (
 	"time"
 
 	"github.com/jukylin/esim/config"
-	"github.com/jukylin/esim/log"
 	"go.mongodb.org/mongo-driver/event"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
+	"github.com/jukylin/esim/log"
 )
 
 var mgoOnce sync.Once
@@ -22,7 +22,7 @@ type MgoClient struct {
 
 	conf config.Config
 
-	log log.Logger
+	logger log.Logger
 
 	monitorEvents []func() MonitorEvent
 
@@ -55,8 +55,8 @@ func NewMongo(options ...Option) *MgoClient {
 			onceMgoClient.conf = config.NewNullConfig()
 		}
 
-		if onceMgoClient.log == nil {
-			onceMgoClient.log = log.NewLogger()
+		if onceMgoClient.logger == nil {
+			onceMgoClient.logger = log.NewLogger()
 		}
 
 		onceMgoClient.init()
@@ -71,9 +71,9 @@ func (MgoClientOptions) WithConf(conf config.Config) Option {
 	}
 }
 
-func (MgoClientOptions) WithLogger(log log.Logger) Option {
+func (MgoClientOptions) Withloggerger(logger log.Logger) Option {
 	return func(m *MgoClient) {
-		m.log = log
+		m.logger = logger
 	}
 }
 
@@ -95,16 +95,16 @@ type MgoConfig struct {
 	Uri string `json:"uri",yaml:"uri"`
 }
 
-func (m *MgoClient) init() {
+func (this *MgoClient) init() {
 
 	mgoConfigs := []MgoConfig{}
-	err := m.conf.UnmarshalKey("mgos", &mgoConfigs)
+	err := this.conf.UnmarshalKey("mgos", &mgoConfigs)
 	if err != nil {
-		m.log.Panicf("Fatal error config file: %s \n", err.Error())
+		this.logger.Panicf("Fatal error config file: %s \n", err.Error())
 	}
 
-	if len(m.mgoConfig) > 0 {
-		mgoConfigs = append(mgoConfigs, m.mgoConfig...)
+	if len(this.mgoConfig) > 0 {
+		mgoConfigs = append(mgoConfigs, this.mgoConfig...)
 	}
 
 	for _, mgo := range mgoConfigs {
@@ -112,8 +112,8 @@ func (m *MgoClient) init() {
 		clientOptions := options.Client()
 		clientOptions.ApplyURI(mgo.Uri)
 
-		if m.monitorEvents != nil {
-			firstEvent := m.initMonitorMulLevelEvent(mgo.Db)
+		if this.monitorEvents != nil {
+			firstEvent := this.initMonitorMulLevelEvent(mgo.Db)
 			//事件监控
 			eventComMon := &event.CommandMonitor{
 				Started: func(ctx context.Context, startEvent *event.CommandStartedEvent) {
@@ -140,61 +140,61 @@ func (m *MgoClient) init() {
 		//池子监控
 		poolMon := &event.PoolMonitor{
 			Event: func(pev *event.PoolEvent) {
-				m.poolEvent(pev)
+				this.poolEvent(pev)
 			},
 		}
 		clientOptions.SetPoolMonitor(poolMon)
 
-		mgo_connect_timeout := m.conf.GetInt64("mgo_connect_timeout")
+		mgo_connect_timeout := this.conf.GetInt64("mgo_connect_timeout")
 		if mgo_connect_timeout != 0 {
 			clientOptions.SetConnectTimeout(time.Duration(mgo_connect_timeout) * time.Millisecond)
 			clientOptions.SetServerSelectionTimeout(time.Duration(mgo_connect_timeout) * time.Millisecond)
 		}
 
-		mgo_max_conn_idle_time := m.conf.GetInt64("mgo_max_conn_idle_time")
+		mgo_max_conn_idle_time := this.conf.GetInt64("mgo_max_conn_idle_time")
 		if mgo_max_conn_idle_time != 0 {
 			clientOptions.SetMaxConnIdleTime(time.Duration(mgo_max_conn_idle_time) * time.Minute)
 		}
 
-		mgo_max_pool_size := m.conf.GetUint64("mgo_max_pool_size")
+		mgo_max_pool_size := this.conf.GetUint64("mgo_max_pool_size")
 		if mgo_max_pool_size != 0 {
 			clientOptions.SetMaxPoolSize(mgo_max_pool_size)
 		}
 
-		mgo_min_pool_size := m.conf.GetUint64("mgo_min_pool_size")
+		mgo_min_pool_size := this.conf.GetUint64("mgo_min_pool_size")
 		if mgo_min_pool_size != 0 {
 			clientOptions.SetMinPoolSize(mgo_min_pool_size)
 		}
 
 		client, err := mongo.NewClient(clientOptions)
 		if err != nil {
-			m.log.Panicf("new mongo client error: %s , uri: %s \n", err.Error(), mgo.Uri)
+			this.logger.Panicf("new mongo client error: %s , uri: %s \n", err.Error(), mgo.Uri)
 		}
 
 		ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
 
 		err = client.Connect(ctx)
 		if err != nil {
-			m.log.Panicf("conn mongo error: %s , uri: %s \n", err.Error(), mgo.Uri)
+			this.logger.Panicf("conn mongo error: %s , uri: %s \n", err.Error(), mgo.Uri)
 		}
-
-		err = m.Ping(client)
+		
+		err = client.Ping(ctx, readpref.Primary())
 		if err != nil {
-			m.log.Panicf("ping mongo error: %s , uri: %s \n", err.Error(), mgo.Uri)
+			this.logger.Panicf("ping mongo error: %s , uri: %s \n", err.Error(), mgo.Uri)
 		}
 
-		m.setMgo(mgo.Db, client)
-		m.log.Infof("[mongodb] %s init success", mgo.Db)
+		this.setMgo(mgo.Db, client)
+		this.logger.Infof("[mongodb] %s init success", mgo.Db)
 	}
 }
 
-func (m *MgoClient) initMonitorMulLevelEvent(db_name string) MonitorEvent {
-	eventNum := len(m.monitorEvents)
+func (this *MgoClient) initMonitorMulLevelEvent(db_name string) MonitorEvent {
+	eventNum := len(this.monitorEvents)
 	var firstProxy MonitorEvent
 	proxyInses := make([]MonitorEvent, eventNum)
-	for k, proxyFunc := range m.monitorEvents {
+	for k, proxyFunc := range this.monitorEvents {
 		if _, ok := proxyFunc().(MonitorEvent); ok == false {
-			m.log.Panicf("[mongodb] not implement MonitorEvent interface")
+			this.logger.Panicf("[mongodb] not implement MonitorEvent interface")
 		} else {
 			proxyInses[k] = proxyFunc()
 		}
@@ -210,38 +210,48 @@ func (m *MgoClient) initMonitorMulLevelEvent(db_name string) MonitorEvent {
 			proxyIns.(MonitorEvent).NextEvent(proxyInses[k+1])
 		}
 
-		m.log.Infof("[mongodb] %s init %s [%p]", db_name, proxyIns.(MonitorEvent).EventName(), proxyIns)
+		this.logger.Infof("[mongodb] %s init %s [%p]", db_name, proxyIns.(MonitorEvent).EventName(), proxyIns)
 	}
 
 	return firstProxy
 }
 
-func (m *MgoClient) setMgo(mgo_name string, gdb *mongo.Client) bool {
+func (this *MgoClient) setMgo(mgo_name string, gdb *mongo.Client) bool {
 	mgo_name = strings.ToLower(mgo_name)
-	m.Mgos[mgo_name] = gdb
+	this.Mgos[mgo_name] = gdb
 	return true
 }
 
-func (m *MgoClient) GetColl(dataBase, coll string) *mongo.Collection {
+func (this *MgoClient) GetColl(dataBase, coll string) *mongo.Collection {
 	dataBase = strings.ToLower(dataBase)
-	if mgo, ok := m.Mgos[dataBase]; ok {
+	if mgo, ok := this.Mgos[dataBase]; ok {
 		return mgo.Database(dataBase).Collection(coll)
 	} else {
-		m.log.Errorf("[db] %s not found", dataBase)
+		this.logger.Errorf("[db] %s not found", dataBase)
 		return nil
 	}
 }
 
-func (m *MgoClient) poolEvent(pev *event.PoolEvent) {
+func (this *MgoClient) poolEvent(pev *event.PoolEvent) {
 }
 
-func (m *MgoClient) Ping(client *mongo.Client) error {
+func (this *MgoClient) Ping() []error {
 	ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
-	return client.Ping(ctx, readpref.Primary())
+
+	var errs []error
+	var err error
+	for _, db := range this.Mgos {
+		err = db.Ping(ctx, readpref.Primary())
+		if err != nil{
+			errs = append(errs, err)
+		}
+	}
+	return errs
+	
 }
 
 //mongodb 的上下文
-func (m *MgoClient) GetCtx(ctx context.Context) context.Context {
+func (this *MgoClient) GetCtx(ctx context.Context) context.Context {
 	var command string
 	return context.WithValue(ctx, "command", &command)
 }
