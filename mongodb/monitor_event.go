@@ -109,7 +109,6 @@ func (m *monitorEvent) SucceededEvent(ctx context.Context,
 
 
 func (m *monitorEvent) FailedEvent(ctx context.Context, failedEvent *event.CommandFailedEvent) {
-	println(56)
 
 	var beginTime time.Time
 	monBackEvent := &mongoBackEvent{}

@@ -63,6 +63,4 @@ func (this *spyEvent) FailedEvent(ctx context.Context, failedEvent *event.Comman
 	if this.nextEvent != nil {
 		this.nextEvent.FailedEvent(ctx, failedEvent)
 	}
-
-
 }
