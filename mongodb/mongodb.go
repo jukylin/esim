@@ -20,8 +20,6 @@ var onceMgoClient *MgoClient
 type MgoClient struct {
 	Mgos map[string]*mongo.Client
 
-	mgoLock *sync.RWMutex
-
 	conf config.Config
 
 	log log.Logger
@@ -47,7 +45,6 @@ func NewMongo(options ...Option) *MgoClient {
 	mgoOnce.Do(func() {
 		onceMgoClient = &MgoClient{
 			Mgos:    make(map[string]*mongo.Client),
-			mgoLock: new(sync.RWMutex),
 		}
 
 		for _, option := range options {
@@ -92,7 +89,6 @@ func (MgoClientOptions) WithMonitorEvent(mongoEvent ...func() MonitorEvent) Opti
 	}
 }
 
-type afterCallback func(context.Context, interface{}, time.Time, time.Time)
 
 type MgoConfig struct {
 	Db  string `json:"db",yaml:"db"`
@@ -149,7 +145,6 @@ func (m *MgoClient) init() {
 		}
 		clientOptions.SetPoolMonitor(poolMon)
 
-		//2个一起设置不然超时会阻塞
 		mgo_connect_timeout := m.conf.GetInt64("mgo_connect_timeout")
 		if mgo_connect_timeout != 0 {
 			clientOptions.SetConnectTimeout(time.Duration(mgo_connect_timeout) * time.Millisecond)
@@ -223,10 +218,7 @@ func (m *MgoClient) initMonitorMulLevelEvent(db_name string) MonitorEvent {
 
 func (m *MgoClient) setMgo(mgo_name string, gdb *mongo.Client) bool {
 	mgo_name = strings.ToLower(mgo_name)
-
-	m.mgoLock.Lock()
 	m.Mgos[mgo_name] = gdb
-	m.mgoLock.Unlock()
 	return true
 }
 
@@ -235,7 +227,6 @@ func (m *MgoClient) GetColl(dataBase, coll string) *mongo.Collection {
 	if mgo, ok := m.Mgos[dataBase]; ok {
 		return mgo.Database(dataBase).Collection(coll)
 	} else {
-		m.mgoLock.RUnlock()
 		m.log.Errorf("[db] %s not found", dataBase)
 		return nil
 	}
