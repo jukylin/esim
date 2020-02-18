@@ -13,6 +13,9 @@ import (
 var esimOnce sync.Once
 var onceEsim *Esim
 
+const DEFAULT_APPNAME = "esim"
+const DEFAULT_PROMETHEUS_HTTP_ADDR = "9002"
+
 //esim init start
 type Esim struct {
 	prometheus *prometheus.Prometheus
@@ -33,7 +36,7 @@ var esimSet = wire.NewSet(
 )
 
 var confFunc  = func() config.Config {
-	return config.NewNullConfig()
+	return config.NewMemConfig()
 }
 func SetConfFunc(conf func() config.Config) {
 	confFunc = conf
@@ -42,14 +45,21 @@ func provideConf() config.Config {
 	return confFunc()
 }
 
-var prometheusFunc = func(conf config.Config, log log.Logger) *prometheus.Prometheus {
-	return prometheus.NewPrometheus(conf, log)
+
+var prometheusFunc = func(conf config.Config, logger log.Logger) *prometheus.Prometheus {
+	var http_addr string
+	if conf.GetString("prometheus_http_addr") != ""{
+		http_addr = conf.GetString("prometheus_http_addr")
+	}else{
+		http_addr = DEFAULT_PROMETHEUS_HTTP_ADDR
+	}
+	return prometheus.NewPrometheus(http_addr, logger)
 }
-func SetPrometheusFunc(prometheus func(conf config.Config, log log.Logger) *prometheus.Prometheus) {
+func SetPrometheusFunc(prometheus func(config.Config, log.Logger) *prometheus.Prometheus) {
 	prometheusFunc = prometheus
 }
-func providePrometheus(conf config.Config, log log.Logger) *prometheus.Prometheus {
-	return prometheusFunc(conf, log)
+func providePrometheus(conf config.Config, logger log.Logger) *prometheus.Prometheus {
+	return prometheusFunc(conf, logger)
 }
 
 
@@ -57,7 +67,6 @@ var loggerFunc = func(conf config.Config) log.Logger {
 	var loggerOptions log.LoggerOptions
 
 	logger := log.NewLogger(
-		loggerOptions.WithConf(conf),
 		loggerOptions.WithDebug(conf.GetBool("debug")),
 	)
 	return logger
@@ -71,9 +80,15 @@ func provideLogger(conf config.Config) log.Logger {
 
 
 var tracerFunc = func(conf config.Config, logger log.Logger) opentracing.Tracer {
-	return eot.NewTracer(conf.GetString("appname"), logger)
+	var appname string
+	if conf.GetString("appname") != ""{
+		appname = conf.GetString("appname")
+	}else{
+		appname = DEFAULT_APPNAME
+	}
+	return eot.NewTracer(appname, logger)
 }
-func SetTracer(tracer func(conf config.Config, logger log.Logger) opentracing.Tracer) {
+func SetTracer(tracer func(config.Config, log.Logger) opentracing.Tracer) {
 	tracerFunc = tracer
 }
 func provideTracer(conf config.Config, logger log.Logger) opentracing.Tracer {

@@ -2,7 +2,6 @@ package log
 
 import (
 	"context"
-	"github.com/jukylin/esim/config"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"runtime"
@@ -18,8 +17,6 @@ type logger struct {
 
 	logger *zap.Logger
 
-	conf config.Config
-
 	sugar *zap.SugaredLogger
 }
 
@@ -33,10 +30,6 @@ func NewLogger(options ...Option) Logger {
 
 	for _, option := range options {
 		option(logger)
-	}
-
-	if logger.conf == nil {
-		logger.conf = config.NewNullConfig()
 	}
 
 	var level zap.AtomicLevel
@@ -77,11 +70,6 @@ func NewLogger(options ...Option) Logger {
 	return logger
 }
 
-func (LoggerOptions) WithConf(conf config.Config) Option {
-	return func(l *logger) {
-		l.conf = conf
-	}
-}
 
 func (LoggerOptions) WithDebug(debug bool) Option {
 	return func(l *logger) {
