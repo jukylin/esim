@@ -48,7 +48,7 @@ func TestMain(m *testing.M) {
 			mgoClientOptions.WithDbConfig([]MgoConfig{
 				{
 					"test",
-					"mongodb://127.0.0.1:27017",
+					"mongodb://0.0.0.0:27017/admin?connect=direct",
 				},
 			}))
 		if len(client.Ping()) > 0{

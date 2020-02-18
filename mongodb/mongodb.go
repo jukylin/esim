@@ -12,6 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"github.com/jukylin/esim/log"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var mgoOnce sync.Once
@@ -233,6 +234,8 @@ func (this *MgoClient) GetColl(dataBase, coll string) *mongo.Collection {
 }
 
 func (this *MgoClient) poolEvent(pev *event.PoolEvent) {
+	lab := prometheus.Labels{"type": pev.Type}
+	mongodbPoolTypes.With(lab).Inc()
 }
 
 func (this *MgoClient) Ping() []error {

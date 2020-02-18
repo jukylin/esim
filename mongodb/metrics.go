@@ -21,7 +21,6 @@ var mongodbDuration = prometheus.NewHistogramVec(
 	[]string{"command"},
 )
 
-
 var mongodbErrTotal = prometheus.NewCounterVec(
 	prometheus.CounterOpts{
 		Name: "mongodb_err_total",
@@ -30,8 +29,17 @@ var mongodbErrTotal = prometheus.NewCounterVec(
 	[]string{"command"},
 )
 
+var mongodbPoolTypes = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Name: "mongodb_pool_total",
+		Help: "Number of pool's types total",
+	},
+	[]string{"type"},
+)
+
 func init() {
 	prometheus.MustRegister(mongodbTotal)
 	prometheus.MustRegister(mongodbDuration)
 	prometheus.MustRegister(mongodbErrTotal)
+	prometheus.MustRegister(mongodbPoolTypes)
 }
