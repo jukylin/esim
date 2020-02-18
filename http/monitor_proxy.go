@@ -1,14 +1,14 @@
 package http
 
 import (
+	"net/http"
+	"time"
 	"github.com/opentracing-contrib/go-stdlib/nethttp"
 	opentracing2 "github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/opentracing"
-	"net/http"
-	"time"
 )
 
 // monitorProxy wraps a RoundTripper.
@@ -102,17 +102,22 @@ func (this *monitorProxy) RoundTrip(req *http.Request) (*http.Response, error) {
 
 	if this.conf.GetBool("http_client_tracer") == true {
 		req, ht := nethttp.TraceRequest(this.tracer, req)
-		resp, err = this.nextTransport.RoundTrip(req)
+
+		transport := nethttp.Transport{}
+		transport.RoundTripper = this.nextTransport
+		resp, err = transport.RoundTrip(req)
+
 		ht.Finish()
 	}else{
 		resp, err = this.nextTransport.RoundTrip(req)
 	}
 
-	this.after(beginTime, req, resp)
-
 	if err != nil {
 		return resp, err
 	}
+
+	this.after(beginTime, req, resp)
+
 
 	return resp, nil
 }
@@ -160,7 +165,7 @@ func (this *monitorProxy) httpClientMetrice(beginTime time.Time, endTime time.Ti
 }
 
 func (this *monitorProxy) debugHttp(beginTime time.Time, endTime time.Time,
-	res *http.Request, resp *http.Response) {
+	req *http.Request, resp *http.Response) {
 	this.log.Debugf("http [%d] [%s] %s ： %s", resp.StatusCode, endTime.Sub(beginTime).String(),
-		 res.Method, res.URL.String())
+		req.Method, req.URL.String())
 }

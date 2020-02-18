@@ -45,7 +45,7 @@ func NewHttpClient(options ...Option) *HttpClient {
 	}
 
 	if httpClient.client.Timeout <= 0 {
-		httpClient.client.Timeout = 3 * time.Second
+		httpClient.client.Timeout = 30 * time.Second
 	}
 
 	if httpClient.logger == nil {
