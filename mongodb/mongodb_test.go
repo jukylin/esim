@@ -20,9 +20,10 @@ type User struct{
 
 
 var client *MgoClient
+var logger log.Logger
 
 func TestMain(m *testing.M) {
-	logger := log.NewLogger()
+	logger = log.NewLogger()
 
 	pool, err := dockertest.NewPool("")
 	if err != nil {
@@ -75,7 +76,6 @@ func TestMain(m *testing.M) {
 func TestGetColl(t *testing.T)  {
 	mgoOnce = sync.Once{}
 
-	logger := log.NewLogger()
 	conf := config.NewMemConfig()
 
 	mgoClientOptions := MgoClientOptions{}
@@ -107,8 +107,6 @@ func TestGetColl(t *testing.T)  {
 func TestWithMonitorEvent(t *testing.T)  {
 	mgoOnce = sync.Once{}
 
-	loggerOptions := log.LoggerOptions{}
-	logger := log.NewLogger(loggerOptions.WithDebug(true))
 	conf := config.NewMemConfig()
 	conf.Set("debug", true)
 
@@ -147,8 +145,6 @@ func TestWithMonitorEvent(t *testing.T)  {
 func TestMulEvent(t *testing.T)  {
 	mgoOnce = sync.Once{}
 
-	loggerOptions := log.LoggerOptions{}
-	logger := log.NewLogger(loggerOptions.WithDebug(true))
 	conf := config.NewMemConfig()
 	conf.Set("debug", true)
 
