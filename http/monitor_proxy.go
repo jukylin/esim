@@ -15,7 +15,7 @@ import (
 type monitorProxy struct {
 	nextTransport http.RoundTripper
 
-	log log.Logger
+	logger log.Logger
 
 	conf config.Config
 
@@ -46,13 +46,13 @@ func NewMonitorProxy(options ...MonitorProxyOption) *monitorProxy {
 		monitorProxy.conf = config.NewNullConfig()
 	}
 
-	if monitorProxy.log == nil {
-		monitorProxy.log = log.NewLogger()
+	if monitorProxy.logger == nil {
+		monitorProxy.logger = log.NewLogger()
 	}
 
 	if monitorProxy.tracer == nil {
 		monitorProxy.tracer = opentracing.NewTracer("http",
-			monitorProxy.log)
+			monitorProxy.logger)
 	}
 
 	monitorProxy.registerAfterEvent()
@@ -68,9 +68,9 @@ func (MonitorProxyOptions) WithConf(conf config.Config) MonitorProxyOption {
 	}
 }
 
-func (MonitorProxyOptions) WithLogger(log log.Logger) MonitorProxyOption {
+func (MonitorProxyOptions) WithLogger(logger log.Logger) MonitorProxyOption {
 	return func(pt *monitorProxy) {
-		pt.log = log
+		pt.logger = logger
 	}
 }
 
@@ -94,6 +94,8 @@ func (this *monitorProxy) RoundTrip(req *http.Request) (*http.Response, error) {
 	if this.nextTransport == nil {
 		this.nextTransport = http.DefaultTransport
 	}
+
+	this.logger.Debugc(req.Context(), "Url : %s", req.URL)
 
 	beginTime := time.Now()
 
@@ -151,11 +153,12 @@ func (this *monitorProxy) slowHttpRequest(beginTime time.Time, endTime time.Time
 
 	if http_client_slow_time != 0 {
 		if endTime.Sub(beginTime) > time.Duration(http_client_slow_time)*time.Millisecond {
-			this.log.Warnf("slow http request [%s] ：%s", endTime.Sub(beginTime).String(),
+			this.logger.Warnf("slow http request [%s] ：%s", endTime.Sub(beginTime).String(),
 				res.RequestURI)
 		}
 	}
 }
+
 
 func (this *monitorProxy) httpClientMetrice(beginTime time.Time, endTime time.Time,
 	res *http.Request, resp *http.Response) {
@@ -164,8 +167,9 @@ func (this *monitorProxy) httpClientMetrice(beginTime time.Time, endTime time.Ti
 	httpDuration.With(lab).Observe(endTime.Sub(beginTime).Seconds())
 }
 
+
 func (this *monitorProxy) debugHttp(beginTime time.Time, endTime time.Time,
 	req *http.Request, resp *http.Response) {
-	this.log.Debugf("http [%d] [%s] %s ： %s", resp.StatusCode, endTime.Sub(beginTime).String(),
+	this.logger.Debugf("http [%d] [%s] %s ： %s", resp.StatusCode, endTime.Sub(beginTime).String(),
 		req.Method, req.URL.String())
 }
