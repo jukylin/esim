@@ -121,7 +121,7 @@ func EsimBackUpFile(backFile string) error {
 	dir := filepath.Dir(backFile)
 	relativeDir := strings.Replace(dir, os.Getenv("GOPATH") + "/src/", "", -1)
 
-	backUpPath := os.Getenv("GOPATH") + "/pkg/esim/"
+	backUpPath := os.Getenv("GOPATH") + "/pkg/esim/backup/"
 
 	targetPath := backUpPath + relativeDir
 
