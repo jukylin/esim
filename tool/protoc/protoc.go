@@ -76,7 +76,7 @@ func Gen(v *viper.Viper) {
 	}
 
 	if v.GetBool("mock") == true {
-		log.Infof("请确认已安装 mockgen")
+		log.Infof("请确认已安装 mockery")
 
 		_, fileName := filepath.Split(from_proto)
 		fileStrs := strings.Split(fileName, ".")

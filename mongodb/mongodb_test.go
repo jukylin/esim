@@ -11,6 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"github.com/ory/dockertest/v3"
 	dc "github.com/ory/dockertest/v3/docker"
+	"github.com/stretchr/testify/assert"
 )
 
 type User struct{
@@ -36,11 +37,17 @@ func TestMain(m *testing.M) {
 	}
 
 	// pulls an image, creates a container based on it and runs it
-	_, err = pool.RunWithOptions(opt, func(hostConfig *dc.HostConfig) {
+	resource, err := pool.RunWithOptions(opt, func(hostConfig *dc.HostConfig) {
 		hostConfig.PortBindings = map[dc.Port][]dc.PortBinding{
 			"27017/tcp": {{HostIP: "", HostPort: "27017"}},
 		}
 	})
+
+	if err != nil {
+		logger.Fatalf("Could not start resource: %s", err)
+	}
+
+	resource.Expire(10)
 
 	if err := pool.Retry(func() error {
 		mgoClientOptions := MgoClientOptions{}
@@ -65,10 +72,9 @@ func TestMain(m *testing.M) {
 	client.Close()
 
 	// You can't defer this because os.Exit doesn't care for defer
-	//if err := pool.Purge(resource); err != nil {
-	//	logger.Fatalf("Could not purge resource: %s", err)
-	//}
-	//resource.Expire(60)
+	if err := pool.Purge(resource); err != nil {
+		logger.Fatalf("Could not purge resource: %s", err)
+	}
 
 	os.Exit(code)
 }
@@ -97,9 +103,8 @@ func TestGetColl(t *testing.T)  {
 	filter := bson.M{"phone": "123456"}
 	coll.Find(ctx, filter)
 	_, ok := ctx.Value("command").(*string)
-	if ok == false{
-		t.Error("command not exists")
-	}
+	assert.True(t, ok)
+
 	mongoClient.Close()
 }
 

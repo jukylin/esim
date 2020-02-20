@@ -38,6 +38,8 @@ func TestMain(m *testing.M) {
 		logger.Fatalf("Could not start resource: %s", err)
 	}
 
+	resource.Expire(10)
+
 	if err = pool.Retry(func() error {
 		client = NewRedisClient()
 		err = client.Ping()
@@ -63,7 +65,6 @@ func TestMain(m *testing.M) {
 		logger.Fatalf("Could not purge resource: %s", err)
 	}
 
-	resource.Expire(60)
 	os.Exit(code)
 }
 

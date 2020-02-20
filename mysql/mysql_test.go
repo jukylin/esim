@@ -66,6 +66,8 @@ func TestMain(m *testing.M) {
 		logger.Fatalf("Could not start resource: %s", err)
 	}
 
+	resource.Expire(10)
+
 	if err := pool.Retry(func() error {
 		var err error
 		db, err = sql.Open("mysql", "root:123456@tcp(0.0.0.0:3306)/mysql?charset=utf8&parseTime=True&loc=Local")
@@ -109,7 +111,6 @@ func TestMain(m *testing.M) {
 	if err := pool.Purge(resource); err != nil {
 		logger.Fatalf("Could not purge resource: %s", err)
 	}
-	resource.Expire(60)
 	os.Exit(code)
 }
 
