@@ -186,16 +186,49 @@ import (
 	"{{PROPATH}}{{service_name}}/internal/infra"
 	http_client "github.com/jukylin/esim/http"
 	"github.com/stretchr/testify/assert"
+	"github.com/jukylin/esim/log"
+	_grpc "google.golang.org/grpc"
+	"github.com/jukylin/esim/container"
+	"github.com/jukylin/esim/grpc"
 )
 
-var app *{{service_name}}.App
 
 func TestMain(m *testing.M) {
-
 	appOptions := {{service_name}}.AppOptions{}
-	app = {{service_name}}.NewApp(appOptions.WithConfPath("../../../../conf/"))
+	app := {{service_name}}.NewApp(appOptions.WithConfPath("../../../../conf/"))
 
-	app.Infra = infra.NewStubsInfra()
+	setUp(app)
+
+	code := m.Run()
+
+	tearDown(app)
+
+	os.Exit(code)
+}
+
+
+func provideStubsGrpcClient(esim *container.Esim) *grpc.GrpcClient {
+	clientOptional := grpc.ClientOptionals{}
+	clientOptions := grpc.NewClientOptions(
+		clientOptional.WithLogger(esim.Logger),
+		clientOptional.WithConf(esim.Conf),
+		clientOptional.WithDialOptions(_grpc.WithUnaryInterceptor(
+			grpc.ClientStubs(func(ctx context.Context, method string, req, reply interface{}, cc *_grpc.ClientConn, invoker _grpc.UnaryInvoker, opts ..._grpc.CallOption) error {
+				esim.Logger.Infof(method)
+				err := invoker(ctx, method, req, reply, cc, opts...)
+				return err
+			}),
+		),),
+	)
+
+	grpcClient := grpc.NewClient(clientOptions)
+
+	return grpcClient
+}
+
+func setUp(app *{{service_name}}.App)  {
+
+	app.Infra = infra.NewStubsInfra(provideStubsGrpcClient(app.Esim))
 
 	app.Trans = append(app.Trans, http.NewBeegoServer(app.Esim))
 
@@ -207,23 +240,24 @@ func TestMain(m *testing.M) {
 			app.Logger.Errorf(err.Error())
 		}
 	}
-
-	code := m.Run()
-
-	app.Infra.Close()
-
-	os.Exit(code)
 }
+
+
+func tearDown(app *{{service_name}}.App)  {
+	app.Infra.Close()
+}
+
 
 //go test -v -tags="component_test"
 func TestControllers_Esim(t *testing.T)  {
+	logger := log.NewLogger()
 
 	client := http_client.NewHttpClient()
 	ctx := context.Background()
-	resp, err := client.Get(ctx, "http://localhost:"+ app.Conf.GetString("httpport"))
+	resp, err := client.Get(ctx, "http://localhost:8080")
 
 	if err != nil{
-		app.Logger.Errorf(err.Error())
+		logger.Errorf(err.Error())
 	}
 
 	defer resp.Body.Close()
@@ -231,9 +265,9 @@ func TestControllers_Esim(t *testing.T)  {
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil{
-		app.Logger.Errorf(err.Error())
+		logger.Errorf(err.Error())
 	}
-	app.Logger.Debugf(string(body))
+	logger.Debugf(string(body))
 	assert.Equal(t, 200, resp.StatusCode)
 }
 `,

@@ -36,7 +36,7 @@ func TestMain(m *testing.M) {
 	}
 
 	// pulls an image, creates a container based on it and runs it
-	resource, err := pool.RunWithOptions(opt, func(hostConfig *dc.HostConfig) {
+	_, err = pool.RunWithOptions(opt, func(hostConfig *dc.HostConfig) {
 		hostConfig.PortBindings = map[dc.Port][]dc.PortBinding{
 			"27017/tcp": {{HostIP: "", HostPort: "27017"}},
 		}
@@ -65,10 +65,10 @@ func TestMain(m *testing.M) {
 	client.Close()
 
 	// You can't defer this because os.Exit doesn't care for defer
-	if err := pool.Purge(resource); err != nil {
-		logger.Fatalf("Could not purge resource: %s", err)
-	}
-	resource.Expire(60)
+	//if err := pool.Purge(resource); err != nil {
+	//	logger.Fatalf("Could not purge resource: %s", err)
+	//}
+	//resource.Expire(60)
 
 	os.Exit(code)
 }

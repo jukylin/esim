@@ -59,7 +59,7 @@ func NewClientOptions(options ...ClientOptional) *ClientOptions {
 	}
 
 	if clientOptions.conf == nil {
-		clientOptions.conf = config.NewNullConfig()
+		clientOptions.conf = config.NewMemConfig()
 	}
 
 	if clientOptions.tracer == nil {
@@ -146,14 +146,12 @@ func (ClientOptionals) WithDialOptions(options ...grpc.DialOption) ClientOptiona
 
 
 //NewGrpcClient create GrpcClient for business.
+//clientOptions clientOptions can not nil
 func NewClient(clientOptions *ClientOptions) *GrpcClient {
 
 	grpcClient := &GrpcClient{}
-	if clientOptions == nil {
-		grpcClient.clientOpts = &ClientOptions{}
-	}else{
-		grpcClient.clientOpts = clientOptions
-	}
+
+	grpcClient.clientOpts = clientOptions
 
 	return grpcClient
 }

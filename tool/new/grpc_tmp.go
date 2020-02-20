@@ -113,16 +113,50 @@ import (
 	"{{PROPATH}}{{service_name}}/internal/infra"
 	gp "{{PROPATH}}{{service_name}}/internal/infra/third_party/protobuf/passport"
 	"github.com/stretchr/testify/assert"
+	_grpc "google.golang.org/grpc"
+	"github.com/jukylin/esim/container"
+	egrpc "github.com/jukylin/esim/grpc"
+	"github.com/jukylin/esim/log"
 )
 
-var app *{{service_name}}.App
 
 func TestMain(m *testing.M) {
-
 	appOptions := {{service_name}}.AppOptions{}
-	app = {{service_name}}.NewApp(appOptions.WithConfPath("../../../../conf/"))
+	app := {{service_name}}.NewApp(appOptions.WithConfPath("../../../../conf/"))
 
-	app.Infra = infra.NewStubsInfra()
+	setUp(app)
+
+	code := m.Run()
+
+	tearDown(app)
+
+	os.Exit(code)
+}
+
+
+func provideStubsGrpcClient(esim *container.Esim) *egrpc.GrpcClient {
+	clientOptional := egrpc.ClientOptionals{}
+	clientOptions := egrpc.NewClientOptions(
+		clientOptional.WithLogger(esim.Logger),
+		clientOptional.WithConf(esim.Conf),
+		clientOptional.WithDialOptions(_grpc.WithUnaryInterceptor(
+			egrpc.ClientStubs(func(ctx context.Context, method string, req, reply interface{}, cc *_grpc.ClientConn, invoker _grpc.UnaryInvoker, opts ..._grpc.CallOption) error {
+				esim.Logger.Infof(method)
+				err := invoker(ctx, method, req, reply, cc, opts...)
+				return err
+			}),
+		),),
+	)
+
+	grpcClient := egrpc.NewClient(clientOptions)
+
+	return grpcClient
+}
+
+
+func setUp(app *{{service_name}}.App)  {
+
+	app.Infra = infra.NewStubsInfra(provideStubsGrpcClient(app.Esim))
 
 	app.Trans = append(app.Trans, grpc.NewGrpcServer(app))
 
@@ -134,19 +168,21 @@ func TestMain(m *testing.M) {
 			app.Logger.Errorf(err.Error())
 		}
 	}
+}
 
-	code := m.Run()
 
+func tearDown(app *{{service_name}}.App)  {
 	app.Infra.Close()
-
-	os.Exit(code)
 }
 
 //go test -v -tags="component_test"
 func TestUserService_GetUserByUserName(t *testing.T)  {
+	logger := log.NewLogger()
+
 	ctx := context.Background()
 
-	conn := app.Infra.GrpcClient.DialContext(ctx, ":" + app.Conf.GetString("grpc_server_tcp"))
+	grpcClient := egrpc.NewClient(egrpc.NewClientOptions())
+	conn := grpcClient.DialContext(ctx, ":50055")
 	defer conn.Close()
 
 	client := gp.NewUserInfoClient(conn)
@@ -155,7 +191,7 @@ func TestUserService_GetUserByUserName(t *testing.T)  {
 	req.Username = "demo"
 	reply, err := client.GetUserByUserName(ctx, req)
 	if err != nil{
-		app.Logger.Errorf(err.Error())
+		logger.Errorf(err.Error())
 	}else {
 		assert.Equal(t, "demo", reply.Data.UserName)
 		assert.Equal(t, int32(0), reply.Code)
