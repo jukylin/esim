@@ -162,11 +162,13 @@ export ESIM_DB_PASSWORD=123456
 
 ## 安装
 
-> 环境 go 1.2 及以上
+> 环境 go 1.3 及以上
 
 > 使用 module 包管理工具
 
 > go get github.com/jukylin/esim
+> cd github.com/jukylin/esim
+> go build -o esim ./tool
 
 ## 创建项目
 
