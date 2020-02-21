@@ -1,9 +1,15 @@
 # Esim文档
 
 ## 架构
+
+> Esim的架构来源于《实现领域驱动设计》的六边形架构和阿里的COLA架构，这2个架构有一个共同点：业务与技术分离。也正是这点解决了微服务开发下业务依赖远程服务的问题。所以才决定由原来的三层架构转为四层架构。
+
+
 ![此处输入图片的描述][1]
 
 ## 分层
+
+> Esim使用松散的分层架构，上层可以任意调用下层。
 
 ![此处输入图片的描述][2]
 
@@ -12,7 +18,7 @@
 目录 | 职责
 ---|---
 controller | 负责显示信息和解析、校验请求，适配不同终端
-app | 不包含业务规则，为下一层领域模型协调任务，分配工作
+application | 不包含业务规则，为下一层领域模型协调任务，分配工作
 domain| 负责表达业务概念，业务状态信息和业务规则，是业务软件的核心
 infrastructure|为各层提供技术支持，持久化，领域事件等
 
@@ -39,12 +45,12 @@ infrastructure|为各层提供技术支持，持久化，领域事件等
 
 目录 | 定义 | 文件 | 类 | 接口
 ---|---|---|---|---
-app/service |应用层|coupon.go | CouponService|无
-domain/service|领域服务 | coupon.go | CouponService|无
-domain/entity |实体| coupon.go | Coupon|无
-infra/event |领域事件|coupon.go | couponEventPub | CouponEvent
-infra/repo|资源库|coupon.go| couponDbRepo |CouponRepo
-infra/dao|数据访问对象| coupon.go| CouponDao |无
+application/service |应用层|index.go | IndexService|无
+domain/service|领域服务 | index.go | IndexService|无
+domain/entity |实体| index.go | Index|无
+infra/event |领域事件|index.go | couponEventPub | IndexEvent
+infra/repo|资源库|index.go| IndexDbRepo |IndexRepo
+infra/dao|数据访问对象| index.go| IndexDao |无
 
 
 ### 数据库设计规范小三样
@@ -77,7 +83,7 @@ infra/dao|数据访问对象| coupon.go| CouponDao |无
 > Esim将wire用于业务与基础设施之间。将基础设施的初始化从业务抽离出来，集中管理。
 
 ### Esim使用wire示例
-> 基础设置的依赖和初始化都在 ```infra/infra.go``` 文件下。wire的使用主要分2步，以增加mysqlClient：
+> 基础设施的依赖和初始化都在 ```infra/infra.go``` 文件下。wire的使用主要分2步，以增加mysqlClient：
 
 #### provide
 ##### before
@@ -243,7 +249,6 @@ func provideLogger(conf config.Config) log.Logger {
 	var loggerOptions log.LoggerOptions
 
 	logger := log.NewLogger(
-		loggerOptions.WithConf(conf),
 		loggerOptions.WithDebug(conf.GetBool("debug")),
 	)
 	return logger}
@@ -260,7 +265,7 @@ infra.NewInfra().Logger.Infoc(ctx, "info %s", "test")
 
 
 ## HTTP
-> 比官方接口多了上下文（ctx）参数
+> 比官方接口多了（ctx）参数
 
 - provide
 
@@ -269,6 +274,13 @@ func provideHttp(esim *container.Esim) *http.HttpClient {
 	clientOptions := http.ClientOptions{}
 	httpClent := http.NewHttpClient(
 		clientOptions.WithTimeOut(esim.Conf.GetDuration("http_client_time_out")),
+        clientOptions.WithProxy(
+            func() interface {} {
+                monitorProxyOptions := http.MonitorProxyOptions{}
+                return http.NewMonitorProxy(
+                    monitorProxyOptions.WithConf(esim.Conf),
+                    monitorProxyOptions.WithLogger(esim.Logger))
+            }),
 	)
 
 	return httpClent
@@ -278,8 +290,6 @@ func provideHttp(esim *container.Esim) *http.HttpClient {
 - reference
 
 ```golang
-import "gitlab.etcchebao.cn/go_service/esim/pkg/http"
-
 resp, err := infra.NewInfra().Http.GetCtx(ctx, "http://www.baidu.com")
 defer resp.Body.Close()
 
@@ -293,14 +303,19 @@ defer resp.Body.Close()
 
 ```golang
 func provideMongodb(esim *container.Esim) mongodb.MgoClient {
-	eventOptions := mongodb.EventOptions{}
 	options := mongodb.MgoClientOptions{}
 	mongo := mongodb.NewMongo(
-		options.WithConf(esim.Conf),
-		options.WithLogger(esim.Log),
-		options.WithMongoEvent(mongodb.NewMonitor),
-		options.WithEventOptions(eventOptions.WithMonConf(esim.Conf),
-			eventOptions.WithMonLogger(esim.Log)),
+		mgoClientOptions.WithLogger(esim.logger),
+		mgoClientOptions.WithConf(esim.conf),
+		mgoClientOptions.WithMonitorEvent(
+			func() MonitorEvent {
+				monitorEventOptions := MonitorEventOptions{}
+				return NewMonitorEvent(
+					monitorEventOptions.WithConf(esim.conf),
+					monitorEventOptions.WithLogger(esim.logger),
+				)
+			},
+		)
 	)
 
 	return mongo
@@ -317,11 +332,10 @@ type Info struct{
 	Title string
 }
 
-inf := infra.NewInfra()
 
 info := Info{}
 
-coll := inf.Mgo.GetColl("database", "coll")
+coll := infra.NewInfra().Mgo.GetColl("database", "coll")
 filter := bson.M{"phone": "123456"}
 res := coll.FindOne(inf.Mgo.GetCtx(c.Request.Context()), filter).Decode(&info)
 
@@ -335,10 +349,13 @@ res := coll.FindOne(inf.Mgo.GetCtx(c.Request.Context()), filter).Decode(&info)
 ```golang
 func provideGrpcClient(esim *container.Esim) *grpc.GrpcClient {
 
-	options := grpc.ClientOptions{}
-	grpcClient := grpc.NewGrpcClient(
-		options.WithClientConf(esim.Conf),
-		options.WithClientLogger(esim.Log))
+	clientOptional := grpc.ClientOptionals{}
+	clientOptions := grpc.NewClientOptions(
+		clientOptional.WithLogger(esim.Logger),
+		clientOptional.WithConf(esim.Conf),
+	)
+
+	grpcClient := grpc.NewClient(clientOptions)
 
 	return grpcClient
 }
@@ -351,7 +368,7 @@ import (
     "pathto/protobuf/passport"
 )
 
-conn := infra.NewInfra().Grpc.DialContext(ctx, ":60080")
+conn := infra.NewInfra().GrpcClient.DialContext(ctx, ":60080")
 defer conn.Close()
 
 client := passport.NewUserInfoClient(conn)
@@ -371,8 +388,18 @@ replyData, err = client.GetUserByUserName(ctx, getUserByUserNameRequest)
 func provideRedis(esim *container.Esim) *redis.RedisClient {
 	redisClientOptions := redis.RedisClientOptions{}
 	redisClent := redis.NewRedisClient(
-		redisClientOptions.WithLogger(esim.Logger),
 		redisClientOptions.WithConf(esim.Conf),
+		redisClientOptions.WithLogger(esim.Logger),
+		redisClientOptions.WithProxy(
+			func() interface{} {
+				monitorProxyOptions := redis.MonitorProxyOptions{}
+				return redis.NewMonitorProxy(
+					monitorProxyOptions.WithConf(esim.Conf),
+					monitorProxyOptions.WithLogger(esim.Logger),
+					monitorProxyOptions.WithTracer(esim.Tracer),
+				)
+			},
+		),
 	)
 
 	return redisClent
@@ -385,7 +412,7 @@ func provideRedis(esim *container.Esim) *redis.RedisClient {
 
 "gitlab.etcchebao.cn/go_service/esim/pkg/redis"
 
-conn := infra.NewInfra().Redsi.GetCtxRedisConn()
+conn := infra.NewInfra().Redis.GetCtxRedisConn()
 defer conn.Close()
 key := "username:"+username
 exists, err := redis.Bool(conn.Do(ctx, "exists", key))
@@ -398,10 +425,21 @@ exists, err := redis.Bool(conn.Do(ctx, "exists", key))
 
 ```golang
 func provideDb(esim *container.Esim) *mysql.MysqlClient {
-	mysqlClientOptions := mysql.MysqlClientOptions{}
+
+    mysqlClientOptions := mysql.MysqlClientOptions{}
 	mysqlClent := mysql.NewMysqlClient(
 		mysqlClientOptions.WithConf(esim.Conf),
 		mysqlClientOptions.WithLogger(esim.Logger),
+		mysqlClientOptions.WithProxy(
+			func() interface{} {
+				monitorProxyOptions := mysql.MonitorProxyOptions{}
+				return mysql.NewMonitorProxy(
+					monitorProxyOptions.WithLogger(esim.Logger),
+					monitorProxyOptions.WithConf(esim.Conf),
+					monitorProxyOptions.WithTracer(esim.Tracer),
+				)
+			},
+		),
 	)
 
 	return mysqlClent
@@ -423,4 +461,4 @@ infra.NewInfra().DB.GetDb(ctx, "db").Table("table").Where("username = ?", userna
 
 
   [1]: https://imgconvert.csdnimg.cn/aHR0cHM6Ly9hdGEyLWltZy5jbi1oYW5nemhvdS5vc3MtcHViLmFsaXl1bi1pbmMuY29tL2EzM2I4MGJjYWM1ZWM3M2QwZDEzNThkNmI0OWExMTljLnBuZw?x-oss-process=image/format,png
-  [2]: https://upload.cc/i1/2019/12/15/ZVh3iL.png
+  [2]: https://upload.cc/i1/2019/12/26/86caKj.png

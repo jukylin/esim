@@ -84,6 +84,16 @@ func provideDb(esim *container.Esim) *mysql.MysqlClient {
 	mysqlClent := mysql.NewMysqlClient(
 		mysqlClientOptions.WithConf(esim.Conf),
 		mysqlClientOptions.WithLogger(esim.Logger),
+		mysqlClientOptions.WithProxy(
+			func() interface{} {
+				monitorProxyOptions := mysql.MonitorProxyOptions{}
+				return mysql.NewMonitorProxy(
+					monitorProxyOptions.WithLogger(esim.Logger),
+					monitorProxyOptions.WithConf(esim.Conf),
+					monitorProxyOptions.WithTracer(esim.Tracer),
+				)
+			},
+		),
 	)
 
 	return mysqlClent
