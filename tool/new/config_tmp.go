@@ -2,10 +2,10 @@ package new
 
 func ConfigInit() {
 	fc1 := &FileContent{
-		FileName: "dev.yaml",
+		FileName: "conf.yaml",
 		Dir:      "conf",
 		Content: `
-runmode : dev
+runmode : '${ENV}'
 appname : {{service_name}}
 debug: true
 
@@ -73,147 +73,6 @@ prometheus_http_addr : 9002
 	}
 
 	fc2 := &FileContent{
-		FileName: "pro.yaml",
-		Dir:      "conf",
-		Content: `
-runmode : pro
-appname : {{service_name}}
-debug: false
-
-#HTTP 服务
-httpport : 8080
-
-#服务端
-grpc_server_tcp : 50055
-grpc_server_kp_time : 60
-grpc_server_kp_time_out : 5
-#链接超时
-grpc_server_conn_time_out : 3
-
-
-#客户端
-grpc_client_kp_time : 60
-grpc_client_kp_time_out : 5
-#链接超时 单位：ms
-grpc_client_conn_time_out : 300
-grpc_client_permit_without_stream: true
-
-jaeger_disabled: '${JAEGER_DISABLED}'
-jaeger_local_agent_host_port : '${TRACER_HOST_PORT}'
-
-#mysql
-dbs:
-#- {db: 'test', dsn: 'root:123456@tcp(0.0.0.0:3306)/config?charset=utf8&parseTime=True&loc=Local',
-#  maxidle: 10, maxopen: 100, maxlifetime : 10}
-#- {db: 'test_slave', dsn: 'root:123456@tcp(0.0.0.0:3306)/config?charset=utf8&parseTime=True&loc=Local',
-
-#mongodb
-#mgos:
-#- {db: 'test', uri: 'mongodb://0.0.0.0:27017/admin?connect=direct'}
-
-#ms
-mgo_connect_timeout : 500
-#min
-mgo_max_conn_idle_time : 10
-mgo_max_pool_size : 100
-mgo_min_pool_size : 10
-
-
-# http请求 单位：s
-http_client_time_out : 3
-
-#redis
-redis_max_active : 50
-redis_max_idle : 100
-redis_idle_time_out : 600
-redis_etc1_host : '${REDIS_ETC1_HOST}'
-redis_etc1_post : '${REDIS_ETC1_PORT}'
-redis_etc1_password : '${REDIS_ETC1_PASSWORD}'
-
-#redis 读超时 单位：ms
-redis_read_time_out : 500
-#redis 写超时 单位：ms
-redis_write_time_out : 500
-#redis 连接超时 单位：ms
-redis_conn_time_out : 500
-
-#prometheus http addr
-prometheus_http_addr : 9002
-`,
-	}
-
-	fc3 := &FileContent{
-		FileName: "test.yaml",
-		Dir:      "conf",
-		Content: `
-runmode : test
-appname : {{service_name}}
-debug: true
-
-#HTTP 服务
-httpport : 8080
-
-#服务端
-grpc_server_tcp : 50055
-grpc_server_kp_time : 60
-grpc_server_kp_time_out : 5
-#链接超时
-grpc_server_conn_time_out : 3
-grpc_server_slow_time : 500
-
-
-#客户端
-grpc_client_kp_time : 60
-grpc_client_kp_time_out : 5
-#链接超时 单位：ms
-grpc_client_conn_time_out : 300
-grpc_client_permit_without_stream: true
-
-
-jaeger_disabled: '${JAEGER_DISABLED}'
-jaeger_local_agent_host_port : '${TRACER_HOST_PORT}'
-
-#mysql
-dbs:
-#- {db: 'test', dsn: 'root:123456@tcp(0.0.0.0:3306)/config?charset=utf8&parseTime=True&loc=Local',
-#  maxidle: 10, maxopen: 100, maxlifetime : 10}
-##- {db: 'test_slave', dsn: 'root:123456@tcp(0.0.0.0:3306)/config?charset=utf8&parseTime=True&loc=Local',
-
-#mongodb
-#mgos:
-#- {db: 'test', uri: 'mongodb://0.0.0.0:27017/admin?connect=direct'}
-
-#ms
-mgo_connect_timeout : 500
-#min
-mgo_max_conn_idle_time : 10
-mgo_max_pool_size : 100
-mgo_min_pool_size : 10
-
-# http请求 单位：s
-http_client_time_out : 3
-
-#redis
-redis_max_active : 50
-redis_max_idle : 100
-redis_idle_time_out : 600
-redis_etc1_host : '${REDIS_ETC1_HOST}'
-redis_etc1_post : '${REDIS_ETC1_PORT}'
-redis_etc1_password : '${REDIS_ETC1_PASSWORD}'
-
-#redis 读超时 单位：ms
-redis_read_time_out : 500
-#redis 写超时 单位：ms
-redis_write_time_out : 500
-#redis 连接超时 单位：ms
-redis_conn_time_out : 500
-
-#prometheus http addr
-prometheus_http_addr : 9002
-`,
-	}
-
-	fc4 := &FileContent{
 		FileName: "monitoring.yaml",
 		Dir:      "conf",
 		Content: `
@@ -290,5 +149,5 @@ redis_metrics : {{bool}}
 `,
 	}
 
-	Files = append(Files, fc1, fc2, fc3, fc4)
+	Files = append(Files, fc1, fc2,)
 }

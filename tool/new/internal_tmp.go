@@ -46,17 +46,19 @@ func NewApp(options ...Option) *App {
 	container.SetConfFunc(func() config.Config {
 		options := config.ViperConfOptions{}
 
-		env := os.Getenv("ENV")
-		if env == "" {
-			env = "dev"
-		}
-
 		monitFile := app.confPath + "monitoring.yaml"
-		confFile := app.confPath  + env + ".yaml"
+		confFile := app.confPath + "conf.yaml"
 
 		file := []string{monitFile, confFile}
-		return config.NewViperConfig(options.WithConfigType("yaml"),
+		conf := config.NewViperConfig(options.WithConfigType("yaml"),
 			options.WithConfFile(file))
+
+		env := os.Getenv("ENV")
+		if env == "" {
+			conf.Set("runmode", "dev")
+		}
+
+		return conf
 	})
 
 	app.Esim = container.NewEsim()
