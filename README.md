@@ -1,5 +1,44 @@
 # Esim文档
 
+## 安装
+
+> 环境 go 1.3 及以上
+
+> 使用 module 包管理工具
+
+> go get github.com/jukylin/esim
+
+> cd github.com/jukylin/esim
+
+> go build -o esim ./tool
+
+## 创建项目
+
+```golang
+esim new -s test
+```
+
+### 浏览器访问
+
+#### 启动服务
+```golang
+cd test
+
+go run main.go
+```
+
+#### 访问
+
+> http://localhost:8080
+
+
+### 使用组件测试 [推荐]
+
+```
+cd  test/internal/transports/http/component-test/
+go test -v -tags="component_test"
+```
+
 ## 架构
 
 > Esim的架构来源于《实现领域驱动设计》的六边形架构和阿里的COLA架构，这2个架构有一个共同点：业务与技术分离。也正是这点解决了微服务开发下业务依赖远程服务的问题。所以才决定由原来的三层架构转为四层架构。
@@ -166,65 +205,21 @@ export ESIM_DB_PASSWORD=123456
 
 > 当项目进入到调优阶段，由于DDD将模型和数据分离，可以单独对模型进行优化。```model``` 命令可以自动对模型进行初始化，内存对齐，生成临时对象池，reset和释放model。很大程度的减少调优花费的时间和心智负担。
 
-## 安装
-
-> 环境 go 1.3 及以上
-
-> 使用 module 包管理工具
-
-> go get github.com/jukylin/esim
-> cd github.com/jukylin/esim
-> go build -o esim ./tool
-
-## 创建项目
-
-```golang
-esim new -s test
-```
-
-### 浏览器访问
-
-#### 启动服务
-```golang
-cd test
-
-go run main.go
-```
-
-#### 访问
-
-> http://localhost:8080
-
-
-### 使用组件测试 [推荐]
-
-```
-cd  test/internal/transports/http/component-test/
-go test -v -tags="component_test"
-```
 
 ## 配置
 - 配置文件
 
 > 配置文件在项目的conf目录下，分3个环境配置文件
 
-> conf/dev.yaml
-
-> conf/test.yaml
-
-> conf/pro.yaml
+> conf/conf.yaml
 
 - provide
 
 ```golang
 func provideConf(){
     options := config.ViperConfOptions{}
-    env := os.Getenv("ENV")
-    if env == "" {
-    	env = "dev"
-    }
 
-    file := []string{"conf/monitoring.yaml", "conf/" + env + ".yaml"}
+    file := []string{"conf/monitoring.yaml", "conf/conf.yaml"}
     conf := config.NewViperConfig(options.WithConfigType("yaml"),
     	options.WithConfFile(file))
 
