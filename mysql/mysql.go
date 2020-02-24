@@ -19,7 +19,9 @@ var mysqlOnce sync.Once
 var onceClient *MysqlClient
 
 type MysqlClient struct {
-	dbs map[string]*gorm.DB
+	gdbs map[string]*gorm.DB
+
+	sqlDbs map[string]*sql.DB
 
 	proxy []func () interface{}
 
@@ -51,11 +53,13 @@ type DbConfig struct {
 	MaxLifetime int    `json:"max_lifetime",yaml:"maxlifetime"`
 }
 
+
 func NewMysqlClient(options ...Option) *MysqlClient {
 	mysqlOnce.Do(func() {
 
 		onceClient = &MysqlClient{
-			dbs:       make(map[string]*gorm.DB),
+			gdbs:       make(map[string]*gorm.DB),
+			sqlDbs:       make(map[string]*sql.DB),
 			proxy: make([]func () interface{}, 0),
 			stateTicker : 10 * time.Second,
 			closeChan: make(chan bool, 1),
@@ -79,11 +83,13 @@ func NewMysqlClient(options ...Option) *MysqlClient {
 	return onceClient
 }
 
+
 func (MysqlClientOptions) WithConf(conf config.Config) Option {
 	return func(m *MysqlClient) {
 		m.conf = conf
 	}
 }
+
 
 func (MysqlClientOptions) WithLogger(logger log.Logger) Option {
 	return func(m *MysqlClient) {
@@ -91,17 +97,20 @@ func (MysqlClientOptions) WithLogger(logger log.Logger) Option {
 	}
 }
 
+
 func (MysqlClientOptions) WithDbConfig(dbConfigs []DbConfig) Option {
 	return func(m *MysqlClient) {
 		m.dbConfigs = dbConfigs
 	}
 }
 
+
 func (MysqlClientOptions) WithProxy(proxy ...func() interface{}) Option {
 	return func(m *MysqlClient) {
 		m.proxy = append(m.proxy, proxy...)
 	}
 }
+
 
 func (MysqlClientOptions) WithStateTicker(stateTicker time.Duration) Option {
 	return func(m *MysqlClient) {
@@ -115,6 +124,7 @@ func (MysqlClientOptions) WithDB(db *sql.DB) Option {
 		m.db = db
 	}
 }
+
 
 // initializes mysqlClient.
 func (this *MysqlClient) init() {
@@ -147,7 +157,7 @@ func (this *MysqlClient) init() {
 			DB.DB().SetMaxOpenConns(dbConfig.MaxOpen)
 			DB.DB().SetConnMaxLifetime(time.Duration(dbConfig.MaxLifetime))
 
-			this.setDb(dbConfig.Db, DB)
+			this.setDb(dbConfig.Db, DB, DB.DB())
 
 			if this.conf.GetBool("debug") == true {
 				DB.LogMode(true)
@@ -181,7 +191,7 @@ func (this *MysqlClient) init() {
 			dbSQL.SetMaxOpenConns(dbConfig.MaxOpen)
 			dbSQL.SetConnMaxLifetime(time.Duration(dbConfig.MaxLifetime))
 
-			this.setDb(dbConfig.Db, DB)
+			this.setDb(dbConfig.Db, DB, dbSQL)
 
 			if this.conf.GetBool("debug") == true {
 				DB.LogMode(true)
@@ -195,11 +205,13 @@ func (this *MysqlClient) init() {
 }
 
 
-func (this *MysqlClient) setDb(db_name string, gdb *gorm.DB) bool {
+func (this *MysqlClient) setDb(db_name string, gdb *gorm.DB, db *sql.DB) bool {
 	db_name = strings.ToLower(db_name)
 
 	//m.mysqlLock.Lock()
-	this.dbs[db_name] = gdb
+	this.gdbs[db_name] = gdb
+	this.sqlDbs[db_name] = db
+
 	//m.mysqlLock.Unlock()
 	return true
 }
@@ -212,7 +224,7 @@ func (this *MysqlClient) getDb(ctx context.Context, db_name string) *gorm.DB {
 	db_name = strings.ToLower(db_name)
 
 	//m.mysqlLock.RLock()
-	if db, ok := this.dbs[db_name]; ok {
+	if db, ok := this.gdbs[db_name]; ok {
 		//m.mysqlLock.RUnlock()
 		return db
 	} else {
@@ -230,8 +242,8 @@ func (this *MysqlClient) GetCtxDb(ctx context.Context, db_name string) *gorm.DB 
 func (this *MysqlClient) Ping() []error {
 	var errs []error
 	var err error
-	for _, db := range this.dbs {
-		err = db.DB().Ping()
+	for _, db := range this.sqlDbs {
+		err = db.Ping()
 		if err != nil{
 			errs = append(errs, err)
 		}
@@ -242,7 +254,7 @@ func (this *MysqlClient) Ping() []error {
 
 func (this *MysqlClient) Close() {
 	var err error
-	for _, db := range this.dbs {
+	for _, db := range this.gdbs {
 		err = db.Close()
 		if err != nil{
 			this.logger.Errorf(err.Error())
@@ -256,15 +268,22 @@ func (this *MysqlClient) Close() {
 
 func (this *MysqlClient) Stats() {
 
+	defer func() {
+		if err := recover(); err != nil{
+			this.logger.Infof(err.(error).Error())
+		}
+	}()
+
 	ticker := time.NewTicker(this.stateTicker)
 	var stats sql.DBStats
 
 	for {
 		select {
 		case <- ticker.C:
-			for db_name, db := range this.dbs {
+			for db_name, db := range this.sqlDbs {
 
-				stats = db.DB().Stats()
+				stats = db.Stats()
+
 				maxOpenConnLab := prometheus.Labels{"db": db_name, "stats" : "max_open_conn"}
 				mysqlStats.With(maxOpenConnLab).Set(float64(stats.MaxOpenConnections))
 

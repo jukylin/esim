@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"context"
 	"database/sql"
 	opentracing2 "github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
@@ -75,15 +76,18 @@ func (MonitorProxyOptions) WithTracer(tracer opentracing2.Tracer) MonitorProxyOp
 	}
 }
 
+
 //implement Proxy interface
 func (this *monitorProxy) NextProxy(db interface{}) {
 	this.nextProxy = db.(SqlCommon)
 }
 
+
 //implement Proxy interface
 func (this *monitorProxy) ProxyName() string {
 	return this.name
 }
+
 
 func (this *monitorProxy) Exec(query string, args ...interface{}) (sql.Result, error) {
 	startTime := time.Now()
@@ -91,6 +95,7 @@ func (this *monitorProxy) Exec(query string, args ...interface{}) (sql.Result, e
 	this.after(query, startTime)
 	return result, err
 }
+
 
 func (this *monitorProxy) Prepare(query string) (*sql.Stmt, error) {
 	startTime := time.Now()
@@ -100,6 +105,7 @@ func (this *monitorProxy) Prepare(query string) (*sql.Stmt, error) {
 	return stmt, err
 }
 
+
 func (this *monitorProxy) Query(query string, args ...interface{}) (*sql.Rows, error) {
 	startTime := time.Now()
 	rows, err := this.nextProxy.Query(query, args...)
@@ -107,6 +113,7 @@ func (this *monitorProxy) Query(query string, args ...interface{}) (*sql.Rows, e
 
 	return rows, err
 }
+
 
 func (this *monitorProxy) QueryRow(query string, args ...interface{}) *sql.Row {
 	startTime := time.Now()
@@ -116,9 +123,21 @@ func (this *monitorProxy) QueryRow(query string, args ...interface{}) *sql.Row {
 	return row
 }
 
+
 func (this *monitorProxy) Close() error {
 	return this.nextProxy.Close()
 }
+
+
+func (this *monitorProxy) Begin() (*sql.Tx, error){
+	return this.nextProxy.Begin()
+}
+
+
+func (this *monitorProxy) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error){
+	return this.nextProxy.BeginTx(ctx, opts)
+}
+
 
 func (this *monitorProxy) registerAfterEvent() {
 	if this.conf.GetBool("mysql_tracer") == true {
@@ -134,12 +153,14 @@ func (this *monitorProxy) registerAfterEvent() {
 	}
 }
 
+
 func (this *monitorProxy) after(query string, beginTime time.Time) {
 	now := time.Now()
 	for _, event := range this.afterEvents {
 		event(query, beginTime, now)
 	}
 }
+
 
 func (this *monitorProxy) withSlowSql(query string, beginTime, endTime time.Time) {
 	mysql_slow_time := this.conf.GetInt64("mysql_slow_time")

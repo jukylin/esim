@@ -66,11 +66,11 @@ func TestMain(m *testing.M) {
 		logger.Fatalf("Could not start resource: %s", err)
 	}
 
-	resource.Expire(10)
+	resource.Expire(120)
 
 	if err := pool.Retry(func() error {
 		var err error
-		db, err = sql.Open("mysql", "root:123456@tcp(0.0.0.0:3306)/mysql?charset=utf8&parseTime=True&loc=Local")
+		db, err = sql.Open("mysql", "root:123456@tcp(localhost:3306)/mysql?charset=utf8&parseTime=True&loc=Local")
 		if err != nil {
 			return err
 		}
@@ -106,6 +106,7 @@ func TestMain(m *testing.M) {
 		}
 	}
 	code := m.Run()
+
 	db.Close()
 	// You can't defer this because os.Exit doesn't care for defer
 	if err := pool.Purge(resource); err != nil {
@@ -127,7 +128,7 @@ func TestInitAndSingleInstance(t *testing.T)  {
 	db1.Exec("use test_1;")
 	assert.NotNil(t, db1)
 
-	_, ok := mysqlClient.dbs["test_1"]
+	_, ok := mysqlClient.gdbs["test_1"]
 	assert.True(t, ok)
 
 	assert.Equal(t, mysqlClient, NewMysqlClient())
@@ -354,8 +355,15 @@ func TestMysqlClient_GetStats(t *testing.T) {
 	mysqlClientOptions := MysqlClientOptions{}
 
 	mysqlClient := NewMysqlClient(
-		mysqlClientOptions.WithDbConfig([]DbConfig{test1Config}),
+		mysqlClientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
 		mysqlClientOptions.WithStateTicker(10 * time.Millisecond),
+		mysqlClientOptions.WithProxy(func() interface{} {
+			memConfig := config.NewMemConfig()
+			monitorProxyOptions := MonitorProxyOptions{}
+			return NewMonitorProxy(
+				monitorProxyOptions.WithConf(memConfig),
+				monitorProxyOptions.WithLogger(log.NewLogger()))
+		}),
 		)
 	ctx := context.Background()
 	db1 := mysqlClient.GetCtxDb(ctx, "test_1")
@@ -375,6 +383,81 @@ func TestMysqlClient_GetStats(t *testing.T) {
 	metric = &io_prometheus_client.Metric{}
 	c.Write(metric)
 	assert.Equal(t, float64(1), metric.Gauge.GetValue())
+
+	mysqlClient.Close()
+}
+
+
+func TestMysqlClient_TxCommit(t *testing.T) {
+	mysqlOnce = sync.Once{}
+
+	mysqlClientOptions := MysqlClientOptions{}
+
+	mysqlClient := NewMysqlClient(
+		mysqlClientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
+		mysqlClientOptions.WithProxy(func() interface{} {
+			memConfig := config.NewMemConfig()
+			monitorProxyOptions := MonitorProxyOptions{}
+			return NewMonitorProxy(
+				monitorProxyOptions.WithConf(memConfig),
+				monitorProxyOptions.WithLogger(log.NewLogger()))
+		}),
+	)
+	ctx := context.Background()
+	db1 := mysqlClient.GetCtxDb(ctx, "test_1")
+	db1.Exec("use test_1;")
+	assert.NotNil(t, db1)
+
+	tx := db1.Begin()
+	tx.Exec("insert into test values (1, 'test')")
+	tx.Commit()
+	if len(tx.GetErrors()) > 0 {
+		assert.Error(t, tx.GetErrors()[0])
+	}
+
+	test := &TestStruct{}
+
+	db1.Table("test").First(test)
+
+	assert.Equal(t, 1, test.Id)
+
+	mysqlClient.Close()
+}
+
+
+
+func TestMysqlClient_TxRollBack(t *testing.T) {
+	mysqlOnce = sync.Once{}
+
+	mysqlClientOptions := MysqlClientOptions{}
+
+	mysqlClient := NewMysqlClient(
+		mysqlClientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
+		mysqlClientOptions.WithProxy(func() interface{} {
+			memConfig := config.NewMemConfig()
+			monitorProxyOptions := MonitorProxyOptions{}
+			return NewMonitorProxy(
+				monitorProxyOptions.WithConf(memConfig),
+				monitorProxyOptions.WithLogger(log.NewLogger()))
+		}),
+	)
+	ctx := context.Background()
+	db1 := mysqlClient.GetCtxDb(ctx, "test_1")
+	db1.Exec("use test_1;")
+	assert.NotNil(t, db1)
+
+	tx := db1.Begin()
+	tx.Exec("insert into test values (1, 'test')")
+	tx.Rollback()
+	if len(tx.GetErrors()) > 0 {
+		assert.Error(t, tx.GetErrors()[0])
+	}
+
+	test := &TestStruct{}
+
+	db1.Table("test").First(test)
+
+	assert.Equal(t, 1, test.Id)
 
 	mysqlClient.Close()
 }
