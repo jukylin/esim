@@ -89,35 +89,35 @@ func (this *monitorProxy) ProxyName() string {
 }
 
 
-func (this *monitorProxy) Exec(query string, args ...interface{}) (sql.Result, error) {
+func (this *monitorProxy) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
 	startTime := time.Now()
-	result, err := this.nextProxy.Exec(query, args...)
+	result, err := this.nextProxy.ExecContext(ctx, query, args...)
 	this.after(query, startTime)
 	return result, err
 }
 
 
-func (this *monitorProxy) Prepare(query string) (*sql.Stmt, error) {
+func (this *monitorProxy) PrepareContext(ctx context.Context, query string) (*sql.Stmt, error) {
 	startTime := time.Now()
-	stmt, err := this.nextProxy.Prepare(query)
+	stmt, err := this.nextProxy.PrepareContext(ctx, query)
 	this.after(query, startTime)
 
 	return stmt, err
 }
 
 
-func (this *monitorProxy) Query(query string, args ...interface{}) (*sql.Rows, error) {
+func (this *monitorProxy) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
 	startTime := time.Now()
-	rows, err := this.nextProxy.Query(query, args...)
+	rows, err := this.nextProxy.QueryContext(ctx, query, args...)
 	this.after(query, startTime)
 
 	return rows, err
 }
 
 
-func (this *monitorProxy) QueryRow(query string, args ...interface{}) *sql.Row {
+func (this *monitorProxy) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
 	startTime := time.Now()
-	row := this.nextProxy.QueryRow(query, args...)
+	row := this.nextProxy.QueryRowContext(ctx, query, args...)
 	this.after(query, startTime)
 
 	return row
@@ -126,11 +126,6 @@ func (this *monitorProxy) QueryRow(query string, args ...interface{}) *sql.Row {
 
 func (this *monitorProxy) Close() error {
 	return this.nextProxy.Close()
-}
-
-
-func (this *monitorProxy) Begin() (*sql.Tx, error){
-	return this.nextProxy.Begin()
 }
 
 

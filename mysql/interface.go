@@ -1,19 +1,15 @@
 package mysql
 
 import (
-	"database/sql"
-	"context"
 	"github.com/jinzhu/gorm"
 )
 
 type SqlCommon interface {
-	gorm.SQLCommon
+	gorm.CommonDB
+
+	gorm.TxBeginner
 
 	sqlClose
-
-	Begin() (*sql.Tx, error)
-
-	BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error)
 }
 
 type sqlClose interface {

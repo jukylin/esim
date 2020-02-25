@@ -12,6 +12,7 @@ import (
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/proxy"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/jinzhu/gorm/dialects/mysql"
 )
 
 var mysqlOnce sync.Once
@@ -37,8 +38,7 @@ type MysqlClient struct {
 
 	stateTicker time.Duration
 
-	//for integration tests
-	db *sql.DB
+	gormConfig *gorm.Config
 }
 
 type Option func(c *MysqlClient)
@@ -119,9 +119,9 @@ func (MysqlClientOptions) WithStateTicker(stateTicker time.Duration) Option {
 }
 
 
-func (MysqlClientOptions) WithDB(db *sql.DB) Option {
+func (MysqlClientOptions) WithGormConfig(gormConfig *gorm.Config) Option {
 	return func(m *MysqlClient) {
-		m.db = db
+		m.gormConfig = gormConfig
 	}
 }
 
@@ -143,58 +143,48 @@ func (this *MysqlClient) init() {
 		if len(this.proxy) == 0 {
 			var DB *gorm.DB
 
-			if this.db != nil{
-				DB, err = gorm.Open("mysql", this.db)
-			}else{
-				DB, err = gorm.Open("mysql", dbConfig.Dsn)
-			}
+			DB, err = gorm.Open(mysql.Open(dbConfig.Dsn), this.gormConfig)
 
 			if err != nil {
 				this.logger.Panicf("[db] %s init error : %s", dbConfig.Db, err.Error())
 			}
 
-			DB.DB().SetMaxIdleConns(dbConfig.MaxIdle)
-			DB.DB().SetMaxOpenConns(dbConfig.MaxOpen)
-			DB.DB().SetConnMaxLifetime(time.Duration(dbConfig.MaxLifetime))
+			//DB.DB().SetMaxIdleConns(dbConfig.MaxIdle)
+			//DB.DB().SetMaxOpenConns(dbConfig.MaxOpen)
+			//DB.DB().SetConnMaxLifetime(time.Duration(dbConfig.MaxLifetime))
 
-			this.setDb(dbConfig.Db, DB, DB.DB())
+			//this.setDb(dbConfig.Db, DB, DB.DB())
 
 			if this.conf.GetBool("debug") == true {
-				DB.LogMode(true)
+				DB.Debug()
 			}
 		} else {
 			var DB *gorm.DB
-			var dbSQL *sql.DB
+			//var dbSQL *sql.DB
 
-			if this.db == nil{
-				dbSQL, err = sql.Open("mysql", dbConfig.Dsn)
-				if err != nil {
-					this.logger.Panicf("[db] %s init error : %s", dbConfig.Db, err.Error())
-				}
-			}else{
-				dbSQL = this.db
-			}
 
-			firstProxy := proxy.NewProxyFactory().GetFirstInstance("db_" + dbConfig.Db, dbSQL, this.proxy...)
-
-			DB, err = gorm.Open("mysql", firstProxy)
+			DB, err = gorm.Open(mysql.Open(dbConfig.Dsn), this.gormConfig)
 			if err != nil {
 				this.logger.Panicf("[db] %s ping error : %s", dbConfig.Db, err.Error())
 			}
 
-			err = dbSQL.Ping()
-			if err != nil {
-				this.logger.Panicf("[db] %s ping error : %s", dbConfig.Db, err.Error())
-			}
+			firstProxy := proxy.NewProxyFactory().GetFirstInstance("db_" + dbConfig.Db, DB.DB, this.proxy...)
 
-			dbSQL.SetMaxIdleConns(dbConfig.MaxIdle)
-			dbSQL.SetMaxOpenConns(dbConfig.MaxOpen)
-			dbSQL.SetConnMaxLifetime(time.Duration(dbConfig.MaxLifetime))
+			DB.DB = firstProxy.(gorm.CommonDB)
 
-			this.setDb(dbConfig.Db, DB, dbSQL)
+			//err = dbSQL.Ping()
+			//if err != nil {
+			//	this.logger.Panicf("[db] %s ping error : %s", dbConfig.Db, err.Error())
+			//}
+			//
+			//dbSQL.SetMaxIdleConns(dbConfig.MaxIdle)
+			//dbSQL.SetMaxOpenConns(dbConfig.MaxOpen)
+			//dbSQL.SetConnMaxLifetime(time.Duration(dbConfig.MaxLifetime))
+
+			this.setDb(dbConfig.Db, DB, nil)
 
 			if this.conf.GetBool("debug") == true {
-				DB.LogMode(true)
+				DB.Debug()
 			}
 		}
 
@@ -226,7 +216,7 @@ func (this *MysqlClient) getDb(ctx context.Context, db_name string) *gorm.DB {
 	//m.mysqlLock.RLock()
 	if db, ok := this.gdbs[db_name]; ok {
 		//m.mysqlLock.RUnlock()
-		return db
+		return db.WithContext(ctx)
 	} else {
 		//m.mysqlLock.RUnlock()
 		this.logger.Errorf("[db] %s not found", db_name)
@@ -253,13 +243,13 @@ func (this *MysqlClient) Ping() []error {
 
 
 func (this *MysqlClient) Close() {
-	var err error
-	for _, db := range this.gdbs {
-		err = db.Close()
-		if err != nil{
-			this.logger.Errorf(err.Error())
-		}
-	}
+	//var err error
+	//for _, db := range this.gdbs {
+	//	err = db.Close()
+	//	if err != nil{
+	//		this.logger.Errorf(err.Error())
+	//	}
+	//}
 
 	//this.closeChan <- true
 	return

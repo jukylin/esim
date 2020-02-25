@@ -121,7 +121,6 @@ func TestInitAndSingleInstance(t *testing.T)  {
 
 	mysqlClient := NewMysqlClient(
 		mysqlClientOptions.WithDbConfig([]DbConfig{test1Config}),
-		mysqlClientOptions.WithDB(db),
 	)
 	ctx := context.Background()
 	db1 := mysqlClient.GetCtxDb(ctx, "test_1")
@@ -163,7 +162,7 @@ func TestProxyPatternWithTwoInstance(t *testing.T)  {
 	ts := &TestStruct{}
 	db1.Table("test").First(ts)
 
-	assert.Len(t, db1.GetErrors(), 0)
+	assert.Nil(t, db1.Error)
 
 	db2 := mysqlClient.GetCtxDb(ctx, "test_2")
 	db2.Exec("use test_2;")
@@ -171,7 +170,7 @@ func TestProxyPatternWithTwoInstance(t *testing.T)  {
 
 	us := &UserStruct{}
 	db2.Table("user").First(us)
-	assert.Len(t, db1.GetErrors(), 0)
+	assert.Nil(t, db1.Error)
 
 	mysqlClient.Close()
 }
@@ -213,7 +212,7 @@ func TestMulProxyPatternWithOneInstance(t *testing.T)  {
 	ts := &TestStruct{}
 	db1.Table("test").First(ts)
 
-	assert.Len(t, db1.GetErrors(), 0)
+	assert.Nil(t, db1.Error)
 
 	assert.True(t, spyProxy1.QueryWasCalled)
 	assert.False(t, spyProxy1.QueryRowWasCalled)
@@ -264,7 +263,7 @@ func TestMulProxyPatternWithTwoInstance(t *testing.T)  {
 	ts := &TestStruct{}
 	db1.Table("test").First(ts)
 
-	assert.Len(t, db1.GetErrors(), 0)
+	assert.Nil(t, db1.Error)
 
 	db2 := mysqlClient.GetCtxDb(ctx, "test_2")
 	db2.Exec("use test_2;")
@@ -273,7 +272,7 @@ func TestMulProxyPatternWithTwoInstance(t *testing.T)  {
 	us := &UserStruct{}
 	db2.Table("user").First(us)
 
-	assert.Len(t, db2.GetErrors(), 0)
+	assert.Nil(t, db1.Error)
 
 	mysqlClient.Close()
 }
@@ -411,9 +410,8 @@ func TestMysqlClient_TxCommit(t *testing.T) {
 	tx := db1.Begin()
 	tx.Exec("insert into test values (1, 'test')")
 	tx.Commit()
-	if len(tx.GetErrors()) > 0 {
-		assert.Error(t, tx.GetErrors()[0])
-	}
+	assert.Nil(t, db1.Error)
+
 
 	test := &TestStruct{}
 
@@ -433,15 +431,16 @@ func TestMysqlClient_TxRollBack(t *testing.T) {
 
 	mysqlClient := NewMysqlClient(
 		mysqlClientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
-		mysqlClientOptions.WithProxy(func() interface{} {
-			memConfig := config.NewMemConfig()
-			monitorProxyOptions := MonitorProxyOptions{}
-			return NewMonitorProxy(
-				monitorProxyOptions.WithConf(memConfig),
-				monitorProxyOptions.WithLogger(log.NewLogger()))
-		}),
+		//mysqlClientOptions.WithProxy(func() interface{} {
+		//	memConfig := config.NewMemConfig()
+		//	monitorProxyOptions := MonitorProxyOptions{}
+		//	return NewMonitorProxy(
+		//		monitorProxyOptions.WithConf(memConfig),
+		//		monitorProxyOptions.WithLogger(log.NewLogger()))
+		//}),
 	)
 	ctx := context.Background()
+	ctx, _ = context.WithTimeout(ctx, 1 * time.Second)
 	db1 := mysqlClient.GetCtxDb(ctx, "test_1")
 	db1.Exec("use test_1;")
 	assert.NotNil(t, db1)
@@ -449,9 +448,7 @@ func TestMysqlClient_TxRollBack(t *testing.T) {
 	tx := db1.Begin()
 	tx.Exec("insert into test values (1, 'test')")
 	tx.Rollback()
-	if len(tx.GetErrors()) > 0 {
-		assert.Error(t, tx.GetErrors()[0])
-	}
+	assert.Nil(t, db1.Error)
 
 	test := &TestStruct{}
 

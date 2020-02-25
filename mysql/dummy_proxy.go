@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"context"
 	"database/sql"
 	"github.com/jukylin/esim/log"
 )
@@ -34,29 +35,34 @@ func (this *dummyProxy) ProxyName() string {
 	return this.name
 }
 
-func (this *dummyProxy) Exec(query string, args ...interface{}) (sql.Result, error) {
+func (this *dummyProxy) ExecContext(query string, args ...interface{}) (sql.Result, error) {
 	result := &dummySqlResult{}
 	return result, nil
 }
 
-func (this *dummyProxy) Prepare(query string) (*sql.Stmt, error) {
+func (this *dummyProxy) PrepareContext(query string) (*sql.Stmt, error) {
 	stmt := &sql.Stmt{}
 
 	return stmt, nil
 }
 
-func (this *dummyProxy) Query(query string, args ...interface{}) (*sql.Rows, error) {
+func (this *dummyProxy) QueryContext(query string, args ...interface{}) (*sql.Rows, error) {
 	rows := &sql.Rows{}
 	return rows, nil
 }
 
-func (this *dummyProxy) QueryRow(query string, args ...interface{}) *sql.Row {
+func (this *dummyProxy) QueryRowContext(query string, args ...interface{}) *sql.Row {
 	row := &sql.Row{}
 	return row
 }
 
 func (this *dummyProxy) Close() error {
-	return this.nextProxy.Close()
+	return nil
+}
+
+
+func (this *dummyProxy) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error){
+	return &sql.Tx{}, nil
 }
 
 // implement sql.Result interface
