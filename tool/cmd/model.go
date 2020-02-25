@@ -25,6 +25,14 @@ func init() {
 
 	modelCmd.Flags().BoolP("sort", "s", true, "按照内存对齐排序")
 
+	modelCmd.Flags().BoolP("new", "n", false, "生成New方法")
+
+	modelCmd.Flags().BoolP("option", "o", false, "New with option")
+
+	modelCmd.Flags().BoolP("gen_log_option", "", false, "generate logger option")
+
+	modelCmd.Flags().BoolP("gen_conf_option", "", false, "generate conf option")
+
 	modelCmd.Flags().BoolP("pool", "p", false, "生成临时对象池")
 
 	modelCmd.Flags().BoolP("coverpool", "c", false, "覆盖原有的临时对象池")

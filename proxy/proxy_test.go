@@ -13,14 +13,20 @@ type DbRepo interface {
 
 type filterProxy struct {
 	nextProxy DbRepo
+
+	logger log.Logger
 }
 
 func NewFilterProxy() *filterProxy {
-	return &filterProxy{}
+	filterProxy := &filterProxy{}
+
+	filterProxy.logger = log.NewLogger()
+
+	return filterProxy
 }
 
 func (this *filterProxy) Get(str string) string {
-	log.Infof("filterProxy")
+	this.logger.Infof("filterProxy")
 	result := this.nextProxy.Get(str)
 	return result
 }
@@ -35,14 +41,20 @@ func (this *filterProxy) ProxyName() string {
 
 type cacheProxy struct {
 	nextProxy DbRepo
+
+	logger log.Logger
 }
 
 func NewCacheProxy() *cacheProxy {
-	return &cacheProxy{}
+	cacheProxy := &cacheProxy{}
+
+	cacheProxy.logger = log.NewLogger()
+
+	return cacheProxy
 }
 
 func (this *cacheProxy) Get(str string) string {
-	log.Infof("cacheProxy")
+	this.logger.Infof("cacheProxy")
 	result := this.nextProxy.Get(str)
 	return result
 }

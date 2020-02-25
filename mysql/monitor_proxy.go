@@ -172,11 +172,13 @@ func (this *monitorProxy) withSlowSql(query string, beginTime, endTime time.Time
 	}
 }
 
+
 func (this *monitorProxy) withMysqlMetrics(query string, beginTime, endTime time.Time) {
 	lab := prometheus.Labels{"sql": query}
 	mysqlTotal.With(lab).Inc()
 	mysqlDuration.With(lab).Observe(endTime.Sub(beginTime).Seconds())
 }
+
 
 //要等2.0
 func (this *monitorProxy) withMysqlTracer(query string, beginTime, endTime time.Time) {
