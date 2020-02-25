@@ -153,15 +153,14 @@ func (this *MysqlClient) init() {
 			//DB.DB().SetMaxOpenConns(dbConfig.MaxOpen)
 			//DB.DB().SetConnMaxLifetime(time.Duration(dbConfig.MaxLifetime))
 
-			//this.setDb(dbConfig.Db, DB, DB.DB())
-
 			if this.conf.GetBool("debug") == true {
-				DB.Debug()
+				DB = DB.Debug()
 			}
+
+			this.setDb(dbConfig.Db, DB, nil)
+
 		} else {
 			var DB *gorm.DB
-			//var dbSQL *sql.DB
-
 
 			DB, err = gorm.Open(mysql.Open(dbConfig.Dsn), this.gormConfig)
 			if err != nil {
@@ -181,11 +180,12 @@ func (this *MysqlClient) init() {
 			//dbSQL.SetMaxOpenConns(dbConfig.MaxOpen)
 			//dbSQL.SetConnMaxLifetime(time.Duration(dbConfig.MaxLifetime))
 
+			if this.conf.GetBool("debug") == true {
+				DB = DB.Debug()
+			}
+
 			this.setDb(dbConfig.Db, DB, nil)
 
-			if this.conf.GetBool("debug") == true {
-				DB.Debug()
-			}
 		}
 
 		go this.Stats()
@@ -213,12 +213,9 @@ func (this *MysqlClient) GetDb(db_name string) *gorm.DB {
 func (this *MysqlClient) getDb(ctx context.Context, db_name string) *gorm.DB {
 	db_name = strings.ToLower(db_name)
 
-	//m.mysqlLock.RLock()
 	if db, ok := this.gdbs[db_name]; ok {
-		//m.mysqlLock.RUnlock()
 		return db.WithContext(ctx)
 	} else {
-		//m.mysqlLock.RUnlock()
 		this.logger.Errorf("[db] %s not found", db_name)
 		return nil
 	}

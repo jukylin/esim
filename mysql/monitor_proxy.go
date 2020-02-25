@@ -26,7 +26,7 @@ type monitorProxy struct {
 	afterEvents []afterEvents
 }
 
-type afterEvents func(string, time.Time, time.Time)
+type afterEvents func(context.Context, string, time.Time, time.Time)
 
 type MonitorProxyOption func(c *monitorProxy)
 
@@ -92,7 +92,7 @@ func (this *monitorProxy) ProxyName() string {
 func (this *monitorProxy) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
 	startTime := time.Now()
 	result, err := this.nextProxy.ExecContext(ctx, query, args...)
-	this.after(query, startTime)
+	this.after(ctx, query, startTime)
 	return result, err
 }
 
@@ -100,7 +100,7 @@ func (this *monitorProxy) ExecContext(ctx context.Context, query string, args ..
 func (this *monitorProxy) PrepareContext(ctx context.Context, query string) (*sql.Stmt, error) {
 	startTime := time.Now()
 	stmt, err := this.nextProxy.PrepareContext(ctx, query)
-	this.after(query, startTime)
+	this.after(ctx, query, startTime)
 
 	return stmt, err
 }
@@ -109,7 +109,7 @@ func (this *monitorProxy) PrepareContext(ctx context.Context, query string) (*sq
 func (this *monitorProxy) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
 	startTime := time.Now()
 	rows, err := this.nextProxy.QueryContext(ctx, query, args...)
-	this.after(query, startTime)
+	this.after(ctx, query, startTime)
 
 	return rows, err
 }
@@ -118,7 +118,7 @@ func (this *monitorProxy) QueryContext(ctx context.Context, query string, args .
 func (this *monitorProxy) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
 	startTime := time.Now()
 	row := this.nextProxy.QueryRowContext(ctx, query, args...)
-	this.after(query, startTime)
+	this.after(ctx, query, startTime)
 
 	return row
 }
@@ -149,15 +149,15 @@ func (this *monitorProxy) registerAfterEvent() {
 }
 
 
-func (this *monitorProxy) after(query string, beginTime time.Time) {
+func (this *monitorProxy) after(ctx context.Context, query string, beginTime time.Time) {
 	now := time.Now()
 	for _, event := range this.afterEvents {
-		event(query, beginTime, now)
+		event(ctx, query, beginTime, now)
 	}
 }
 
 
-func (this *monitorProxy) withSlowSql(query string, beginTime, endTime time.Time) {
+func (this *monitorProxy) withSlowSql(ctx context.Context, query string, beginTime, endTime time.Time) {
 	mysql_slow_time := this.conf.GetInt64("mysql_slow_time")
 
 	if mysql_slow_time != 0 {
@@ -168,17 +168,15 @@ func (this *monitorProxy) withSlowSql(query string, beginTime, endTime time.Time
 }
 
 
-func (this *monitorProxy) withMysqlMetrics(query string, beginTime, endTime time.Time) {
+func (this *monitorProxy) withMysqlMetrics(ctx context.Context, query string, beginTime, endTime time.Time) {
 	lab := prometheus.Labels{"sql": query}
 	mysqlTotal.With(lab).Inc()
 	mysqlDuration.With(lab).Observe(endTime.Sub(beginTime).Seconds())
 }
 
 
-//要等2.0
-func (this *monitorProxy) withMysqlTracer(query string, beginTime, endTime time.Time) {
-	//span := opentracing.GetSpan(ctx, m.tracer,
-	//	query, beginTime)
-	//span.LogKV("sql", query)
-	//span.FinishWithOptions(opentracing2.FinishOptions{FinishTime: endTime})
+func (this *monitorProxy) withMysqlTracer(ctx context.Context, query string, beginTime, endTime time.Time) {
+	span := opentracing.GetSpan(ctx, this.tracer, query, beginTime)
+	span.LogKV("sql", query)
+	span.FinishWithOptions(opentracing2.FinishOptions{FinishTime: endTime})
 }

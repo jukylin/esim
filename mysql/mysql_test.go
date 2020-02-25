@@ -12,8 +12,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_model/go"
-	"github.com/ory/dockertest/v3"
-	dc "github.com/ory/dockertest/v3/docker"
+	//"github.com/ory/dockertest/v3"
+	//dc "github.com/ory/dockertest/v3/docker"
 )
 
 var (
@@ -43,75 +43,75 @@ type UserStruct struct{
 var db *sql.DB
 
 func TestMain(m *testing.M) {
-	logger := log.NewLogger()
+	//logger := log.NewLogger()
 
-	pool, err := dockertest.NewPool("")
-	if err != nil {
-		logger.Fatalf("Could not connect to docker: %s", err)
-	}
+	//pool, err := dockertest.NewPool("")
+	//if err != nil {
+	//	logger.Fatalf("Could not connect to docker: %s", err)
+	//}
 
-	opt := &dockertest.RunOptions{
-		Repository: "mysql",
-		Tag: "latest",
-		Env: []string{"MYSQL_ROOT_PASSWORD=123456"},
-		}
+	//opt := &dockertest.RunOptions{
+	//	Repository: "mysql",
+	//	Tag: "latest",
+	//	Env: []string{"MYSQL_ROOT_PASSWORD=123456"},
+	//	}
 
 	// pulls an image, creates a container based on it and runs it
-	resource, err := pool.RunWithOptions(opt, func(hostConfig *dc.HostConfig) {
-					hostConfig.PortBindings = map[dc.Port][]dc.PortBinding{
-						"3306/tcp": {{HostIP: "", HostPort: "3306"}},
-					}
-				})
-	if err != nil {
-		logger.Fatalf("Could not start resource: %s", err)
-	}
+	//_, err = pool.RunWithOptions(opt, func(hostConfig *dc.HostConfig) {
+	//				hostConfig.PortBindings = map[dc.Port][]dc.PortBinding{
+	//					"3306/tcp": {{HostIP: "", HostPort: "3306"}},
+	//				}
+	//			})
+	//if err != nil {
+	//	logger.Fatalf("Could not start resource: %s", err)
+	//}
 
-	resource.Expire(120)
+	//resource.Expire(120)
 
-	if err := pool.Retry(func() error {
-		var err error
-		db, err = sql.Open("mysql", "root:123456@tcp(localhost:3306)/mysql?charset=utf8&parseTime=True&loc=Local")
-		if err != nil {
-			return err
-		}
-		db.SetMaxOpenConns(100)
+	//if err := pool.Retry(func() error {
+	//	var err error
+	//	db, err = sql.Open("mysql", "root:123456@tcp(localhost:3306)/mysql?charset=utf8&parseTime=True&loc=Local")
+	//	if err != nil {
+	//		return err
+	//	}
+	//	db.SetMaxOpenConns(100)
+	//
+	//	return db.Ping()
+	//}); err != nil {
+	//	logger.Fatalf("Could not connect to docker: %s", err)
+	//}
+	//
+	//sqls := []string{
+	//	`create database test_1;`,
+	//	`CREATE TABLE IF NOT EXISTS test_1.test(
+	//	  id int not NULL auto_increment,
+	//	  title VARCHAR(10) not NULL DEFAULT '',
+	//	  PRIMARY KEY (id)
+	//	)engine=innodb;`,
+	//	`create database test_2;`,
+	//	`CREATE TABLE IF NOT EXISTS test_2.user(
+	//	  id int not NULL auto_increment,
+	//	  username VARCHAR(10) not NULL DEFAULT '',
+	//		PRIMARY KEY (id)
+	//	)engine=innodb;`,}
 
-		return db.Ping()
-	}); err != nil {
-		logger.Fatalf("Could not connect to docker: %s", err)
-	}
-
-	sqls := []string{
-		`create database test_1;`,
-		`CREATE TABLE IF NOT EXISTS test_1.test(
-		  id int not NULL auto_increment,
-		  title VARCHAR(10) not NULL DEFAULT '',
-		  PRIMARY KEY (id)
-		)engine=innodb;`,
-		`create database test_2;`,
-		`CREATE TABLE IF NOT EXISTS test_2.user(
-		  id int not NULL auto_increment,
-		  username VARCHAR(10) not NULL DEFAULT '',
-			PRIMARY KEY (id)
-		)engine=innodb;`,}
-
-	for _, execSql := range sqls {
-		res, err := db.Exec(execSql)
-		if err != nil {
-			logger.Errorf(err.Error())
-		}
-		_, err = res.RowsAffected()
-		if err != nil {
-			logger.Errorf(err.Error())
-		}
-	}
+	//for _, execSql := range sqls {
+	//	res, err := db.Exec(execSql)
+	//	if err != nil {
+	//		logger.Errorf(err.Error())
+	//	}
+	//	_, err = res.RowsAffected()
+	//	if err != nil {
+	//		logger.Errorf(err.Error())
+	//	}
+	//}
 	code := m.Run()
 
-	db.Close()
+	//db.Close()
 	// You can't defer this because os.Exit doesn't care for defer
-	if err := pool.Purge(resource); err != nil {
-		logger.Fatalf("Could not purge resource: %s", err)
-	}
+	//if err := pool.Purge(resource); err != nil {
+	//	logger.Fatalf("Could not purge resource: %s", err)
+	//}
 	os.Exit(code)
 }
 
@@ -390,10 +390,14 @@ func TestMysqlClient_GetStats(t *testing.T) {
 func TestMysqlClient_TxCommit(t *testing.T) {
 	mysqlOnce = sync.Once{}
 
+	memConfig := config.NewMemConfig()
+	memConfig.Set("debug", true)
+
 	mysqlClientOptions := MysqlClientOptions{}
 
 	mysqlClient := NewMysqlClient(
 		mysqlClientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
+		mysqlClientOptions.WithConf(memConfig),
 		mysqlClientOptions.WithProxy(func() interface{} {
 			memConfig := config.NewMemConfig()
 			monitorProxyOptions := MonitorProxyOptions{}
@@ -403,21 +407,20 @@ func TestMysqlClient_TxCommit(t *testing.T) {
 		}),
 	)
 	ctx := context.Background()
-	db1 := mysqlClient.GetCtxDb(ctx, "test_1")
-	db1.Exec("use test_1;")
-	assert.NotNil(t, db1)
+	//db1 := mysqlClient.GetCtxDb(ctx, "test_1").Table("test")
+	//
+	//test := TestStruct{}
+	//test.Id = 1
+	//test.Title = "test"
+	//
+	//tx := db1.Begin()
+	//tx.Create(&test)
+	//tx.Commit()
+	//assert.Nil(t, db1.Error)
 
-	tx := db1.Begin()
-	tx.Exec("insert into test values (1, 'test')")
-	tx.Commit()
-	assert.Nil(t, db1.Error)
-
-
-	test := &TestStruct{}
-
-	db1.Table("test").First(test)
-
-	assert.Equal(t, 1, test.Id)
+	test2 := TestStruct{}
+	mysqlClient.GetCtxDb(ctx, "test_1").Table("test").First(&test2)
+	assert.Equal(t, 1, test2.Id)
 
 	mysqlClient.Close()
 }
@@ -427,34 +430,38 @@ func TestMysqlClient_TxCommit(t *testing.T) {
 func TestMysqlClient_TxRollBack(t *testing.T) {
 	mysqlOnce = sync.Once{}
 
+	memConfig := config.NewMemConfig()
+	memConfig.Set("debug", true)
+
 	mysqlClientOptions := MysqlClientOptions{}
 
 	mysqlClient := NewMysqlClient(
 		mysqlClientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
-		//mysqlClientOptions.WithProxy(func() interface{} {
-		//	memConfig := config.NewMemConfig()
-		//	monitorProxyOptions := MonitorProxyOptions{}
-		//	return NewMonitorProxy(
-		//		monitorProxyOptions.WithConf(memConfig),
-		//		monitorProxyOptions.WithLogger(log.NewLogger()))
-		//}),
+		mysqlClientOptions.WithConf(memConfig),
+		mysqlClientOptions.WithProxy(func() interface{} {
+			memConfig := config.NewMemConfig()
+			monitorProxyOptions := MonitorProxyOptions{}
+			return NewMonitorProxy(
+				monitorProxyOptions.WithConf(memConfig),
+				monitorProxyOptions.WithLogger(log.NewLogger()))
+		}),
 	)
 	ctx := context.Background()
 	ctx, _ = context.WithTimeout(ctx, 1 * time.Second)
-	db1 := mysqlClient.GetCtxDb(ctx, "test_1")
-	db1.Exec("use test_1;")
-	assert.NotNil(t, db1)
+	db1 := mysqlClient.GetCtxDb(ctx, "test_1").Table("test")
+
+	test := TestStruct{}
+	test.Id = 1
+	test.Title = "test"
 
 	tx := db1.Begin()
-	tx.Exec("insert into test values (1, 'test')")
+	tx.Create(&test)
 	tx.Rollback()
 	assert.Nil(t, db1.Error)
 
-	test := &TestStruct{}
-
-	db1.Table("test").First(test)
-
-	assert.Equal(t, 1, test.Id)
+	test2 := TestStruct{}
+	mysqlClient.GetCtxDb(ctx, "test_1").Table("test").First(&test2)
+	assert.Equal(t, 0, test2.Id)
 
 	mysqlClient.Close()
 }
