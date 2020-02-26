@@ -35,8 +35,6 @@ func init() {
 
 	modelCmd.Flags().BoolP("pool", "p", false, "生成临时对象池")
 
-	modelCmd.Flags().BoolP("coverpool", "c", false, "覆盖原有的临时对象池")
-
 	//modelCmd.Flags().BoolP("print", "", false, "扩展print方法")
 
 	//modelCmd.Flags().BoolP("Print", "", false, "打印到终端")

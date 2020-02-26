@@ -874,22 +874,22 @@ func HandleVar(info *BuildPluginInfo, varName string, context *string) bool {
 
 //单数池
 func HandlePool(v *viper.Viper, info *BuildPluginInfo) {
-	if info.oldNewFuncBody == "" || v.GetBool("coverpool") == true {
+	if info.oldNewFuncBody == "" {
 		info.newObjStr = getNewObjStr(info)
 	}
 
-	if info.oldReleaseFuncBody == "" || v.GetBool("coverpool") == true {
+	if info.oldReleaseFuncBody == ""{
 		info.releaseStr = getReleaseObjStr(info, info.InitField.Fields)
 	}
 }
 
 //复数池
 func HandlePluralPool(v *viper.Viper, info *BuildPluginInfo) {
-	if info.oldPluralNewBody == "" || v.GetBool("coverpool") == true {
+	if info.oldPluralNewBody == "" {
 		info.newPluralNewBody = getNewPluralObjStr(info)
 	}
 
-	if info.oldPluralReleaseBody == "" || v.GetBool("coverpool") == true {
+	if info.oldPluralReleaseBody == "" {
 		info.newPluralReleaseBody = getReleasePluralObjStr(info)
 	}
 }
