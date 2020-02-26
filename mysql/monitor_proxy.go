@@ -21,7 +21,7 @@ type monitorProxy struct {
 
 	conf config.Config
 
-	log log.Logger
+	logger log.Logger
 
 	afterEvents []afterEvents
 }
@@ -43,12 +43,12 @@ func NewMonitorProxy(options ...MonitorProxyOption) *monitorProxy {
 		monitorProxy.conf = config.NewNullConfig()
 	}
 
-	if monitorProxy.log == nil {
-		monitorProxy.log = log.NewLogger()
+	if monitorProxy.logger == nil {
+		monitorProxy.logger = log.NewLogger()
 	}
 
 	if monitorProxy.tracer == nil {
-		monitorProxy.tracer = opentracing.NewTracer("mysql", monitorProxy.log)
+		monitorProxy.tracer = opentracing.NewTracer("mysql", monitorProxy.logger)
 	}
 
 	monitorProxy.name = "monitor_proxy"
@@ -64,9 +64,9 @@ func (MonitorProxyOptions) WithConf(conf config.Config) MonitorProxyOption {
 	}
 }
 
-func (MonitorProxyOptions) WithLogger(log log.Logger) MonitorProxyOption {
+func (MonitorProxyOptions) WithLogger(logger log.Logger) MonitorProxyOption {
 	return func(r *monitorProxy) {
-		r.log = log
+		r.logger = logger
 	}
 }
 
@@ -162,7 +162,7 @@ func (this *monitorProxy) withSlowSql(ctx context.Context, query string, beginTi
 
 	if mysql_slow_time != 0 {
 		if endTime.Sub(beginTime) > time.Duration(mysql_slow_time)*time.Millisecond {
-			this.log.Warnf("slow sql %s", query)
+			this.logger.Warnf("slow sql %s", query)
 		}
 	}
 }
