@@ -104,27 +104,15 @@ type BuildPluginInfo struct {
 	headerStr string
 
 	bodyStr string
-
-	oldNewFuncBody string
-
-	oldReleaseFuncBody string
-
+	
 	InitField InitFieldsReturn
 
 	///模型的复数
-	hasPlural bool
-
 	pluralName string
-
-	oldPluralNewBody string
 
 	newPluralNewBody string
 
-	oldPluralReleaseBody string
-
 	newPluralReleaseBody string
-
-	oldPluralType string
 	///模型的复数
 }
 
@@ -257,11 +245,6 @@ func FindModel(modelPath, modelName, modelNamePlural string) (*BuildPluginInfo, 
 						for _, specs := range GenDecl.Specs {
 							if typeSpec, ok := specs.(*ast.TypeSpec); ok {
 
-								if info.pluralName != "" && typeSpec.Name.String() == modelNamePlural {
-									info.hasPlural = true
-									info.oldPluralType = string(src[GenDecl.TokPos-1 : typeSpec.End()])
-								}
-
 								if typeSpec.Name.String() == modelName {
 									info.modelFileName = fileInfo.Name()
 									found = true
@@ -318,34 +301,6 @@ func FindModel(modelPath, modelName, modelNamePlural string) (*BuildPluginInfo, 
 						}
 						info.oldImportStr = strSrc[GenDecl.Pos()-1 : GenDecl.End()]
 					}
-				}
-
-				if GenDecl, ok := decl.(*ast.FuncDecl); ok && found == true {
-					if GenDecl.Name.String() == "New"+modelName {
-						info.oldNewFuncBody = strSrc[GenDecl.Pos()-1 : GenDecl.End()]
-					}
-					if GenDecl.Name.String() == "Release" {
-						for _, recvList := range GenDecl.Recv.List {
-							if recvList.Type.(*ast.StarExpr).X.(*ast.Ident).String() == modelName {
-								info.oldReleaseFuncBody = strSrc[GenDecl.Pos()-1 : GenDecl.End()]
-							}
-						}
-					}
-
-					if info.hasPlural == true {
-						if GenDecl.Name.String() == "New"+info.pluralName {
-							info.oldPluralNewBody = strSrc[GenDecl.Pos()-1 : GenDecl.End()]
-						}
-
-						if GenDecl.Name.String() == "Release" {
-							for _, recvList := range GenDecl.Recv.List {
-								if recvList.Type.(*ast.StarExpr).X.(*ast.Ident).String() == info.pluralName {
-									info.oldPluralReleaseBody = strSrc[GenDecl.Pos()-1 : GenDecl.End()]
-								}
-							}
-						}
-					}
-
 				}
 			}
 		}
@@ -497,26 +452,6 @@ func WriteContent(v *viper.Viper, info *BuildPluginInfo) error {
 	}
 
 	strSrc := string(src)
-
-	if info.oldNewFuncBody != "" && v.GetBool("pool") == true {
-		strSrc = strings.Replace(strSrc, info.oldNewFuncBody, "", -1)
-	}
-
-	if info.oldReleaseFuncBody != "" && v.GetBool("pool") == true {
-		strSrc = strings.Replace(strSrc, info.oldReleaseFuncBody, "", -1)
-	}
-
-	if info.oldPluralNewBody != "" && v.GetBool("plural") == true {
-		strSrc = strings.Replace(strSrc, info.oldPluralNewBody, "", -1)
-	}
-
-	if info.oldPluralReleaseBody != "" && v.GetBool("plural") == true {
-		strSrc = strings.Replace(strSrc, info.oldPluralReleaseBody, "", -1)
-	}
-
-	if info.oldPluralType != "" && v.GetBool("plural") == true {
-		strSrc = strings.Replace(strSrc, info.oldPluralType, "", -1)
-	}
 
 	if info.headerStr != "" {
 
@@ -874,24 +809,16 @@ func HandleVar(info *BuildPluginInfo, varName string, context *string) bool {
 
 //单数池
 func HandlePool(v *viper.Viper, info *BuildPluginInfo) {
-	if info.oldNewFuncBody == "" {
-		info.newObjStr = getNewObjStr(info)
-	}
+	info.newObjStr = getNewObjStr(info)
 
-	if info.oldReleaseFuncBody == ""{
-		info.releaseStr = getReleaseObjStr(info, info.InitField.Fields)
-	}
+	info.releaseStr = getReleaseObjStr(info, info.InitField.Fields)
 }
 
 //复数池
 func HandlePluralPool(v *viper.Viper, info *BuildPluginInfo) {
-	if info.oldPluralNewBody == "" {
-		info.newPluralNewBody = getNewPluralObjStr(info)
-	}
+	info.newPluralNewBody = getNewPluralObjStr(info)
 
-	if info.oldPluralReleaseBody == "" {
-		info.newPluralReleaseBody = getReleasePluralObjStr(info)
-	}
+	info.newPluralReleaseBody = getReleasePluralObjStr(info)
 }
 
 func getNewObjStr(info *BuildPluginInfo) string {
@@ -1051,11 +978,7 @@ func getTwoPart(info *BuildPluginInfo) {
 
 	if info.pluralName != "" {
 		bodyStr += "\n"
-		if info.hasPlural == false {
-			bodyStr += "type " + info.pluralName + " []" + info.modelName
-		} else {
-			bodyStr += info.oldPluralType
-		}
+		bodyStr += "type " + info.pluralName + " []" + info.modelName
 	}
 
 	if info.newObjStr != "" {
