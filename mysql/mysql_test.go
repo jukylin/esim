@@ -12,8 +12,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_model/go"
-	//"github.com/ory/dockertest/v3"
-	//dc "github.com/ory/dockertest/v3/docker"
+	"github.com/ory/dockertest/v3"
+	dc "github.com/ory/dockertest/v3/docker"
 )
 
 var (
@@ -43,75 +43,75 @@ type UserStruct struct{
 var db *sql.DB
 
 func TestMain(m *testing.M) {
-	//logger := log.NewLogger()
+	logger := log.NewLogger()
 
-	//pool, err := dockertest.NewPool("")
-	//if err != nil {
-	//	logger.Fatalf("Could not connect to docker: %s", err)
-	//}
+	pool, err := dockertest.NewPool("")
+	if err != nil {
+		logger.Fatalf("Could not connect to docker: %s", err)
+	}
 
-	//opt := &dockertest.RunOptions{
-	//	Repository: "mysql",
-	//	Tag: "latest",
-	//	Env: []string{"MYSQL_ROOT_PASSWORD=123456"},
-	//	}
+	opt := &dockertest.RunOptions{
+		Repository: "mysql",
+		Tag: "latest",
+		Env: []string{"MYSQL_ROOT_PASSWORD=123456"},
+		}
 
 	// pulls an image, creates a container based on it and runs it
-	//_, err = pool.RunWithOptions(opt, func(hostConfig *dc.HostConfig) {
-	//				hostConfig.PortBindings = map[dc.Port][]dc.PortBinding{
-	//					"3306/tcp": {{HostIP: "", HostPort: "3306"}},
-	//				}
-	//			})
-	//if err != nil {
-	//	logger.Fatalf("Could not start resource: %s", err)
-	//}
+	resource, err := pool.RunWithOptions(opt, func(hostConfig *dc.HostConfig) {
+					hostConfig.PortBindings = map[dc.Port][]dc.PortBinding{
+						"3306/tcp": {{HostIP: "", HostPort: "3306"}},
+					}
+				})
+	if err != nil {
+		logger.Fatalf("Could not start resource: %s", err)
+	}
 
-	//resource.Expire(120)
+	resource.Expire(120)
 
-	//if err := pool.Retry(func() error {
-	//	var err error
-	//	db, err = sql.Open("mysql", "root:123456@tcp(localhost:3306)/mysql?charset=utf8&parseTime=True&loc=Local")
-	//	if err != nil {
-	//		return err
-	//	}
-	//	db.SetMaxOpenConns(100)
-	//
-	//	return db.Ping()
-	//}); err != nil {
-	//	logger.Fatalf("Could not connect to docker: %s", err)
-	//}
-	//
-	//sqls := []string{
-	//	`create database test_1;`,
-	//	`CREATE TABLE IF NOT EXISTS test_1.test(
-	//	  id int not NULL auto_increment,
-	//	  title VARCHAR(10) not NULL DEFAULT '',
-	//	  PRIMARY KEY (id)
-	//	)engine=innodb;`,
-	//	`create database test_2;`,
-	//	`CREATE TABLE IF NOT EXISTS test_2.user(
-	//	  id int not NULL auto_increment,
-	//	  username VARCHAR(10) not NULL DEFAULT '',
-	//		PRIMARY KEY (id)
-	//	)engine=innodb;`,}
+	if err := pool.Retry(func() error {
+		var err error
+		db, err = sql.Open("mysql", "root:123456@tcp(localhost:3306)/mysql?charset=utf8&parseTime=True&loc=Local")
+		if err != nil {
+			return err
+		}
+		db.SetMaxOpenConns(100)
 
-	//for _, execSql := range sqls {
-	//	res, err := db.Exec(execSql)
-	//	if err != nil {
-	//		logger.Errorf(err.Error())
-	//	}
-	//	_, err = res.RowsAffected()
-	//	if err != nil {
-	//		logger.Errorf(err.Error())
-	//	}
-	//}
+		return db.Ping()
+	}); err != nil {
+		logger.Fatalf("Could not connect to docker: %s", err)
+	}
+
+	sqls := []string{
+		`create database test_1;`,
+		`CREATE TABLE IF NOT EXISTS test_1.test(
+		  id int not NULL auto_increment,
+		  title VARCHAR(10) not NULL DEFAULT '',
+		  PRIMARY KEY (id)
+		)engine=innodb;`,
+		`create database test_2;`,
+		`CREATE TABLE IF NOT EXISTS test_2.user(
+		  id int not NULL auto_increment,
+		  username VARCHAR(10) not NULL DEFAULT '',
+			PRIMARY KEY (id)
+		)engine=innodb;`,}
+
+	for _, execSql := range sqls {
+		res, err := db.Exec(execSql)
+		if err != nil {
+			logger.Errorf(err.Error())
+		}
+		_, err = res.RowsAffected()
+		if err != nil {
+			logger.Errorf(err.Error())
+		}
+	}
 	code := m.Run()
 
-	//db.Close()
+	db.Close()
 	// You can't defer this because os.Exit doesn't care for defer
-	//if err := pool.Purge(resource); err != nil {
-	//	logger.Fatalf("Could not purge resource: %s", err)
-	//}
+	if err := pool.Purge(resource); err != nil {
+		logger.Fatalf("Could not purge resource: %s", err)
+	}
 	os.Exit(code)
 }
 
