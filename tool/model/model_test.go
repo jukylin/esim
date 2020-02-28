@@ -5,7 +5,6 @@ import (
 	"github.com/jukylin/esim/pkg/file-dir"
 	"os"
 	"testing"
-	"unsafe"
 )
 
 func getCurDir() string {
@@ -143,11 +142,7 @@ func TestClear(t *testing.T) {
 	Clear(info)
 }
 
-func TestSize(t *testing.T) {
-	test := Test{}
 
-	println(unsafe.Sizeof(test))
-}
 
 func TestNewFrame(t *testing.T)  {
 
@@ -163,6 +158,6 @@ func TestNewFrame(t *testing.T)  {
 	frame := NewFrame(v, info)
 	getOptions(v, info)
 
-	newFrame := replaceOptions(frame, info)
+	newFrame := replaceFrame(frame, info)
 	println(newFrame)
 }

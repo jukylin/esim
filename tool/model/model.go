@@ -441,12 +441,15 @@ func ExecPlugin(v *viper.Viper, info *BuildPluginInfo) error {
 		info.newStruct = BuildNewStruct(info.modelName, re.Fields, info.oldFields)
 	}
 
+	var frame string
+
 	if v.GetBool("new") == true {
-		//getNewFrame(info)
+		NewVarStr(v, info)
+		frame = NewFrame(v, info)
 	}
 
 	if v.GetBool("option") == true {
-		getHeader(info)
+		getOptions(v, info)
 	}
 
 	if v.GetBool("pool") == true {
@@ -459,6 +462,8 @@ func ExecPlugin(v *viper.Viper, info *BuildPluginInfo) error {
 		HandelPlural(v, info)
 		info.VarStr = getVarStr(info.oldVar)
 	}
+
+	info.newObjStr = replaceFrame(frame, info)
 
 	if v.GetBool("pool") == true {
 		getHeader(info)
@@ -522,7 +527,7 @@ func New` + info.modelName + `({{options3}}) ` + info.NewVarStr + ` {
 	return newFrame
 }
 
-func replaceOptions(newFrame string, info *BuildPluginInfo) string {
+func replaceFrame(newFrame string, info *BuildPluginInfo) string {
 	newFrame = strings.Replace(newFrame, "{{options1}}", info.option1, -1)
 
 	newFrame = strings.Replace(newFrame, "{{options2}}", info.option2, -1)
@@ -982,7 +987,7 @@ func getInitStr(info *BuildPluginInfo) string {
 }
 
 func getReleaseObjStr(info *BuildPluginInfo, initFields []string) string {
-	str := "func (" + strings.ToLower(info.modelName) + " *" + info.modelName + ") Release() {\n"
+	str := "func (" + strings.ToLower(info.modelName) + info.NewVarStr + ") Release() {\n"
 
 	for _, field := range info.InitField.Fields {
 		if strings.Contains(field, "time.Time") {
