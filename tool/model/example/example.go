@@ -1,25 +1,26 @@
 package example
 
-type Test struct {
-	g byte
+type Test struct{
+
+	b int64
 
 	c int8
 
 	i bool
 
-	d int16
-
 	f float32
 
 	a int32
 
-	b int64
+	h []int
 
 	m map[string]interface{}
 
 	e string
 
-	h []int
+	g byte
 
 	u [3]string
+
+	d int16
 }
