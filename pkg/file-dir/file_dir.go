@@ -106,6 +106,8 @@ func GetCurrentDir() string {
 
 	parDir := strings.Replace(wd + "/", srcPath, "", -1)
 
+	parDir = strings.Trim(parDir, "/")
+
 	return parDir
 }
 

@@ -101,6 +101,6 @@ func TestGetParDir(t *testing.T)  {
 
 func TestBackUpFile(t *testing.T) {
 	log.NewLogger()
-	err := BackUpFile("./test/esim.txt")
+	err := EsimBackUpFile("./test/esim.txt")
 	assert.NoError(t, err)
 }
