@@ -441,6 +441,11 @@ func ExecPlugin(v *viper.Viper, info *BuildPluginInfo) error {
 		info.newStruct = BuildNewStruct(info.modelName, re.Fields, info.oldFields)
 	}
 
+	initReturn := InitFieldsReturn{}
+	json.Unmarshal([]byte(model.InitField()), &initReturn)
+	//HandleNewStruct(info, newStrcut)
+	info.InitField = initReturn
+
 	var frame string
 
 	if v.GetBool("new") == true {
@@ -454,10 +459,6 @@ func ExecPlugin(v *viper.Viper, info *BuildPluginInfo) error {
 
 	if v.GetBool("pool") == true {
 
-		initReturn := InitFieldsReturn{}
-		json.Unmarshal([]byte(model.InitField()), &initReturn)
-		//HandleNewStruct(info, newStrcut)
-		info.InitField = initReturn
 		HandleInitFieldsAndPool(v, info)
 		HandelPlural(v, info)
 		info.VarStr = getVarStr(info.oldVar)
@@ -562,6 +563,7 @@ func getOptions(v *viper.Viper, info *BuildPluginInfo)  {
 func (`+info.modelName+`Options) WithConf(conf config.Config) `+info.modelName+`Option {
 	return func(` + string(info.modelName[0]) + ` `+ info.NewVarStr +`) {
 	` + string(info.modelName[0]) + `.conf = conf
+	}
 }
 `
 
