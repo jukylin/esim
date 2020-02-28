@@ -23,6 +23,10 @@ type Test struct{
 
 	u [3]string 
 
-} 
+}
+
+func NewTest()  {
+
+}
 
 type Tests []Test

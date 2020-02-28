@@ -27,9 +27,11 @@ func init() {
 
 	modelCmd.Flags().BoolP("new", "n", false, "生成New方法")
 
+	modelCmd.Flags().BoolP("star", "", false, "返回指针变量")
+
 	modelCmd.Flags().BoolP("option", "o", false, "New with option")
 
-	modelCmd.Flags().BoolP("gen_log_option", "", false, "generate logger option")
+	modelCmd.Flags().BoolP("gen_logger_option", "", false, "generate logger option")
 
 	modelCmd.Flags().BoolP("gen_conf_option", "", false, "generate conf option")
 

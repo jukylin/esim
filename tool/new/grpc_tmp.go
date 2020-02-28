@@ -69,7 +69,7 @@ import (
 	"{{PROPATH}}{{service_name}}/internal/transports/grpc/controllers"
 )
 
-func NewGrpcServer(app *{{service_name}}.App) *grpc.GrpcServer {
+func NewGrpcServer(app *{{package_name}}.App) *grpc.GrpcServer {
 
 	target := app.Conf.GetString("grpc_server_tcp")
 
@@ -121,8 +121,8 @@ import (
 
 
 func TestMain(m *testing.M) {
-	appOptions := {{service_name}}.AppOptions{}
-	app := {{service_name}}.NewApp(appOptions.WithConfPath("../../../../conf/"))
+	appOptions := {{package_name}}.AppOptions{}
+	app := {{package_name}}.NewApp(appOptions.WithConfPath("../../../../conf/"))
 
 	setUp(app)
 
@@ -154,7 +154,7 @@ func provideStubsGrpcClient(esim *container.Esim) *egrpc.GrpcClient {
 }
 
 
-func setUp(app *{{service_name}}.App)  {
+func setUp(app *{{package_name}}.App)  {
 
 	app.Infra = infra.NewStubsInfra(provideStubsGrpcClient(app.Esim))
 
@@ -171,7 +171,7 @@ func setUp(app *{{service_name}}.App)  {
 }
 
 
-func tearDown(app *{{service_name}}.App)  {
+func tearDown(app *{{package_name}}.App)  {
 	app.Infra.Close()
 }
 
@@ -215,7 +215,7 @@ import (
 
 type Controllers struct {
 
-	App *{{service_name}}.App
+	App *{{package_name}}.App
 
 	Demo *DemoController
 }
@@ -227,13 +227,13 @@ var controllersSet = wire.NewSet(
 )
 
 
-func NewControllers(app *{{service_name}}.App) *Controllers {
+func NewControllers(app *{{package_name}}.App) *Controllers {
 	controllers := initControllers(app)
 	return controllers
 }
 
 
-func provideDemoController(app *{{service_name}}.App) *DemoController {
+func provideDemoController(app *{{package_name}}.App) *DemoController {
 
 	userSvc := application.NewUserSvc(app.Infra)
 
@@ -261,7 +261,7 @@ import (
 
 
 
-func initControllers(app *{{service_name}}.App) *Controllers {
+func initControllers(app *{{package_name}}.App) *Controllers {
 	wire.Build(controllersSet)
 	return nil
 }
@@ -285,7 +285,7 @@ import (
 
 // Injectors from wire.go:
 
-func initControllers(app *{{service_name}}.App) *Controllers {
+func initControllers(app *{{package_name}}.App) *Controllers {
 	demoController := provideDemoController(app)
 	controllers := &Controllers{
 		App:  app,

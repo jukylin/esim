@@ -194,8 +194,8 @@ import (
 
 
 func TestMain(m *testing.M) {
-	appOptions := {{service_name}}.AppOptions{}
-	app := {{service_name}}.NewApp(appOptions.WithConfPath("../../../../conf/"))
+	appOptions := {{package_name}}.AppOptions{}
+	app := {{package_name}}.NewApp(appOptions.WithConfPath("../../../../conf/"))
 
 	setUp(app)
 
@@ -243,7 +243,7 @@ func setUp(app *{{service_name}}.App)  {
 }
 
 
-func tearDown(app *{{service_name}}.App)  {
+func tearDown(app *{{package_name}}.App)  {
 	app.Infra.Close()
 }
 
@@ -278,7 +278,7 @@ func TestControllers_Esim(t *testing.T)  {
 		Dir:      "internal/transports/http/dto",
 		Content: `package dto
 
-import "{{service_name}}/internal/domain/user/entity"
+import "{{PROPATH}}{{service_name}}/internal/domain/user/entity"
 
 type User struct {
 

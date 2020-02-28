@@ -112,7 +112,7 @@ type GinServer struct{
 	app *{{service_name}}.App
 }
 
-func NewGinServer(app *{{service_name}}.App) *GinServer {
+func NewGinServer(app *{{package_name}}.App) *GinServer {
 
 	httpport := app.Conf.GetString("httpport")
 
@@ -196,8 +196,8 @@ import (
 
 
 func TestMain(m *testing.M) {
-	appOptions := {{service_name}}.AppOptions{}
-	app := {{service_name}}.NewApp(appOptions.WithConfPath("../../../../conf/"))
+	appOptions := {{package_name}}.AppOptions{}
+	app := {{package_name}}.NewApp(appOptions.WithConfPath("../../../../conf/"))
 
 	setUp(app)
 
@@ -228,7 +228,7 @@ func provideStubsGrpcClient(esim *container.Esim) *grpc.GrpcClient {
 	return grpcClient
 }
 
-func setUp(app *{{service_name}}.App)  {
+func setUp(app *{{package_name}}.App)  {
 
 	app.Infra = infra.NewStubsInfra(provideStubsGrpcClient(app.Esim))
 
@@ -245,7 +245,7 @@ func setUp(app *{{service_name}}.App)  {
 }
 
 
-func tearDown(app *{{service_name}}.App)  {
+func tearDown(app *{{package_name}}.App)  {
 	app.Infra.Close()
 }
 
@@ -288,7 +288,7 @@ import (
 
 type Controllers struct {
 
-	App *{{service_name}}.App
+	App *{{package_name}}.App
 
 	Ping *PingController
 
@@ -307,27 +307,27 @@ var controllersSet = wire.NewSet(
 )
 
 
-func NewControllers(app *{{service_name}}.App) *Controllers {
+func NewControllers(app *{{package_name}}.App) *Controllers {
 	controllers := initControllers(app)
 	return controllers
 }
 
 
-func providePingController(app *{{service_name}}.App) *PingController {
+func providePingController(app *{{package_name}}.App) *PingController {
 	pingController := &PingController{}
 	pingController.infra = app.Infra
 	return pingController
 }
 
 
-func provideEsimController(app *{{service_name}}.App) *EsimController {
+func provideEsimController(app *{{package_name}}.App) *EsimController {
 	esimController := &EsimController{}
 	esimController.infra = app.Infra
 	return esimController
 }
 
 
-func provideDemoController(app *{{service_name}}.App) *DemoController {
+func provideDemoController(app *{{package_name}}.App) *DemoController {
 
 	userSvc := application.NewUserSvc(app.Infra)
 
@@ -355,7 +355,7 @@ import (
 
 
 
-func initControllers(app *{{service_name}}.App) *Controllers {
+func initControllers(app *{{package_name}}.App) *Controllers {
 	wire.Build(controllersSet)
 	return nil
 }
@@ -379,7 +379,7 @@ import (
 
 // Injectors from wire.go:
 
-func initControllers(app *{{service_name}}.App) *Controllers {
+func initControllers(app *{{package_name}}.App) *Controllers {
 	pingController := providePingController(app)
 	esimController := provideEsimController(app)
 	demoController := provideDemoController(app)
@@ -400,7 +400,7 @@ func initControllers(app *{{service_name}}.App) *Controllers {
 		Dir:      "internal/transports/http/dto",
 		Content: `package dto
 
-import "{{service_name}}/internal/domain/user/entity"
+import "{{PROPATH}}{{service_name}}/internal/domain/user/entity"
 
 type User struct {
 

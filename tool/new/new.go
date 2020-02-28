@@ -46,6 +46,9 @@ func Build(v *viper.Viper, log logger.Logger) error {
 		return errors.New("创建目录 " + serviceName + " 失败：" + err.Error())
 	}
 
+	// "-" => "_"
+	packageName := strings.Replace(serviceName, "-", "_", -1)
+
 	run_server, import_server := tmpInit(v)
 
 	currentDir := file_dir.GetCurrentDir()
@@ -75,6 +78,9 @@ func Build(v *viper.Viper, log logger.Logger) error {
 		file.Content = strings.ReplaceAll(file.Content, "{{IMPORT_SERVER}}", import_server)
 
 		file.Content = strings.ReplaceAll(file.Content, "{{service_name}}", serviceName)
+
+		file.Content = strings.ReplaceAll(file.Content, "{{package_name}}", packageName)
+
 		file.Content = strings.ReplaceAll(file.Content, "{{!}}", "`")
 		file.Content = strings.ReplaceAll(file.Content, "{{PROPATH}}", currentDir)
 

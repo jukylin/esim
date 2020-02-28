@@ -148,3 +148,21 @@ func TestSize(t *testing.T) {
 
 	println(unsafe.Sizeof(test))
 }
+
+func TestNewFrame(t *testing.T)  {
+
+	v := viper.New()
+	v.Set("gen_logger_option", true)
+	v.Set("gen_conf_option", true)
+	v.Set("star", true)
+
+	info := &BuildPluginInfo{}
+	info.modelName = "TestFrame"
+
+	NewVarStr(v, info)
+	frame := NewFrame(v, info)
+	getOptions(v, info)
+
+	newFrame := replaceOptions(frame, info)
+	println(newFrame)
+}

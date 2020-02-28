@@ -89,7 +89,7 @@ type BuildPluginInfo struct {
 
 	oldVarBody []string
 
-	newVar string
+	VarStr string
 
 	oldImport []string
 
@@ -104,7 +104,7 @@ type BuildPluginInfo struct {
 	headerStr string
 
 	bodyStr string
-	
+
 	InitField InitFieldsReturn
 
 	///模型的复数
@@ -114,6 +114,23 @@ type BuildPluginInfo struct {
 
 	newPluralReleaseBody string
 	///模型的复数
+
+
+	///options start
+	option1 string
+
+	option2 string
+
+	option3 string
+
+	option4 string
+
+	option5 string
+	///options end
+
+	NewStr string
+
+	NewVarStr string
 }
 
 //获取单词的复数形式
@@ -424,6 +441,14 @@ func ExecPlugin(v *viper.Viper, info *BuildPluginInfo) error {
 		info.newStruct = BuildNewStruct(info.modelName, re.Fields, info.oldFields)
 	}
 
+	if v.GetBool("new") == true {
+		//getNewFrame(info)
+	}
+
+	if v.GetBool("option") == true {
+		getHeader(info)
+	}
+
 	if v.GetBool("pool") == true {
 
 		initReturn := InitFieldsReturn{}
@@ -432,7 +457,7 @@ func ExecPlugin(v *viper.Viper, info *BuildPluginInfo) error {
 		info.InitField = initReturn
 		HandleInitFieldsAndPool(v, info)
 		HandelPlural(v, info)
-		info.newVar = getVarStr(info.oldVar)
+		info.VarStr = getVarStr(info.oldVar)
 	}
 
 	if v.GetBool("pool") == true {
@@ -443,6 +468,112 @@ func ExecPlugin(v *viper.Viper, info *BuildPluginInfo) error {
 
 	return nil
 }
+
+
+func NewVarStr(v *viper.Viper, info *BuildPluginInfo)  {
+	if v.GetBool("pool") == true || v.GetBool("star") == true{
+		info.NewVarStr = "*" + info.modelName
+	}else{
+		info.NewVarStr = info.modelName
+	}
+}
+
+
+func GetNewStr(v *viper.Viper, info *BuildPluginInfo) string {
+	if v.GetBool("star") == true{
+		return strings.ToLower(string(info.modelName[0])) + string(info.modelName[1:])  + " := &" + info.modelName + "{}"
+	}else if v.GetBool("pool") == true{
+		return strings.ToLower(string(info.modelName[0])) + string(info.modelName[1:]) + ` := ` + strings.ToLower(info.modelName) + `Pool.Get().(*` + info.modelName + `)`
+	}else{
+		return strings.ToLower(string(info.modelName[0])) + string(info.modelName[1:])  + " := " + info.modelName + "{}"
+	}
+
+	return ""
+}
+
+func GetReturnStr(info *BuildPluginInfo) string {
+	return "	return " + strings.ToLower(string(info.modelName[0])) + string(info.modelName[1:])
+}
+
+func NewFrame(v *viper.Viper, info *BuildPluginInfo) string {
+	var newFrame string
+	newFrame = `
+
+{{options1}}
+
+{{options2}}
+
+func New` + info.modelName + `({{options3}}) ` + info.NewVarStr + ` {
+
+	`+ GetNewStr(v, info) +`
+
+	{{options4}}
+
+	` + getInitStr(info) + `
+
+` + GetReturnStr(info) + `
+}
+
+{{options5}}
+
+`
+
+
+	return newFrame
+}
+
+func replaceOptions(newFrame string, info *BuildPluginInfo) string {
+	newFrame = strings.Replace(newFrame, "{{options1}}", info.option1, -1)
+
+	newFrame = strings.Replace(newFrame, "{{options2}}", info.option2, -1)
+
+	newFrame = strings.Replace(newFrame, "{{options3}}", info.option3, -1)
+
+	newFrame = strings.Replace(newFrame, "{{options4}}", info.option4, -1)
+
+	newFrame = strings.Replace(newFrame, "{{options5}}", info.option5, -1)
+
+	return newFrame
+}
+
+
+func getOptions(v *viper.Viper, info *BuildPluginInfo)  {
+
+	info.option1 = `type `+info.modelName+`Option func(`+ info.NewVarStr +`)`
+
+	info.option2 = `type `+info.modelName+`Options struct{}`
+
+	info.option3 = `options ...`+info.modelName+`Option`
+
+	info.option4 = `
+	for _, option := range options {
+		option(` + strings.ToLower(info.modelName) + `)
+	}`
+
+	if v.GetBool("gen_logger_option") == true{
+		appendImport(info, "github.com/jukylin/esim/config")
+
+		info.option5 += `
+func (`+info.modelName+`Options) WithConf(conf config.Config) `+info.modelName+`Option {
+	return func(` + string(info.modelName[0]) + ` `+ info.NewVarStr +`) {
+	` + string(info.modelName[0]) + `.conf = conf
+}
+`
+
+	}
+
+	if v.GetBool("gen_conf_option") == true {
+		appendImport(info, "github.com/jukylin/esim/log")
+		info.option5 += `
+func (`+info.modelName+`Options) WithLogger(logger log.Logger) `+info.modelName+`Option {
+	return func(` + string(info.modelName[0]) + ` ` + info.NewVarStr + `) {
+		` + string(info.modelName[0]) + `.logger = logger
+	}
+}
+`
+	}
+}
+
 
 func WriteContent(v *viper.Viper, info *BuildPluginInfo) error {
 
@@ -809,7 +940,7 @@ func HandleVar(info *BuildPluginInfo, varName string, context *string) bool {
 
 //单数池
 func HandlePool(v *viper.Viper, info *BuildPluginInfo) {
-	info.newObjStr = getNewObjStr(info)
+	//info.newObjStr = getNewObjStr(info)
 
 	info.releaseStr = getReleaseObjStr(info, info.InitField.Fields)
 }
@@ -821,10 +952,8 @@ func HandlePluralPool(v *viper.Viper, info *BuildPluginInfo) {
 	info.newPluralReleaseBody = getReleasePluralObjStr(info)
 }
 
-func getNewObjStr(info *BuildPluginInfo) string {
-	str := `func New` + info.modelName + `() *` + info.modelName + ` {
-	` + strings.ToLower(info.modelName) + ` := ` + strings.ToLower(info.modelName) + `Pool.Get().(*` + info.modelName + `)
-`
+func getInitStr(info *BuildPluginInfo) string {
+	var str string
 
 	for _, f := range info.InitField.SpecFields {
 		if f.Type == "slice" {
@@ -848,9 +977,6 @@ func getNewObjStr(info *BuildPluginInfo) string {
 		}
 	}
 
-	str += `return ` + strings.ToLower(info.modelName) + `
-}
-`
 
 	return str
 }
@@ -961,7 +1087,7 @@ func getHeader(info *BuildPluginInfo) {
 
 	headerStr += importStr
 	headerStr += "\n"
-	headerStr += info.newVar
+	headerStr += info.VarStr
 
 	info.headerStr = headerStr
 }
