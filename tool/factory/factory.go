@@ -1,4 +1,4 @@
-package model
+package factory
 
 import (
 	"encoding/json"
@@ -131,6 +131,9 @@ type BuildPluginInfo struct {
 	NewStr string
 
 	NewVarStr string
+
+	//模型对应文件内容
+	modelFileContent string
 }
 
 //获取单词的复数形式
@@ -164,6 +167,13 @@ func HandleModel(v *viper.Viper) error {
 	info, err := FindModel(modelpath, modelname, modelNamePlural)
 	if err != nil {
 		return err
+	}
+
+	if ExtendField(v, info) {
+		err = ReWriteModelContent(info)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = BuildPluginEnv(info, nil)
@@ -263,6 +273,7 @@ func FindModel(modelPath, modelName, modelNamePlural string) (*BuildPluginInfo, 
 							if typeSpec, ok := specs.(*ast.TypeSpec); ok {
 
 								if typeSpec.Name.String() == modelName {
+									info.modelFileContent = strSrc
 									info.modelFileName = fileInfo.Name()
 									found = true
 									info.packName = f.Name.String()
@@ -305,6 +316,7 @@ func FindModel(modelPath, modelName, modelNamePlural string) (*BuildPluginInfo, 
 							}
 						}
 					}
+
 					if GenDecl.Tok.String() == "import" && found == true {
 						for _, specs := range GenDecl.Specs {
 							if typeSpec, ok := specs.(*ast.ImportSpec); ok {
@@ -329,6 +341,97 @@ func FindModel(modelPath, modelName, modelNamePlural string) (*BuildPluginInfo, 
 		return nil, errors.New("not found model")
 	}
 }
+
+//extend logger and conf
+func ExtendField(v *viper.Viper, info *BuildPluginInfo) bool {
+
+	var HasExtend bool
+	if v.GetBool("option") == true {
+		if v.GetBool("gen_logger_option") == true{
+			HasExtend = true
+			var foundLogField bool
+			for _, field := range info.oldFields {
+				if strings.Contains(field.Filed, "log.Logger") == false && foundLogField == false{
+					foundLogField = true
+					fld := db2entity.Field{}
+					fld.Filed = "logger log.Logger"
+					info.oldFields = append(info.oldFields, fld)
+				}
+			}
+
+			var foundLogImport bool
+			for _, oim := range info.oldImport{
+				if oim == "github.com/jukylin/esim/log"{
+					foundLogImport = true
+				}
+			}
+
+			if foundLogImport == false {
+				appendImport(info, "github.com/jukylin/esim/log")
+			}
+		}
+
+		if v.GetBool("gen_conf_option") == true{
+			HasExtend = true
+
+			var foundConfField bool
+			for _, field := range info.oldFields {
+				if strings.Contains(field.Filed, "config.Config") == false && foundConfField == false{
+					foundConfField = true
+					fld := db2entity.Field{}
+					fld.Filed = "conf config.Config"
+					info.oldFields = append(info.oldFields, fld)
+				}
+			}
+
+			var foundConfImport bool
+			for _, oim := range info.oldImport{
+				if oim == "github.com/jukylin/esim/config"{
+					foundConfImport = true
+				}
+			}
+			if foundConfImport == false {
+				appendImport(info, "github.com/jukylin/esim/config")
+			}
+		}
+	}
+	return HasExtend
+}
+
+//有扩展属性才重写
+func ReWriteModelContent(info *BuildPluginInfo) error {
+
+	if info.oldImportStr != "" {
+		info.modelFileContent = strings.Replace(info.modelFileContent, info.oldImportStr, getNewImport(info.oldImport), -1)
+	} else if info.packStr != "" {
+		getHeader(info)
+		info.modelFileContent = strings.Replace(info.modelFileContent, info.packStr, info.headerStr, -1)
+	}
+
+	info.oldImportStr = getNewImport(info.oldImport)
+
+	info.modelFileContent = strings.Replace(info.modelFileContent, info.oldStruct, db2entity.GetNewStruct(info.modelName, info.oldFields), -1)
+	info.oldStruct = db2entity.GetNewStruct(info.modelName, info.oldFields)
+
+	return Write(info, info.modelFileContent)
+}
+
+func getNewImport(imports []string) string {
+	var newImport string
+	newImport +=
+`import (
+`
+	for _, imp := range imports {
+		newImport += `	` +imp+ `
+`
+	}
+
+	newImport += `)`
+
+	return newImport
+}
+
+
 
 //@ 建立虚拟环境
 func BuildPluginEnv(info *BuildPluginInfo, buildBeforeFunc func()) error {
@@ -356,7 +459,7 @@ func BuildPluginEnv(info *BuildPluginInfo, buildBeforeFunc func()) error {
 	}
 
 	//TODO 生成 modelName _plugin.go 文件
-	_, err = GenPlugin(info.modelName, info.oldFields, targetDir)
+	_, err = GenPlugin(info.modelName, info.oldFields, targetDir, info.oldImport)
 	if err != nil {
 		return err
 	}
@@ -556,7 +659,7 @@ func getOptions(v *viper.Viper, info *BuildPluginInfo)  {
 		option(` + strings.ToLower(info.modelName) + `)
 	}`
 
-	if v.GetBool("gen_logger_option") == true{
+	if v.GetBool("gen_conf_option") == true{
 		appendImport(info, "github.com/jukylin/esim/config")
 
 		info.option5 += `
@@ -569,7 +672,7 @@ func (`+info.modelName+`Options) WithConf(conf config.Config) `+info.modelName+`
 
 	}
 
-	if v.GetBool("gen_conf_option") == true {
+	if v.GetBool("gen_logger_option") == true {
 		appendImport(info, "github.com/jukylin/esim/log")
 		info.option5 += `
 func (`+info.modelName+`Options) WithLogger(logger log.Logger) `+info.modelName+`Option {
@@ -606,18 +709,22 @@ func WriteContent(v *viper.Viper, info *BuildPluginInfo) error {
 
 	strSrc = strings.Replace(strSrc, info.oldStruct, info.bodyStr, -1)
 
+	return Write(info, strSrc)
+}
+
+func Write(info *BuildPluginInfo, context string) error {
 	dst, err := os.OpenFile(info.modelDir+"/"+info.modelFileName, os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
 		return err
 	}
 	defer dst.Close()
 
-	dst.Write([]byte(strSrc))
+	dst.Write([]byte(context))
 
 	return nil
 }
 
-func GenPlugin(structName string, fields []db2entity.Field, dir string) (string, error) {
+func GenPlugin(structName string, fields []db2entity.Field, dir string, oldImport []string) (string, error) {
 	str := `package main
 
 import (
@@ -629,7 +736,6 @@ import (
 	"github.com/hashicorp/go-plugin"
 	"github.com/jukylin/esim/tool/model"
 )
-
 
 
 type InitFieldsReturn struct{
@@ -1086,13 +1192,8 @@ func getHeader(info *BuildPluginInfo) {
 	if info.oldImportStr == "" {
 		headerStr = info.packStr + "\n"
 	}
-	importStr := "import( \n"
-	for _, imp := range info.oldImport {
-		importStr += "	" + imp + "\n"
-	}
-	importStr += ") \n"
 
-	headerStr += importStr
+	headerStr += getNewImport(info.oldImport)
 	headerStr += "\n"
 	headerStr += info.VarStr
 

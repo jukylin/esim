@@ -616,7 +616,7 @@ func handleInject(srcStr string, structName string, fieldName, packageName, inte
 							oldStruct = srcStr[GenDecl.Pos()-1 : GenDecl.End()]
 							oldFields := GetOldFields(GenDecl, srcStr)
 							newFields := append(oldFields, Field{Filed: interName + " repo." + interName})
-							newStruct = getNewStruct(structName, newFields)
+							newStruct = GetNewStruct(structName, newFields)
 						}
 					}
 				}
@@ -766,7 +766,7 @@ func provide` + instName + `(esim *container.Esim) repo.` + interName + ` {
 	return funcStr
 }
 
-func getNewStruct(name string, fields []Field) string {
+func GetNewStruct(name string, fields []Field) string {
 	var structStr string
 	structStr = " type " + name + " struct {\r\n"
 

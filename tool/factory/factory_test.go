@@ -1,11 +1,13 @@
-package model
+package factory
 
 import (
 	"github.com/spf13/viper"
 	"github.com/jukylin/esim/pkg/file-dir"
 	"os"
 	"testing"
+	"github.com/stretchr/testify/assert"
 )
+
 
 func getCurDir() string {
 	modelpath, err := os.Getwd()
@@ -16,14 +18,16 @@ func getCurDir() string {
 	return modelpath
 }
 
+
 func delModelFile() {
 	os.Remove(getCurDir() + "/plugin/model.go")
 	os.Remove(getCurDir() + "/plugin/model_test.go")
 }
 
+
 func TestFindModel(t *testing.T) {
 	modelName := "Test"
-	modelPath := getCurDir()
+	modelPath := getCurDir() + "/example"
 
 	info, err := FindModel(modelPath, modelName, "")
 	if err != nil {
@@ -36,10 +40,11 @@ func TestFindModel(t *testing.T) {
 	}
 }
 
+
 func TestBuildVirEnv(t *testing.T) {
 
 	modelName := "Test"
-	modelPath := getCurDir()
+	modelPath := getCurDir() + "/example"
 
 	info, err := FindModel(modelPath, modelName, "")
 	if err != nil {
@@ -66,10 +71,11 @@ func TestBuildVirEnv(t *testing.T) {
 	Clear(info)
 }
 
+
 func TestExecPlugin(t *testing.T) {
 
 	modelName := "Test"
-	modelPath := getCurDir()
+	modelPath := getCurDir() + "/example"
 
 	v := viper.New()
 	v.Set("sort", false)
@@ -96,9 +102,10 @@ func TestExecPlugin(t *testing.T) {
 	Clear(info)
 }
 
+
 func TestWriteContent(t *testing.T) {
 	modelName := "Test"
-	modelPath := getCurDir()
+	modelPath := getCurDir() + "/example"
 
 	v := viper.New()
 	v.Set("sort", true)
@@ -131,9 +138,10 @@ func TestWriteContent(t *testing.T) {
 	Clear(info)
 }
 
+
 func TestClear(t *testing.T) {
 	modelName := "Test"
-	modelPath := getCurDir()
+	modelPath := getCurDir() + "/example"
 
 	info, err := FindModel(modelPath, modelName, "")
 	if err != nil {
@@ -141,7 +149,6 @@ func TestClear(t *testing.T) {
 	}
 	Clear(info)
 }
-
 
 
 func TestNewFrame(t *testing.T)  {
@@ -160,4 +167,36 @@ func TestNewFrame(t *testing.T)  {
 
 	newFrame := replaceFrame(frame, info)
 	println(newFrame)
+}
+
+
+func TestGetNewImport(t *testing.T)  {
+	imports := []string{"test", "test2"}
+
+	newImport := getNewImport(imports)
+
+	println(newImport)
+}
+
+
+func TestExtendField(t *testing.T)  {
+	modelName := "Test"
+	modelPath := getCurDir() + "/example"
+
+	v := viper.New()
+	v.Set("gen_logger_option", true)
+	v.Set("gen_conf_option", true)
+	v.Set("option", true)
+
+	info, err := FindModel(modelPath, modelName, getPluralWord(modelName))
+	if err != nil {
+		assert.Nil(t, err)
+	}
+
+	if ExtendField(v, info) {
+		err := ReWriteModelContent(info)
+		assert.Nil(t, err)
+	}else{
+		assert.Fail(t, "not here")
+	}
 }

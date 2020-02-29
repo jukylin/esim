@@ -1,5 +1,6 @@
 package example
 
+
 type Test struct{
 
 	b int64

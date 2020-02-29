@@ -1,4 +1,4 @@
-package model
+package factory
 
 import (
 	"net/rpc"
