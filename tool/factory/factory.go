@@ -607,18 +607,18 @@ func NewVarStr(v *viper.Viper, info *BuildPluginInfo)  {
 
 func GetNewStr(v *viper.Viper, info *BuildPluginInfo) string {
 	if v.GetBool("star") == true{
-		return strings.ToLower(string(info.modelName[0])) + string(info.modelName[1:])  + " := &" + info.modelName + "{}"
+		return strings.ToLower(string(info.modelName[0]))  + " := &" + info.modelName + "{}"
 	}else if v.GetBool("pool") == true{
-		return strings.ToLower(string(info.modelName[0])) + string(info.modelName[1:]) + ` := ` + strings.ToLower(info.modelName) + `Pool.Get().(*` + info.modelName + `)`
+		return strings.ToLower(string(info.modelName[0])) + ` := ` + strings.ToLower(info.modelName) + `Pool.Get().(*` + info.modelName + `)`
 	}else{
-		return strings.ToLower(string(info.modelName[0])) + string(info.modelName[1:])  + " := " + info.modelName + "{}"
+		return strings.ToLower(string(info.modelName[0]))  + " := " + info.modelName + "{}"
 	}
 
 	return ""
 }
 
 func GetReturnStr(info *BuildPluginInfo) string {
-	return "	return " + strings.ToLower(string(info.modelName[0])) + string(info.modelName[1:])
+	return "	return " + strings.ToLower(string(info.modelName[0]))
 }
 
 func NewFrame(v *viper.Viper, info *BuildPluginInfo) string {
@@ -629,7 +629,7 @@ func NewFrame(v *viper.Viper, info *BuildPluginInfo) string {
 
 {{options2}}
 
-func New` + info.modelName + `({{options3}}) ` + info.NewVarStr + ` {
+func New` + strings.ToUpper(string(info.modelName[0])) + string(info.modelName[1:]) + `({{options3}}) ` + info.NewVarStr + ` {
 
 	`+ GetNewStr(v, info) +`
 
@@ -673,7 +673,7 @@ func getOptions(v *viper.Viper, info *BuildPluginInfo)  {
 
 	info.option4 = `
 	for _, option := range options {
-		option(` + strings.ToLower(info.modelName) + `)
+		option(` + strings.ToLower(string(info.modelName[0])) + `)
 	}`
 
 	if v.GetBool("gen_conf_option") == true{

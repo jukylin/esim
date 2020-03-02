@@ -31,7 +31,7 @@ func init() {
 
 	ifaceCmd.Flags().BoolP("star", "s", false, "带星")
 
-	ifaceCmd.Flags().StringP("struct_name", "", "", "结构体名称：type test struct{}")
+	ifaceCmd.Flags().StringP("struct_name", "", "", "struct 名称：type struct_name struct{}")
 
 	v.BindPFlags(ifaceCmd.Flags())
 }

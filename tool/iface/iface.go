@@ -18,6 +18,8 @@ import (
 
 type Iface struct {
 
+	IfaceName string
+
 	StructName string
 
 	PackageName string
@@ -29,6 +31,8 @@ type Iface struct {
 	Methods []Method
 
 	Content string
+
+	Star string
 
 	OutFile string
 }
@@ -59,7 +63,12 @@ func (this *Iface) Run(v *viper.Viper) error {
 	if name == ""{
 		return errors.New("必须指定 name")
 	}
-	this.StructName = struct_name
+	this.IfaceName = name
+
+	star := v.GetBool("star")
+	if star == true {
+		this.Star = "*"
+	}
 
 	iface_path := v.GetString("iface_path")
 
