@@ -10,13 +10,17 @@ import (
 	"go/ast"
 	"go/parser"
 	"strconv"
+	"text/template"
+	"bytes"
 )
 
 type Iface struct {
 
-	packName string
+	StructName string
 
-	imports []string
+	PackageName string
+
+	ImportStr string
 
 	found bool
 
@@ -25,11 +29,11 @@ type Iface struct {
 
 
 type Method struct {
-	funcName string
+	FuncName string
 
-	argStr string
+	ArgStr string
 
-	returnStr string
+	ReturnStr string
 }
 
 func (this *Iface) FindIface(ifacePath string, ifaceName string) (error) {
@@ -50,6 +54,10 @@ func (this *Iface) FindIface(ifacePath string, ifaceName string) (error) {
 	}
 
 	for _, fileInfo := range files {
+
+		if this.found {
+			continue
+		}
 
 		ext := path.Ext(fileInfo.Name())
 		if ext != ".go" {
@@ -74,9 +82,18 @@ func (this *Iface) FindIface(ifacePath string, ifaceName string) (error) {
 				return err
 			}
 
+			this.PackageName = f.Name.String()
+
 			for _, decl := range f.Decls {
-				specs := decl.(*ast.GenDecl).Specs
-				for _, spec := range specs {
+				GenDecl := decl.(*ast.GenDecl)
+
+				if GenDecl.Tok.String() == "import"{
+					this.ImportStr = strSrc[GenDecl.Pos() -1 : GenDecl.End() - 1]
+					continue
+				}
+
+				for _, spec := range GenDecl.Specs {
+
 					if typeSpec, ok := spec.(*ast.TypeSpec); ok {
 						if typeSpec.Name.String() == ifaceName &&
 							typeSpec.Type.(*ast.InterfaceType).Interface.IsValid(){
@@ -85,26 +102,26 @@ func (this *Iface) FindIface(ifacePath string, ifaceName string) (error) {
 							for _, method := range typeSpec.Type.(*ast.InterfaceType).Methods.List {
 								if funcType, ok := method.Type.(*ast.FuncType); ok{
 									m := Method{}
-									m.funcName = method.Names[0].String()
+									m.FuncName = method.Names[0].String()
 
 									if len(funcType.Params.List) > 0{
 										var paramsLen int
 										paramsLen = len(funcType.Params.List)
 										for k, param := range funcType.Params.List {
 											if len(param.Names) > 0{
-												m.argStr += param.Names[0].String() + " "
+												m.ArgStr += param.Names[0].String() + " "
 											}else{
-												m.argStr += "arg" + strconv.Itoa(k) + " "
+												m.ArgStr += "arg" + strconv.Itoa(k) + " "
 											}
 
-											m.argStr += strSrc[param.Type.Pos() -1 :param.Type.End() - 1]
+											m.ArgStr += strSrc[param.Type.Pos() -1 :param.Type.End() - 1]
 
 											if k < paramsLen - 1{
-												m.argStr += ", "
+												m.ArgStr += ", "
 											}
 										}
 									}
-									m.returnStr = strSrc[funcType.Results.Pos() -1 : funcType.Results.End() -1 ]
+									m.ReturnStr = strSrc[funcType.Results.Pos() -1 : funcType.Results.End() -1 ]
 
 									this.Methods = append(this.Methods, m)
 								}
@@ -114,9 +131,28 @@ func (this *Iface) FindIface(ifacePath string, ifaceName string) (error) {
 				}
 			}
 		}
-
 	}
 
+
+	return nil
+}
+
+func (this *Iface) Gen() (string, error) {
+	tmpl, err := template.New("iface").Parse(ifaceTemplate)
+	if err != nil{
+		return "", err
+	}
+
+	var buf bytes.Buffer
+	err = tmpl.Execute(&buf, this)
+	if err != nil{
+		return "", err
+	}
+
+	return buf.String(), nil
+}
+
+func (this *Iface) Write() error {
 
 	return nil
 }

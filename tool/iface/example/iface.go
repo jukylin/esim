@@ -1,14 +1,14 @@
-package example
+package example1
 
 import (
 	"context"
-	"gitlab.etcchebao.cn/go_service/esim/db2entity"
+	"github.com/jukylin/esim/pkg/file-dir"
 )
 
 type Test interface {
-	Iface1( func(string) string) bool
+	Iface1(func(string) string) bool
 
 	Iface2(ctx context.Context, found *bool) (bool, error)
 
-	Iface3(user db2entity.Field) func(string) string
+	Iface3() func(string) string
 }
