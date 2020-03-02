@@ -111,6 +111,10 @@ func GetCurrentDir() string {
 	return parDir
 }
 
+func RemoveDir(dir string) error {
+	return os.RemoveAll(dir)
+}
+
 //BackUpFile backup files to os.Getenv("GOPATH") + "/pkg/esim/"
 //backFile is Absolute path
 // Overwrite as soon as the file exists
@@ -163,6 +167,33 @@ func EsimBackUpFile(backFile string) error {
 	}
 
 	log.Log.Infof("%s backup to %s", relativePath, backUpPath)
+
+	return nil
+}
+
+func EsimWrite(filePath string, content string) error {
+
+	dir := filepath.Dir(filePath)
+
+	exists, err := IsExistsDir(dir)
+	if err != nil{
+		return err
+	}
+
+	if exists == false {
+		err = CreateDir(dir)
+		if err != nil{
+			return err
+		}
+	}
+
+	dst, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE, 0644)
+	if err != nil {
+		return err
+	}
+	defer dst.Close()
+
+	dst.Write([]byte(content))
 
 	return nil
 }

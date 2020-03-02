@@ -1,9 +1,7 @@
 package iface
 
 
-var ifaceTemplate = `
-
-package {{.PackageName}}
+var ifaceTemplate = `package {{.PackageName}}
 
 {{- $StructName := .StructName}}
 
@@ -15,4 +13,5 @@ type {{$StructName}} struct {}
 func (this *{{$StructName}}) {{.FuncName}}({{.ArgStr}}) {{.ReturnStr}} {
 
 }
-{{ end -}}`
+{{ end -}}
+`

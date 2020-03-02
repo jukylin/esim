@@ -709,19 +709,7 @@ func WriteContent(v *viper.Viper, info *BuildPluginInfo) error {
 
 	strSrc = strings.Replace(strSrc, info.oldStruct, info.bodyStr, -1)
 
-	return Write(info, strSrc)
-}
-
-func Write(info *BuildPluginInfo, context string) error {
-	dst, err := os.OpenFile(info.modelDir+"/"+info.modelFileName, os.O_WRONLY|os.O_CREATE, 0644)
-	if err != nil {
-		return err
-	}
-	defer dst.Close()
-
-	dst.Write([]byte(context))
-
-	return nil
+	return file_dir.EsimWrite(info.modelDir+"/"+info.modelFileName, strSrc)
 }
 
 func GenPlugin(structName string, fields []db2entity.Field, dir string, oldImport []string) (string, error) {

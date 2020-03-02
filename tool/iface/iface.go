@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"text/template"
 	"bytes"
+	"golang.org/x/tools/imports"
 )
 
 type Iface struct {
@@ -25,6 +26,10 @@ type Iface struct {
 	found bool
 
 	Methods []Method
+
+	Content string
+
+	OutFile string
 }
 
 
@@ -64,7 +69,6 @@ func (this *Iface) FindIface(ifacePath string, ifaceName string) (error) {
 			continue
 		}
 
-		//测试文件不copy
 		if strings.Index(fileInfo.Name(), "_test") > -1 {
 			continue
 		}
@@ -137,22 +141,28 @@ func (this *Iface) FindIface(ifacePath string, ifaceName string) (error) {
 	return nil
 }
 
-func (this *Iface) Gen() (string, error) {
+func (this *Iface) Gen() error {
 	tmpl, err := template.New("iface").Parse(ifaceTemplate)
 	if err != nil{
-		return "", err
+		return err
 	}
 
 	var buf bytes.Buffer
 	err = tmpl.Execute(&buf, this)
 	if err != nil{
-		return "", err
+		return err
 	}
 
-	return buf.String(), nil
+	src, err := imports.Process("", buf.Bytes(), nil)
+	if err != nil{
+		return err
+	}
+
+	this.Content = string(src)
+
+	return nil
 }
 
 func (this *Iface) Write() error {
-
-	return nil
+	return file_dir.EsimWrite(this.OutFile, this.Content)
 }

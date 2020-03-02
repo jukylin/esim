@@ -41,6 +41,7 @@ require (
 	go.uber.org/zap v1.10.0
 	golang.org/x/net v0.0.0-20191011234655-491137f69257
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
+	golang.org/x/tools v0.0.0-20190606124116-d0a3d012864b
 	google.golang.org/appengine v1.6.1 // indirect
 	google.golang.org/genproto v0.0.0-20191009194640-548a555dbc03 // indirect
 	google.golang.org/grpc v1.24.0
