@@ -413,7 +413,7 @@ func ReWriteModelContent(info *BuildPluginInfo) error {
 	info.modelFileContent = strings.Replace(info.modelFileContent, info.oldStruct, db2entity.GetNewStruct(info.modelName, info.oldFields), -1)
 	info.oldStruct = db2entity.GetNewStruct(info.modelName, info.oldFields)
 
-	return Write(info, info.modelFileContent)
+	return file_dir.EsimWrite(info.modelDir+"/"+info.modelFileName, info.modelFileContent)
 }
 
 func getNewImport(imports []string) string {

@@ -13,6 +13,8 @@ import (
 	"text/template"
 	"bytes"
 	"golang.org/x/tools/imports"
+	"github.com/spf13/viper"
+	"fmt"
 )
 
 type Iface struct {
@@ -39,6 +41,49 @@ type Method struct {
 	ArgStr string
 
 	ReturnStr string
+}
+
+func (this *Iface) Run(v *viper.Viper) error {
+	out_path := v.GetString("out")
+	if out_path == ""{
+		return errors.New("必须指定 out")
+	}
+	this.OutFile = out_path
+
+	struct_name := v.GetString("struct_name")
+	if struct_name == ""{
+		return errors.New("必须指定 struct_name")
+	}
+	this.StructName = struct_name
+
+	name := v.GetString("name")
+	if name == ""{
+		return errors.New("必须指定 name")
+	}
+	this.StructName = struct_name
+
+	iface_path := v.GetString("iface_path")
+
+	err := this.FindIface(iface_path, name)
+	if err != nil{
+		return err
+	}
+
+	if this.found == false{
+		return errors.New("没有找到 " + name)
+	}
+
+	err = this.Process()
+	if err != nil{
+		return err
+	}
+
+	err = this.Write()
+	if err != nil{
+		return err
+	}
+
+	return nil
 }
 
 func (this *Iface) FindIface(ifacePath string, ifaceName string) (error) {
@@ -89,45 +134,45 @@ func (this *Iface) FindIface(ifacePath string, ifaceName string) (error) {
 			this.PackageName = f.Name.String()
 
 			for _, decl := range f.Decls {
-				GenDecl := decl.(*ast.GenDecl)
+				if GenDecl, ok := decl.(*ast.GenDecl); ok {
+					if GenDecl.Tok.String() == "import" {
+						this.ImportStr = strSrc[GenDecl.Pos()-1: GenDecl.End()-1]
+						continue
+					}
 
-				if GenDecl.Tok.String() == "import"{
-					this.ImportStr = strSrc[GenDecl.Pos() -1 : GenDecl.End() - 1]
-					continue
-				}
+					for _, spec := range GenDecl.Specs {
 
-				for _, spec := range GenDecl.Specs {
+						if typeSpec, ok := spec.(*ast.TypeSpec); ok {
+							if typeSpec.Name.String() == ifaceName &&
+								typeSpec.Type.(*ast.InterfaceType).Interface.IsValid() {
+								this.found = true
 
-					if typeSpec, ok := spec.(*ast.TypeSpec); ok {
-						if typeSpec.Name.String() == ifaceName &&
-							typeSpec.Type.(*ast.InterfaceType).Interface.IsValid(){
-							this.found = true
+								for _, method := range typeSpec.Type.(*ast.InterfaceType).Methods.List {
+									if funcType, ok := method.Type.(*ast.FuncType); ok {
+										m := Method{}
+										m.FuncName = method.Names[0].String()
 
-							for _, method := range typeSpec.Type.(*ast.InterfaceType).Methods.List {
-								if funcType, ok := method.Type.(*ast.FuncType); ok{
-									m := Method{}
-									m.FuncName = method.Names[0].String()
+										if len(funcType.Params.List) > 0 {
+											var paramsLen int
+											paramsLen = len(funcType.Params.List)
+											for k, param := range funcType.Params.List {
+												if len(param.Names) > 0 {
+													m.ArgStr += param.Names[0].String() + " "
+												} else {
+													m.ArgStr += "arg" + strconv.Itoa(k) + " "
+												}
 
-									if len(funcType.Params.List) > 0{
-										var paramsLen int
-										paramsLen = len(funcType.Params.List)
-										for k, param := range funcType.Params.List {
-											if len(param.Names) > 0{
-												m.ArgStr += param.Names[0].String() + " "
-											}else{
-												m.ArgStr += "arg" + strconv.Itoa(k) + " "
-											}
+												m.ArgStr += strSrc[param.Type.Pos()-1:param.Type.End()-1]
 
-											m.ArgStr += strSrc[param.Type.Pos() -1 :param.Type.End() - 1]
-
-											if k < paramsLen - 1{
-												m.ArgStr += ", "
+												if k < paramsLen-1 {
+													m.ArgStr += ", "
+												}
 											}
 										}
-									}
-									m.ReturnStr = strSrc[funcType.Results.Pos() -1 : funcType.Results.End() -1 ]
+										m.ReturnStr = strSrc[funcType.Results.Pos()-1: funcType.Results.End()-1 ]
 
-									this.Methods = append(this.Methods, m)
+										this.Methods = append(this.Methods, m)
+									}
 								}
 							}
 						}
@@ -141,7 +186,7 @@ func (this *Iface) FindIface(ifacePath string, ifaceName string) (error) {
 	return nil
 }
 
-func (this *Iface) Gen() error {
+func (this *Iface) Process() error {
 	tmpl, err := template.New("iface").Parse(ifaceTemplate)
 	if err != nil{
 		return err

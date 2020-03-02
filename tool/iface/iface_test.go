@@ -4,6 +4,7 @@ import (
 	"testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/jukylin/esim/pkg/file-dir"
+	"github.com/spf13/viper"
 )
 
 var Result = `package example1
@@ -27,7 +28,7 @@ func (this *TestStub) Iface3() func(string) string {
 }
 `
 
-func TestIface_FindIface(t *testing.T) {
+func TestIface(t *testing.T) {
 	iface := &Iface{}
 
 	iface.OutFile = "./abc/test_stub.go"
@@ -38,7 +39,7 @@ func TestIface_FindIface(t *testing.T) {
 
 	iface.FindIface(ifacePath, "Test")
 
-	err := iface.Gen()
+	err := iface.Process()
 	assert.Nil(t, err)
 
 	assert.Equal(t, Result, iface.Content)
@@ -48,6 +49,24 @@ func TestIface_FindIface(t *testing.T) {
 	exists, err := file_dir.IsExistsDir("./abc")
 	assert.Nil(t, err)
 	assert.True(t, exists)
+
+	assert.Nil(t, file_dir.RemoveDir("./abc"))
+}
+
+
+func TestIface_Run(t *testing.T) {
+	v := viper.New()
+	v.Set("out", "./abc/test_stub.go")
+
+	v.Set("struct_name", "TestStub")
+
+	v.Set("name", "Test")
+
+	v.Set("iface_path", "./example")
+
+	iface := &Iface{}
+	err := iface.Run(v)
+	assert.Nil(t, err)
 
 	assert.Nil(t, file_dir.RemoveDir("./abc"))
 }
