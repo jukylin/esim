@@ -21,6 +21,7 @@ import (
 	"strings"
 	log2 "log"
 	go_plugin "github.com/hashicorp/go-plugin"
+	"golang.org/x/tools/imports"
 	"github.com/hashicorp/go-hclog"
 )
 
@@ -176,40 +177,82 @@ func HandleModel(v *viper.Viper) error {
 		}
 	}
 
-	err = BuildPluginEnv(info, nil)
-	if err != nil {
-		return err
-	}
-
-	defer func() {
-		if err := recover(); err != nil {
-			log.Errorf("%v", err)
+	if len(info.oldFields) > 0 {
+		err = BuildPluginEnv(info, nil)
+		if err != nil {
+			return err
 		}
-		Clear(info)
-	}()
 
-	err = ExecPlugin(v, info)
-	if err != nil {
-		return err
+		defer func() {
+			if err := recover(); err != nil {
+				log.Errorf("%v", err)
+			}
+			Clear(info)
+		}()
+
+		err = ExecPlugin(v, info)
+		if err != nil {
+			return err
+		}
 	}
+
+	BuildFrame(v, info)
 
 	err = file_dir.EsimBackUpFile(info.modelDir + "/" + info.modelFileName)
 	if err != nil{
 		log.Warnf("backup err %s:%s", info.modelDir + "/" + info.modelFileName, err.Error())
 	}
 
-	err = WriteContent(v, info)
+	src, err := ReplaceContent(v, info)
 	if err != nil {
 		return err
 	}
 
-	err = db2entity.ExecGoFmt(info.modelFileName, info.modelDir)
-	if err != nil{
+	res, err := imports.Process("", []byte(src), nil)
+	if err != nil {
 		return err
 	}
 
+	err = file_dir.EsimWrite(info.modelDir+"/"+info.modelFileName, string(res))
+	if err != nil {
+		return err
+	}
+
+	//err = db2entity.ExecGoFmt(info.modelFileName, info.modelDir)
+	//if err != nil{
+	//	return err
+	//}
+
 	err = Clear(info)
 	return err
+}
+
+func BuildFrame(v *viper.Viper, info *BuildPluginInfo)  {
+	var frame string
+
+	if v.GetBool("new") == true {
+		NewVarStr(v, info)
+		frame = NewFrame(v, info)
+	}
+
+	if v.GetBool("option") == true {
+		getOptions(v, info)
+	}
+
+	if v.GetBool("pool") == true && len(info.InitField.Fields) > 0{
+
+		HandleInitFieldsAndPool(v, info)
+		HandelPlural(v, info)
+		info.VarStr = getVarStr(info.oldVar)
+	}
+
+	info.newObjStr = replaceFrame(frame, info)
+
+	if v.GetBool("pool") == true {
+		getHeader(info)
+	}
+
+	getTwoPart(info)
 }
 
 //@ 查找模型
@@ -549,32 +592,6 @@ func ExecPlugin(v *viper.Viper, info *BuildPluginInfo) error {
 	//HandleNewStruct(info, newStrcut)
 	info.InitField = initReturn
 
-	var frame string
-
-	if v.GetBool("new") == true {
-		NewVarStr(v, info)
-		frame = NewFrame(v, info)
-	}
-
-	if v.GetBool("option") == true {
-		getOptions(v, info)
-	}
-
-	if v.GetBool("pool") == true {
-
-		HandleInitFieldsAndPool(v, info)
-		HandelPlural(v, info)
-		info.VarStr = getVarStr(info.oldVar)
-	}
-
-	info.newObjStr = replaceFrame(frame, info)
-
-	if v.GetBool("pool") == true {
-		getHeader(info)
-	}
-
-	getTwoPart(info)
-
 	return nil
 }
 
@@ -660,7 +677,6 @@ func getOptions(v *viper.Viper, info *BuildPluginInfo)  {
 	}`
 
 	if v.GetBool("gen_conf_option") == true{
-		appendImport(info, "github.com/jukylin/esim/config")
 
 		info.option5 += `
 func (`+info.modelName+`Options) WithConf(conf config.Config) `+info.modelName+`Option {
@@ -673,7 +689,6 @@ func (`+info.modelName+`Options) WithConf(conf config.Config) `+info.modelName+`
 	}
 
 	if v.GetBool("gen_logger_option") == true {
-		appendImport(info, "github.com/jukylin/esim/log")
 		info.option5 += `
 func (`+info.modelName+`Options) WithLogger(logger log.Logger) `+info.modelName+`Option {
 	return func(` + string(info.modelName[0]) + ` ` + info.NewVarStr + `) {
@@ -685,11 +700,11 @@ func (`+info.modelName+`Options) WithLogger(logger log.Logger) `+info.modelName+
 }
 
 
-func WriteContent(v *viper.Viper, info *BuildPluginInfo) error {
+func ReplaceContent(v *viper.Viper, info *BuildPluginInfo) (string, error) {
 
 	src, err := ioutil.ReadFile(info.modelDir + "/" + info.modelFileName)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	strSrc := string(src)
@@ -709,7 +724,7 @@ func WriteContent(v *viper.Viper, info *BuildPluginInfo) error {
 
 	strSrc = strings.Replace(strSrc, info.oldStruct, info.bodyStr, -1)
 
-	return file_dir.EsimWrite(info.modelDir+"/"+info.modelFileName, strSrc)
+	return strSrc, nil
 }
 
 func GenPlugin(structName string, fields []db2entity.Field, dir string, oldImport []string) (string, error) {

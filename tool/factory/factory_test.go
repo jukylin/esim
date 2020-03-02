@@ -6,6 +6,7 @@ import (
 	"os"
 	"testing"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/tools/imports"
 )
 
 
@@ -58,7 +59,7 @@ func TestBuildVirEnv(t *testing.T) {
 		return
 	}
 
-	e, err := file_dir.IsExistsDir("./plugin")
+	e, err := file_dir.IsExistsDir("./example/plugin")
 	if err != nil {
 		t.Error(err.Error())
 		return
@@ -103,7 +104,37 @@ func TestExecPlugin(t *testing.T) {
 }
 
 
-func TestWriteContent(t *testing.T) {
+func TestFinalContent(t *testing.T) {
+
+	result := `package example
+
+type Test struct {
+	c int8
+
+	i bool
+
+	g byte
+
+	d int16
+
+	f float32
+
+	a int32
+
+	b int64
+
+	m map[string]interface{}
+
+	e string
+
+	h []int
+
+	u [3]string
+}
+
+type Tests []Test
+`
+
 	modelName := "Test"
 	modelPath := getCurDir() + "/example"
 
@@ -130,11 +161,23 @@ func TestWriteContent(t *testing.T) {
 		t.Error(err.Error())
 		return
 	}
-	err = WriteContent(v, info)
+
+	BuildFrame(v, info)
+
+	src, err := ReplaceContent(v, info)
 	if err != nil {
 		t.Error(err.Error())
 		return
 	}
+
+	res, err := imports.Process("", []byte(src), nil)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+
+	assert.Equal(t, result, string(res))
+
 	Clear(info)
 }
 
@@ -166,16 +209,23 @@ func TestNewFrame(t *testing.T)  {
 	getOptions(v, info)
 
 	newFrame := replaceFrame(frame, info)
-	println(newFrame)
+	assert.Empty(t, newFrame)
 }
 
 
 func TestGetNewImport(t *testing.T)  {
+
+	result := `import (
+        test
+        test2
+)
+`
+
 	imports := []string{"test", "test2"}
 
 	newImport := getNewImport(imports)
 
-	println(newImport)
+	assert.Equal(t,  result, newImport)
 }
 
 

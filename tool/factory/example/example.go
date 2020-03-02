@@ -1,8 +1,6 @@
 package example
 
-
-type Test struct{
-
+ type Test struct {
 	b int64
 
 	c int8
