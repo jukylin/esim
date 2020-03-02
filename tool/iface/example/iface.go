@@ -2,7 +2,6 @@ package example1
 
 import (
 	"context"
-	"github.com/jukylin/esim/pkg/file-dir"
 )
 
 type Test interface {

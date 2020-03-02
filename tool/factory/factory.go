@@ -722,7 +722,7 @@ import (
 	"reflect"
 	"strings"
 	"github.com/hashicorp/go-plugin"
-	"github.com/jukylin/esim/tool/model"
+	"github.com/jukylin/esim/tool/factory"
 )
 
 
@@ -941,9 +941,9 @@ type ModelImp struct{}
 func main() {
 
 	plugin.Serve(&plugin.ServeConfig{
-		HandshakeConfig: model.HandshakeConfig,
+		HandshakeConfig: factory.HandshakeConfig,
 		Plugins: map[string]plugin.Plugin{
-			"model": &model.ModelPlugin{Impl: &ModelImp{}},
+			"model": &factory.ModelPlugin{Impl: &ModelImp{}},
 		},
 
 		// A non-nil value here enables gRPC serving for this plugin...

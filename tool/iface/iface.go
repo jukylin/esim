@@ -14,7 +14,6 @@ import (
 	"bytes"
 	"golang.org/x/tools/imports"
 	"github.com/spf13/viper"
-	"fmt"
 )
 
 type Iface struct {
