@@ -1,6 +1,7 @@
 package example
 
- type Test struct {
+
+type Test struct {
 	b int64
 
 	c int8
@@ -23,3 +24,10 @@ package example
 
 	d int16
 }
+
+type empty struct {}
+
+
+
+
+

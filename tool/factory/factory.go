@@ -394,12 +394,15 @@ func ExtendField(v *viper.Viper, info *BuildPluginInfo) bool {
 			HasExtend = true
 			var foundLogField bool
 			for _, field := range info.oldFields {
-				if strings.Contains(field.Filed, "log.Logger") == false && foundLogField == false{
+				if strings.Contains(field.Filed, "log.Logger") == true && foundLogField == false{
 					foundLogField = true
-					fld := db2entity.Field{}
-					fld.Filed = "logger log.Logger"
-					info.oldFields = append(info.oldFields, fld)
 				}
+			}
+
+			if foundLogField == false || len(info.oldFields) == 0{
+				fld := db2entity.Field{}
+				fld.Filed = "logger log.Logger"
+				info.oldFields = append(info.oldFields, fld)
 			}
 
 			var foundLogImport bool
@@ -419,12 +422,15 @@ func ExtendField(v *viper.Viper, info *BuildPluginInfo) bool {
 
 			var foundConfField bool
 			for _, field := range info.oldFields {
-				if strings.Contains(field.Filed, "config.Config") == false && foundConfField == false{
+				if strings.Contains(field.Filed, "config.Config") == true && foundConfField == false{
 					foundConfField = true
-					fld := db2entity.Field{}
-					fld.Filed = "conf config.Config"
-					info.oldFields = append(info.oldFields, fld)
 				}
+			}
+
+			if foundConfField == false || len(info.oldFields) == 0{
+				fld := db2entity.Field{}
+				fld.Filed = "conf config.Config"
+				info.oldFields = append(info.oldFields, fld)
 			}
 
 			var foundConfImport bool
@@ -456,7 +462,12 @@ func ReWriteModelContent(info *BuildPluginInfo) error {
 	info.modelFileContent = strings.Replace(info.modelFileContent, info.oldStruct, db2entity.GetNewStruct(info.modelName, info.oldFields), -1)
 	info.oldStruct = db2entity.GetNewStruct(info.modelName, info.oldFields)
 
-	return file_dir.EsimWrite(info.modelDir+"/"+info.modelFileName, info.modelFileContent)
+	src, err := imports.Process("", []byte(info.modelFileContent), nil)
+	if err != nil{
+		return err
+	}
+
+	return file_dir.EsimWrite(info.modelDir+"/"+info.modelFileName, string(src))
 }
 
 func getNewImport(imports []string) string {
@@ -469,7 +480,8 @@ func getNewImport(imports []string) string {
 `
 	}
 
-	newImport += `)`
+	newImport += `)
+`
 
 	return newImport
 }

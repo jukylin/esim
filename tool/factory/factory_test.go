@@ -230,7 +230,7 @@ func TestGetNewImport(t *testing.T)  {
 
 
 func TestExtendField(t *testing.T)  {
-	modelName := "Test"
+	modelName := "empty"
 	modelPath := getCurDir() + "/example"
 
 	v := viper.New()
