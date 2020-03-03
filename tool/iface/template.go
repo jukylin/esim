@@ -10,7 +10,6 @@ var ifaceTemplate = `package {{.PackageName}}
 
 {{.ImportStr}}
 
-//@ Interface {{.IfaceName}}
 type {{$StructName}} struct {}
 
 {{ range .Methods }}

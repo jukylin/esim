@@ -45,5 +45,7 @@ func init() {
 
 	factoryCmd.Flags().BoolP("plural", "", false, "支持复数")
 
+	factoryCmd.Flags().StringP("imp_iface", "", "", "实现了接口")
+
 	v.BindPFlags(factoryCmd.Flags())
 }

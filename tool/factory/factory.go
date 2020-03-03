@@ -597,7 +597,9 @@ func ExecPlugin(v *viper.Viper, info *BuildPluginInfo) error {
 
 
 func NewVarStr(v *viper.Viper, info *BuildPluginInfo)  {
-	if v.GetBool("pool") == true || v.GetBool("star") == true{
+	if v.GetString("imp_iface") != ""{
+		info.NewVarStr = v.GetString("imp_iface")
+	}else if v.GetBool("pool") == true || v.GetBool("star") == true{
 		info.NewVarStr = "*" + info.modelName
 	}else{
 		info.NewVarStr = info.modelName
