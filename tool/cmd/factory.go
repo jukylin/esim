@@ -41,7 +41,7 @@ func init() {
 
 	//modelCmd.Flags().BoolP("Print", "", false, "打印到终端")
 
-	factoryCmd.Flags().StringP("modelname", "m", "", "模型的名称")
+	factoryCmd.Flags().StringP("name", "", "", "结构体名称")
 
 	factoryCmd.Flags().BoolP("plural", "", false, "支持复数")
 
