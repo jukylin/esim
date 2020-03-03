@@ -10,7 +10,7 @@ import (
 
 var factoryCmd = &cobra.Command{
 	Use:   "factory",
-	Short: "对model进行优化",
+	Short: "初始化结构体",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		err := factory.HandleModel(v)
@@ -27,21 +27,21 @@ func init() {
 
 	factoryCmd.Flags().BoolP("new", "n", false, "生成New方法")
 
-	factoryCmd.Flags().BoolP("star", "", false, "返回指针变量")
-
 	factoryCmd.Flags().BoolP("option", "o", false, "New with option")
+
+	factoryCmd.Flags().BoolP("pool", "p", false, "生成临时对象池")
 
 	factoryCmd.Flags().BoolP("gen_logger_option", "", false, "generate logger option")
 
 	factoryCmd.Flags().BoolP("gen_conf_option", "", false, "generate conf option")
 
-	factoryCmd.Flags().BoolP("pool", "p", false, "生成临时对象池")
+	factoryCmd.Flags().BoolP("star", "", false, "返回指针变量")
 
 	//modelCmd.Flags().BoolP("print", "", false, "扩展print方法")
 
 	//modelCmd.Flags().BoolP("Print", "", false, "打印到终端")
 
-	factoryCmd.Flags().StringP("name", "", "", "结构体名称")
+	factoryCmd.Flags().StringP("sname", "", "", "结构体名称")
 
 	factoryCmd.Flags().BoolP("plural", "", false, "支持复数")
 

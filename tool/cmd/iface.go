@@ -23,15 +23,15 @@ var ifaceCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(ifaceCmd)
 
-	ifaceCmd.Flags().StringP("name", "n", "", "接口名称")
+	ifaceCmd.Flags().StringP("iname", "", "", "接口名称")
 
 	ifaceCmd.Flags().StringP("out", "o", "", "输出文件: abc.go")
 
-	ifaceCmd.Flags().StringP("iface_path", "i", ".", "接口路径")
+	ifaceCmd.Flags().StringP("ipath", "i", ".", "接口路径")
 
-	ifaceCmd.Flags().BoolP("star", "s", false, "带星")
+	ifaceCmd.Flags().BoolP("istar", "s", false, "带星")
 
-	ifaceCmd.Flags().StringP("struct_name", "", "", "struct 名称：type struct_name struct{}")
+	ifaceCmd.Flags().StringP("stname", "", "", "struct 名称：type struct_name struct{}")
 
 	v.BindPFlags(ifaceCmd.Flags())
 }

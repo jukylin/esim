@@ -53,24 +53,24 @@ func (this *Iface) Run(v *viper.Viper) error {
 	}
 	this.OutFile = out_path
 
-	struct_name := v.GetString("struct_name")
+	struct_name := v.GetString("stname")
 	if struct_name == ""{
-		return errors.New("必须指定 struct_name")
+		return errors.New("必须指定 stname")
 	}
 	this.StructName = struct_name
 
-	name := v.GetString("name")
+	name := v.GetString("iname")
 	if name == ""{
-		return errors.New("必须指定 name")
+		return errors.New("必须指定 iname")
 	}
 	this.IfaceName = name
 
-	star := v.GetBool("star")
+	star := v.GetBool("istar")
 	if star == true {
 		this.Star = "*"
 	}
 
-	iface_path := v.GetString("iface_path")
+	iface_path := v.GetString("ipath")
 
 	err := this.FindIface(iface_path, name)
 	if err != nil{

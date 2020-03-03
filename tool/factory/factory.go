@@ -149,23 +149,23 @@ func getPluralWord(word string) string {
 }
 
 func HandleModel(v *viper.Viper) error {
-	modelname := v.GetString("modelname")
-	if modelname == "" {
-		return errors.New("请输入模型名称")
+	sname := v.GetString("sname")
+	if sname == "" {
+		return errors.New("请输入结构体名称")
 	}
 
-	modelpath, err := os.Getwd()
+	wd, err := os.Getwd()
 	if err != nil {
 		return err
 	}
 
 	plural := v.GetBool("plural")
-	var modelNamePlural string
+	var structNamePlural string
 	if plural == true {
-		modelNamePlural = getPluralWord(modelname)
+		structNamePlural = getPluralWord(sname)
 	}
 
-	info, err := FindModel(modelpath, modelname, modelNamePlural)
+	info, err := FindModel(wd, sname, structNamePlural)
 	if err != nil {
 		return err
 	}
