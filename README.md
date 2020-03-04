@@ -67,6 +67,10 @@ infrastructure|为各层提供技术支持，持久化，领域事件等
 
 - 函数第一个参数是ctx！函数第一个参数是ctx！函数第一个参数是ctx！
 
+- 禁止在defer内做逻辑运算
+
+- 业务代码形参、实参、返回值的类型不允许使用interface 和 map
+
 - 命名
 
 &emsp; | Jaeger
