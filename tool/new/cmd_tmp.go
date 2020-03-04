@@ -27,8 +27,8 @@ import (
 	"os"
 	"github.com/spf13/cobra"
 {{IMPORT_SERVER}}
-	"{{service_name}}/internal"
-	"{{service_name}}/internal/infra"
+	"{{PROPATH}}{{service_name}}/internal"
+	"{{PROPATH}}{{service_name}}/internal/infra"
 )
 
 // rootCmd represents the base command when called without any subcommands
