@@ -201,13 +201,13 @@ export ESIM_DB_PASSWORD=123456
 ```
 > 由于DDD开发方式多了很多目录，文件，导致这部分工作变得很繁琐，所以```db2entity``` 从mysql数据库的表开始，自动建立实体，生成简单的CRUD语句和资源库的接口与实现，并把生成的资源库注入到基础设施。
 
-- esim factory -m modelname
+- esim factory --sname struct_name -n
 
 > 前置条件:
 > 1. 在模型目录下
 > 2. 开启 module， ```export GO111MODULE=on```
 
-> 当项目进入到调优阶段，由于DDD将模型和数据分离，可以单独对模型进行优化。```factory``` 命令可以自动对模型进行初始化，内存对齐，生成临时对象池，reset和释放资源。很大程度的减少调优花费的时间和心智负担。
+> ```factory``` 命令可以自动对结构体进行初始化，内存对齐，生成临时对象池，reset和释放资源等操作，减少一些繁杂操作。
 
 
 ## 配置
