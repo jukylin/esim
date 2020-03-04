@@ -1,13 +1,13 @@
 module github.com/jukylin/esim
 
-go 1.12
+go 1.13
 
 require (
 	github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd // indirect
 	github.com/containerd/continuity v0.0.0-20200107194136-26c1120b8d41 // indirect
 	github.com/davecgh/go-spew v1.1.1
 	github.com/garyburd/redigo v1.6.0
-	github.com/gin-gonic/gin v1.4.0
+	github.com/gin-gonic/gin v1.5.0
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/golang/protobuf v1.3.3 // indirect
 	github.com/golang/snappy v0.0.1 // indirect

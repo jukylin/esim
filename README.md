@@ -10,7 +10,7 @@
 
 > cd github.com/jukylin/esim
 
-> go build -o esim ./tool
+> go build -o esim ./tool && mv ./esim $GOPATH/bin
 
 ## 创建项目
 
