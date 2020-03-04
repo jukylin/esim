@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+	"golang.org/x/tools/imports"
 )
 
 var (
@@ -96,8 +97,19 @@ func Build(v *viper.Viper, log logger.Logger) error {
 			}
 		}
 
+		var src []byte
+		if strings.HasSuffix(fileName, ".go") {
+			src, err = imports.Process("", []byte(file.Content), nil)
+			if err != nil {
+				os.Remove(serviceName)
+				return err
+			}
+		}else{
+			src = []byte(file.Content)
+		}
+
 		//写内容
-		err = ioutil.WriteFile(fileName, []byte(file.Content), 0666)
+		err = ioutil.WriteFile(fileName, src, 0666)
 		if err != nil {
 			//半路创建失败，全删除
 			os.Remove(serviceName)

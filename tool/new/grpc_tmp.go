@@ -64,7 +64,7 @@ import (
 	"strings"
 
 	"github.com/jukylin/esim/grpc"
-	"{{PROPATH}}{{service_name}}/internal"
+	{{service_name}} "{{PROPATH}}{{service_name}}/internal"
 	"{{PROPATH}}{{service_name}}/internal/transports/grpc/routers"
 	"{{PROPATH}}{{service_name}}/internal/transports/grpc/controllers"
 )
@@ -108,7 +108,7 @@ import (
 	"os"
 	"testing"
 	"context"
-	"{{PROPATH}}{{service_name}}/internal"
+	{{service_name}} "{{PROPATH}}{{service_name}}/internal"
 	"{{PROPATH}}{{service_name}}/internal/transports/grpc"
 	"{{PROPATH}}{{service_name}}/internal/infra"
 	gp "{{PROPATH}}{{service_name}}/internal/infra/third_party/protobuf/passport"
@@ -207,7 +207,7 @@ func TestUserService_GetUserByUserName(t *testing.T)  {
 		Content: `package controllers
 
 import (
-	"{{PROPATH}}{{service_name}}/internal"
+	{{service_name}} "{{PROPATH}}{{service_name}}/internal"
 	"github.com/google/wire"
 	"{{PROPATH}}{{service_name}}/internal/application"
 )
@@ -256,7 +256,7 @@ package controllers
 
 import (
 	"github.com/google/wire"
-	"{{PROPATH}}{{service_name}}/internal"
+	{{service_name}} "{{PROPATH}}{{service_name}}/internal"
 )
 
 
@@ -280,7 +280,7 @@ func initControllers(app *{{package_name}}.App) *Controllers {
 package controllers
 
 import (
-	"{{PROPATH}}{{service_name}}/internal"
+	{{service_name}} "{{PROPATH}}{{service_name}}/internal"
 )
 
 // Injectors from wire.go:

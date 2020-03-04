@@ -27,7 +27,7 @@ import (
 	"os"
 	"github.com/spf13/cobra"
 {{IMPORT_SERVER}}
-	"{{PROPATH}}{{service_name}}/internal"
+	{{service_name}} "{{PROPATH}}{{service_name}}/internal"
 	"{{PROPATH}}{{service_name}}/internal/infra"
 )
 
