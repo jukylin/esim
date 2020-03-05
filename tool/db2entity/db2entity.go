@@ -543,7 +543,7 @@ func Inject(structName string, fieldName, packageName, interName string,
 		}
 
 		//先整理下源文件
-		ioutil.WriteFile(infrDir+infrFile, formatSrc, 0755)
+		ioutil.WriteFile(infrDir+infrFile, formatSrc, 0666)
 
 		srcStr := string(formatSrc)
 
@@ -558,7 +558,7 @@ func Inject(structName string, fieldName, packageName, interName string,
 		//}
 
 		//语法检查
-		ioutil.WriteFile(infrDir+infrFile, []byte(source), 0755)
+		ioutil.WriteFile(infrDir+infrFile, []byte(source), 0666)
 
 		err = ExecGoFmt(infrFile, infrDir)
 		if err != nil {

@@ -36,7 +36,7 @@ func init() {
 
 	db2entityCmd.Flags().StringP("password", "p", os.Getenv("ESIM_DB_PASSWORD"), "password to connect to database")
 
-	db2entityCmd.Flags().StringP("boubcxt", "b", "", "name to set for bounded context")
+	db2entityCmd.Flags().StringP("boubctx", "b", "", "name to set for bounded context")
 
 	db2entityCmd.Flags().StringP("package", "", "", "name to set for package")
 

@@ -187,7 +187,7 @@ infra.NewInfra().DB
 
 ## 工具
 
-- esim db2entity -d db_name -d table_name
+- esim db2entity -d db_name -t table_name -b boubctx
 
 > 前置条件：
 > 1. 在项目根目录下
