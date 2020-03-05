@@ -211,6 +211,13 @@ export ESIM_DB_PASSWORD=123456
 
 
 ## 配置
+
+- 环境设置
+
+> esim 默认为 dev 环境，可以通过环境变量设置不同环境
+
+> export ENV=pro
+
 - 配置文件
 
 > 配置文件在项目的conf目录下
