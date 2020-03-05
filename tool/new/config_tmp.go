@@ -7,7 +7,6 @@ func ConfigInit() {
 		Content: `
 runmode : '${ENV}'
 appname : {{service_name}}
-debug: true
 
 #HTTP 服务
 httpport : 8080

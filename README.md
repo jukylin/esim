@@ -214,9 +214,9 @@ export ESIM_DB_PASSWORD=123456
 
 - 环境设置
 
-> esim 默认为 dev 环境，可以通过环境变量设置不同环境
+> esim 默认为 dev 环境，esim主要由 dev 和 pro 环境
 
-> export ENV=pro
+> export ESIM_ENV=pro
 
 - 配置文件
 

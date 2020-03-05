@@ -177,7 +177,10 @@ func (this *Iface) FindIface(ifacePath string, ifaceName string) (error) {
 												}
 											}
 										}
-										m.ReturnStr = strSrc[funcType.Results.Pos()-1: funcType.Results.End()-1 ]
+
+										if funcType.Results.NumFields() > 0 {
+											m.ReturnStr = strSrc[funcType.Results.Pos()-1: funcType.Results.End()-1 ]
+										}
 
 										this.Methods = append(this.Methods, m)
 									}
