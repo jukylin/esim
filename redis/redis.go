@@ -85,16 +85,16 @@ func newPoolRedis(options ...Option) *RedisClient {
 			redisIdleTimeout = 600
 		}
 
-		redis_etc1_host := onceRedisClient.conf.GetString("redis_etc1_host")
+		redis_etc1_host := onceRedisClient.conf.GetString("redis_host")
 		if redis_etc1_host == "" {
 			redis_etc1_host = "0.0.0.0"
 		}
-		redis_etc1_port := onceRedisClient.conf.GetString("redis_etc1_post")
+		redis_etc1_port := onceRedisClient.conf.GetString("redis_post")
 		if redis_etc1_port == "" {
 			redis_etc1_port = "6379"
 		}
 
-		redis_etc1_password := onceRedisClient.conf.GetString("redis_etc1_password")
+		redis_etc1_password := onceRedisClient.conf.GetString("redis_password")
 
 		redis_read_time_out := onceRedisClient.conf.GetInt64("redis_read_time_out")
 		if redis_read_time_out == 0 {

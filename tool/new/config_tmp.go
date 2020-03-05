@@ -54,9 +54,9 @@ http_client_time_out : 3
 redis_max_active : 50
 redis_max_idle : 100
 redis_idle_time_out : 600
-redis_etc1_host : '${REDIS_ETC1_HOST}'
-redis_etc1_post : '${REDIS_ETC1_PORT}'
-redis_etc1_password : '${REDIS_ETC1_PASSWORD}'
+redis_host : 0.0.0.0
+redis_post : 6379
+redis_password :
 
 #redis 读超时 单位：ms
 redis_read_time_out : 500
