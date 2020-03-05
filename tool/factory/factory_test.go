@@ -205,6 +205,7 @@ func TestNewFrame(t *testing.T)  {
 	info.modelName = "TestFrame"
 
 	NewVarStr(v, info)
+	NewOptionParam(v, info)
 	frame := NewFrame(v, info)
 	getOptions(v, info)
 

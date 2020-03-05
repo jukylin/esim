@@ -133,6 +133,8 @@ type BuildPluginInfo struct {
 
 	NewVarStr string
 
+	OptionParam string
+
 	//模型对应文件内容
 	modelFileContent string
 }
@@ -236,6 +238,7 @@ func BuildFrame(v *viper.Viper, info *BuildPluginInfo)  {
 	}
 
 	if v.GetBool("option") == true {
+		NewOptionParam(v, info)
 		getOptions(v, info)
 	}
 
@@ -618,6 +621,14 @@ func NewVarStr(v *viper.Viper, info *BuildPluginInfo)  {
 	}
 }
 
+func NewOptionParam(v *viper.Viper, info *BuildPluginInfo)  {
+	if v.GetBool("pool") == true || v.GetBool("star") == true{
+		info.OptionParam = "*" + info.modelName
+	}else{
+		info.OptionParam = info.modelName
+	}
+}
+
 
 func GetNewStr(v *viper.Viper, info *BuildPluginInfo) string {
 	if v.GetBool("star") == true{
@@ -630,6 +641,7 @@ func GetNewStr(v *viper.Viper, info *BuildPluginInfo) string {
 
 	return ""
 }
+
 
 func GetReturnStr(info *BuildPluginInfo) string {
 	return "	return " + strings.ToLower(string(info.modelName[0]))
@@ -679,7 +691,7 @@ func replaceFrame(newFrame string, info *BuildPluginInfo) string {
 
 func getOptions(v *viper.Viper, info *BuildPluginInfo)  {
 
-	info.option1 = `type `+info.modelName+`Option func(`+ info.NewVarStr +`)`
+	info.option1 = `type `+info.modelName+`Option func(`+ info.OptionParam +`)`
 
 	info.option2 = `type `+info.modelName+`Options struct{}`
 
