@@ -106,8 +106,8 @@ func GenEntity(v *viper.Viper) error {
 
 		etar = v.GetString("etar")
 
-		if v.GetString("boubcxt") == ""{
-			log.Fatalf("boubcxt is empty")
+		if v.GetString("boubctx") == ""{
+			log.Fatalf("boubctx is empty")
 		}
 
 		if etar == "" {
@@ -435,8 +435,8 @@ type ` + tableName + `DbRepo struct{
 	` + tableName + `Dao *dao.` + structName + `Dao
 }
 
-func New` + structName + `DbRepo(logger log.Logger) ` + structName + `DbRepo {
-	repo := &` + tableName + `Repo{
+func New` + structName + `DbRepo(logger log.Logger) ` + structName + `Repo {
+	repo := &` + tableName + `DbRepo{
 		logger : logger,
 	}
 
@@ -511,8 +511,8 @@ func GetFirstToLower(str string) string {
 	return strings.ToLower(string(str[0]))
 }
 
-func Inject(structName string, fieldName, packageName, interName string,
-	instName string, importStr string) {
+func Inject(structName string, fieldName, packageName, interfaceName string,
+	instanceName string, importStr string) {
 
 	infrDir := "./internal/infra/"
 
@@ -548,7 +548,7 @@ func Inject(structName string, fieldName, packageName, interName string,
 		srcStr := string(formatSrc)
 
 		source := handleInject(srcStr, "Infra",
-			fieldName, packageName, interName, instName, importStr)
+			fieldName, packageName, interfaceName, instanceName, importStr)
 
 		//整理，写入
 		//formatSrc, err = format.Source([]byte(source))
