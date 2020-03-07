@@ -181,7 +181,7 @@ func (this *GrpcServer) checkServerSlow() grpc.UnaryServerInterceptor {
 		grpc_client_slow_time := this.conf.GetInt64("grpc_server_slow_time")
 		if grpc_client_slow_time != 0 {
 			if end_time.Sub(begin_time) > time.Duration(grpc_client_slow_time)*time.Millisecond {
-				this.logger.Warnc(ctx, "slow server grpc_handle %s", info.FullMethod)
+				this.logger.Warnc(ctx, "slow server %s", info.FullMethod)
 			}
 		}
 

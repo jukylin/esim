@@ -111,7 +111,7 @@ func GenEntity(v *viper.Viper) error {
 		}
 
 		if etar == "" {
-			etar = "internal/domain/"+v.GetString("boubcxt")+"/entity"
+			etar = "internal/domain/"+v.GetString("boubctx")+"/entity"
 		}
 
 		dirExists, err := file_dir.IsExistsDir(etar)
@@ -259,7 +259,7 @@ func GenEntity(v *viper.Viper) error {
 
 	if v.GetBool("disrepotar") == false {
 
-		repoStr := GenerateRepo(table, st)
+		repoStr := GenerateRepo(table, st, v)
 
 		forRepoStr, err := format.Source([]byte(repoStr))
 		if err != nil {
@@ -303,7 +303,7 @@ package dao
 import (
 	"errors"
 	"context"
-	"` + file_dir.GetParDir() + `/internal/domain/entity"
+	"` + file_dir.GetCurrentDir() + `/internal/domain/` + v.GetString("boubctx") + `/entity"
 	"github.com/jinzhu/gorm"
 	"github.com/jukylin/esim/mysql"
 )
@@ -411,15 +411,15 @@ func (this *` + structName + `Dao) Update(ctx context.Context, update map[string
 	return []byte(daoStr), nil
 }
 
-func GenerateRepo(tableName string, structName string) string {
+func GenerateRepo(tableName string, structName string, v *viper.Viper) string {
 	repoStr := `
 package repo
 
 
 import (
 	"context"
-	"` + file_dir.GetParDir() + `/internal/domain/entity"
-	"` + file_dir.GetParDir() + `/internal/infra/dao"
+	"` + file_dir.GetCurrentDir() + `/internal/domain/` + v.GetString("boubctx") + `/entity"
+	"` + file_dir.GetCurrentDir() + `/internal/infra/dao"
 	"github.com/jukylin/esim/log"
 )
 
