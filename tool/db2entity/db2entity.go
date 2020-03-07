@@ -14,6 +14,7 @@ import (
 	logger "github.com/jukylin/esim/log"
 	"os"
 	"strings"
+	"golang.org/x/tools/imports"
 )
 
 var (
@@ -51,18 +52,6 @@ func GenEntity(v *viper.Viper) error {
 
 			if existsdao == false {
 				log.Fatalf("dir dao not exists")
-			}
-		}
-
-		if v.GetBool("disetar") == false {
-			//entity目录是存在
-			existsEntity, err := file_dir.IsExistsDir("./internal/domain/entity")
-			if err != nil {
-				log.Fatalf(err.Error())
-			}
-
-			if existsEntity == false {
-				log.Fatalf("dir entity not exists")
 			}
 		}
 	}
@@ -227,6 +216,17 @@ func GenEntity(v *viper.Viper) error {
 	}
 
 	if v.GetBool("disetar") == false {
+
+		struc, err := format.Source([]byte(struc))
+		if err != nil {
+			log.Fatalf(err.Error())
+		}
+
+		struc, err = imports.Process("", struc, nil)
+		if err != nil{
+			log.Fatalf(err.Error())
+		}
+
 		err = ioutil.WriteFile(etar, struc, 0666)
 		if err != nil {
 			log.Fatalf(err.Error())
@@ -245,13 +245,19 @@ func GenEntity(v *viper.Viper) error {
 
 		forDaoStr, err := format.Source([]byte(daoStr))
 		if err != nil {
-			log.Errorf(err.Error())
-		} else {
-			err = ioutil.WriteFile(daoTarget, forDaoStr, 0666)
-			if err != nil {
-				log.Fatalf(err.Error())
-			}
+			log.Fatalf(err.Error())
 		}
+
+		forDaoStr, err = imports.Process("", forDaoStr, nil)
+		if err != nil{
+			log.Fatalf(err.Error())
+		}
+
+		err = ioutil.WriteFile(daoTarget, forDaoStr, 0666)
+		if err != nil {
+			log.Fatalf(err.Error())
+		}
+
 		log.Infof("create file  %s success", daoTarget)
 	} else {
 		log.Infof("not create file  %s", daoTarget)
@@ -263,13 +269,19 @@ func GenEntity(v *viper.Viper) error {
 
 		forRepoStr, err := format.Source([]byte(repoStr))
 		if err != nil {
-			log.Errorf(err.Error())
-		} else {
-			err = ioutil.WriteFile(repoTarget, forRepoStr, 0666)
-			if err != nil {
-				log.Fatalf(err.Error())
-			}
+			log.Fatalf(err.Error())
 		}
+
+		forRepoStr, err = imports.Process("", forRepoStr, nil)
+		if err != nil{
+			log.Fatalf(err.Error())
+		}
+
+		err = ioutil.WriteFile(repoTarget, forRepoStr, 0666)
+		if err != nil {
+			log.Fatalf(err.Error())
+		}
+
 		log.Infof("create file  %s success", repoTarget)
 	} else {
 		log.Infof("not create file  %s", repoTarget)
@@ -531,18 +543,13 @@ func Inject(structName string, fieldName, packageName, interfaceName string,
 			return
 		}
 
+		//先整理下源文件
 		formatSrc, err := format.Source([]byte(src))
 		if err != nil {
 			log.Errorf(err.Error())
 			return
 		}
 
-		err = ExecGoFmt(infrFile, infrDir)
-		if err != nil {
-			log.Fatalf(err.Error())
-		}
-
-		//先整理下源文件
 		ioutil.WriteFile(infrDir+infrFile, formatSrc, 0666)
 
 		srcStr := string(formatSrc)
@@ -551,19 +558,24 @@ func Inject(structName string, fieldName, packageName, interfaceName string,
 			fieldName, packageName, interfaceName, instanceName, importStr)
 
 		//整理，写入
-		//formatSrc, err = format.Source([]byte(source))
-		//if err != nil{
-		//	log.Errorf(err.Error())
-		//	return
-		//}
-
-		//语法检查
-		ioutil.WriteFile(infrDir+infrFile, []byte(source), 0666)
-
-		err = ExecGoFmt(infrFile, infrDir)
-		if err != nil {
-			log.Fatalf(err.Error())
+		formatSrc, err = format.Source([]byte(source))
+		if err != nil{
+			log.Errorf(err.Error())
+			return
 		}
+
+		formatSrc, err = imports.Process("", formatSrc, nil)
+		if err != nil{
+			log.Errorf(err.Error())
+			return
+		}
+
+		ioutil.WriteFile(infrDir+infrFile, []byte(formatSrc), 0666)
+
+		//err = ExecGoFmt(infrFile, infrDir)
+		//if err != nil {
+		//	log.Fatalf(err.Error())
+		//}
 
 		err = ExecWire(infrDir)
 		if err != nil {

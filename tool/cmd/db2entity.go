@@ -16,7 +16,7 @@ var db2entityCmd = &cobra.Command{
 CRUD文件被放到 infra/dao/table.go下
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		v.Set("debug", true)
+		v.Set("debug", false)
 		db2entity.GenEntity(v)
 	},
 }
