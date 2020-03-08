@@ -13,8 +13,10 @@ var ifaceTemplate = `package {{.PackageName}}
 type {{$StructName}} struct {}
 
 {{ range .Methods }}
-func (this {{$Star}}{{$StructName}}) {{.FuncName}}({{.ArgStr}}) {{.ReturnStr}} {
+func (this {{$Star}}{{$StructName}}) {{.FuncName}}({{.ArgStr}}) {{.ReturnTypeStr}} {
+{{.InitReturnVarStr}}
 
+{{.ReturnStr}}
 }
 {{ end -}}
 `

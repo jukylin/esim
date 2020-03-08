@@ -43,7 +43,13 @@ type Method struct {
 
 	ArgStr string
 
+	ReturnTypeStr string
+
 	ReturnStr string
+
+	InitReturnVarStr string
+
+	ReturnVar []string
 }
 
 func (this *Iface) Run(v *viper.Viper) error {
@@ -96,7 +102,6 @@ func (this *Iface) Run(v *viper.Viper) error {
 
 func (this *Iface) FindIface(ifacePath string, ifaceName string) (error) {
 	ifacePath = strings.TrimRight(ifacePath, "/")
-
 	exists, err := file_dir.IsExistsDir(ifacePath)
 	if err != nil {
 		return err
@@ -158,6 +163,7 @@ func (this *Iface) FindIface(ifacePath string, ifaceName string) (error) {
 								for _, method := range typeSpec.Type.(*ast.InterfaceType).Methods.List {
 									if funcType, ok := method.Type.(*ast.FuncType); ok {
 										m := Method{}
+										m.ReturnStr = "return "
 										m.FuncName = method.Names[0].String()
 
 										if len(funcType.Params.List) > 0 {
@@ -178,10 +184,23 @@ func (this *Iface) FindIface(ifacePath string, ifaceName string) (error) {
 											}
 										}
 
-										if funcType.Results.NumFields() > 0 {
-											m.ReturnStr = strSrc[funcType.Results.Pos()-1: funcType.Results.End()-1 ]
-										}
 
+										if funcType.Results.NumFields() > 0 {
+											m.ReturnTypeStr = strSrc[funcType.Results.Pos()-1: funcType.Results.End()-1 ]
+											var returnVarName string
+											for rk, funcResult := range funcType.Results.List{
+												if len(funcResult.Names) > 0 {
+													returnVarName = funcResult.Names[0].String()
+												}else{
+													returnVarName = "r" + strconv.Itoa(rk)
+													m.InitReturnVarStr += "	var " + returnVarName + " "
+													m.InitReturnVarStr += strSrc[funcResult.Type.Pos()- 1 : funcResult.Type.End() - 1 ] + " \r\n"
+												}
+
+												m.ReturnStr += returnVarName + ","
+											}
+										}
+										m.ReturnStr = strings.Trim(m.ReturnStr, ",")
 										this.Methods = append(this.Methods, m)
 									}
 								}

@@ -2,6 +2,7 @@ package iface
 
 import (
 	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/jukylin/esim/pkg/file-dir"
 	"github.com/spf13/viper"
@@ -15,16 +16,25 @@ import (
 
 type TestStub struct{}
 
-func (this *TestStub) Iface1(arg0 func(string) string) bool {
+func (this TestStub) Iface1(arg0 func(string) string) (result bool) {
 
+	return result
 }
 
-func (this *TestStub) Iface2(ctx context.Context, found *bool) (bool, error) {
+func (this TestStub) Iface2(ctx context.Context, found *bool) (result bool, err error) {
 
+	return result, err
 }
 
-func (this *TestStub) Iface3() func(string) string {
+func (this TestStub) Iface3() (f func(string) string) {
 
+	return f
+}
+
+func (this TestStub) Iface4() map[string]string {
+	var r0 map[string]string
+
+	return r0
 }
 `
 
@@ -58,15 +68,14 @@ func TestIface_Run(t *testing.T) {
 	v := viper.New()
 	v.Set("out", "./abc/test_stub.go")
 
-	v.Set("struct_name", "TestStub")
+	v.Set("stname", "TestStub")
 
-	v.Set("name", "Test")
+	v.Set("iname", "Test")
 
-	v.Set("iface_path", "./example")
+	v.Set("ipath", "./example")
 
 	iface := &Iface{}
 	err := iface.Run(v)
 	assert.Nil(t, err)
-
 	assert.Nil(t, file_dir.RemoveDir("./abc"))
 }
