@@ -1,18 +1,18 @@
 package redis
 
 import (
-	"testing"
 	"context"
-	"sync"
-	"time"
-	"os"
-	"github.com/stretchr/testify/assert"
-	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/config"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_model/go"
+	"github.com/jukylin/esim/log"
 	"github.com/ory/dockertest/v3"
 	dc "github.com/ory/dockertest/v3/docker"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_model/go"
+	"github.com/stretchr/testify/assert"
+	"os"
+	"sync"
+	"testing"
+	"time"
 )
 
 var client *RedisClient
@@ -26,7 +26,7 @@ func TestMain(m *testing.M) {
 	}
 	opt := &dockertest.RunOptions{
 		Repository: "redis",
-		Tag: "latest",
+		Tag:        "latest",
 	}
 
 	resource, err := pool.RunWithOptions(opt, func(hostConfig *dc.HostConfig) {
@@ -43,13 +43,13 @@ func TestMain(m *testing.M) {
 	if err = pool.Retry(func() error {
 		client = NewRedisClient()
 		err = client.Ping()
-		if err != nil{
+		if err != nil {
 			return err
 		}
 		ctx := context.Background()
 		conn := client.GetCtxRedisConn()
-		conn.Do( ctx, "set", "name", "test")
-		conn.Do( ctx, "set", "version", "2.0")
+		conn.Do(ctx, "set", "name", "test")
+		conn.Do(ctx, "set", "version", "2.0")
 		conn.Close()
 		return nil
 	}); err != nil {
@@ -69,7 +69,7 @@ func TestMain(m *testing.M) {
 }
 
 //使用 proxyConn 代理请求
-func TestGetProxyConn(t *testing.T){
+func TestGetProxyConn(t *testing.T) {
 	poolRedisOnce = sync.Once{}
 
 	redisClientOptions := RedisClientOptions{}
@@ -81,7 +81,7 @@ func TestGetProxyConn(t *testing.T){
 					monitorProxyOptions.WithLogger(log.NewLogger()),
 				)
 			},
-			),
+		),
 	)
 
 	conn := redisClent.GetCtxRedisConn()
@@ -91,8 +91,7 @@ func TestGetProxyConn(t *testing.T){
 	redisClent.Close()
 }
 
-
-func TestGetNotProxyConn(t *testing.T){
+func TestGetNotProxyConn(t *testing.T) {
 	poolRedisOnce = sync.Once{}
 
 	conn := client.GetCtxRedisConn()
@@ -113,7 +112,7 @@ func TestMonitorProxy_Do(t *testing.T) {
 	redisClent := NewRedisClient(
 		redisClientOptions.WithConf(memConfig),
 		redisClientOptions.WithProxy(
-			func() interface {} {
+			func() interface{} {
 				monitorProxyOptions := MonitorProxyOptions{}
 				return NewMonitorProxy(
 					monitorProxyOptions.WithLogger(log.NewLogger()),
@@ -132,7 +131,6 @@ func TestMonitorProxy_Do(t *testing.T) {
 	//redisClent.Close()
 }
 
-
 func TestMulLevelProxy_Do(t *testing.T) {
 	poolRedisOnce = sync.Once{}
 
@@ -145,13 +143,13 @@ func TestMulLevelProxy_Do(t *testing.T) {
 	redisClent := NewRedisClient(
 		redisClientOptions.WithConf(memConfig),
 		redisClientOptions.WithProxy(
-			func() interface {} {
+			func() interface{} {
 				monitorProxyOptions := MonitorProxyOptions{}
 				return NewMonitorProxy(
 					monitorProxyOptions.WithLogger(log.NewLogger()),
 				)
 			},
-			func() interface {} {
+			func() interface{} {
 				return spyProxy
 			},
 		),
@@ -166,7 +164,6 @@ func TestMulLevelProxy_Do(t *testing.T) {
 
 	redisClent.Close()
 }
-
 
 func TestMulGo_Do(t *testing.T) {
 	poolRedisOnce = sync.Once{}
@@ -190,7 +187,7 @@ func TestMulGo_Do(t *testing.T) {
 
 	go func() {
 		conn := redisClent.GetRedisConn()
-		name, err := String(conn.Do( "get", "name"))
+		name, err := String(conn.Do("get", "name"))
 		assert.Nil(t, err)
 		assert.Equal(t, "test", name)
 		conn.Close()
@@ -258,7 +255,7 @@ func TestRedisClient_Stats(t *testing.T) {
 
 	redisClent := NewRedisClient(
 		redisClientOptions.WithConf(memConfig),
-		redisClientOptions.WithStateTicker(10 * time.Microsecond),
+		redisClientOptions.WithStateTicker(10*time.Microsecond),
 	)
 
 	time.Sleep(100 * time.Millisecond)
@@ -280,7 +277,5 @@ func TestRedisClient_Stats(t *testing.T) {
 	c.Write(metric)
 	assert.True(t, metric.Gauge.GetValue() >= 0)
 
-
 	redisClent.Close()
 }
-

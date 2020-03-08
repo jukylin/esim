@@ -2,12 +2,12 @@ package log
 
 import (
 	"context"
+	"github.com/opentracing/opentracing-go"
+	jaeger "github.com/uber/jaeger-client-go"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"runtime"
 	"time"
-	"github.com/opentracing/opentracing-go"
-	jaeger "github.com/uber/jaeger-client-go"
 )
 
 var Log Logger
@@ -70,13 +70,11 @@ func NewLogger(options ...Option) Logger {
 	return logger
 }
 
-
 func (LoggerOptions) WithDebug(debug bool) Option {
 	return func(l *logger) {
 		l.debug = debug
 	}
 }
-
 
 func (log *logger) Error(msg string) {
 	log.logger.Error(msg)
@@ -132,14 +130,12 @@ func (log *logger) Warnc(ctx context.Context, template string, args ...interface
 	log.sugar.With("caller", log.getCaller(runtime.Caller(1))).Warnf(template, args...)
 }
 
-
 func (log *logger) Errorc(ctx context.Context, template string, args ...interface{}) {
 	if tracerId := log.getTracerId(ctx); tracerId != "" {
 		log.sugar.With("tracer_id", tracerId)
 	}
 	log.sugar.With("caller", log.getCaller(runtime.Caller(1))).Errorf(template, args...)
 }
-
 
 func (log *logger) DPanicc(ctx context.Context, template string, args ...interface{}) {
 	if tracerId := log.getTracerId(ctx); tracerId != "" {
@@ -174,9 +170,9 @@ func (log *logger) standardTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEn
 func (log *logger) getTracerId(ctx context.Context) string {
 	sp := opentracing.SpanFromContext(ctx)
 	if sp != nil {
-		if jaegerSpanContext, ok := sp.Context().(jaeger.SpanContext); ok{
+		if jaegerSpanContext, ok := sp.Context().(jaeger.SpanContext); ok {
 			return jaegerSpanContext.TraceID().String()
-		}else{
+		} else {
 			return ""
 		}
 	} else {

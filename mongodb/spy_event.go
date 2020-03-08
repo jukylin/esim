@@ -16,9 +16,7 @@ type spyEvent struct {
 	FailedEventWasCalled bool
 
 	logger log.Logger
-
 }
-
 
 func NewSpyEvent(logger log.Logger) *spyEvent {
 
@@ -27,7 +25,6 @@ func NewSpyEvent(logger log.Logger) *spyEvent {
 
 	return spyEvent
 }
-
 
 func (this *spyEvent) NextEvent(event MonitorEvent) {
 	this.nextEvent = event
@@ -45,7 +42,6 @@ func (this *spyEvent) Start(ctx context.Context, starEv *event.CommandStartedEve
 	}
 }
 
-
 func (this *spyEvent) SucceededEvent(ctx context.Context,
 	succEvent *event.CommandSucceededEvent) {
 	this.logger.Infof("SucceededEvent")
@@ -55,7 +51,6 @@ func (this *spyEvent) SucceededEvent(ctx context.Context,
 	}
 
 }
-
 
 func (this *spyEvent) FailedEvent(ctx context.Context, failedEvent *event.CommandFailedEvent) {
 	this.logger.Infof("FailedEvent")

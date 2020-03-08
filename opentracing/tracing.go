@@ -3,12 +3,11 @@ package opentracing
 import (
 	"time"
 
-	"golang.org/x/net/context"
+	"github.com/jukylin/esim/log"
 	"github.com/opentracing/opentracing-go"
 	jaegerconfig "github.com/uber/jaeger-client-go/config"
-	"github.com/jukylin/esim/log"
+	"golang.org/x/net/context"
 )
-
 
 func NewTracer(serviceName string, logger log.Logger) opentracing.Tracer {
 
@@ -23,16 +22,15 @@ func NewTracer(serviceName string, logger log.Logger) opentracing.Tracer {
 	//cfg.Sampler.Type = "const"
 	//cfg.Sampler.Param = 1
 	tracer, _, err = cfg.NewTracer(jaegerconfig.Logger(logger))
-	if err != nil{
+	if err != nil {
 		logger.Panicf(err.Error())
 	}
 
 	return tracer
 }
 
-
 func GetSpan(ctx context.Context, tracer opentracing.Tracer,
-	operationName string, begin_time time.Time) (opentracing.Span){
+	operationName string, begin_time time.Time) opentracing.Span {
 
 	if parSpan := opentracing.SpanFromContext(ctx); parSpan != nil {
 		spanOption := opentracing.StartSpanOptions{}
@@ -45,9 +43,8 @@ func GetSpan(ctx context.Context, tracer opentracing.Tracer,
 	return nil
 }
 
-
 func FinishWithOptions(ctx context.Context, tracer opentracing.Tracer, operationName string,
-	begin_time time.Time) (opentracing.Span){
+	begin_time time.Time) opentracing.Span {
 
 	if parSpan := opentracing.SpanFromContext(ctx); parSpan != nil {
 		spanOption := opentracing.StartSpanOptions{}

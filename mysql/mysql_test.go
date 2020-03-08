@@ -1,42 +1,42 @@
 package mysql
 
 import (
-	"testing"
 	"context"
-	"sync"
-	"time"
-	"os"
 	"database/sql"
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
-	"github.com/stretchr/testify/assert"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_model/go"
 	"github.com/ory/dockertest/v3"
 	dc "github.com/ory/dockertest/v3/docker"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_model/go"
+	"github.com/stretchr/testify/assert"
+	"os"
+	"sync"
+	"testing"
+	"time"
 )
 
 var (
 	test1Config = DbConfig{
-		Db : "test_1",
-		Dsn : "root:123456@tcp(localhost:3306)/test_1?charset=utf8&parseTime=True&loc=Local",
-		MaxIdle : 10,
-		MaxOpen : 100}
+		Db:      "test_1",
+		Dsn:     "root:123456@tcp(localhost:3306)/test_1?charset=utf8&parseTime=True&loc=Local",
+		MaxIdle: 10,
+		MaxOpen: 100}
 
 	test2Config = DbConfig{
-		Db : "test_2",
-		Dsn : "root:123456@tcp(localhost:3306)/test_1?charset=utf8&parseTime=True&loc=Local",
-		MaxIdle : 10,
-		MaxOpen : 100}
+		Db:      "test_2",
+		Dsn:     "root:123456@tcp(localhost:3306)/test_1?charset=utf8&parseTime=True&loc=Local",
+		MaxIdle: 10,
+		MaxOpen: 100}
 )
 
-type TestStruct struct{
-	Id int `json:"id"`
+type TestStruct struct {
+	Id    int    `json:"id"`
 	Title string `json:"title"`
 }
 
-type UserStruct struct{
-	Id int `json:"id"`
+type UserStruct struct {
+	Id       int    `json:"id"`
 	Username string `json:"username"`
 }
 
@@ -52,16 +52,16 @@ func TestMain(m *testing.M) {
 
 	opt := &dockertest.RunOptions{
 		Repository: "mysql",
-		Tag: "latest",
-		Env: []string{"MYSQL_ROOT_PASSWORD=123456"},
-		}
+		Tag:        "latest",
+		Env:        []string{"MYSQL_ROOT_PASSWORD=123456"},
+	}
 
 	// pulls an image, creates a container based on it and runs it
 	resource, err := pool.RunWithOptions(opt, func(hostConfig *dc.HostConfig) {
-					hostConfig.PortBindings = map[dc.Port][]dc.PortBinding{
-						"3306/tcp": {{HostIP: "", HostPort: "3306"}},
-					}
-				})
+		hostConfig.PortBindings = map[dc.Port][]dc.PortBinding{
+			"3306/tcp": {{HostIP: "", HostPort: "3306"}},
+		}
+	})
 	if err != nil {
 		logger.Fatalf("Could not start resource: %s", err)
 	}
@@ -93,7 +93,7 @@ func TestMain(m *testing.M) {
 		  id int not NULL auto_increment,
 		  username VARCHAR(10) not NULL DEFAULT '',
 			PRIMARY KEY (id)
-		)engine=innodb;`,}
+		)engine=innodb;`}
 
 	for _, execSql := range sqls {
 		res, err := db.Exec(execSql)
@@ -115,7 +115,7 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func TestInitAndSingleInstance(t *testing.T)  {
+func TestInitAndSingleInstance(t *testing.T) {
 
 	mysqlClientOptions := MysqlClientOptions{}
 
@@ -136,8 +136,7 @@ func TestInitAndSingleInstance(t *testing.T)  {
 	mysqlClient.Close()
 }
 
-
-func TestProxyPatternWithTwoInstance(t *testing.T)  {
+func TestProxyPatternWithTwoInstance(t *testing.T) {
 	mysqlOnce = sync.Once{}
 
 	mysqlClientOptions := MysqlClientOptions{}
@@ -153,7 +152,7 @@ func TestProxyPatternWithTwoInstance(t *testing.T)  {
 				monitorProxyOptions.WithConf(memConfig),
 				monitorProxyOptions.WithLogger(log.NewLogger()))
 		}),
-		)
+	)
 
 	ctx := context.Background()
 	db1 := mysqlClient.GetCtxDb(ctx, "test_1")
@@ -176,7 +175,7 @@ func TestProxyPatternWithTwoInstance(t *testing.T)  {
 	mysqlClient.Close()
 }
 
-func TestMulProxyPatternWithOneInstance(t *testing.T)  {
+func TestMulProxyPatternWithOneInstance(t *testing.T) {
 	mysqlOnce = sync.Once{}
 
 	mysqlClientOptions := MysqlClientOptions{}
@@ -228,9 +227,7 @@ func TestMulProxyPatternWithOneInstance(t *testing.T)  {
 	mysqlClient.Close()
 }
 
-
-
-func TestMulProxyPatternWithTwoInstance(t *testing.T)  {
+func TestMulProxyPatternWithTwoInstance(t *testing.T) {
 	mysqlOnce = sync.Once{}
 
 	mysqlClientOptions := MysqlClientOptions{}
@@ -277,8 +274,6 @@ func TestMulProxyPatternWithTwoInstance(t *testing.T)  {
 
 	mysqlClient.Close()
 }
-
-
 
 func BenchmarkParallelGetDB(b *testing.B) {
 	mysqlOnce = sync.Once{}
@@ -332,11 +327,11 @@ func TestDummyProxy_Exec(t *testing.T) {
 			func() interface{} {
 				return newSpyProxy(log.NewLogger(), "spyProxy")
 			},
-			//func() interface{} {
-			//	return newDummyProxy(log.NewLogger(), "dummyProxy")
-			//},
-			),
-		)
+		//func() interface{} {
+		//	return newDummyProxy(log.NewLogger(), "dummyProxy")
+		//},
+		),
+	)
 	ctx := context.Background()
 	db1 := mysqlClient.GetCtxDb(ctx, "test_1")
 	db1.Exec("use test_1;")
@@ -356,7 +351,7 @@ func TestMysqlClient_GetStats(t *testing.T) {
 
 	mysqlClient := NewMysqlClient(
 		mysqlClientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
-		mysqlClientOptions.WithStateTicker(10 * time.Millisecond),
+		mysqlClientOptions.WithStateTicker(10*time.Millisecond),
 		mysqlClientOptions.WithProxy(func() interface{} {
 			memConfig := config.NewMemConfig()
 			monitorProxyOptions := MonitorProxyOptions{}
@@ -364,7 +359,7 @@ func TestMysqlClient_GetStats(t *testing.T) {
 				monitorProxyOptions.WithConf(memConfig),
 				monitorProxyOptions.WithLogger(log.NewLogger()))
 		}),
-		)
+	)
 	ctx := context.Background()
 	db1 := mysqlClient.GetCtxDb(ctx, "test_1")
 	db1.Exec("use test_1;")
@@ -386,7 +381,6 @@ func TestMysqlClient_GetStats(t *testing.T) {
 
 	mysqlClient.Close()
 }
-
 
 func TestMysqlClient_TxCommit(t *testing.T) {
 	mysqlOnce = sync.Once{}
@@ -423,8 +417,6 @@ func TestMysqlClient_TxCommit(t *testing.T) {
 
 	mysqlClient.Close()
 }
-
-
 
 func TestMysqlClient_TxRollBack(t *testing.T) {
 	mysqlOnce = sync.Once{}

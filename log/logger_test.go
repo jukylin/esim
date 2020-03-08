@@ -1,17 +1,17 @@
 package log
 
 import (
-	"testing"
-	opentracing "github.com/opentracing/opentracing-go"
 	"context"
-	jaegerConfig "github.com/uber/jaeger-client-go/config"
+	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/stretchr/testify/assert"
 	jaeger "github.com/uber/jaeger-client-go"
+	jaegerConfig "github.com/uber/jaeger-client-go/config"
+	"testing"
 )
 
 func initJaeger() (opentracing.Tracer, error) {
 	cfg, err := jaegerConfig.FromEnv()
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 
@@ -21,7 +21,7 @@ func initJaeger() (opentracing.Tracer, error) {
 	return tracer, err
 }
 
-func TestLog(t *testing.T)  {
+func TestLog(t *testing.T) {
 
 	loggerOptions := LoggerOptions{}
 
@@ -31,7 +31,7 @@ func TestLog(t *testing.T)  {
 	assert.Nil(t, err)
 
 	sp := tracer.StartSpan("test")
-	ctx := opentracing.ContextWithSpan(context.Background() , sp)
+	ctx := opentracing.ContextWithSpan(context.Background(), sp)
 
 	logger.Debugf("debug")
 
@@ -46,7 +46,7 @@ func TestLog(t *testing.T)  {
 	logger.Warnc(ctx, "warn")
 }
 
-func TestGetTracerId(t *testing.T)  {
+func TestGetTracerId(t *testing.T) {
 
 	loggerOptions := LoggerOptions{}
 
@@ -56,14 +56,13 @@ func TestGetTracerId(t *testing.T)  {
 	assert.Nil(t, err)
 
 	sp := tracer.StartSpan("test")
-	ctx := opentracing.ContextWithSpan(context.Background() , sp)
+	ctx := opentracing.ContextWithSpan(context.Background(), sp)
 
 	assert.Equal(t, sp.Context().(jaeger.SpanContext).TraceID().String(),
 		log.(*logger).getTracerId(ctx))
 }
 
-
-func TestGetTracerIdEmpty(t *testing.T)  {
+func TestGetTracerIdEmpty(t *testing.T) {
 
 	loggerOptions := LoggerOptions{}
 
@@ -72,4 +71,3 @@ func TestGetTracerIdEmpty(t *testing.T)  {
 	ctx := context.Background()
 	assert.Empty(t, log.(*logger).getTracerId(ctx))
 }
-

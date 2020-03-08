@@ -1,12 +1,11 @@
 package http
 
 import (
-	"net/http"
 	"github.com/jukylin/esim/log"
+	"net/http"
 )
 
 type spyProxy struct {
-
 	RoundTripWasCalled bool
 
 	name string
@@ -23,9 +22,9 @@ type spyProxyOptions struct{}
 func NewSpyProxy(logger log.Logger, name string) *spyProxy {
 	spyProxy := &spyProxy{}
 
-	if logger == nil{
+	if logger == nil {
 		spyProxy.log = log.NewLogger()
-	}else{
+	} else {
 		spyProxy.log = logger
 	}
 
@@ -34,7 +33,7 @@ func NewSpyProxy(logger log.Logger, name string) *spyProxy {
 	return spyProxy
 }
 
-func (this *spyProxy) NextProxy(tripper interface{})  {
+func (this *spyProxy) NextProxy(tripper interface{}) {
 	this.nextTransport = tripper.(http.RoundTripper)
 }
 

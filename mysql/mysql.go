@@ -3,15 +3,15 @@ package mysql
 import (
 	"context"
 	"database/sql"
-	"strings"
-	"sync"
-	"time"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/proxy"
 	"github.com/prometheus/client_golang/prometheus"
+	"strings"
+	"sync"
+	"time"
 )
 
 var mysqlOnce sync.Once
@@ -23,7 +23,7 @@ type MysqlClient struct {
 
 	sqlDbs map[string]*sql.DB
 
-	proxy []func () interface{}
+	proxy []func() interface{}
 
 	conf config.Config
 
@@ -53,16 +53,15 @@ type DbConfig struct {
 	MaxLifetime int    `json:"max_lifetime",yaml:"maxlifetime"`
 }
 
-
 func NewMysqlClient(options ...Option) *MysqlClient {
 	mysqlOnce.Do(func() {
 
 		onceClient = &MysqlClient{
-			gdbs:       make(map[string]*gorm.DB),
-			sqlDbs:       make(map[string]*sql.DB),
-			proxy: make([]func () interface{}, 0),
-			stateTicker : 10 * time.Second,
-			closeChan: make(chan bool, 1),
+			gdbs:        make(map[string]*gorm.DB),
+			sqlDbs:      make(map[string]*sql.DB),
+			proxy:       make([]func() interface{}, 0),
+			stateTicker: 10 * time.Second,
+			closeChan:   make(chan bool, 1),
 		}
 
 		for _, option := range options {
@@ -83,13 +82,11 @@ func NewMysqlClient(options ...Option) *MysqlClient {
 	return onceClient
 }
 
-
 func (MysqlClientOptions) WithConf(conf config.Config) Option {
 	return func(m *MysqlClient) {
 		m.conf = conf
 	}
 }
-
 
 func (MysqlClientOptions) WithLogger(logger log.Logger) Option {
 	return func(m *MysqlClient) {
@@ -97,13 +94,11 @@ func (MysqlClientOptions) WithLogger(logger log.Logger) Option {
 	}
 }
 
-
 func (MysqlClientOptions) WithDbConfig(dbConfigs []DbConfig) Option {
 	return func(m *MysqlClient) {
 		m.dbConfigs = dbConfigs
 	}
 }
-
 
 func (MysqlClientOptions) WithProxy(proxy ...func() interface{}) Option {
 	return func(m *MysqlClient) {
@@ -111,20 +106,17 @@ func (MysqlClientOptions) WithProxy(proxy ...func() interface{}) Option {
 	}
 }
 
-
 func (MysqlClientOptions) WithStateTicker(stateTicker time.Duration) Option {
 	return func(m *MysqlClient) {
 		m.stateTicker = stateTicker
 	}
 }
 
-
 func (MysqlClientOptions) WithDB(db *sql.DB) Option {
 	return func(m *MysqlClient) {
 		m.db = db
 	}
 }
-
 
 // initializes mysqlClient.
 func (this *MysqlClient) init() {
@@ -143,9 +135,9 @@ func (this *MysqlClient) init() {
 		if len(this.proxy) == 0 {
 			var DB *gorm.DB
 
-			if this.db != nil{
+			if this.db != nil {
 				DB, err = gorm.Open("mysql", this.db)
-			}else{
+			} else {
 				DB, err = gorm.Open("mysql", dbConfig.Dsn)
 			}
 
@@ -166,16 +158,16 @@ func (this *MysqlClient) init() {
 			var DB *gorm.DB
 			var dbSQL *sql.DB
 
-			if this.db == nil{
+			if this.db == nil {
 				dbSQL, err = sql.Open("mysql", dbConfig.Dsn)
 				if err != nil {
 					this.logger.Panicf("[db] %s init error : %s", dbConfig.Db, err.Error())
 				}
-			}else{
+			} else {
 				dbSQL = this.db
 			}
 
-			firstProxy := proxy.NewProxyFactory().GetFirstInstance("db_" + dbConfig.Db, dbSQL, this.proxy...)
+			firstProxy := proxy.NewProxyFactory().GetFirstInstance("db_"+dbConfig.Db, dbSQL, this.proxy...)
 
 			DB, err = gorm.Open("mysql", firstProxy)
 			if err != nil {
@@ -203,7 +195,6 @@ func (this *MysqlClient) init() {
 		this.logger.Infof("[mysql] %s init success", dbConfig.Db)
 	}
 }
-
 
 func (this *MysqlClient) setDb(db_name string, gdb *gorm.DB, db *sql.DB) bool {
 	db_name = strings.ToLower(db_name)
@@ -238,25 +229,23 @@ func (this *MysqlClient) GetCtxDb(ctx context.Context, db_name string) *gorm.DB 
 	return this.getDb(ctx, db_name)
 }
 
-
 func (this *MysqlClient) Ping() []error {
 	var errs []error
 	var err error
 	for _, db := range this.sqlDbs {
 		err = db.Ping()
-		if err != nil{
+		if err != nil {
 			errs = append(errs, err)
 		}
 	}
 	return errs
 }
 
-
 func (this *MysqlClient) Close() {
 	var err error
 	for _, db := range this.gdbs {
 		err = db.Close()
-		if err != nil{
+		if err != nil {
 			this.logger.Errorf(err.Error())
 		}
 	}
@@ -265,11 +254,10 @@ func (this *MysqlClient) Close() {
 	return
 }
 
-
 func (this *MysqlClient) Stats() {
 
 	defer func() {
-		if err := recover(); err != nil{
+		if err := recover(); err != nil {
 			this.logger.Infof(err.(error).Error())
 		}
 	}()
@@ -279,27 +267,27 @@ func (this *MysqlClient) Stats() {
 
 	for {
 		select {
-		case <- ticker.C:
+		case <-ticker.C:
 			for db_name, db := range this.sqlDbs {
 
 				stats = db.Stats()
 
-				maxOpenConnLab := prometheus.Labels{"db": db_name, "stats" : "max_open_conn"}
+				maxOpenConnLab := prometheus.Labels{"db": db_name, "stats": "max_open_conn"}
 				mysqlStats.With(maxOpenConnLab).Set(float64(stats.MaxOpenConnections))
 
-				openConnLab := prometheus.Labels{"db": db_name, "stats" : "open_conn"}
+				openConnLab := prometheus.Labels{"db": db_name, "stats": "open_conn"}
 				mysqlStats.With(openConnLab).Set(float64(stats.OpenConnections))
 
-				inUseLab := prometheus.Labels{"db": db_name, "stats" : "in_use"}
+				inUseLab := prometheus.Labels{"db": db_name, "stats": "in_use"}
 				mysqlStats.With(inUseLab).Set(float64(stats.InUse))
 
-				idleLab := prometheus.Labels{"db": db_name, "stats" : "idle"}
+				idleLab := prometheus.Labels{"db": db_name, "stats": "idle"}
 				mysqlStats.With(idleLab).Set(float64(stats.Idle))
 
-				waitCountLab := prometheus.Labels{"db": db_name, "stats" : "wait_count"}
+				waitCountLab := prometheus.Labels{"db": db_name, "stats": "wait_count"}
 				mysqlStats.With(waitCountLab).Set(float64(stats.WaitCount))
 			}
-		case <- this.closeChan:
+		case <-this.closeChan:
 			this.logger.Infof("stop stats")
 			goto Stop
 		}

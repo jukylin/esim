@@ -1,13 +1,12 @@
 package http
 
 import (
-	"net/http"
 	"github.com/jukylin/esim/log"
+	"net/http"
 	"time"
 )
 
 type slowProxy struct {
-
 	RoundTripWasCalled bool
 
 	name string
@@ -24,9 +23,9 @@ type slowProxyOptions struct{}
 func NewSlowProxy(logger log.Logger, name string) *slowProxy {
 	slowProxy := &slowProxy{}
 
-	if logger == nil{
+	if logger == nil {
 		slowProxy.log = log.NewLogger()
-	}else{
+	} else {
 		slowProxy.log = logger
 	}
 
@@ -35,7 +34,7 @@ func NewSlowProxy(logger log.Logger, name string) *slowProxy {
 	return slowProxy
 }
 
-func (this *slowProxy) NextProxy(tripper interface{})  {
+func (this *slowProxy) NextProxy(tripper interface{}) {
 	this.nextTransport = tripper.(http.RoundTripper)
 }
 

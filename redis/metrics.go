@@ -2,7 +2,7 @@ package redis
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
-	)
+)
 
 var redisTotal = prometheus.NewCounterVec(
 	prometheus.CounterOpts{
@@ -23,9 +23,9 @@ var redisDuration = prometheus.NewHistogramVec(
 )
 
 var redisStats = prometheus.NewGaugeVec(
-	prometheus.GaugeOpts {
-		Name:      "redis_stats",
-		Help:      "pool's statistics",
+	prometheus.GaugeOpts{
+		Name: "redis_stats",
+		Help: "pool's statistics",
 	},
 	[]string{"stats"},
 )

@@ -7,12 +7,12 @@ import (
 	"time"
 
 	"github.com/jukylin/esim/config"
+	"github.com/jukylin/esim/log"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.mongodb.org/mongo-driver/event"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
-	"github.com/jukylin/esim/log"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 var mgoOnce sync.Once
@@ -45,7 +45,7 @@ type MgoClientOptions struct{}
 func NewMongo(options ...Option) *MgoClient {
 	mgoOnce.Do(func() {
 		onceMgoClient = &MgoClient{
-			Mgos:    make(map[string]*mongo.Client),
+			Mgos: make(map[string]*mongo.Client),
 		}
 
 		for _, option := range options {
@@ -89,7 +89,6 @@ func (MgoClientOptions) WithMonitorEvent(mongoEvent ...func() MonitorEvent) Opti
 		m.monitorEvents = mongoEvent
 	}
 }
-
 
 type MgoConfig struct {
 	Db  string `json:"db",yaml:"db"`
@@ -245,7 +244,7 @@ func (this *MgoClient) Ping() []error {
 	var err error
 	for _, db := range this.Mgos {
 		err = db.Ping(ctx, readpref.Primary())
-		if err != nil{
+		if err != nil {
 			errs = append(errs, err)
 		}
 	}
@@ -253,7 +252,7 @@ func (this *MgoClient) Ping() []error {
 	return errs
 }
 
-func (this *MgoClient) Close()  {
+func (this *MgoClient) Close() {
 	var err error
 	ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
 

@@ -1,24 +1,23 @@
 package mongodb
 
 import (
-	"os"
-	"testing"
 	"context"
+	"os"
 	"sync"
+	"testing"
 
-	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/config"
-	"go.mongodb.org/mongo-driver/bson"
+	"github.com/jukylin/esim/log"
 	"github.com/ory/dockertest/v3"
 	dc "github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
-type User struct{
-	Id int
+type User struct {
+	Id   int
 	Name string
 }
-
 
 var client *MgoClient
 var logger log.Logger
@@ -33,7 +32,7 @@ func TestMain(m *testing.M) {
 
 	opt := &dockertest.RunOptions{
 		Repository: "mongo",
-		Tag: "latest",
+		Tag:        "latest",
 	}
 
 	// pulls an image, creates a container based on it and runs it
@@ -58,9 +57,9 @@ func TestMain(m *testing.M) {
 					"mongodb://0.0.0.0:27017/admin?connect=direct",
 				},
 			}))
-		if len(client.Ping()) > 0{
+		if len(client.Ping()) > 0 {
 			return client.Ping()[0]
-		}else{
+		} else {
 			return nil
 		}
 	}); err != nil {
@@ -79,7 +78,7 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func TestGetColl(t *testing.T)  {
+func TestGetColl(t *testing.T) {
 	mgoOnce = sync.Once{}
 
 	conf := config.NewMemConfig()
@@ -108,8 +107,7 @@ func TestGetColl(t *testing.T)  {
 	mongoClient.Close()
 }
 
-
-func TestWithMonitorEvent(t *testing.T)  {
+func TestWithMonitorEvent(t *testing.T) {
 	mgoOnce = sync.Once{}
 
 	conf := config.NewMemConfig()
@@ -146,8 +144,7 @@ func TestWithMonitorEvent(t *testing.T)  {
 	mongoClient.Close()
 }
 
-
-func TestMulEvent(t *testing.T)  {
+func TestMulEvent(t *testing.T) {
 	mgoOnce = sync.Once{}
 
 	conf := config.NewMemConfig()

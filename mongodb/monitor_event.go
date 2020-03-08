@@ -4,11 +4,11 @@ import (
 	"context"
 	"time"
 
-	opentracing2 "github.com/opentracing/opentracing-go"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/opentracing"
+	opentracing2 "github.com/opentracing/opentracing-go"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.mongodb.org/mongo-driver/event"
 )
 
@@ -26,7 +26,7 @@ type monitorEvent struct {
 
 type afterEvents func(context.Context, *mongoBackEvent, time.Time, time.Time)
 
-type MonitorEventOptions struct {}
+type MonitorEventOptions struct{}
 
 type EventOption func(c *monitorEvent)
 
@@ -87,7 +87,6 @@ func (m *monitorEvent) Start(ctx context.Context, starEv *event.CommandStartedEv
 	}
 }
 
-
 func (m *monitorEvent) SucceededEvent(ctx context.Context,
 	succEvent *event.CommandSucceededEvent) {
 
@@ -107,7 +106,6 @@ func (m *monitorEvent) SucceededEvent(ctx context.Context,
 	}
 }
 
-
 func (m *monitorEvent) FailedEvent(ctx context.Context, failedEvent *event.CommandFailedEvent) {
 
 	var beginTime time.Time
@@ -116,7 +114,6 @@ func (m *monitorEvent) FailedEvent(ctx context.Context, failedEvent *event.Comma
 
 	monBackEvent.failedEvent = failedEvent
 	beginTime = endTime.Add(-time.Duration(failedEvent.DurationNanos))
-
 
 	if m.nextEvent != nil {
 		m.nextEvent.FailedEvent(ctx, failedEvent)

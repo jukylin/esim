@@ -7,12 +7,10 @@ import (
 
 // FacadeProxy implement ContextConn interface, but nextConn is redis.Conn
 type FacadeProxy struct {
-
 	nextConn redis.Conn
 
 	name string
 }
-
 
 type FacadeProxyOption func(c *FacadeProxy)
 
@@ -27,7 +25,6 @@ func NewFacadeProxy(options ...FacadeProxyOption) *FacadeProxy {
 	FacadeProxy.name = "Facade_proxy"
 	return FacadeProxy
 }
-
 
 //implement Proxy interface
 func (this *FacadeProxy) NextProxy(conn interface{}) {

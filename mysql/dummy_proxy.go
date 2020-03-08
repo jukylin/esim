@@ -14,7 +14,6 @@ type dummyProxy struct {
 	name string
 }
 
-
 func newDummyProxy(logger log.Logger, name string) *dummyProxy {
 	dummyProxy := &dummyProxy{}
 
@@ -64,11 +63,11 @@ type dummySqlResult struct {
 }
 
 // implement sql.Result interface
-func (this *dummySqlResult) LastInsertId() (int64, error){
+func (this *dummySqlResult) LastInsertId() (int64, error) {
 	return 0, nil
 }
 
 // implement sql.Result interface
-func (this *dummySqlResult) RowsAffected() (int64, error){
+func (this *dummySqlResult) RowsAffected() (int64, error) {
 	return 0, nil
 }

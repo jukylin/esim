@@ -1,30 +1,27 @@
 package grpc
 
 import (
-	"google.golang.org/grpc"
 	"github.com/jukylin/esim/log"
+	"google.golang.org/grpc"
 )
 
 // Collect the grpc.ClientConn instances
-type ClientConn struct{
+type ClientConn struct {
 	conns []*grpc.ClientConn
 
 	logger log.Logger
 }
 
-
-type ClientState struct{
+type ClientState struct {
 	stats []string
 }
 
-
 func NewClientConn(logger log.Logger) *ClientConn {
 	connClose := &ClientConn{
-		logger:logger,
+		logger: logger,
 	}
 	return connClose
 }
-
 
 // Examples：
 // 		client := grpc.NewClient(clientOptions)
@@ -33,13 +30,12 @@ func NewClientConn(logger log.Logger) *ClientConn {
 //
 // 		clientConn := NewClientConn()
 // 		clientConn.CollectConn(conn)
-func (this *ClientConn) CollectConn(conn *grpc.ClientConn)  {
+func (this *ClientConn) CollectConn(conn *grpc.ClientConn) {
 	this.conns = append(this.conns, conn)
 }
 
-
 //Close unity closes the grpc.ClientConn instances
-func (this *ClientConn) Close()  {
+func (this *ClientConn) Close() {
 	var err error
 	for _, conn := range this.conns {
 		err = conn.Close()
@@ -53,7 +49,7 @@ func (this *ClientConn) Close()  {
 func (this *ClientConn) State() []string {
 	var state []string
 	for _, conn := range this.conns {
-		state = append(state, conn.Target() + ":" + conn.GetState().String())
+		state = append(state, conn.Target()+":"+conn.GetState().String())
 	}
 
 	return state

@@ -1,16 +1,16 @@
 package grpc
 
 import (
-	"testing"
 	"context"
-	"time"
-	"net"
-	"google.golang.org/grpc"
-	pb "google.golang.org/grpc/examples/helloworld/helloworld"
+	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
 	"github.com/stretchr/testify/assert"
-	"github.com/jukylin/esim/config"
+	"google.golang.org/grpc"
+	pb "google.golang.org/grpc/examples/helloworld/helloworld"
 	"google.golang.org/grpc/reflection"
+	"net"
+	"testing"
+	"time"
 )
 
 var logger log.Logger
@@ -44,20 +44,20 @@ func TestMain(m *testing.M) {
 		serverOptions.WithServerConf(memConfig),
 		serverOptions.WithUnarySrvItcp(
 			ServerStubs(func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
-				if req.(*pb.HelloRequest).Name == "call_panic"{
+				if req.(*pb.HelloRequest).Name == "call_panic" {
 					panic("is a test")
-				}else if req.(*pb.HelloRequest).Name == "call_panic_arr" {
+				} else if req.(*pb.HelloRequest).Name == "call_panic_arr" {
 					var arr [1]string
 					arr[0] = "is a test"
 					panic(arr)
-				}else if req.(*pb.HelloRequest).Name == "call_nil" {
+				} else if req.(*pb.HelloRequest).Name == "call_nil" {
 					return nil, err
 				}
 				resp, err = handler(ctx, req)
 
 				return resp, err
 			}),
-		),	)
+		))
 
 	pb.RegisterGreeterServer(svr.Server, &server{})
 	// Register reflection service on gRPC server.
@@ -70,7 +70,6 @@ func TestMain(m *testing.M) {
 
 	m.Run()
 }
-
 
 func TestNewGrpcClient(t *testing.T) {
 
@@ -96,11 +95,10 @@ func TestNewGrpcClient(t *testing.T) {
 	r, err := c.SayHello(ctx, &pb.HelloRequest{Name: "esim"})
 	if err != nil {
 		logger.Errorf(err.Error())
-	}else {
+	} else {
 		assert.NotEmpty(t, r.Message)
 	}
 }
-
 
 func TestSlowClient(t *testing.T) {
 
@@ -117,7 +115,7 @@ func TestSlowClient(t *testing.T) {
 		clientOptional.WithDialOptions(
 			grpc.WithBlock(),
 			grpc.WithChainUnaryInterceptor(slowRequest),
-			),
+		),
 	)
 
 	ctx := context.Background()
@@ -132,11 +130,10 @@ func TestSlowClient(t *testing.T) {
 	r, err := c.SayHello(ctx, &pb.HelloRequest{Name: "esim"})
 	if err != nil {
 		logger.Errorf(err.Error())
-	}else {
+	} else {
 		assert.NotEmpty(t, r.Message)
 	}
 }
-
 
 func TestServerPanic(t *testing.T) {
 
@@ -166,13 +163,11 @@ func TestServerPanic(t *testing.T) {
 	assert.Nil(t, r)
 }
 
-
 func TestServerPanicArr(t *testing.T) {
 
 	memConfig := config.NewMemConfig()
 	memConfig.Set("debug", true)
 	memConfig.Set("grpc_client_debug", true)
-
 
 	clientOptional := ClientOptionals{}
 	clientOptions := NewClientOptions(
@@ -194,13 +189,11 @@ func TestServerPanicArr(t *testing.T) {
 	assert.Nil(t, r)
 }
 
-
 func TestSubsReply(t *testing.T) {
 
 	memConfig := config.NewMemConfig()
 	memConfig.Set("debug", true)
 	memConfig.Set("grpc_client_debug", true)
-
 
 	clientOptional := ClientOptionals{}
 	clientOptions := NewClientOptions(
@@ -215,7 +208,7 @@ func TestSubsReply(t *testing.T) {
 				}
 				return nil
 			})),
-			),
+		),
 	)
 
 	ctx := context.Background()
@@ -230,7 +223,7 @@ func TestSubsReply(t *testing.T) {
 	r, err := c.SayHello(ctx, &pb.HelloRequest{Name: "esim"})
 	if err != nil {
 		logger.Errorf(err.Error())
-	}else {
+	} else {
 		assert.Equal(t, "esim", r.Message)
 	}
 }

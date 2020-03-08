@@ -6,7 +6,6 @@ import (
 )
 
 type spyProxy struct {
-
 	DoWasCalled bool
 
 	SendWasCalled bool
@@ -14,13 +13,12 @@ type spyProxy struct {
 	FlushWasCalled bool
 
 	ReceiveWasCalled bool
-	
+
 	nextConn ContextConn
-	
+
 	name string
 
 	log log.Logger
-
 }
 
 type spyProxyOption func(c *spyProxy)
@@ -30,7 +28,7 @@ type spyProxyOptions struct{}
 func NewSpyProxy(logger log.Logger, name string) *spyProxy {
 	spyProxy := &spyProxy{}
 
-	if logger == nil{
+	if logger == nil {
 		spyProxy.log = log.NewLogger()
 	}
 
@@ -38,7 +36,6 @@ func NewSpyProxy(logger log.Logger, name string) *spyProxy {
 
 	return spyProxy
 }
-
 
 //implement Proxy interface
 func (this *spyProxy) NextProxy(conn interface{}) {

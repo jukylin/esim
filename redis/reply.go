@@ -15,10 +15,9 @@
 package redis
 
 import (
-	"github.com/garyburd/redigo/redis"
 	"encoding/json"
+	"github.com/garyburd/redigo/redis"
 )
-
 
 //refer redis.Int
 func Int(reply interface{}, err error) (int, error) {
@@ -32,7 +31,6 @@ func Int64(reply interface{}, err error) (int64, error) {
 	return rep, decorError(err)
 }
 
-
 //refer redis.Uint64
 func Uint64(reply interface{}, err error) (uint64, error) {
 	rep, err := redis.Uint64(reply, err)
@@ -41,7 +39,7 @@ func Uint64(reply interface{}, err error) (uint64, error) {
 
 //refer redis.Float64
 func Float64(reply interface{}, err error) (float64, error) {
-	rep, err :=  redis.Float64(reply, err)
+	rep, err := redis.Float64(reply, err)
 	return rep, decorError(err)
 }
 
@@ -62,7 +60,6 @@ func Bool(reply interface{}, err error) (bool, error) {
 	rep, err := redis.Bool(reply, err)
 	return rep, decorError(err)
 }
-
 
 //refer redis.Values
 func Values(reply interface{}, err error) ([]interface{}, error) {
@@ -116,14 +113,14 @@ func Positions(result interface{}, err error) ([]*[2]float64, error) {
 }
 
 func Struct(result interface{}, err error, v ...interface{}) error {
-	 bytes, err := redis.Bytes(result, err)
-	 if err != nil{
-	 	return err
-	 }
+	bytes, err := redis.Bytes(result, err)
+	if err != nil {
+		return err
+	}
 
-	 err = json.Unmarshal(bytes, &v)
+	err = json.Unmarshal(bytes, &v)
 
-	 return err
+	return err
 }
 
 //decorError implement decoration redis.ErrNil

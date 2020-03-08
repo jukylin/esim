@@ -1,14 +1,14 @@
 package http
 
 import (
-	"net/http"
-	"time"
-	"github.com/opentracing-contrib/go-stdlib/nethttp"
-	opentracing2 "github.com/opentracing/opentracing-go"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/opentracing"
+	"github.com/opentracing-contrib/go-stdlib/nethttp"
+	opentracing2 "github.com/opentracing/opentracing-go"
+	"github.com/prometheus/client_golang/prometheus"
+	"net/http"
+	"time"
 )
 
 // monitorProxy wraps a RoundTripper.
@@ -81,7 +81,7 @@ func (MonitorProxyOptions) WithTracer(tracer opentracing2.Tracer) MonitorProxyOp
 	}
 }
 
-func (this *monitorProxy) NextProxy(tripper interface{})  {
+func (this *monitorProxy) NextProxy(tripper interface{}) {
 	this.nextTransport = tripper.(http.RoundTripper)
 }
 
@@ -110,7 +110,7 @@ func (this *monitorProxy) RoundTrip(req *http.Request) (*http.Response, error) {
 		resp, err = transport.RoundTrip(req)
 
 		ht.Finish()
-	}else{
+	} else {
 		resp, err = this.nextTransport.RoundTrip(req)
 	}
 
@@ -119,7 +119,6 @@ func (this *monitorProxy) RoundTrip(req *http.Request) (*http.Response, error) {
 	}
 
 	this.after(beginTime, req, resp)
-
 
 	return resp, nil
 }
@@ -146,7 +145,6 @@ func (this *monitorProxy) after(beginTime time.Time, res *http.Request, resp *ht
 	}
 }
 
-
 func (this *monitorProxy) slowHttpRequest(beginTime time.Time, endTime time.Time,
 	res *http.Request, resp *http.Response) {
 	http_client_slow_time := this.conf.GetInt64("http_client_slow_time")
@@ -159,14 +157,12 @@ func (this *monitorProxy) slowHttpRequest(beginTime time.Time, endTime time.Time
 	}
 }
 
-
 func (this *monitorProxy) httpClientMetrice(beginTime time.Time, endTime time.Time,
 	res *http.Request, resp *http.Response) {
 	lab := prometheus.Labels{"url": res.URL.String(), "method": res.Method}
 	httpTotal.With(lab).Inc()
 	httpDuration.With(lab).Observe(endTime.Sub(beginTime).Seconds())
 }
-
 
 func (this *monitorProxy) debugHttp(beginTime time.Time, endTime time.Time,
 	req *http.Request, resp *http.Response) {

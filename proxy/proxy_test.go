@@ -1,11 +1,10 @@
 package proxy
 
 import (
-	"testing"
 	"github.com/jukylin/esim/log"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
-
 
 type DbRepo interface {
 	Get(str string) string
@@ -78,7 +77,7 @@ func (this *realDb) Get(str string) string {
 	return "1.0.0"
 }
 
-func TestProxyFactory(t *testing.T)  {
+func TestProxyFactory(t *testing.T) {
 	firstProxy := NewProxyFactory().GetFirstInstance("db_repo", NewRealDb(),
 		func() interface{} {
 			return NewFilterProxy()
@@ -93,8 +92,7 @@ func TestProxyFactory(t *testing.T)  {
 	assert.Equal(t, result, "1.0.0")
 }
 
-
-func TestProxyFactoryNotProxy(t *testing.T)  {
+func TestProxyFactoryNotProxy(t *testing.T) {
 	firstProxy := NewProxyFactory().GetFirstInstance("db_repo", NewRealDb())
 	assert.IsType(t, firstProxy, &realDb{})
 
@@ -102,14 +100,12 @@ func TestProxyFactoryNotProxy(t *testing.T)  {
 	assert.Equal(t, result, "1.0.0")
 }
 
-
-func TestProxyFactoryNotRealInstanceNotProxy(t *testing.T)  {
+func TestProxyFactoryNotRealInstanceNotProxy(t *testing.T) {
 	firstProxy := NewProxyFactory().GetFirstInstance("db_repo", nil)
 	assert.Nil(t, firstProxy)
 }
 
-
-func TestProxyFactoryNotRealInstanceButProxy(t *testing.T)  {
+func TestProxyFactoryNotRealInstanceButProxy(t *testing.T) {
 	firstProxy := NewProxyFactory().GetFirstInstance("db_repo", nil,
 		func() interface{} {
 			return NewFilterProxy()
@@ -120,8 +116,7 @@ func TestProxyFactoryNotRealInstanceButProxy(t *testing.T)  {
 	assert.IsType(t, &filterProxy{}, firstProxy)
 }
 
-
-func TestProxyFactoryGetInstances(t *testing.T)  {
+func TestProxyFactoryGetInstances(t *testing.T) {
 	firstProxy := NewProxyFactory().GetInstances("db_repo",
 		func() interface{} {
 			return NewFilterProxy()

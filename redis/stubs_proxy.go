@@ -6,13 +6,11 @@ import (
 )
 
 type stubsProxy struct {
-	
 	nextConn ContextConn
-	
+
 	name string
 
 	log log.Logger
-
 }
 
 type stubsProxyOption func(c *stubsProxy)
@@ -22,7 +20,7 @@ type stubsProxyOptions struct{}
 func NewStubsProxy(logger log.Logger, name string) *stubsProxy {
 	stubsProxy := &stubsProxy{}
 
-	if logger == nil{
+	if logger == nil {
 		stubsProxy.log = log.NewLogger()
 	}
 
@@ -30,7 +28,6 @@ func NewStubsProxy(logger log.Logger, name string) *stubsProxy {
 
 	return stubsProxy
 }
-
 
 //implement Proxy interface
 func (this *stubsProxy) NextProxy(conn interface{}) {
@@ -54,11 +51,11 @@ func (this *stubsProxy) Err() (err error) {
 }
 
 func (this *stubsProxy) Do(ctx context.Context, commandName string, args ...interface{}) (reply interface{}, err error) {
-	if args[0] == "name"{
+	if args[0] == "name" {
 		return "test", nil
 	}
 
-	if args[0] == "version"{
+	if args[0] == "version" {
 		return "2.0", nil
 	}
 

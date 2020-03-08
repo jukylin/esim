@@ -4,8 +4,7 @@ import (
 	"context"
 )
 
-type nullLogger struct {}
-
+type nullLogger struct{}
 
 func NewNullLogger() Logger {
 
@@ -15,7 +14,6 @@ func NewNullLogger() Logger {
 
 	return logger
 }
-
 
 func (log *nullLogger) Error(msg string) {}
 

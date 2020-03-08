@@ -1,13 +1,13 @@
 package container
 
 import (
-	"sync"
 	"github.com/google/wire"
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
+	eot "github.com/jukylin/esim/opentracing"
 	"github.com/jukylin/esim/prometheus"
 	"github.com/opentracing/opentracing-go"
-	eot "github.com/jukylin/esim/opentracing"
+	"sync"
 )
 
 var esimOnce sync.Once
@@ -35,9 +35,10 @@ var esimSet = wire.NewSet(
 	provideTracer,
 )
 
-var confFunc  = func() config.Config {
+var confFunc = func() config.Config {
 	return config.NewMemConfig()
 }
+
 func SetConfFunc(conf func() config.Config) {
 	confFunc = conf
 }
@@ -45,23 +46,22 @@ func provideConf() config.Config {
 	return confFunc()
 }
 
-
 var prometheusFunc = func(conf config.Config, logger log.Logger) *prometheus.Prometheus {
 	var http_addr string
-	if conf.GetString("prometheus_http_addr") != ""{
+	if conf.GetString("prometheus_http_addr") != "" {
 		http_addr = conf.GetString("prometheus_http_addr")
-	}else{
+	} else {
 		http_addr = DEFAULT_PROMETHEUS_HTTP_ADDR
 	}
 	return prometheus.NewPrometheus(http_addr, logger)
 }
+
 func SetPrometheusFunc(prometheus func(config.Config, log.Logger) *prometheus.Prometheus) {
 	prometheusFunc = prometheus
 }
 func providePrometheus(conf config.Config, logger log.Logger) *prometheus.Prometheus {
 	return prometheusFunc(conf, logger)
 }
-
 
 var loggerFunc = func(conf config.Config) log.Logger {
 	var loggerOptions log.LoggerOptions
@@ -71,6 +71,7 @@ var loggerFunc = func(conf config.Config) log.Logger {
 	)
 	return logger
 }
+
 func SetLogger(log func(config.Config) log.Logger) {
 	loggerFunc = log
 }
@@ -78,16 +79,16 @@ func provideLogger(conf config.Config) log.Logger {
 	return loggerFunc(conf)
 }
 
-
 var tracerFunc = func(conf config.Config, logger log.Logger) opentracing.Tracer {
 	var appname string
-	if conf.GetString("appname") != ""{
+	if conf.GetString("appname") != "" {
 		appname = conf.GetString("appname")
-	}else{
+	} else {
 		appname = DEFAULT_APPNAME
 	}
 	return eot.NewTracer(appname, logger)
 }
+
 func SetTracer(tracer func(config.Config, log.Logger) opentracing.Tracer) {
 	tracerFunc = tracer
 }

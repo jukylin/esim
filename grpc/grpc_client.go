@@ -6,11 +6,11 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	ggp "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
-	opentracing2 "github.com/opentracing/opentracing-go"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/opentracing"
+	opentracing2 "github.com/opentracing/opentracing-go"
+	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
@@ -41,7 +41,6 @@ type ClientOptions struct {
 
 	opts []grpc.DialOption
 }
-
 
 type ClientOptional func(c *ClientOptions)
 
@@ -144,7 +143,6 @@ func (ClientOptionals) WithDialOptions(options ...grpc.DialOption) ClientOptiona
 	}
 }
 
-
 //NewGrpcClient create GrpcClient for business.
 //clientOptions clientOptions can not nil
 func NewClient(clientOptions *ClientOptions) *GrpcClient {
@@ -155,7 +153,6 @@ func NewClient(clientOptions *ClientOptions) *GrpcClient {
 
 	return grpcClient
 }
-
 
 func (this *GrpcClient) DialContext(ctx context.Context, target string) *grpc.ClientConn {
 
@@ -224,18 +221,16 @@ func (this *ClientOptions) clientDebug() func(ctx context.Context,
 	}
 }
 
-
 func ClientStubs(stubsFunc func(ctx context.Context, method string, req, reply interface{},
 	cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error) func(ctx context.Context,
 	method string, req, reply interface{}, cc *grpc.ClientConn,
 	invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 	return func(ctx context.Context, method string, req, reply interface{},
 		cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-			err := stubsFunc(ctx, method, req, reply, cc, invoker, opts...)
+		err := stubsFunc(ctx, method, req, reply, cc, invoker, opts...)
 		return err
 	}
 }
-
 
 func slowRequest(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn,
 	invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
@@ -243,7 +238,6 @@ func slowRequest(ctx context.Context, method string, req, reply interface{}, cc 
 	err := invoker(ctx, method, req, reply, cc, opts...)
 	return err
 }
-
 
 func timeoutRequest(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn,
 	invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {

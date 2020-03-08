@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestNewViperConfig(t *testing.T)  {
+func TestNewViperConfig(t *testing.T) {
 	options := ViperConfOptions{}
 
 	file := []string{"./a.yaml", "b.yaml", "c.yaml"}
@@ -13,23 +13,22 @@ func TestNewViperConfig(t *testing.T)  {
 		options.WithConfFile(file))
 
 	name := conf.GetString("name")
-	if name != "esim"{
+	if name != "esim" {
 		t.Errorf("error should esim , now %s", name)
 	}
 
 	version := conf.GetFloat64("version")
-	if version != 1.0{
+	if version != 1.0 {
 		t.Errorf("error should 1.0 , now %f", version)
 	}
 
 	disable := conf.GetBool("disable")
-	if disable != true{
+	if disable != true {
 		t.Errorf("error should true , now false")
 	}
 }
 
-
-func TestNotConfigFile(t *testing.T)  {
+func TestNotConfigFile(t *testing.T) {
 	options := ViperConfOptions{}
 
 	NewViperConfig(options.WithConfigType("yaml"))

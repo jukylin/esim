@@ -3,7 +3,6 @@ package log
 import "context"
 
 type Logger interface {
-
 	Error(msg string)
 
 	Debugf(string, ...interface{})
@@ -20,7 +19,7 @@ type Logger interface {
 
 	Fatalf(string, ...interface{})
 
-	Debugc(context.Context, string,  ...interface{})
+	Debugc(context.Context, string, ...interface{})
 
 	Infoc(context.Context, string, ...interface{})
 

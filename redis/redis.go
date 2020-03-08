@@ -34,7 +34,6 @@ type RedisClient struct {
 	closeChan chan bool
 }
 
-
 type Option func(c *RedisClient)
 
 type RedisClientOptions struct{}
@@ -47,9 +46,9 @@ func newPoolRedis(options ...Option) *RedisClient {
 	poolRedisOnce.Do(func() {
 
 		onceRedisClient = &RedisClient{
-			proxyConn: make([]func () interface{}, 0),
-			stateTicker : 10 * time.Second,
-			closeChan: make(chan bool, 1),
+			proxyConn:   make([]func() interface{}, 0),
+			stateTicker: 10 * time.Second,
+			closeChan:   make(chan bool, 1),
 		}
 
 		for _, option := range options {
@@ -147,7 +146,7 @@ func newPoolRedis(options ...Option) *RedisClient {
 		if onceRedisClient.conf.GetString("runmode") == "pro" {
 			//conn success ？
 			rc := onceRedisClient.client.Get()
-			if rc.Err() != nil{
+			if rc.Err() != nil {
 				onceRedisClient.logger.Panicf(rc.Err().Error())
 			}
 			rc.Close()
@@ -202,17 +201,15 @@ func (this *RedisClient) GetCtxRedisConn() ContextConn {
 	facadeProxy.NextProxy(rc)
 
 	var firstProxy ContextConn
-	if this.proxyNum > 0 && rc.Err() == nil{
-		firstProxy = this.proxyInses[len(this.proxyInses) - 1].(ContextConn)
+	if this.proxyNum > 0 && rc.Err() == nil {
+		firstProxy = this.proxyInses[len(this.proxyInses)-1].(ContextConn)
 		firstProxy.(proxy.Proxy).NextProxy(facadeProxy)
-	}else{
+	} else {
 		firstProxy = facadeProxy
 	}
 
 	return firstProxy
 }
-
-
 
 func (this *RedisClient) Close() {
 	this.client.Close()
@@ -224,24 +221,23 @@ func (this *RedisClient) Ping() error {
 	return conn.Err()
 }
 
-
 func (this *RedisClient) Stats() {
 	ticker := time.NewTicker(this.stateTicker)
 	var stats redis.PoolStats
 
 	for {
 		select {
-		case <- ticker.C:
+		case <-ticker.C:
 
 			stats = this.client.Stats()
 
-			activeCountLab := prometheus.Labels{"stats" : "active_count"}
+			activeCountLab := prometheus.Labels{"stats": "active_count"}
 			redisStats.With(activeCountLab).Set(float64(stats.ActiveCount))
 
-			idleCountLab := prometheus.Labels{"stats" : "idle_count"}
+			idleCountLab := prometheus.Labels{"stats": "idle_count"}
 			redisStats.With(idleCountLab).Set(float64(stats.IdleCount))
 
-		case <- this.closeChan:
+		case <-this.closeChan:
 			this.logger.Infof("stop stats")
 			goto Stop
 		}

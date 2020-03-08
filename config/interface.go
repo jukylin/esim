@@ -1,11 +1,11 @@
 package config
 
 import (
-	"time"
 	"github.com/spf13/viper"
+	"time"
 )
 
-type Config interface{
+type Config interface {
 	Get(key string) interface{}
 
 	GetString(key string) string
@@ -30,7 +30,7 @@ type Config interface{
 
 	GetDuration(key string) time.Duration
 
-// GetIntSlice(key string) []int { return viper.GetIntSlice(key) }
+	// GetIntSlice(key string) []int { return viper.GetIntSlice(key) }
 
 	GetStringSlice(key string) []string
 

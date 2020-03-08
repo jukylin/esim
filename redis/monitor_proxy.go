@@ -2,16 +2,15 @@ package redis
 
 import (
 	"context"
-	opentracing2 "github.com/opentracing/opentracing-go"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/opentracing"
+	opentracing2 "github.com/opentracing/opentracing-go"
+	"github.com/prometheus/client_golang/prometheus"
 	"time"
 )
 
 type monitorProxy struct {
-
 	name string
 
 	nextConn ContextConn
@@ -38,15 +37,15 @@ func NewMonitorProxy(options ...MonitorProxyOption) *monitorProxy {
 		option(monitorProxy)
 	}
 
-	if monitorProxy.conf == nil{
+	if monitorProxy.conf == nil {
 		monitorProxy.conf = config.NewNullConfig()
 	}
 
-	if monitorProxy.log == nil{
+	if monitorProxy.log == nil {
 		monitorProxy.log = log.NewLogger()
 	}
 
-	if monitorProxy.tracer == nil{
+	if monitorProxy.tracer == nil {
 		monitorProxy.tracer = opentracing.NewTracer("redis", monitorProxy.log)
 	}
 
@@ -80,7 +79,7 @@ func (pc *monitorProxy) NextProxy(conn interface{}) {
 
 //implement Proxy interface
 func (pc *monitorProxy) ProxyName() string {
-	 return pc.name
+	return pc.name
 }
 
 func (pc *monitorProxy) Close() error {

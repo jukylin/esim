@@ -1,10 +1,9 @@
 package proxy
 
 import (
-	"sync"
 	"github.com/jukylin/esim/log"
+	"sync"
 )
-
 
 type Proxy interface {
 	//set next proxy
@@ -18,14 +17,13 @@ var proxyFactoryOnce sync.Once
 
 var proxyFactory *ProxyFactory
 
-type ProxyFactory struct{
+type ProxyFactory struct {
 	logger log.Logger
 }
 
 type ProxyFactoryOption func(c *ProxyFactory)
 
 type ProxyFactoryOptions struct{}
-
 
 func NewProxyFactory(options ...ProxyFactoryOption) *ProxyFactory {
 
@@ -68,13 +66,12 @@ func (this *ProxyFactory) GetFirstInstance(realName string, realInstance interfa
 		if realInstance != nil {
 			proxyInses[len(proxyInses)-1].(Proxy).NextProxy(realInstance)
 		}
-	}else{
+	} else {
 		firstProxy = realInstance
 	}
 
 	return firstProxy
 }
-
 
 func (this *ProxyFactory) GetInstances(realName string, proxys ...func() interface{}) []interface{} {
 
@@ -94,10 +91,10 @@ func (this *ProxyFactory) GetInstances(realName string, proxys ...func() interfa
 			if proxyNum == 1 {
 				proxyIns.(Proxy).NextProxy(proxyInses[k])
 				this.logger.Infof("[%s] %s init [%p]", realName, proxyIns.(Proxy).ProxyName(), proxyIns)
-			} else if k+1 < proxyNum{
+			} else if k+1 < proxyNum {
 				proxyIns.(Proxy).NextProxy(proxyInses[k+1])
 				this.logger.Infof("[%s] %s init [%p]", realName, proxyIns.(Proxy).ProxyName(), proxyIns)
-			}else{
+			} else {
 				continue
 			}
 		}

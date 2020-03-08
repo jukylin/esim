@@ -17,7 +17,6 @@ func provideMockProme(conf config.Config) *prometheus.Prometheus {
 	return prometheus.NewNullProme()
 }
 
-
 func provideNoopTracer() opentracing.Tracer {
 	return opentracing.NoopTracer{}
 }

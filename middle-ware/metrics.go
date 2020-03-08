@@ -1,9 +1,8 @@
-
 package middle_ware
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
-	)
+)
 
 // 初始化 web_reqeust_total
 var requestTotal = prometheus.NewCounterVec(

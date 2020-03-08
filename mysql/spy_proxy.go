@@ -21,7 +21,6 @@ type spyProxy struct {
 	name string
 }
 
-
 func newSpyProxy(logger log.Logger, name string) *spyProxy {
 	spyProxy := &spyProxy{}
 

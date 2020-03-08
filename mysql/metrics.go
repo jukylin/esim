@@ -2,7 +2,7 @@ package mysql
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
-	)
+)
 
 var mysqlTotal = prometheus.NewCounterVec(
 	prometheus.CounterOpts{
@@ -21,11 +21,10 @@ var mysqlDuration = prometheus.NewHistogramVec(
 	[]string{"sql"},
 )
 
-
 var mysqlStats = prometheus.NewGaugeVec(
-	prometheus.GaugeOpts {
-		Name:      "mysql_stats",
-		Help:      "database statistics",
+	prometheus.GaugeOpts{
+		Name: "mysql_stats",
+		Help: "database statistics",
 	},
 	[]string{"db", "stats"},
 )

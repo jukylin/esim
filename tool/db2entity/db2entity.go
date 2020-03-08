@@ -91,16 +91,21 @@ func GenEntity(v *viper.Viper) error {
 	var entityDir string
 	var repoTarget string
 
+	boubctx := v.GetString("boubctx")
+	if boubctx != ""{
+		boubctx = boubctx + "/"
+	}
+
 	if v.GetBool("disetar") == false {
 
 		etar = v.GetString("etar")
 
-		if v.GetString("boubctx") == ""{
-			log.Fatalf("boubctx is empty")
-		}
-
 		if etar == "" {
-			etar = "internal/domain/"+v.GetString("boubctx")+"/entity"
+			if boubctx != ""{
+				etar = "internal/domain/" + boubctx + "entity"
+			}else{
+				etar = "internal/domain/entity"
+			}
 		}
 
 		dirExists, err := file_dir.IsExistsDir(etar)
@@ -238,7 +243,7 @@ func GenEntity(v *viper.Viper) error {
 
 	if v.GetBool("disdaotar") == false {
 
-		daoStr, err := GenerateDao(table, st, pk, v, genMysqlInfo)
+		daoStr, err := GenerateDao(table, st, pk, v, genMysqlInfo, boubctx)
 		if err != nil {
 			log.Fatalf("Error in creating struct from json: " + err.Error())
 		}
@@ -265,7 +270,7 @@ func GenEntity(v *viper.Viper) error {
 
 	if v.GetBool("disrepotar") == false {
 
-		repoStr := GenerateRepo(table, st, v)
+		repoStr := GenerateRepo(table, st, v, boubctx)
 
 		forRepoStr, err := format.Source([]byte(repoStr))
 		if err != nil {
@@ -307,7 +312,7 @@ func GenEntity(v *viper.Viper) error {
 }
 
 func GenerateDao(tableName string, structName string, pkgName string,
-	v *viper.Viper, genMysqlInfo generateMysqlInfo) ([]byte, error) {
+	v *viper.Viper, genMysqlInfo generateMysqlInfo, boubctx string) ([]byte, error) {
 
 	daoStr := `
 package dao
@@ -315,7 +320,7 @@ package dao
 import (
 	"errors"
 	"context"
-	"` + file_dir.GetCurrentDir() + `/internal/domain/` + v.GetString("boubctx") + `/entity"
+	"` + file_dir.GetCurrentDir() + `/internal/domain/` + boubctx + `entity"
 	"github.com/jinzhu/gorm"
 	"github.com/jukylin/esim/mysql"
 )
@@ -423,14 +428,14 @@ func (this *` + structName + `Dao) Update(ctx context.Context, update map[string
 	return []byte(daoStr), nil
 }
 
-func GenerateRepo(tableName string, structName string, v *viper.Viper) string {
+func GenerateRepo(tableName string, structName string, v *viper.Viper, boubctx string) string {
 	repoStr := `
 package repo
 
 
 import (
 	"context"
-	"` + file_dir.GetCurrentDir() + `/internal/domain/` + v.GetString("boubctx") + `/entity"
+	"` + file_dir.GetCurrentDir() + `/internal/domain/` + boubctx + `entity"
 	"` + file_dir.GetCurrentDir() + `/internal/infra/dao"
 	"github.com/jukylin/esim/log"
 )

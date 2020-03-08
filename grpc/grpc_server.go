@@ -1,23 +1,23 @@
 package grpc
 
 import (
-	"time"
-	"net"
 	"errors"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	ggp "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
+	opentracing2 "github.com/opentracing/opentracing-go"
+	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/examples/helloworld/helloworld"
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/reflection"
-	opentracing2 "github.com/opentracing/opentracing-go"
-	"google.golang.org/grpc/examples/helloworld/helloworld"
+	"net"
+	"time"
 )
 
 type GrpcServer struct {
@@ -159,7 +159,6 @@ func (ServerOptions) WithGrpcServerOption(options ...grpc.ServerOption) ServerOp
 	}
 }
 
-
 func (ServerOptions) WithTracer(tracer opentracing2.Tracer) ServerOption {
 	return func(g *GrpcServer) {
 		g.tracer = tracer
@@ -237,9 +236,9 @@ func panicResp() grpc.UnaryServerInterceptor {
 		handler grpc.UnaryHandler,
 	) (resp interface{}, err error) {
 
-		if req.(*helloworld.HelloRequest).Name == "call_panic"{
+		if req.(*helloworld.HelloRequest).Name == "call_panic" {
 			panic("is a test")
-		}else if req.(*helloworld.HelloRequest).Name == "call_panic_arr" {
+		} else if req.(*helloworld.HelloRequest).Name == "call_panic_arr" {
 			var arr [1]string
 			arr[0] = "is a test"
 			panic(arr)
@@ -249,8 +248,6 @@ func panicResp() grpc.UnaryServerInterceptor {
 		return resp, err
 	}
 }
-
-
 
 func ServerStubs(stubsFunc func(
 	ctx context.Context,
@@ -268,7 +265,7 @@ func ServerStubs(stubsFunc func(
 	}
 }
 
-func (this *GrpcServer) Start(){
+func (this *GrpcServer) Start() {
 
 	lis, err := net.Listen("tcp", this.target)
 	if err != nil {
@@ -287,7 +284,6 @@ func (this *GrpcServer) Start(){
 	}()
 }
 
-
-func (this *GrpcServer) GracefulShutDown()  {
+func (this *GrpcServer) GracefulShutDown() {
 	this.Server.GracefulStop()
 }

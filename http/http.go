@@ -3,12 +3,12 @@ package http
 import (
 	"context"
 	"github.com/jukylin/esim/log"
+	"github.com/jukylin/esim/proxy"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
-	"github.com/jukylin/esim/proxy"
 )
 
 type HttpClient struct {
@@ -18,7 +18,6 @@ type HttpClient struct {
 
 	logger log.Logger
 }
-
 
 type Option func(c *HttpClient)
 
@@ -39,7 +38,7 @@ func NewHttpClient(options ...Option) *HttpClient {
 
 	if httpClient.transports == nil {
 		httpClient.client.Transport = http.DefaultTransport
-	}else{
+	} else {
 		httpClient.client.Transport = proxy.NewProxyFactory().
 			GetFirstInstance("http", http.DefaultTransport, httpClient.transports...).(http.RoundTripper)
 	}
@@ -55,12 +54,11 @@ func NewHttpClient(options ...Option) *HttpClient {
 	return httpClient
 }
 
-func (ClientOptions) WithProxy(proxy ...func () interface{}) Option {
+func (ClientOptions) WithProxy(proxy ...func() interface{}) Option {
 	return func(hc *HttpClient) {
 		hc.transports = append(hc.transports, proxy...)
 	}
 }
-
 
 func (ClientOptions) WithTimeOut(timeout time.Duration) Option {
 	return func(hc *HttpClient) {
@@ -68,19 +66,16 @@ func (ClientOptions) WithTimeOut(timeout time.Duration) Option {
 	}
 }
 
-
 func (ClientOptions) WithLogger(logger log.Logger) Option {
 	return func(hc *HttpClient) {
 		hc.logger = logger
 	}
 }
 
-
 func (this *HttpClient) Do(ctx context.Context, req *http.Request) (*http.Response, error) {
 	resp, err := this.client.Do(req)
 	return resp, err
 }
-
 
 func (this *HttpClient) Get(ctx context.Context, url string) (resp *http.Response, err error) {
 	req, err := http.NewRequest("GET", url, nil)
@@ -93,7 +88,6 @@ func (this *HttpClient) Get(ctx context.Context, url string) (resp *http.Respons
 	return resp, err
 }
 
-
 func (this *HttpClient) Post(ctx context.Context, url, contentType string, body io.Reader) (resp *http.Response, err error) {
 	req, err := http.NewRequest("POST", url, body)
 	if err != nil {
@@ -104,11 +98,9 @@ func (this *HttpClient) Post(ctx context.Context, url, contentType string, body 
 	return this.Do(ctx, req)
 }
 
-
 func (this *HttpClient) PostForm(ctx context.Context, url string, data url.Values) (resp *http.Response, err error) {
 	return this.Post(ctx, url, "application/x-www-form-urlencoded", strings.NewReader(data.Encode()))
 }
-
 
 func (this *HttpClient) Head(ctx context.Context, url string) (resp *http.Response, err error) {
 	req, err := http.NewRequest("HEAD", url, nil)
@@ -118,7 +110,6 @@ func (this *HttpClient) Head(ctx context.Context, url string) (resp *http.Respon
 	req = req.WithContext(ctx)
 	return this.Do(ctx, req)
 }
-
 
 func (this *HttpClient) CloseIdleConnections(ctx context.Context) {
 	this.client.CloseIdleConnections()
