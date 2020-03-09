@@ -2,7 +2,7 @@ package new
 
 func DaoInit() {
 	fc1 := &FileContent{
-		FileName: "user.go",
+		FileName: "user_dao.go",
 		Dir:      "internal/infra/dao",
 		Content: `package dao
 

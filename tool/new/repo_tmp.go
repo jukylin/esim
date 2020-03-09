@@ -2,7 +2,7 @@ package new
 
 func RepoInit() {
 	fc1 := &FileContent{
-		FileName: "user.go",
+		FileName: "user_repo.go",
 		Dir:      "internal/infra/repo",
 		Content: `package repo
 
@@ -23,7 +23,7 @@ type userRepo struct {
 	userDao *dao.UserDao
 }
 
-func NewUserRepo(logger log.Logger) UserRepo {
+func NewDBUserRepo(logger log.Logger) UserRepo {
 	repo := &userRepo{
 		log: logger,
 	}

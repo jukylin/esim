@@ -2,7 +2,7 @@ package new
 
 func ServiceInit() {
 	fc1 := &FileContent{
-		FileName: "user.go",
+		FileName: "user_service.go",
 		Dir:      "internal/application",
 		Content: `package application
 

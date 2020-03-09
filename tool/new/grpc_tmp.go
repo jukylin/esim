@@ -2,7 +2,7 @@ package new
 
 func GrpcInit() {
 	fc1 := &FileContent{
-		FileName: "demo.go",
+		FileName: "demo_controller.go",
 		Dir:      "internal/transports/grpc/controllers",
 		Content: `package controllers
 
@@ -297,7 +297,7 @@ func initControllers(app *{{package_name}}.App) *Controllers {
 	}
 
 	fc8 := &FileContent{
-		FileName: "user.go",
+		FileName: "user_dto.go",
 		Dir:      "internal/transports/grpc/dto",
 		Content: `package dto
 

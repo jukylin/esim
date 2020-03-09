@@ -2,7 +2,7 @@ package new
 
 func ModelInit() {
 	fc1 := &FileContent{
-		FileName: "user.go",
+		FileName: "user_entity.go",
 		Dir:      "internal/domain/user/entity",
 		Content: `package entity
 

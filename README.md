@@ -76,10 +76,10 @@ infrastructure|为各层提供技术支持，持久化，领域事件等
 &emsp; | Jaeger
 ---|---
 目录名 |小写/中横线
-函数名 |小驼峰
+函数名 |驼峰
 文件名 |下划线
-变量 | 小驼峰
-常量 | 小驼峰
+变量 | 驼峰
+常量 | 驼峰
 包名 | 当前目录名
 请求地址 | *小写
 请求参数 | 小驼峰
@@ -88,12 +88,12 @@ infrastructure|为各层提供技术支持，持久化，领域事件等
 
 目录 | 定义 | 文件 | 类 | 接口
 ---|---|---|---|---
-application/service |应用层|index.go | IndexService|无
-domain/service|领域服务 | index.go | IndexService|无
-domain/entity |实体| index.go | Index|无
-infra/event |领域事件|index.go | couponEventPub | IndexEvent
-infra/repo|资源库|index.go| IndexDbRepo |IndexRepo
-infra/dao|数据访问对象| index.go| IndexDao |无
+application/service |应用层|index_service.go | IndexService|无
+domain/service|领域服务 | index_service.go | IndexService|无
+domain/entity |实体| index_entity.go | IndexEntity|无
+infra/event |领域事件|index_event.go | PubIndexEvent | IndexEvent
+infra/repo|资源库|index_repo.go| DBIndexRepo |IndexRepo
+infra/dao|数据访问对象| index_dao.go| IndexDao |无
 
 
 ### 数据库设计规范小三样
