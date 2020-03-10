@@ -686,7 +686,12 @@ func getOldImports(GenDecl *ast.GenDecl) []string {
 	var imports []string
 	for _, specs := range GenDecl.Specs {
 		if spec, ok := specs.(*ast.ImportSpec); ok {
-			imports = append(imports, spec.Path.Value)
+			var name string
+			if  spec.Name.String() != "<nil>"{
+				name = spec.Name.String()
+			}
+
+			imports = append(imports,  name +  " " + spec.Path.Value)
 		}
 	}
 

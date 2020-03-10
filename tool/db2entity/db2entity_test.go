@@ -12,6 +12,7 @@ func TestInject(t *testing.T) {
 import (
 	wire "github.com/google/wire"
 	"github.com/jukylin/esim/container"
+	_ "github.com/jukylin/esim"
 
 	"sync"
 )
