@@ -305,7 +305,7 @@ func GenEntity(v *viper.Viper) error {
 		}
 
 		Inject("infra", st, pk,
-			st+"Repo", st+"DbRepo", proPath+"/internal/infra/repo")
+			st + "Repo", "DB" + st + "Repo", proPath+"/internal/infra/repo")
 	}
 
 	return nil
@@ -445,31 +445,31 @@ type ` + structName + `Repo interface {
 	FindById(context.Context, int64) entity.` + structName + `
 }
 
-type ` + tableName + `DbRepo struct{
+type DB` + structName + `Repo struct{
 
 	logger log.Logger
 
-	` + tableName + `Dao *dao.` + structName + `Dao
+	` + GetFirstStringToLower(structName) + `Dao *dao.` + structName + `Dao
 }
 
-func New` + structName + `DbRepo(logger log.Logger) ` + structName + `Repo {
-	repo := &` + tableName + `DbRepo{
+func NewDB` + structName + `Repo(logger log.Logger) ` + structName + `Repo {
+	repo := &DB` + structName + `Repo{
 		logger : logger,
 	}
 
-	if repo.` + tableName + `Dao == nil{
-		repo.` + tableName + `Dao = dao.New` + structName + `Dao()
+	if repo.` + GetFirstStringToLower(structName) + `Dao == nil{
+		repo.` + GetFirstStringToLower(structName) + `Dao = dao.New` + structName + `Dao()
 	}
 
 
 	return repo
 }
 
-func (this *` + tableName + `DbRepo) FindById(ctx context.Context, id int64) entity.` + structName + ` {
+func (this *DB` + structName + `Repo) FindById(ctx context.Context, id int64) entity.` + structName + ` {
 	var ` + tableName + ` entity.` + structName + `
 	var err error
 
-	` + tableName + `, err = this.` + tableName + `Dao.Find(ctx, "*", "id = ? ", id)
+	` + tableName + `, err = this.` + GetFirstStringToLower(structName) + `Dao.Find(ctx, "*", "id = ? ", id)
 
 	if err != nil{
 		this.logger.Errorf(err.Error())
@@ -527,6 +527,11 @@ func camelString(s string) string {
 func GetFirstToLower(str string) string {
 	return strings.ToLower(string(str[0]))
 }
+
+func GetFirstStringToLower(str string) string {
+	return strings.ToLower(string(str[0])) + str[1:]
+}
+
 
 func Inject(structName string, fieldName, packageName, interfaceName string,
 	instanceName string, importStr string) {
@@ -810,6 +815,7 @@ func GetNewStruct(name string, fields []Field) string {
 func GetFirstToUpper(str string) string {
 	return strings.ToUpper(string(str[0])) + str[1:]
 }
+
 
 func ExecGoFmt(file string, dir string) error {
 	cmd_line := fmt.Sprintf("go fmt %s", file)
