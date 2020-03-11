@@ -5,7 +5,7 @@ import (
 )
 
 type SqlCommon interface {
-	gorm.CommonDB
+	gorm.ConnPool
 
 	gorm.TxBeginner
 

@@ -10,7 +10,7 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
-	"github.com/jukylin/esim/proxy"
+	//"github.com/jukylin/esim/proxy"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/jinzhu/gorm/dialects/mysql"
 )
@@ -167,14 +167,17 @@ func (this *MysqlClient) init() {
 				this.logger.Panicf("[db] %s ping error : %s", dbConfig.Db, err.Error())
 			}
 
-			firstProxy := proxy.NewProxyFactory().GetFirstInstance("db_" + dbConfig.Db, DB.DB, this.proxy...)
+			sqlDb := DB.ConnPool.(*sql.DB)
+			err = sqlDb.Ping()
+			if err != nil {
+				this.logger.Panicf("[db] %s ping error : %s", dbConfig.Db, err.Error())
+			}
 
-			DB.DB = firstProxy.(gorm.CommonDB)
+			//firstProxy := proxy.NewProxyFactory().GetFirstInstance("db_" + dbConfig.Db, DB.ConnPool, this.proxy...)
 
-			//err = dbSQL.Ping()
-			//if err != nil {
-			//	this.logger.Panicf("[db] %s ping error : %s", dbConfig.Db, err.Error())
-			//}
+			//DB.ConnPool = firstProxy.(gorm.ConnPool)
+
+
 			//
 			//dbSQL.SetMaxIdleConns(dbConfig.MaxIdle)
 			//dbSQL.SetMaxOpenConns(dbConfig.MaxOpen)

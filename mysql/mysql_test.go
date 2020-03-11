@@ -66,7 +66,7 @@ func TestMain(m *testing.M) {
 		logger.Fatalf("Could not start resource: %s", err)
 	}
 
-	resource.Expire(120)
+	resource.Expire(60)
 
 	if err := pool.Retry(func() error {
 		var err error
