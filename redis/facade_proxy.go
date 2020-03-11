@@ -2,7 +2,7 @@ package redis
 
 import (
 	"context"
-	"github.com/garyburd/redigo/redis"
+	"github.com/gomodule/redigo/redis"
 )
 
 // FacadeProxy implement ContextConn interface, but nextConn is redis.Conn

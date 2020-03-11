@@ -15,8 +15,6 @@ import (
 	"time"
 )
 
-var client *RedisClient
-
 func TestMain(m *testing.M) {
 	logger := log.NewLogger()
 
@@ -38,27 +36,10 @@ func TestMain(m *testing.M) {
 		logger.Fatalf("Could not start resource: %s", err)
 	}
 
-	resource.Expire(10)
-
-	if err = pool.Retry(func() error {
-		client = NewRedisClient()
-		err = client.Ping()
-		if err != nil {
-			return err
-		}
-		ctx := context.Background()
-		conn := client.GetCtxRedisConn()
-		conn.Do(ctx, "set", "name", "test")
-		conn.Do(ctx, "set", "version", "2.0")
-		conn.Close()
-		return nil
-	}); err != nil {
-		logger.Fatalf("Could not connect to docker: %s", err)
-	}
+	resource.Expire(60)
 
 	code := m.Run()
 
-	client.Close()
 
 	// You can't defer this because os.Exit doesn't care for defer
 	if err := pool.Purge(resource); err != nil {
@@ -94,12 +75,28 @@ func TestGetProxyConn(t *testing.T) {
 func TestGetNotProxyConn(t *testing.T) {
 	poolRedisOnce = sync.Once{}
 
-	conn := client.GetCtxRedisConn()
+	redisClientOptions := RedisClientOptions{}
+	memConfig := config.NewMemConfig()
+	memConfig.Set("debug", true)
 
-	assert.IsTypef(t, NewFacadeProxy(), conn, "MediatorProxy type")
+	redisClent := NewRedisClient(
+		redisClientOptions.WithConf(memConfig),
+		redisClientOptions.WithProxy(
+			func() interface{} {
+				monitorProxyOptions := MonitorProxyOptions{}
+				return NewMonitorProxy(
+					monitorProxyOptions.WithLogger(log.NewLogger()),
+				)
+			},
+		),
+	)
+
+	conn := redisClent.GetCtxRedisConn()
+
+	assert.IsTypef(t, NewMonitorProxy(), conn, "MonitorProxy type")
 	assert.NotNil(t, conn)
 	conn.Close()
-	client.Close()
+	redisClent.Close()
 }
 
 func TestMonitorProxy_Do(t *testing.T) {
@@ -181,6 +178,10 @@ func TestMulGo_Do(t *testing.T) {
 		//),
 	)
 
+	conn := redisClent.GetRedisConn()
+	conn.Do("set", "name", "test")
+	conn.Do("set", "version", "2.0")
+	conn.Close()
 	wg := sync.WaitGroup{}
 	//ctx := context.Background()
 	wg.Add(2)
