@@ -2,6 +2,7 @@ package iface
 
 import (
 	"testing"
+	"os"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/jukylin/esim/pkg/file-dir"
@@ -38,23 +39,33 @@ func (this TestStub) Iface4() map[string]string {
 }
 `
 
+var ifacer *Iface
+
+func TestMain(m *testing.M) {
+
+	ifacer = NewIface()
+
+	code := m.Run()
+
+	os.Exit(code)
+}
+
 func TestIface(t *testing.T) {
-	iface := &Iface{}
 
-	iface.OutFile = "./abc/test_stub.go"
+	ifacer.OutFile = "./abc/test_stub.go"
 
-	iface.StructName = "TestStub"
+	ifacer.StructName = "TestStub"
 
-	ifacePath := "./example"
+	//ifacePath := "./example"
 
-	iface.FindIface(ifacePath, "Test")
+	//iface.FindIface(ifacePath, "Test")
 
-	err := iface.Process()
+	err := ifacer.Process()
 	assert.Nil(t, err)
 
-	assert.Equal(t, Result, iface.Content)
+	assert.Equal(t, Result, ifacer.Content)
 
-	iface.Write()
+	ifacer.Write()
 
 	exists, err := file_dir.IsExistsDir("./abc")
 	assert.Nil(t, err)
@@ -72,10 +83,44 @@ func TestIface_Run(t *testing.T) {
 
 	v.Set("iname", "Test")
 
-	v.Set("ipath", "./example")
+	v.Set("ipath", "./example/iface.go")
 
-	iface := &Iface{}
-	err := iface.Run(v)
+	ifacer := NewIface()
+	err := ifacer.Run(v)
 	assert.Nil(t, err)
 	assert.Nil(t, file_dir.RemoveDir("./abc"))
+}
+
+
+func TestIface_ParsePackageImport(t *testing.T) {
+	//ifacer := NewIface()
+
+	//ifacer.Run()
+
+	//iface := &Iface{}
+	//iface.ParsePackageImport("", "/data/go/src/github.com/jukylin/esim/tool/iface")
+}
+
+
+func TestIface_GetUniqueImportName(t *testing.T)  {
+	pkgName := "github.com/jukylin/esim/redis"
+
+	importName, err := ifacer.getUniqueImportName(pkgName, 0)
+	assert.Nil(t, err)
+	assert.Equal(t, "redis", importName)
+
+	importName, err = ifacer.getUniqueImportName(pkgName, 1)
+	assert.Nil(t, err)
+	assert.Equal(t, "esimredis", importName)
+
+	importName, err = ifacer.getUniqueImportName(pkgName, 2)
+	assert.Nil(t, err)
+	assert.Equal(t, "jukylinesimredis", importName)
+
+	importName, err = ifacer.getUniqueImportName(pkgName, 3)
+	assert.Nil(t, err)
+	assert.Equal(t, "githubcomjukylinesimredis", importName)
+
+	importName, err = ifacer.getUniqueImportName(pkgName, 4)
+	assert.Error(t, err)
 }

@@ -12,8 +12,8 @@ var ifaceCmd = &cobra.Command{
 	Short: "根据接口生成空实例",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		ifa := &iface.Iface{}
-		err := ifa.Run(v)
+		ifacer := iface.NewIface()
+		err := ifacer.Run(v)
 		if err != nil {
 			log.Log.Error(err.Error())
 		}

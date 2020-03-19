@@ -34,6 +34,7 @@ require (
 	github.com/uber-go/atomic v1.4.0 // indirect
 	github.com/uber/jaeger-client-go v2.17.0+incompatible
 	github.com/uber/jaeger-lib v2.1.1+incompatible // indirect
+	github.com/vektra/mockery v0.0.0-20181123154057-e78b021dcbb5
 	github.com/xdg/scram v0.0.0-20180814205039-7eeb5667e42c // indirect
 	github.com/xdg/stringprep v1.0.0 // indirect
 	go.mongodb.org/mongo-driver v1.1.1
