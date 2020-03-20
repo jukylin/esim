@@ -187,7 +187,7 @@ infra.NewInfra().DB
 
 ## 工具
 
-- esim db2entity -d db_name -t table_name -b boubctx
+- esim db2entity -d db_name -t table_name
 
 > 前置条件：
 > 1. 在项目根目录下
@@ -208,6 +208,13 @@ export ESIM_DB_PASSWORD=123456
 > 2. 开启 module， ```export GO111MODULE=on```
 
 > ```factory``` 命令可以自动对结构体进行初始化，内存对齐，生成临时对象池，reset和释放资源等操作，减少一些繁杂操作。
+
+- esim ifacer --iname 接口名称
+
+> 前置条件:
+> 1. 在接口目录下
+
+> ```ifacer``` 命令根据接口的定义生成空实例
 
 
 ## 配置

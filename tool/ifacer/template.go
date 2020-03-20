@@ -1,5 +1,4 @@
-package iface
-
+package ifacer
 
 var ifaceTemplate = `package {{.PackageName}}
 

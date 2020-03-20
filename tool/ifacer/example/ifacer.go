@@ -6,7 +6,7 @@ import (
 
 	aa "github.com/jukylin/esim/redis"
 	"github.com/gomodule/redigo/redis"
-	"github.com/jukylin/esim/tool/iface/example/repo"
+	"github.com/jukylin/esim/tool/ifacer/example/repo"
 )
 
 type TestStruct struct{

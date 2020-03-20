@@ -1,12 +1,12 @@
-package iface
+package ifacer
 
 import (
-	"testing"
 	"os"
+	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/spf13/viper"
 	"github.com/jukylin/esim/pkg/file-dir"
+	"github.com/spf13/viper"
+	"github.com/stretchr/testify/assert"
 )
 
 var Result = `package example1
@@ -16,7 +16,7 @@ import (
 
 	redigoredis "github.com/gomodule/redigo/redis"
 	redis "github.com/jukylin/esim/redis"
-	repo "github.com/jukylin/esim/tool/iface/example/repo"
+	repo "github.com/jukylin/esim/tool/ifacer/example/repo"
 )
 
 type TestStub struct{}
@@ -79,7 +79,7 @@ func (this TestStub) Iface8(rp repo.Repo) repo.Repo {
 }
 `
 
-var ifacer *Iface
+var ifacer *Ifacer
 
 func TestMain(m *testing.M) {
 
@@ -91,8 +91,7 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-
-func TestIface_Run(t *testing.T) {
+func TestIface_RunNullWrite(t *testing.T) {
 	v := viper.New()
 	v.Set("out", "./abc/test_stub.go")
 
@@ -106,7 +105,6 @@ func TestIface_Run(t *testing.T) {
 	assert.Equal(t, Result, ifacer.Content)
 	assert.Nil(t, err)
 }
-
 
 func TestIface_Write(t *testing.T) {
 	v := viper.New()
@@ -126,7 +124,7 @@ func TestIface_Write(t *testing.T) {
 	file_dir.RemoveDir("./abc")
 }
 
-func TestIface_GetUniqueImportName(t *testing.T)  {
+func TestIface_GetUniqueImportName(t *testing.T) {
 	pkgName := "github.com/jukylin/esim/redis"
 
 	importName := ifacer.getUniqueImportName(pkgName, 0)
@@ -147,14 +145,13 @@ func TestIface_GetUniqueImportName(t *testing.T)  {
 	assert.True(t, shouldPanic)
 }
 
-
 func TestIface_SetNoConflictImport(t *testing.T) {
 
-	testCases := []struct{
-		caseName string
+	testCases := []struct {
+		caseName   string
 		importName string
-		pkgName string
-		expected string
+		pkgName    string
+		expected   string
 	}{
 		{"redis", "redis", "github.com/jukylin/esim/redis", "github.com/jukylin/esim/redis"},
 		{"aredis", "redis", "github.com/jukylin/a/redis", "github.com/jukylin/a/redis"},
@@ -162,7 +159,7 @@ func TestIface_SetNoConflictImport(t *testing.T) {
 		{"gitlabcomjukyaredis", "redis", "gitlab.com/juky/a/redis", "gitlab.com/juky/a/redis"},
 	}
 
-	for _, test := range testCases{
+	for _, test := range testCases {
 		t.Run(test.caseName, func(t *testing.T) {
 			ifacer.setNoConflictImport(test.importName, test.pkgName)
 
