@@ -86,6 +86,54 @@ type Method struct {
 
 func (this *Iface) Run(v *viper.Viper) error {
 
+	err := this.checkFlag(v)
+	if err != nil{
+		return err
+	}
+
+	star := v.GetBool("istar")
+	if star == true {
+		this.Star = "*"
+	}
+
+	iface_path := v.GetString("ipath")
+	err = this.Parser.Parse(iface_path)
+	if err != nil{
+		return err
+	}
+
+	err = this.Parser.Load()
+	if err != nil{
+		return err
+	}
+
+	iface, err := this.Parser.Find(this.IfaceName)
+	if err != nil{
+		return err
+	}
+
+	this.PackageName = iface.Pkg.Name()
+
+	this.ManageNoConflictImport(iface.Pkg.Imports())
+	
+	this.GenMethods(iface.Type)
+
+	this.getUsingImportStr()
+
+	err = this.Process()
+	if err != nil{
+		return err
+	}
+
+	err = this.writer.Write(this.OutFile, this.Content)
+	if err != nil{
+		return err
+	}
+
+	return nil
+}
+
+func (this *Iface) checkFlag(v *viper.Viper) error {
 	out_path := v.GetString("out")
 	if out_path == ""{
 		return errors.New("必须指定 out")
@@ -104,33 +152,12 @@ func (this *Iface) Run(v *viper.Viper) error {
 	}
 	this.IfaceName = name
 
-	star := v.GetBool("istar")
-	if star == true {
-		this.Star = "*"
-	}
+	return nil
+}
 
-	iface_path := v.GetString("ipath")
-	err := this.Parser.Parse(iface_path)
-	if err != nil{
-		return err
-	}
-
-	err = this.Parser.Load()
-	if err != nil{
-		return err
-	}
-
-	iface, err := this.Parser.Find(this.IfaceName)
-	if err != nil{
-		return err
-	}
-
-	this.PackageName = iface.Pkg.Name()
-
-	this.ManageNoConflictImport(iface.Pkg.Imports())
-
-	for i := 0; i < iface.Type.NumMethods(); i++ {
-		fn := iface.Type.Method(i)
+func (this *Iface) GenMethods(types *types.Interface)  {
+	for i := 0; i < types.NumMethods(); i++ {
+		fn := types.Method(i)
 		ftype := fn.Type().(*types.Signature)
 		m := &Method{}
 		m.ReturnStr = "return "
@@ -140,21 +167,8 @@ func (this *Iface) Run(v *viper.Viper) error {
 		this.getReturnStr(ftype.Results(), m)
 		this.Methods = append(this.Methods, *m)
 	}
-
-	this.getUsingImportStr()
-
-	err = this.Process()
-	if err != nil{
-		return err
-	}
-
-	err = this.writer.Write(this.OutFile, this.Content)
-	if err != nil{
-		return err
-	}
-
-	return nil
 }
+
 
 func (this *Iface) getUsingImportStr() {
 	this.UsingImportStr = "import ( \r\n"
