@@ -13,7 +13,7 @@ var factoryCmd = &cobra.Command{
 	Short: "初始化结构体",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		err := factory.HandleModel(v)
+		err := factory.Run(v)
 		if err != nil {
 			log.Log.Error(err.Error())
 		}

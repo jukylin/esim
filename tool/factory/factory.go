@@ -35,7 +35,6 @@ func init() {
 
 type SortReturn struct {
 	Fields Fields `json:"fields"`
-	Size   int    `json:"size"`
 }
 
 type InitFieldsReturn struct {
@@ -58,11 +57,7 @@ type Var struct {
 	name string
 }
 
-var HandshakeConfig = go_plugin.HandshakeConfig{
-	ProtocolVersion:  1,
-	MagicCookieKey:   "BASIC_PLUGIN",
-	MagicCookieValue: "hello",
-}
+
 
 type BuildPluginInfo struct {
 	//模型目录 绝对路径
@@ -150,7 +145,7 @@ func getPluralWord(word string) string {
 	return newWord
 }
 
-func HandleModel(v *viper.Viper) error {
+func Run(v *viper.Viper) error {
 	sname := v.GetString("sname")
 	if sname == "" {
 		return errors.New("请输入结构体名称")
@@ -219,11 +214,6 @@ func HandleModel(v *viper.Viper) error {
 	if err != nil {
 		return err
 	}
-
-	//err = db2entity.ExecGoFmt(info.modelFileName, info.modelDir)
-	//if err != nil{
-	//	return err
-	//}
 
 	err = Clear(info)
 	return err
@@ -561,14 +551,12 @@ func CopyFile(dstName, srcName string, packageName string) (bool, error) {
 
 func ExecPlugin(v *viper.Viper, info *BuildPluginInfo) error {
 
-	var pluginMap = map[string]go_plugin.Plugin{
-		"model": &ModelPlugin{},
-	}
+
 
 	log2.SetOutput(ioutil.Discard)
 
 	client := go_plugin.NewClient(&go_plugin.ClientConfig{
-		HandshakeConfig: HandshakeConfig,
+		HandshakeConfig: handshakeConfig,
 		Plugins:         pluginMap,
 		Cmd:             exec.Command(info.modelDir + "/plugin/plugin"),
 		Logger : hclog.New(&hclog.LoggerOptions{
