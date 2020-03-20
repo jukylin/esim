@@ -5,10 +5,6 @@ import (
 
 	"errors"
 
-	"github.com/jukylin/esim/pkg/file-dir"
-
-	"go/ast"
-
 	"strconv"
 	"text/template"
 	"bytes"
@@ -19,6 +15,7 @@ import (
 	"path/filepath"
 	"github.com/jukylin/esim/log"
 )
+
 
 type Iface struct {
 
@@ -46,19 +43,31 @@ type Iface struct {
 
 	OutFile string
 
-	NoConflictImport map[string]string
+	//import from interface file
+	PkgNoConflictImport map[string]string
+
+	//import in the interface
+	IfaceUsingIngImport map[string]string
+
+	writer IfaceWrite
+
+	UsingImportStr string
 }
 
-func NewIface() *Iface {
+func NewIface(writer IfaceWrite) *Iface {
 
-	iface := &Iface{}
-	iface.Parser = mockery.NewParser([]string{})
+	ifacer := &Iface{}
+	ifacer.Parser = mockery.NewParser([]string{})
 
-	iface.NoConflictImport = make(map[string]string)
+	ifacer.PkgNoConflictImport = make(map[string]string)
 
-	iface.logger = log.NewLogger()
+	ifacer.IfaceUsingIngImport = make(map[string]string)
 
-	return iface
+	ifacer.logger = log.NewLogger()
+
+	ifacer.writer = writer
+
+	return ifacer
 }
 
 type Method struct {
@@ -115,40 +124,31 @@ func (this *Iface) Run(v *viper.Viper) error {
 	if err != nil{
 		return err
 	}
-	//iface.File.Imports[0].
-	//spew.Dump(iface.File.Decls.())
-	//this.extra(iface)
-	//return nil
 
-	this.getNoConflictImport(iface.Pkg.Imports())
+	this.PackageName = iface.Pkg.Name()
+
+	this.ManageNoConflictImport(iface.Pkg.Imports())
 
 	for i := 0; i < iface.Type.NumMethods(); i++ {
 		fn := iface.Type.Method(i)
 		ftype := fn.Type().(*types.Signature)
-		//fname := fn.Name()
 		m := &Method{}
 		m.ReturnStr = "return "
 
 		m.FuncName = fn.Name()
 		this.getArgStr(ftype.Params(), m)
-		//spew.Dump(m)
 		this.getReturnStr(ftype.Results(), m)
-
-		//spew.Dump(ftype.Results(), fname)
-	}
-	return nil
-	//err := this.FindIface(iface.File)
-	if err != nil{
-		return err
+		this.Methods = append(this.Methods, *m)
 	}
 
+	this.getUsingImportStr()
 
 	err = this.Process()
 	if err != nil{
 		return err
 	}
 
-	err = this.Write()
+	err = this.writer.Write(this.OutFile, this.Content)
 	if err != nil{
 		return err
 	}
@@ -156,40 +156,48 @@ func (this *Iface) Run(v *viper.Viper) error {
 	return nil
 }
 
-func (this *Iface) extra(p *mockery.Interface)  {
-	this.PackageName = p.Pkg.Name()
-
-	this.ImportStr = this.getNoConflictImport(p.Pkg.Imports())
-
-}
-
-func (this *Iface) getNoConflictImport(imports []*types.Package) string {
-	for _, imp := range imports{
-		if impPath, ok := this.NoConflictImport[imp.Name()]; ok {
-			if impPath == imp.Path(){
-				continue
-			}
-
-			//package name repeat
-			level := 1
-			flag := true
-			for flag {
-				importName := this.getUniqueImportName(imp.Path(), level)
-
-				if _, ok := this.NoConflictImport[imp.Name()]; !ok {
-					this.NoConflictImport[importName] = imp.Path()
-					flag = false
-				}
-			}
-		}else{
-			this.NoConflictImport[imp.Name()] = imp.Path()
-		}
+func (this *Iface) getUsingImportStr() {
+	this.UsingImportStr = "import ( \r\n"
+	for impName, impPkg := range this.IfaceUsingIngImport{
+		this.UsingImportStr += "	" + impName + " \"" + impPkg + "\" \r\n"
 	}
 
-	return ""
+	this.UsingImportStr += ")"
+}
+
+func (this *Iface) ManageNoConflictImport(imports []*types.Package) bool {
+	for _, imp := range imports{
+		this.setNoConflictImport(imp.Name(), imp.Path())
+	}
+
+	return true
 }
 
 
+func (this *Iface) setNoConflictImport(importName string, importPath string) bool {
+	if impPath, ok := this.PkgNoConflictImport[importName]; ok {
+		if impPath == importPath{
+			return true
+		}
+
+		//package name repeat
+		level := 1
+		flag := true
+		for flag {
+			importName := this.getUniqueImportName(importPath, level)
+
+			if _, ok := this.PkgNoConflictImport[importName]; !ok {
+				this.PkgNoConflictImport[importName] = importPath
+				flag = false
+			}
+			level++
+		}
+	}else{
+		this.PkgNoConflictImport[importName] = importPath
+	}
+
+	return true
+}
 
 
 //github.com/jukylin/esim/redis
@@ -204,7 +212,7 @@ func (this *Iface) getUniqueImportName(pkgName string, level int) (string) {
 	lenStr := len(strs)
 
 	if lenStr - 1 < level{
-		this.logger.DPanicf("%d out of range", level)
+		this.logger.Panicf("%d out of range", level)
 	}
 
 	var importName string
@@ -219,97 +227,17 @@ func (this *Iface) getUniqueImportName(pkgName string, level int) (string) {
 }
 
 
-func (this *Iface) FindIface(f *ast.File) (error) {
-	var strSrc string
-	var ifaceName string
-	this.PackageName = f.Name.String()
-
-	for _, decl := range f.Decls {
-		if GenDecl, ok := decl.(*ast.GenDecl); ok {
-			if GenDecl.Tok.String() == "import" {
-				this.ImportStr = strSrc[GenDecl.Pos()-1: GenDecl.End()-1]
-				continue
-			}
-
-			for _, spec := range GenDecl.Specs {
-
-				if typeSpec, ok := spec.(*ast.TypeSpec); ok {
-					if typeSpec.Name.String() == ifaceName &&
-						typeSpec.Type.(*ast.InterfaceType).Interface.IsValid() {
-						this.found = true
-
-						for _, method := range typeSpec.Type.(*ast.InterfaceType).Methods.List {
-							if funcType, ok := method.Type.(*ast.FuncType); ok {
-								m := Method{}
-								m.ReturnStr = "return "
-								m.FuncName = method.Names[0].String()
-
-								if len(funcType.Params.List) > 0 {
-									var paramsLen int
-									paramsLen = len(funcType.Params.List)
-									for k, param := range funcType.Params.List {
-										if len(param.Names) > 0 {
-											m.ArgStr += param.Names[0].String() + " "
-										} else {
-											m.ArgStr += "arg" + strconv.Itoa(k) + " "
-										}
-
-										m.ArgStr += strSrc[param.Type.Pos()-1:param.Type.End()-1]
-
-										if k < paramsLen-1 {
-											m.ArgStr += ", "
-										}
-									}
-								}
-
-
-								if funcType.Results.NumFields() > 0 {
-									m.ReturnTypeStr = strSrc[funcType.Results.Pos()-1: funcType.Results.End()-1 ]
-									var returnVarName string
-									for rk, funcResult := range funcType.Results.List{
-										if len(funcResult.Names) > 0 {
-											returnVarName = funcResult.Names[0].String()
-										}else{
-											returnVarName = "r" + strconv.Itoa(rk)
-											m.InitReturnVarStr += "	var " + returnVarName + " "
-											m.InitReturnVarStr += strSrc[funcResult.Type.Pos()- 1 : funcResult.Type.End() - 1 ] + " \r\n"
-										}
-
-										m.ReturnStr += returnVarName + ","
-									}
-								}
-								m.ReturnStr = strings.Trim(m.ReturnStr, ",")
-								this.Methods = append(this.Methods, m)
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-
-
-	return nil
-}
-
-
-func (this *Iface) getImportArr(tuple *types.Tuple, m *Method)  {
-
-}
-
 func (this *Iface) getArgStr(tuple *types.Tuple, m *Method)  {
 	if tuple.Len() > 0 {
 		for i := 0; i < tuple.Len(); i++ {
 			ArgInfo := tuple.At(i)
-			//spew.Dump(ArgInfo)
 			if ArgInfo.Name() != "" {
 				m.ArgStr += ArgInfo.Name() + " "
 			} else {
 				m.ArgStr += "arg" + strconv.Itoa(i) + " "
 			}
 
-			m.ArgStr += ArgInfo.Type().String()
+			m.ArgStr += this.trimTypeString(ArgInfo.Type().String())
 
 			if i < tuple.Len() - 1 {
 				m.ArgStr += ", "
@@ -318,28 +246,39 @@ func (this *Iface) getArgStr(tuple *types.Tuple, m *Method)  {
 	}
 }
 
+
+func (this *Iface) trimTypeString(typeString string) string {
+	for impName, impPkg := range this.PkgNoConflictImport{
+		if strings.Index(typeString, impPkg) > -1 {
+			this.IfaceUsingIngImport[impName] = impPkg
+			return strings.Replace(typeString, impPkg, impName, -1)
+		}
+	}
+
+	return typeString
+}
+
+
 func (this *Iface) getReturnStr(tuple *types.Tuple, m *Method)  {
 	if tuple.Len() > 0 {
+		m.ReturnTypeStr += "("
 		for i := 0; i < tuple.Len(); i++ {
-			//ArgInfo := tuple.At(i)
-			//spew.Dump(ArgInfo)
-			//spew.Dump(ArgInfo)
-			//m.ReturnTypeStr = strSrc[funcType.Results.Pos()-1: funcType.Results.End()-1 ]
-			//var returnVarName string
-			//for rk, funcResult := range funcType.Results.List{
-			//	if len(funcResult.Names) > 0 {
-			//		returnVarName = funcResult.Names[0].String()
-			//	}else{
-			//		returnVarName = "r" + strconv.Itoa(rk)
-			//		m.InitReturnVarStr += "	var " + returnVarName + " "
-			//		m.InitReturnVarStr += strSrc[funcResult.Type.Pos()- 1 : funcResult.Type.End() - 1 ] + " \r\n"
-			//	}
-			//
-			//	m.ReturnStr += returnVarName + ","
-			//}
+			ArgInfo := tuple.At(i)
+			m.ReturnTypeStr += ArgInfo.Name() + " " + this.trimTypeString(ArgInfo.Type().String())
+			var returnVarName string
+			if ArgInfo.Name() == "" {
+				returnVarName = "r" + strconv.Itoa(i)
+				m.InitReturnVarStr += "	var " + returnVarName + " "
+				m.InitReturnVarStr += this.trimTypeString(ArgInfo.Type().String()) + " \r\n"
+			}
 
-			m.ReturnStr = strings.Trim(m.ReturnStr, ",")
+			m.ReturnStr += returnVarName + ","
+			m.ReturnTypeStr += ","
 		}
+
+		m.ReturnTypeStr = strings.Trim(m.ReturnTypeStr, ",")
+		m.ReturnTypeStr += ")"
+		m.ReturnStr = strings.Trim(m.ReturnStr, ",")
 	}
 }
 
@@ -363,8 +302,4 @@ func (this *Iface) Process() error {
 	this.Content = string(src)
 
 	return nil
-}
-
-func (this *Iface) Write() error {
-	return file_dir.EsimWrite(this.OutFile, this.Content)
 }

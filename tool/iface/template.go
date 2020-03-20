@@ -7,8 +7,7 @@ var ifaceTemplate = `package {{.PackageName}}
 
 {{- $Star := .Star}}
 
-
-{{.ImportStr}}
+{{.UsingImportStr}}
 
 type {{$StructName}} struct {}
 

@@ -5,35 +5,75 @@ import (
 	"os"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/jukylin/esim/pkg/file-dir"
 	"github.com/spf13/viper"
+	"github.com/jukylin/esim/pkg/file-dir"
 )
 
 var Result = `package example1
 
 import (
-	"context"
+	context "context"
+
+	redigoredis "github.com/gomodule/redigo/redis"
+	redis "github.com/jukylin/esim/redis"
+	repo "github.com/jukylin/esim/tool/iface/example/repo"
 )
 
 type TestStub struct{}
 
-func (this TestStub) Iface1(arg0 func(string) string) (result bool) {
+func (this TestStub) Close(arg0 string, arg1 int) error {
+	var r0 error
 
-	return result
+	return r0
+}
+
+func (this TestStub) Err() error {
+	var r0 error
+
+	return r0
+}
+
+func (this TestStub) Iface1(arg0 func(string) string) (result bool, pool redigoredis.Pool) {
+
+	return
 }
 
 func (this TestStub) Iface2(ctx context.Context, found *bool) (result bool, err error) {
 
-	return result, err
+	return
 }
 
 func (this TestStub) Iface3() (f func(string) string) {
 
-	return f
+	return
 }
 
 func (this TestStub) Iface4() map[string]string {
 	var r0 map[string]string
+
+	return r0
+}
+
+func (this TestStub) Iface5(redisClient *redis.RedisClient) *redis.RedisClient {
+	var r0 *redis.RedisClient
+
+	return r0
+}
+
+func (this TestStub) Iface6(redisClient redis.RedisClient) redis.RedisClient {
+	var r0 redis.RedisClient
+
+	return r0
+}
+
+func (this TestStub) Iface7(arg0 chan<- bool) <-chan bool {
+	var r0 <-chan bool
+
+	return r0
+}
+
+func (this TestStub) Iface8(rp repo.Repo) repo.Repo {
+	var r0 repo.Repo
 
 	return r0
 }
@@ -43,35 +83,12 @@ var ifacer *Iface
 
 func TestMain(m *testing.M) {
 
-	ifacer = NewIface()
+	writer := &NullWrite{}
+	ifacer = NewIface(writer)
 
 	code := m.Run()
 
 	os.Exit(code)
-}
-
-func TestIface(t *testing.T) {
-
-	ifacer.OutFile = "./abc/test_stub.go"
-
-	ifacer.StructName = "TestStub"
-
-	//ifacePath := "./example"
-
-	//iface.FindIface(ifacePath, "Test")
-
-	err := ifacer.Process()
-	assert.Nil(t, err)
-
-	assert.Equal(t, Result, ifacer.Content)
-
-	ifacer.Write()
-
-	exists, err := file_dir.IsExistsDir("./abc")
-	assert.Nil(t, err)
-	assert.True(t, exists)
-
-	assert.Nil(t, file_dir.RemoveDir("./abc"))
 }
 
 
@@ -85,42 +102,79 @@ func TestIface_Run(t *testing.T) {
 
 	v.Set("ipath", "./example/iface.go")
 
-	ifacer := NewIface()
 	err := ifacer.Run(v)
+	assert.Equal(t, Result, ifacer.Content)
 	assert.Nil(t, err)
-	assert.Nil(t, file_dir.RemoveDir("./abc"))
 }
 
 
-func TestIface_ParsePackageImport(t *testing.T) {
-	//ifacer := NewIface()
+func TestIface_Write(t *testing.T) {
+	v := viper.New()
+	v.Set("out", "./abc/test_stub.go")
 
-	//ifacer.Run()
+	v.Set("stname", "TestStub")
 
-	//iface := &Iface{}
-	//iface.ParsePackageImport("", "/data/go/src/github.com/jukylin/esim/tool/iface")
+	v.Set("iname", "Test")
+
+	v.Set("ipath", "./example/iface.go")
+
+	ifacer.writer = &EsimWrite{}
+
+	err := ifacer.Run(v)
+	assert.Equal(t, Result, ifacer.Content)
+	assert.Nil(t, err)
+	file_dir.RemoveDir("./abc")
 }
-
 
 func TestIface_GetUniqueImportName(t *testing.T)  {
 	pkgName := "github.com/jukylin/esim/redis"
 
-	importName, err := ifacer.getUniqueImportName(pkgName, 0)
-	assert.Nil(t, err)
+	importName := ifacer.getUniqueImportName(pkgName, 0)
 	assert.Equal(t, "redis", importName)
 
-	importName, err = ifacer.getUniqueImportName(pkgName, 1)
-	assert.Nil(t, err)
+	importName = ifacer.getUniqueImportName(pkgName, 1)
 	assert.Equal(t, "esimredis", importName)
 
-	importName, err = ifacer.getUniqueImportName(pkgName, 2)
-	assert.Nil(t, err)
+	importName = ifacer.getUniqueImportName(pkgName, 2)
 	assert.Equal(t, "jukylinesimredis", importName)
 
-	importName, err = ifacer.getUniqueImportName(pkgName, 3)
-	assert.Nil(t, err)
+	importName = ifacer.getUniqueImportName(pkgName, 3)
 	assert.Equal(t, "githubcomjukylinesimredis", importName)
 
-	importName, err = ifacer.getUniqueImportName(pkgName, 4)
-	assert.Error(t, err)
+	shouldPanic := assert.Panics(t, func() {
+		importName = ifacer.getUniqueImportName(pkgName, 4)
+	})
+	assert.True(t, shouldPanic)
+}
+
+
+func TestIface_SetNoConflictImport(t *testing.T) {
+
+	testCases := []struct{
+		caseName string
+		importName string
+		pkgName string
+		expected string
+	}{
+		{"redis", "redis", "github.com/jukylin/esim/redis", "github.com/jukylin/esim/redis"},
+		{"aredis", "redis", "github.com/jukylin/a/redis", "github.com/jukylin/a/redis"},
+		{"jukyaredis", "redis", "github.com/juky/a/redis", "github.com/juky/a/redis"},
+		{"gitlabcomjukyaredis", "redis", "gitlab.com/juky/a/redis", "gitlab.com/juky/a/redis"},
+	}
+
+	for _, test := range testCases{
+		t.Run(test.caseName, func(t *testing.T) {
+			ifacer.setNoConflictImport(test.importName, test.pkgName)
+
+			assert.Equal(t, test.expected, ifacer.PkgNoConflictImport[test.caseName])
+		})
+	}
+}
+
+func TestIface_TrimTypeString(t *testing.T) {
+	ifacer.setNoConflictImport("redis", "github.com/jukylin/esim/redis")
+
+	result := ifacer.trimTypeString("*github.com/jukylin/esim/redis.RedisClient")
+	assert.Equal(t, "*redis.RedisClient", result)
+
 }
