@@ -18,9 +18,9 @@ import (
 )
 
 type structField interface {
-	Sort()
+	Sort() *SortReturn
 
-	InitField()
+	InitField() *InitFieldsReturn
 }
 
 

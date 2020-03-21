@@ -16,22 +16,15 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"regexp"
 	"strconv"
 	"strings"
 	log2 "log"
 	go_plugin "github.com/hashicorp/go-plugin"
 	"golang.org/x/tools/imports"
 	"github.com/hashicorp/go-hclog"
+	"path/filepath"
+	"github.com/hashicorp/consul/command/info"
 )
-
-var (
-	log logger.Logger
-)
-
-func init() {
-	log = logger.NewLogger()
-}
 
 type SortReturn struct {
 	Fields Fields `json:"fields"`
@@ -59,37 +52,13 @@ type Var struct {
 
 
 
-type BuildPluginInfo struct {
-	//模型目录 绝对路径
-	modelDir string
+type esimFactory struct {
 
-	filesName []string
+	oldStructInfo *structInfo
 
-	//模型名称
-	modelName string
+	newStructInfo *structInfo
 
-	//模型文件名
-	modelFileName string
-
-	packName string
-
-	packStr string
-
-	oldFields []db2entity.Field
-
-	oldStruct string
-
-	newStruct string
-
-	oldVar []Var
-
-	oldVarBody []string
-
-	VarStr string
-
-	oldImport []string
-
-	oldImportStr string
+	found bool
 
 	willAppendImport []string
 
@@ -130,8 +99,55 @@ type BuildPluginInfo struct {
 
 	OptionParam string
 
+	logger logger.Logger
+}
+
+func NewEsimFactory() *esimFactory {
+	factory := &esimFactory{}
+
+	factory.oldStructInfo = &structInfo{}
+
+	factory.newStructInfo = &structInfo{}
+
+	factory.logger = logger.NewLogger()
+
+	return factory
+}
+
+type structInfo struct{
+	//struct Absolute path
+	structDir string
+
+	filesName []string
+
+	//struct name which be search
+	structName string
+
+	structNamePlural string
+
+	//结构体文件名
+	structFileName string
+
+	packName string
+
+	packStr string
+
+	fields []db2entity.Field
+
+	structStr string
+
 	//模型对应文件内容
-	modelFileContent string
+	structFileContent string
+
+	vars []Var
+
+	varBody []string
+
+	varStr string
+
+	imports []string
+
+	importStr string
 }
 
 //获取单词的复数形式
@@ -145,24 +161,14 @@ func getPluralWord(word string) string {
 	return newWord
 }
 
-func Run(v *viper.Viper) error {
-	sname := v.GetString("sname")
-	if sname == "" {
-		return errors.New("请输入结构体名称")
-	}
+func (this *esimFactory) Run(v *viper.Viper) error {
 
-	wd, err := os.Getwd()
+	err := this.inputBind(v)
 	if err != nil {
 		return err
 	}
 
-	plural := v.GetBool("plural")
-	var structNamePlural string
-	if plural == true {
-		structNamePlural = getPluralWord(sname)
-	}
-
-	info, err := FindModel(wd, sname, structNamePlural)
+	this.FindStruct()
 	if err != nil {
 		return err
 	}
@@ -174,7 +180,7 @@ func Run(v *viper.Viper) error {
 		}
 	}
 
-	if len(info.oldFields) > 0 {
+	if len(info.oldStructInfo.fields) > 0 {
 		err = BuildPluginEnv(info, nil)
 		if err != nil {
 			return err
@@ -182,9 +188,8 @@ func Run(v *viper.Viper) error {
 
 		defer func() {
 			if err := recover(); err != nil {
-				log.Errorf("%v", err)
+				this.logger.Errorf("%v", err)
 			}
-			Clear(info)
 		}()
 
 		err = ExecPlugin(v, info)
@@ -195,9 +200,9 @@ func Run(v *viper.Viper) error {
 
 	BuildFrame(v, info)
 
-	err = file_dir.EsimBackUpFile(info.modelDir + "/" + info.modelFileName)
+	err = file_dir.EsimBackUpFile(info.oldStructInfo.structDir + string(filepath.Separator) + info.oldStructInfo.structFileName)
 	if err != nil{
-		log.Warnf("backup err %s:%s", info.modelDir + "/" + info.modelFileName, err.Error())
+		this.logger.Warnf("backup err %s:%s", info.oldStructInfo.structDir + string(filepath.Separator) + info.oldStructInfo.structFileName, err.Error())
 	}
 
 	src, err := ReplaceContent(v, info)
@@ -210,16 +215,37 @@ func Run(v *viper.Viper) error {
 		return err
 	}
 
-	err = file_dir.EsimWrite(info.modelDir+"/"+info.modelFileName, string(res))
+	err = file_dir.EsimWrite(info.oldStructInfo.structDir + string(filepath.Separator) + info.oldStructInfo.structFileName, string(res))
 	if err != nil {
 		return err
 	}
 
-	err = Clear(info)
 	return err
 }
 
-func BuildFrame(v *viper.Viper, info *BuildPluginInfo)  {
+
+func (this *esimFactory) inputBind(v *viper.Viper) error {
+	sname := v.GetString("sname")
+	if sname == "" {
+		return errors.New("请输入结构体名称")
+	}
+	this.oldStructInfo.structName = sname
+
+	wd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	this.oldStructInfo.structDir = strings.TrimRight(wd, "/")
+
+	plural := v.GetBool("plural")
+	if plural == true {
+		this.oldStructInfo.structNamePlural = getPluralWord(sname)
+	}
+
+	return nil
+}
+
+func BuildFrame(v *viper.Viper, info *esimFactory)  {
 	var frame string
 
 	if v.GetBool("new") == true {
@@ -236,7 +262,7 @@ func BuildFrame(v *viper.Viper, info *BuildPluginInfo)  {
 
 		HandleInitFieldsAndPool(v, info)
 		HandelPlural(v, info)
-		info.VarStr = getVarStr(info.oldVar)
+		info.oldStructInfo.varStr = getVarStr(info.oldStructInfo.vars)
 	}
 
 	info.newObjStr = replaceFrame(frame, info)
@@ -250,28 +276,21 @@ func BuildFrame(v *viper.Viper, info *BuildPluginInfo)  {
 
 //@ 查找模型
 //@ 解析模型
-func FindModel(modelPath, modelName, modelNamePlural string) (*BuildPluginInfo, error) {
+func (this *esimFactory) FindStruct() bool {
 
-	modelPath = strings.TrimRight(modelPath, "/")
-
-	exists, err := file_dir.IsExistsDir(modelPath)
+	exists, err := file_dir.IsExistsDir(this.oldStructInfo.structDir)
 	if err != nil {
-		return nil, err
+		this.logger.Panicf(err.Error())
 	}
 
 	if exists == false {
-		return nil, errors.New(modelPath + " dir not exists")
+		this.logger.Panicf("%s dir not exists", this.oldStructInfo.structDir)
 	}
 
-	files, err := ioutil.ReadDir(modelPath)
+	files, err := ioutil.ReadDir(this.oldStructInfo.structDir)
 	if err != nil {
 		return nil, err
 	}
-
-	info := BuildPluginInfo{}
-	info.modelName = modelName
-	info.modelDir = modelPath
-	info.pluralName = modelNamePlural
 
 	var found bool
 	for _, fileInfo := range files {
@@ -286,11 +305,10 @@ func FindModel(modelPath, modelName, modelNamePlural string) (*BuildPluginInfo, 
 			continue
 		}
 
-		found = false
-		info.filesName = append(info.filesName, fileInfo.Name())
+		this.oldStructInfo.filesName = append(this.oldStructInfo.filesName, fileInfo.Name())
 
 		if !fileInfo.IsDir() {
-			src, err := ioutil.ReadFile(modelPath + "/" + fileInfo.Name())
+			src, err := ioutil.ReadFile(this.oldStructInfo.structDir + "/" + fileInfo.Name())
 			if err != nil {
 				return nil, err
 			}
@@ -308,14 +326,14 @@ func FindModel(modelPath, modelName, modelNamePlural string) (*BuildPluginInfo, 
 						for _, specs := range GenDecl.Specs {
 							if typeSpec, ok := specs.(*ast.TypeSpec); ok {
 
-								if typeSpec.Name.String() == modelName {
-									info.modelFileContent = strSrc
-									info.modelFileName = fileInfo.Name()
-									found = true
-									info.packName = f.Name.String()
-									info.packStr = strSrc[f.Name.Pos()-1 : f.Name.End()]
-									info.oldFields = db2entity.GetOldFields(GenDecl, strSrc)
-									info.oldStruct = string(src[GenDecl.TokPos-1 : typeSpec.Type.(*ast.StructType).Fields.Closing])
+								if typeSpec.Name.String() == this.oldStructInfo.structName {
+									this.oldStructInfo.structFileContent = strSrc
+									this.oldStructInfo.structFileName = fileInfo.Name()
+									this.found = true
+									this.oldStructInfo.packName = f.Name.String()
+									this.oldStructInfo.packStr = strSrc[f.Name.Pos()-1 : f.Name.End()]
+									this.oldStructInfo.fields = db2entity.GetOldFields(GenDecl, strSrc)
+									this.oldStructInfo.structStr = string(src[GenDecl.TokPos-1 : typeSpec.Type.(*ast.StructType).Fields.Closing])
 								}
 							}
 						}
@@ -334,10 +352,10 @@ func FindModel(modelPath, modelName, modelNamePlural string) (*BuildPluginInfo, 
 
 								//区别有括号和无括号
 								if GenDecl.Rparen != 0 {
-									info.oldVarBody = append(info.oldVarBody,
+									this.oldStructInfo.varBody = append(this.oldStructInfo.varBody,
 										strSrc[GenDecl.TokPos-1:GenDecl.Rparen])
 								} else {
-									info.oldVarBody = append(info.oldVarBody,
+									this.oldStructInfo.varBody = append(this.oldStructInfo.varBody,
 										strSrc[GenDecl.TokPos-1:typeSpec.End()])
 								}
 
@@ -348,7 +366,7 @@ func FindModel(modelPath, modelName, modelNamePlural string) (*BuildPluginInfo, 
 									}
 								}
 								fileVar.name = typeSpec.Names[0].Name
-								info.oldVar = append(info.oldVar, fileVar)
+								this.oldStructInfo.vars = append(this.oldStructInfo.vars, fileVar)
 							}
 						}
 					}
@@ -357,21 +375,21 @@ func FindModel(modelPath, modelName, modelNamePlural string) (*BuildPluginInfo, 
 						for _, specs := range GenDecl.Specs {
 							if typeSpec, ok := specs.(*ast.ImportSpec); ok {
 								if typeSpec.Name.String() != "<nil>" {
-									info.oldImport = append(info.oldImport,
+									this.oldStructInfo.imports = append(this.oldStructInfo.imports,
 										typeSpec.Name.String()+" "+typeSpec.Path.Value)
 								} else {
-									info.oldImport = append(info.oldImport, typeSpec.Path.Value)
+									this.oldStructInfo.imports = append(this.oldStructInfo.imports, typeSpec.Path.Value)
 								}
 							}
 						}
-						info.oldImportStr = strSrc[GenDecl.Pos()-1 : GenDecl.End()]
+						this.oldStructInfo.importStr = strSrc[GenDecl.Pos()-1 : GenDecl.End()]
 					}
 				}
 			}
 		}
 	}
 
-	if info.modelFileName != "" {
+	if this.oldStructInfo.structFileName != "" {
 		return &info, nil
 	} else {
 		return nil, errors.New("not found model")
@@ -379,14 +397,14 @@ func FindModel(modelPath, modelName, modelNamePlural string) (*BuildPluginInfo, 
 }
 
 //extend logger and conf
-func ExtendField(v *viper.Viper, info *BuildPluginInfo) bool {
+func ExtendField(v *viper.Viper, info *esimFactory) bool {
 
 	var HasExtend bool
 	if v.GetBool("option") == true {
 		if v.GetBool("gen_logger_option") == true{
 			HasExtend = true
 			var foundLogField bool
-			for _, field := range info.oldFields {
+			for _, field := range info.oldStructInfo.oldFields {
 				if strings.Contains(field.Filed, "log.Logger") == true && foundLogField == false{
 					foundLogField = true
 				}
@@ -441,26 +459,26 @@ func ExtendField(v *viper.Viper, info *BuildPluginInfo) bool {
 }
 
 //有扩展属性才重写
-func ReWriteModelContent(info *BuildPluginInfo) error {
+func ReWriteModelContent(info *esimFactory) error {
 
 	if info.oldImportStr != "" {
-		info.modelFileContent = strings.Replace(info.modelFileContent, info.oldImportStr, getNewImport(info.oldImport), -1)
+		info.structFileContent = strings.Replace(info.structFileContent, info.oldImportStr, getNewImport(info.oldImport), -1)
 	} else if info.packStr != "" {
 		getHeader(info)
-		info.modelFileContent = strings.Replace(info.modelFileContent, info.packStr, info.headerStr, -1)
+		info.structFileContent = strings.Replace(info.structFileContent, info.packStr, info.headerStr, -1)
 	}
 
 	info.oldImportStr = getNewImport(info.oldImport)
 
-	info.modelFileContent = strings.Replace(info.modelFileContent, info.oldStruct, db2entity.GetNewStruct(info.modelName, info.oldFields), -1)
-	info.oldStruct = db2entity.GetNewStruct(info.modelName, info.oldFields)
+	info.structFileContent = strings.Replace(info.structFileContent, info.oldStruct, db2entity.GetNewStruct(info.structName, info.oldFields), -1)
+	info.oldStruct = db2entity.GetNewStruct(info.structName, info.oldFields)
 
-	src, err := imports.Process("", []byte(info.modelFileContent), nil)
+	src, err := imports.Process("", []byte(info.structFileContent), nil)
 	if err != nil{
 		return err
 	}
 
-	return file_dir.EsimWrite(info.modelDir+"/"+info.modelFileName, string(src))
+	return file_dir.EsimWrite(info.structDir+"/"+info.structFileName, string(src))
 }
 
 func getNewImport(imports []string) string {
@@ -482,11 +500,11 @@ func getNewImport(imports []string) string {
 
 
 //@ 建立虚拟环境
-func BuildPluginEnv(info *BuildPluginInfo, buildBeforeFunc func()) error {
+func BuildPluginEnv(info *esimFactory, buildBeforeFunc func()) error {
 
-	info.modelDir = strings.TrimRight(info.modelDir, "/")
+	info.structDir = strings.TrimRight(info.structDir, "/")
 
-	targetDir := info.modelDir + "/plugin"
+	targetDir := info.structDir + "/plugin"
 
 	exists, err := file_dir.IsExistsDir(targetDir)
 	if err != nil {
@@ -500,14 +518,10 @@ func BuildPluginEnv(info *BuildPluginInfo, buildBeforeFunc func()) error {
 		}
 	}
 
-	//TODO 复制文件
-	//TODO 改 package 名称
-	for _, name := range info.filesName {
-		CopyFile(targetDir+"/"+name, info.modelDir+"/"+name, info.packName)
-	}
 
-	//TODO 生成 modelName _plugin.go 文件
-	_, err = GenPlugin(info.modelName, info.oldFields, targetDir, info.oldImport)
+
+	//TODO 生成 structName _plugin.go 文件
+	_, err = GenPlugin(info.structName, info.oldFields, targetDir, info.oldImport)
 	if err != nil {
 		return err
 	}
@@ -524,41 +538,15 @@ func BuildPluginEnv(info *BuildPluginInfo, buildBeforeFunc func()) error {
 	return nil
 }
 
-//@ Copy File
-//@ repackagename
-func CopyFile(dstName, srcName string, packageName string) (bool, error) {
-	src, err := os.Open(srcName)
-	if err != nil {
-		return false, err
-	}
 
-	defer src.Close()
-	dst, err := os.OpenFile(dstName, os.O_WRONLY|os.O_CREATE, 0644)
-	if err != nil {
-		return false, err
-	}
-	defer dst.Close()
-
-	reg, _ := regexp.Compile(`package[\s*]` + packageName)
-
-	contents, err := ioutil.ReadAll(src)
-	contents = reg.ReplaceAll(contents, []byte("package main"))
-
-	dst.Write(contents)
-
-	return true, nil
-}
-
-func ExecPlugin(v *viper.Viper, info *BuildPluginInfo) error {
-
-
+func ExecPlugin(v *viper.Viper, info *esimFactory) error {
 
 	log2.SetOutput(ioutil.Discard)
 
 	client := go_plugin.NewClient(&go_plugin.ClientConfig{
 		HandshakeConfig: handshakeConfig,
 		Plugins:         pluginMap,
-		Cmd:             exec.Command(info.modelDir + "/plugin/plugin"),
+		Cmd:             exec.Command(info.structDir + "/plugin/plugin"),
 		Logger : hclog.New(&hclog.LoggerOptions{
 			Output: hclog.DefaultOutput,
 			Level:  hclog.Error,
@@ -587,7 +575,7 @@ func ExecPlugin(v *viper.Viper, info *BuildPluginInfo) error {
 
 		json.Unmarshal([]byte(model.Sort()), re)
 
-		info.newStruct = BuildNewStruct(info.modelName, re.Fields, info.oldFields)
+		info.newStruct = BuildNewStruct(info.structName, re.Fields, info.oldFields)
 	}
 
 	initReturn := InitFieldsReturn{}
@@ -599,43 +587,43 @@ func ExecPlugin(v *viper.Viper, info *BuildPluginInfo) error {
 }
 
 
-func NewVarStr(v *viper.Viper, info *BuildPluginInfo)  {
+func NewVarStr(v *viper.Viper, info *esimFactory)  {
 	if v.GetString("imp_iface") != ""{
 		info.NewVarStr = v.GetString("imp_iface")
 	}else if v.GetBool("pool") == true || v.GetBool("star") == true{
-		info.NewVarStr = "*" + info.modelName
+		info.NewVarStr = "*" + info.structName
 	}else{
-		info.NewVarStr = info.modelName
+		info.NewVarStr = info.structName
 	}
 }
 
-func NewOptionParam(v *viper.Viper, info *BuildPluginInfo)  {
+func NewOptionParam(v *viper.Viper, info *esimFactory)  {
 	if v.GetBool("pool") == true || v.GetBool("star") == true{
-		info.OptionParam = "*" + info.modelName
+		info.OptionParam = "*" + info.structName
 	}else{
-		info.OptionParam = info.modelName
+		info.OptionParam = info.structName
 	}
 }
 
 
-func GetNewStr(v *viper.Viper, info *BuildPluginInfo) string {
+func GetNewStr(v *viper.Viper, info *esimFactory) string {
 	if v.GetBool("star") == true{
-		return strings.ToLower(string(info.modelName[0]))  + " := &" + info.modelName + "{}"
+		return strings.ToLower(string(info.structName[0]))  + " := &" + info.structName + "{}"
 	}else if v.GetBool("pool") == true{
-		return strings.ToLower(string(info.modelName[0])) + ` := ` + strings.ToLower(info.modelName) + `Pool.Get().(*` + info.modelName + `)`
+		return strings.ToLower(string(info.structName[0])) + ` := ` + strings.ToLower(info.structName) + `Pool.Get().(*` + info.structName + `)`
 	}else{
-		return strings.ToLower(string(info.modelName[0]))  + " := " + info.modelName + "{}"
+		return strings.ToLower(string(info.structName[0]))  + " := " + info.structName + "{}"
 	}
 
 	return ""
 }
 
 
-func GetReturnStr(info *BuildPluginInfo) string {
-	return "	return " + strings.ToLower(string(info.modelName[0]))
+func GetReturnStr(info *esimFactory) string {
+	return "	return " + strings.ToLower(string(info.structName[0]))
 }
 
-func NewFrame(v *viper.Viper, info *BuildPluginInfo) string {
+func NewFrame(v *viper.Viper, info *esimFactory) string {
 	var newFrame string
 	newFrame = `
 
@@ -643,7 +631,7 @@ func NewFrame(v *viper.Viper, info *BuildPluginInfo) string {
 
 {{options2}}
 
-func New` + strings.ToUpper(string(info.modelName[0])) + string(info.modelName[1:]) + `({{options3}}) ` + info.NewVarStr + ` {
+func New` + strings.ToUpper(string(info.structName[0])) + string(info.structName[1:]) + `({{options3}}) ` + info.NewVarStr + ` {
 
 	`+ GetNewStr(v, info) +`
 
@@ -662,7 +650,7 @@ func New` + strings.ToUpper(string(info.modelName[0])) + string(info.modelName[1
 	return newFrame
 }
 
-func replaceFrame(newFrame string, info *BuildPluginInfo) string {
+func replaceFrame(newFrame string, info *esimFactory) string {
 	newFrame = strings.Replace(newFrame, "{{options1}}", info.option1, -1)
 
 	newFrame = strings.Replace(newFrame, "{{options2}}", info.option2, -1)
@@ -677,25 +665,25 @@ func replaceFrame(newFrame string, info *BuildPluginInfo) string {
 }
 
 
-func getOptions(v *viper.Viper, info *BuildPluginInfo)  {
+func getOptions(v *viper.Viper, info *esimFactory)  {
 
-	info.option1 = `type `+info.modelName+`Option func(`+ info.OptionParam +`)`
+	info.option1 = `type `+info.structName+`Option func(`+ info.OptionParam +`)`
 
-	info.option2 = `type `+info.modelName+`Options struct{}`
+	info.option2 = `type `+info.structName+`Options struct{}`
 
-	info.option3 = `options ...`+info.modelName+`Option`
+	info.option3 = `options ...`+info.structName+`Option`
 
 	info.option4 = `
 	for _, option := range options {
-		option(` + strings.ToLower(string(info.modelName[0])) + `)
+		option(` + strings.ToLower(string(info.structName[0])) + `)
 	}`
 
 	if v.GetBool("gen_conf_option") == true{
 
 		info.option5 += `
-func (`+info.modelName+`Options) WithConf(conf config.Config) `+info.modelName+`Option {
-	return func(` + string(info.modelName[0]) + ` `+ info.NewVarStr +`) {
-	` + string(info.modelName[0]) + `.conf = conf
+func (`+info.structName+`Options) WithConf(conf config.Config) `+info.structName+`Option {
+	return func(` + string(info.structName[0]) + ` `+ info.NewVarStr +`) {
+	` + string(info.structName[0]) + `.conf = conf
 	}
 }
 `
@@ -704,9 +692,9 @@ func (`+info.modelName+`Options) WithConf(conf config.Config) `+info.modelName+`
 
 	if v.GetBool("gen_logger_option") == true {
 		info.option5 += `
-func (`+info.modelName+`Options) WithLogger(logger log.Logger) `+info.modelName+`Option {
-	return func(` + string(info.modelName[0]) + ` ` + info.NewVarStr + `) {
-		` + string(info.modelName[0]) + `.logger = logger
+func (`+info.structName+`Options) WithLogger(logger log.Logger) `+info.structName+`Option {
+	return func(` + string(info.structName[0]) + ` ` + info.NewVarStr + `) {
+		` + string(info.structName[0]) + `.logger = logger
 	}
 }
 `
@@ -714,9 +702,9 @@ func (`+info.modelName+`Options) WithLogger(logger log.Logger) `+info.modelName+
 }
 
 
-func ReplaceContent(v *viper.Viper, info *BuildPluginInfo) (string, error) {
+func ReplaceContent(v *viper.Viper, info *esimFactory) (string, error) {
 
-	src, err := ioutil.ReadFile(info.modelDir + "/" + info.modelFileName)
+	src, err := ioutil.ReadFile(info.structDir + "/" + info.structFileName)
 	if err != nil {
 		return "", err
 	}
@@ -1009,8 +997,8 @@ func BuildPlugin(dir string) error {
 	return nil
 }
 
-func HandleNewStruct(info *BuildPluginInfo, newStrcut string) bool {
-	src, err := ioutil.ReadFile(info.modelDir + "/" + info.modelFileName)
+func HandleNewStruct(info *esimFactory, newStrcut string) bool {
+	src, err := ioutil.ReadFile(info.structDir + "/" + info.structFileName)
 	if err != nil {
 		log.Errorf(err.Error())
 		return false
@@ -1020,7 +1008,7 @@ func HandleNewStruct(info *BuildPluginInfo, newStrcut string) bool {
 
 	strSrc = strings.Replace(strSrc, info.oldStruct, newStrcut, -1)
 
-	dst, err := os.OpenFile(info.modelDir+"/"+info.modelFileName, os.O_WRONLY|os.O_CREATE, 0644)
+	dst, err := os.OpenFile(info.structDir+"/"+info.structFileName, os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
 		log.Errorf(err.Error())
 		return false
@@ -1033,9 +1021,9 @@ func HandleNewStruct(info *BuildPluginInfo, newStrcut string) bool {
 }
 
 //初始化变量，生成临时对象池
-func HandleInitFieldsAndPool(v *viper.Viper, info *BuildPluginInfo) bool {
+func HandleInitFieldsAndPool(v *viper.Viper, info *esimFactory) bool {
 
-	HandleVar(info, info.modelName, nil)
+	HandleVar(info, info.structName, nil)
 
 	HandlePool(v, info)
 
@@ -1043,7 +1031,7 @@ func HandleInitFieldsAndPool(v *viper.Viper, info *BuildPluginInfo) bool {
 }
 
 //处理复数
-func HandelPlural(v *viper.Viper, info *BuildPluginInfo) bool {
+func HandelPlural(v *viper.Viper, info *esimFactory) bool {
 
 	if info.pluralName != "" {
 
@@ -1055,7 +1043,7 @@ func HandelPlural(v *viper.Viper, info *BuildPluginInfo) bool {
 	return true
 }
 
-func HandleVar(info *BuildPluginInfo, varName string, context *string) bool {
+func HandleVar(info *esimFactory, varName string, context *string) bool {
 	poolName := strings.ToLower(varName) + "Pool"
 	if varNameExists(info.oldVar, poolName) == true {
 		log.Debugf("变量已存在 : %s", poolName)
@@ -1069,20 +1057,20 @@ func HandleVar(info *BuildPluginInfo, varName string, context *string) bool {
 }
 
 //单数池
-func HandlePool(v *viper.Viper, info *BuildPluginInfo) {
+func HandlePool(v *viper.Viper, info *esimFactory) {
 	//info.newObjStr = getNewObjStr(info)
 
 	info.releaseStr = getReleaseObjStr(info, info.InitField.Fields)
 }
 
 //复数池
-func HandlePluralPool(v *viper.Viper, info *BuildPluginInfo) {
+func HandlePluralPool(v *viper.Viper, info *esimFactory) {
 	info.newPluralNewBody = getNewPluralObjStr(info)
 
 	info.newPluralReleaseBody = getReleasePluralObjStr(info)
 }
 
-func getInitStr(info *BuildPluginInfo) string {
+func getInitStr(info *esimFactory) string {
 	var str string
 
 	for _, f := range info.InitField.SpecFields {
@@ -1111,8 +1099,8 @@ func getInitStr(info *BuildPluginInfo) string {
 	return str
 }
 
-func getReleaseObjStr(info *BuildPluginInfo, initFields []string) string {
-	str := "func (" + strings.ToLower(info.modelName) + info.NewVarStr + ") Release() {\n"
+func getReleaseObjStr(info *esimFactory, initFields []string) string {
+	str := "func (" + strings.ToLower(info.structName) + info.NewVarStr + ") Release() {\n"
 
 	for _, field := range info.InitField.Fields {
 		if strings.Contains(field, "time.Time") {
@@ -1121,13 +1109,13 @@ func getReleaseObjStr(info *BuildPluginInfo, initFields []string) string {
 		str += "		" + field + "\n"
 	}
 
-	str += "		" + strings.ToLower(info.modelName) + "Pool.Put(" + strings.ToLower(info.modelName) + ")\n"
+	str += "		" + strings.ToLower(info.structName) + "Pool.Put(" + strings.ToLower(info.structName) + ")\n"
 	str += "}"
 
 	return str
 }
 
-func getNewPluralObjStr(info *BuildPluginInfo) string {
+func getNewPluralObjStr(info *esimFactory) string {
 	str := `func New` + info.pluralName + `() *` + info.pluralName + ` {
 	` + strings.ToLower(info.pluralName) + ` := ` +
 		strings.ToLower(info.pluralName) + `Pool.Get().(*` + info.pluralName + `)
@@ -1140,7 +1128,7 @@ func getNewPluralObjStr(info *BuildPluginInfo) string {
 	return str
 }
 
-func getReleasePluralObjStr(info *BuildPluginInfo) string {
+func getReleasePluralObjStr(info *esimFactory) string {
 	str := "func (" + strings.ToLower(info.pluralName) + " *" + info.pluralName + ") Release() {\n"
 
 	str += "*" + strings.ToLower(info.pluralName) + " = (*" + strings.ToLower(info.pluralName) + ")[:0]\n"
@@ -1150,7 +1138,7 @@ func getReleasePluralObjStr(info *BuildPluginInfo) string {
 	return str
 }
 
-func appendImport(info *BuildPluginInfo, importName string) bool {
+func appendImport(info *esimFactory, importName string) bool {
 	var found bool
 	importName = "\"" + importName + "\""
 	for _, importStr := range info.oldImport {
@@ -1179,15 +1167,15 @@ func getVarStr(vars []Var) string {
 	return varStr
 }
 
-func getPoolVar(modelName string) Var {
+func getPoolVar(structName string) Var {
 	var poolVar Var
-	poolVar.val = strings.ToLower(modelName) + `Pool = sync.Pool{
+	poolVar.val = strings.ToLower(structName) + `Pool = sync.Pool{
         New: func() interface{} {
-                return &` + modelName + `{}
+                return &` + structName + `{}
         },
 	}
 `
-	poolVar.name = strings.ToLower(modelName) + `Pool`
+	poolVar.name = strings.ToLower(structName) + `Pool`
 	return poolVar
 }
 
@@ -1203,7 +1191,7 @@ func varNameExists(vars []Var, poolVarName string) bool {
 }
 
 //import + var
-func getHeader(info *BuildPluginInfo) {
+func getHeader(info *esimFactory) {
 
 	headerStr := ""
 	if info.oldImportStr == "" {
@@ -1218,7 +1206,7 @@ func getHeader(info *BuildPluginInfo) {
 }
 
 //struct body
-func getTwoPart(info *BuildPluginInfo) {
+func getTwoPart(info *esimFactory) {
 	bodyStr := ""
 
 	if info.newStruct != "" {
@@ -1229,7 +1217,7 @@ func getTwoPart(info *BuildPluginInfo) {
 
 	if info.pluralName != "" {
 		bodyStr += "\n"
-		bodyStr += "type " + info.pluralName + " []" + info.modelName
+		bodyStr += "type " + info.pluralName + " []" + info.structName
 	}
 
 	if info.newObjStr != "" {
@@ -1255,11 +1243,4 @@ func getTwoPart(info *BuildPluginInfo) {
 	info.bodyStr = bodyStr
 }
 
-func Clear(info *BuildPluginInfo) error {
-	err := os.RemoveAll(info.modelDir + "/plugin")
-	if err != nil {
-		return err
-	} else {
-		return nil
-	}
-}
+
