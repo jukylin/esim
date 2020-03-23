@@ -60,7 +60,15 @@ type esimFactory struct {
 
 	found bool
 
+	withOption bool
+
+	withGenLoggerOption bool
+
+	withGenConfOption bool
+
 	willAppendImport []string
+
+	structFieldIface StructFieldIface
 
 	newObjStr string
 
@@ -110,6 +118,8 @@ func NewEsimFactory() *esimFactory {
 	factory.newStructInfo = &structInfo{}
 
 	factory.logger = logger.NewLogger()
+
+	factory.structFieldIface = NewRpcPluginStructField()
 
 	return factory
 }
@@ -168,19 +178,18 @@ func (this *esimFactory) Run(v *viper.Viper) error {
 		return err
 	}
 
-	this.FindStruct()
-	if err != nil {
-		return err
+	if this.FindStruct() == false{
+		this.logger.Panicf("%s not found this struct", this.oldStructInfo.structName)
 	}
 
-	if ExtendField(v, info) {
-		err = ReWriteModelContent(info)
+	if this.ExtendField() {
+		err = this.ReWriteStructContent()
 		if err != nil {
 			return err
 		}
 	}
 
-	if len(info.oldStructInfo.fields) > 0 {
+	if len(this.oldStructInfo.fields) > 0 {
 		err = BuildPluginEnv(info, nil)
 		if err != nil {
 			return err
@@ -242,6 +251,12 @@ func (this *esimFactory) inputBind(v *viper.Viper) error {
 		this.oldStructInfo.structNamePlural = getPluralWord(sname)
 	}
 
+	this.withOption = v.GetBool("option")
+
+	this.withGenConfOption = v.GetBool("gen_logger_option")
+
+	this.withGenLoggerOption = v.GetBool("gen_conf_option")
+
 	return nil
 }
 
@@ -289,7 +304,7 @@ func (this *esimFactory) FindStruct() bool {
 
 	files, err := ioutil.ReadDir(this.oldStructInfo.structDir)
 	if err != nil {
-		return nil, err
+		this.logger.Panicf(err.Error())
 	}
 
 	var found bool
@@ -310,14 +325,14 @@ func (this *esimFactory) FindStruct() bool {
 		if !fileInfo.IsDir() {
 			src, err := ioutil.ReadFile(this.oldStructInfo.structDir + "/" + fileInfo.Name())
 			if err != nil {
-				return nil, err
+				this.logger.Panicf(err.Error())
 			}
 
 			strSrc := string(src)
 			fset := token.NewFileSet() // positions are relative to fset
 			f, err := parser.ParseFile(fset, "", strSrc, parser.ParseComments)
 			if err != nil {
-				return nil, err
+				this.logger.Panicf(err.Error())
 			}
 
 			for _, decl := range f.Decls {
@@ -389,69 +404,65 @@ func (this *esimFactory) FindStruct() bool {
 		}
 	}
 
-	if this.oldStructInfo.structFileName != "" {
-		return &info, nil
-	} else {
-		return nil, errors.New("not found model")
-	}
+	return this.found
 }
 
-//extend logger and conf
-func ExtendField(v *viper.Viper, info *esimFactory) bool {
+//extend logger and conf for oldstruct field
+func (this *esimFactory) ExtendField() bool {
 
 	var HasExtend bool
-	if v.GetBool("option") == true {
-		if v.GetBool("gen_logger_option") == true{
+	if this.withOption == true {
+		if this.withGenLoggerOption == true{
 			HasExtend = true
 			var foundLogField bool
-			for _, field := range info.oldStructInfo.oldFields {
+			for _, field := range this.oldStructInfo.fields {
 				if strings.Contains(field.Filed, "log.Logger") == true && foundLogField == false{
 					foundLogField = true
 				}
 			}
 
-			if foundLogField == false || len(info.oldFields) == 0{
+			if foundLogField == false || len(this.oldStructInfo.fields) == 0{
 				fld := db2entity.Field{}
 				fld.Filed = "logger log.Logger"
-				info.oldFields = append(info.oldFields, fld)
+				this.oldStructInfo.fields = append(this.oldStructInfo.fields, fld)
 			}
 
 			var foundLogImport bool
-			for _, oim := range info.oldImport{
+			for _, oim := range this.oldStructInfo.imports{
 				if oim == "github.com/jukylin/esim/log"{
 					foundLogImport = true
 				}
 			}
 
 			if foundLogImport == false {
-				appendImport(info, "github.com/jukylin/esim/log")
+				this.appendOldImport("github.com/jukylin/esim/log")
 			}
 		}
 
-		if v.GetBool("gen_conf_option") == true{
+		if this.withGenConfOption == true{
 			HasExtend = true
 
 			var foundConfField bool
-			for _, field := range info.oldFields {
+			for _, field := range this.oldStructInfo.fields {
 				if strings.Contains(field.Filed, "config.Config") == true && foundConfField == false{
 					foundConfField = true
 				}
 			}
 
-			if foundConfField == false || len(info.oldFields) == 0{
+			if foundConfField == false || len(this.oldStructInfo.fields) == 0{
 				fld := db2entity.Field{}
 				fld.Filed = "conf config.Config"
-				info.oldFields = append(info.oldFields, fld)
+				this.oldStructInfo.fields = append(this.oldStructInfo.fields, fld)
 			}
 
 			var foundConfImport bool
-			for _, oim := range info.oldImport{
+			for _, oim := range this.oldStructInfo.imports{
 				if oim == "github.com/jukylin/esim/config"{
 					foundConfImport = true
 				}
 			}
 			if foundConfImport == false {
-				appendImport(info, "github.com/jukylin/esim/config")
+				this.appendOldImport("github.com/jukylin/esim/config")
 			}
 		}
 	}
@@ -459,29 +470,35 @@ func ExtendField(v *viper.Viper, info *esimFactory) bool {
 }
 
 //有扩展属性才重写
-func ReWriteModelContent(info *esimFactory) error {
+func (this *esimFactory) ReWriteStructContent() error {
 
-	if info.oldImportStr != "" {
-		info.structFileContent = strings.Replace(info.structFileContent, info.oldImportStr, getNewImport(info.oldImport), -1)
-	} else if info.packStr != "" {
-		getHeader(info)
-		info.structFileContent = strings.Replace(info.structFileContent, info.packStr, info.headerStr, -1)
+	if this.oldStructInfo.importStr != "" {
+		this.oldStructInfo.structFileContent = strings.Replace(this.oldStructInfo.structFileContent,
+			this.oldStructInfo.importStr, this.getNewImport(this.oldStructInfo.imports), -1)
+	} else if this.oldStructInfo.packStr != "" {
+		this.getHeader()
+		this.oldStructInfo.structFileContent = strings.Replace(this.oldStructInfo.structFileContent,
+			this.oldStructInfo.packStr, this.headerStr, -1)
 	}
 
-	info.oldImportStr = getNewImport(info.oldImport)
+	this.oldStructInfo.importStr = this.getNewImport(this.oldStructInfo.imports)
 
-	info.structFileContent = strings.Replace(info.structFileContent, info.oldStruct, db2entity.GetNewStruct(info.structName, info.oldFields), -1)
-	info.oldStruct = db2entity.GetNewStruct(info.structName, info.oldFields)
+	this.oldStructInfo.structFileContent = strings.Replace(this.oldStructInfo.structFileContent,
+		this.oldStructInfo.structStr, db2entity.GetNewStruct(this.oldStructInfo.structName,
+			this.oldStructInfo.fields), -1)
+	this.oldStructInfo.structStr = db2entity.GetNewStruct(this.oldStructInfo.structName, this.oldStructInfo.fields)
 
-	src, err := imports.Process("", []byte(info.structFileContent), nil)
+	src, err := imports.Process("", []byte(this.oldStructInfo.structFileContent), nil)
 	if err != nil{
 		return err
 	}
 
-	return file_dir.EsimWrite(info.structDir+"/"+info.structFileName, string(src))
+	return file_dir.EsimWrite(this.oldStructInfo.structDir +
+		string(filepath.Separator) + this.oldStructInfo.structFileName,
+			string(src))
 }
 
-func getNewImport(imports []string) string {
+func (this *esimFactory) getNewImport(imports []string) string {
 	var newImport string
 	newImport +=
 `import (
@@ -1138,17 +1155,17 @@ func getReleasePluralObjStr(info *esimFactory) string {
 	return str
 }
 
-func appendImport(info *esimFactory, importName string) bool {
+func (this *esimFactory) appendOldImport(importName string) bool {
 	var found bool
 	importName = "\"" + importName + "\""
-	for _, importStr := range info.oldImport {
+	for _, importStr := range this.oldStructInfo.imports {
 		if importStr == importName {
 			found = true
 		}
 	}
 
 	if found == false {
-		info.oldImport = append(info.oldImport, importName)
+		this.oldStructInfo.imports = append(this.oldStructInfo.imports, importName)
 	}
 
 	return true
@@ -1191,18 +1208,18 @@ func varNameExists(vars []Var, poolVarName string) bool {
 }
 
 //import + var
-func getHeader(info *esimFactory) {
+func (this *esimFactory) getHeader() {
 
 	headerStr := ""
-	if info.oldImportStr == "" {
-		headerStr = info.packStr + "\n"
+	if this.oldStructInfo.importStr == "" {
+		headerStr = this.oldStructInfo.packStr + "\n"
 	}
 
-	headerStr += getNewImport(info.oldImport)
+	headerStr += this.getNewImport(this.oldStructInfo.imports)
 	headerStr += "\n"
-	headerStr += info.VarStr
+	headerStr += this.oldStructInfo.varStr
 
-	info.headerStr = headerStr
+	this.headerStr = headerStr
 }
 
 //struct body

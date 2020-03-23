@@ -17,10 +17,12 @@ import (
 	"github.com/hashicorp/go-hclog"
 )
 
-type structField interface {
+type StructFieldIface interface {
 	Sort() *SortReturn
 
 	InitField() *InitFieldsReturn
+
+	Close()
 }
 
 
@@ -28,9 +30,9 @@ type rpcPluginStructField struct{
 
 	logger log2.Logger
 
-	modelDir string
+	structDir string
 
-	modelName string
+	structName string
 
 	packName string
 
@@ -57,19 +59,8 @@ var handshakeConfig = go_plugin.HandshakeConfig{
 	MagicCookieValue: "hello",
 }
 
-func NewRpcPluginStructField(modelDir string) *rpcPluginStructField {
+func NewRpcPluginStructField() *rpcPluginStructField {
 	rpcPlugin := &rpcPluginStructField{}
-
-	rpcPlugin.pluginClient = go_plugin.NewClient(&go_plugin.ClientConfig{
-		HandshakeConfig: handshakeConfig,
-		Plugins:         pluginMap,
-		Cmd:             exec.Command(modelDir + "/plugin/plugin"),
-		Logger : hclog.New(&hclog.LoggerOptions{
-			Output: hclog.DefaultOutput,
-			Level:  hclog.Error,
-			Name:   "plugin",
-		}),
-	})
 
 
 	return rpcPlugin
@@ -77,9 +68,9 @@ func NewRpcPluginStructField(modelDir string) *rpcPluginStructField {
 
 
 func (this *rpcPluginStructField) buildPluginEnv() error {
-	this.modelDir = strings.TrimRight(this.modelDir, "/")
+	this.structDir = strings.TrimRight(this.structDir, string(filepath.Separator))
 
-	targetDir := this.modelDir + "/plugin"
+	targetDir := this.structDir + string(filepath.Separator) + "plugin"
 
 	exists, err := file_dir.IsExistsDir(targetDir)
 	if err != nil {
@@ -97,12 +88,12 @@ func (this *rpcPluginStructField) buildPluginEnv() error {
 	//TODO 改 package 名称
 	for _, name := range this.filesName {
 		this.copyFile(targetDir + string(filepath.Separator) + name,
-			this.modelDir + string(filepath.Separator) + name,
+			this.structDir + string(filepath.Separator) + name,
 				this.packName)
 	}
 
 	//TODO 生成 modelName_plugin.go 文件
-	this.genModelPlugin(targetDir)
+	this.genStructPlugin(targetDir)
 	if err != nil {
 		return err
 	}
@@ -143,7 +134,7 @@ func (this *rpcPluginStructField) copyFile(dstName, srcName string, packageName 
 }
 
 
-func (this *rpcPluginStructField) genModelPlugin(dir string)  {
+func (this *rpcPluginStructField) genStructPlugin(dir string)  {
 	str := `package main
 
 import (
@@ -188,7 +179,7 @@ func (f Fields) Swap(i, j int) { f[i], f[j] = f[j], f[i] }
 
 	str += this.genInitField()
 
-	file := dir + "/" + this.modelName + "_plugin.go"
+	file := dir + string(filepath.Separator) + this.structName + "_plugin.go"
 
 	err := ioutil.WriteFile(file, []byte(str), 0666)
 	if err != nil {
@@ -202,11 +193,11 @@ func (f Fields) Swap(i, j int) { f[i], f[j] = f[j], f[i] }
 func (this *rpcPluginStructField) getSortBody() string {
 	str := "func (ModelImp) Sort() string { \r\n"
 
-	str += "	" + strings.ToLower(this.modelName) + " := " + this.modelName + "{} \r\n"
+	str += "	" + strings.ToLower(this.structName) + " := " + this.structName + "{} \r\n"
 
-	str += "	originSize := unsafe.Sizeof(" + strings.ToLower(this.modelName) + ")\r\n"
+	str += "	originSize := unsafe.Sizeof(" + strings.ToLower(this.structName) + ")\r\n"
 
-	str += "	getType := reflect.TypeOf(" + strings.ToLower(this.modelName) + ") \n"
+	str += "	getType := reflect.TypeOf(" + strings.ToLower(this.structName) + ") \n"
 
 	str += "	var fields Fields\r\n"
 
@@ -240,12 +231,12 @@ func (this *rpcPluginStructField) genInitField() string {
 	var str string
 	str = `
 func (ModelImp) InitField() string {
-		` + strings.ToLower(this.modelName) + ` := ` + this.modelName + `{}
+		` + strings.ToLower(this.structName) + ` := ` + this.structName + `{}
 
 		initReturn := &InitFieldsReturn{}
 	 	fields := &Fields{}
 
-		getType := reflect.TypeOf(` + strings.ToLower(this.modelName) + `)
+		getType := reflect.TypeOf(` + strings.ToLower(this.structName) + `)
 		structFields := getInitStr(getType, strings.ToLower(getType.Name()), fields)
 
 		initReturn.SpecFields = *fields
@@ -409,6 +400,26 @@ func (this *rpcPluginStructField) dispense()  {
 
 
 func (this *rpcPluginStructField) run()  {
+
+	if this.structDir == ""{
+		this.logger.Panicf("%s is empty", this.structDir)
+	}
+
+	if this.structName == ""{
+		this.logger.Panicf("%s is empty", this.structName)
+	}
+
+	this.pluginClient = go_plugin.NewClient(&go_plugin.ClientConfig{
+		HandshakeConfig: handshakeConfig,
+		Plugins:         pluginMap,
+		Cmd:             exec.Command(this.structDir + string(filepath.Separator) + "plugin" + string(filepath.Separator) + "plugin"),
+		Logger : hclog.New(&hclog.LoggerOptions{
+			Output: hclog.DefaultOutput,
+			Level:  hclog.Error,
+			Name:   "plugin",
+		}),
+	})
+
 	this.buildPluginEnv()
 
 	this.dispense()
@@ -453,6 +464,6 @@ func (this *rpcPluginStructField) Close()  {
 }
 
 func (this *rpcPluginStructField) clear() {
-	err := os.RemoveAll(this.modelDir + "/plugin")
+	err := os.RemoveAll(this.structDir + string(filepath.Separator) + "plugin")
 	this.logger.Panicf(err.Error())
 }
