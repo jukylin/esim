@@ -18,11 +18,15 @@ import (
 )
 
 type StructFieldIface interface {
-	Sort() *SortReturn
+	SortField() *SortReturn
 
 	InitField() *InitFieldsReturn
 
 	Close()
+
+	SetStructDir(string)
+
+	SetStructName(string)
 }
 
 
@@ -426,7 +430,7 @@ func (this *rpcPluginStructField) run()  {
 }
 
 
-func (this *rpcPluginStructField) Sort() *SortReturn {
+func (this *rpcPluginStructField) SortField() *SortReturn {
 
 	if this.model == nil{
 		this.run()
@@ -455,6 +459,15 @@ func (this *rpcPluginStructField) InitField() *InitFieldsReturn {
 	}
 
 	return initReturn
+}
+
+func (this *rpcPluginStructField) SetStructDir(structDir string)  {
+	this.structDir = structDir
+}
+
+
+func (this *rpcPluginStructField) SetStructName(structName string)  {
+	this.structName = structName
 }
 
 
