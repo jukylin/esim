@@ -5,8 +5,10 @@ import (
 	//"github.com/jukylin/esim/pkg/file-dir"
 	"os"
 	"testing"
+	//"strings"
 	"github.com/stretchr/testify/assert"
 	//"golang.org/x/tools/imports"
+	"github.com/jukylin/esim/pkg/file-dir"
 )
 
 
@@ -249,6 +251,7 @@ func getCurDir() string {
 //}
 
 
+
 func TestCopyOldStructInfo(t *testing.T)  {
 	esimfactory.oldStructInfo.imports = append(esimfactory.oldStructInfo.imports, "fmt")
 	esimfactory.oldStructInfo.structFileContent = "package main"
@@ -258,7 +261,7 @@ func TestCopyOldStructInfo(t *testing.T)  {
 }
 
 
-func TestExtendField(t *testing.T)  {
+func TestExtendFieldAndReplaceStructContent(t *testing.T)  {
 
 	esimfactory.withOption = true
 	esimfactory.withGenLoggerOption = true
@@ -269,5 +272,39 @@ func TestExtendField(t *testing.T)  {
 
 	assert.Equal(t, 2, len(esimfactory.newStructInfo.fields))
 	assert.Equal(t, 2, len(esimfactory.newStructInfo.imports))
+
+	esimfactory.writer = file_dir.NullWrite{}
+
+	esimfactory.oldStructInfo.structFileContent = `package main
+
+import (
+	"fmt"
+	"sync"
+)
+
+type test struct {
+	a int
+
+	b string
+}
+
+`
+	esimfactory.oldStructInfo.importStr = `
+import (
+	"fmt"
+	"sync"
+)
+`
+
+	esimfactory.oldStructInfo.structStr = `
+type test struct {
+	a int
+
+	b string
+}
+`
+	esimfactory.structName = "test"
+	err := esimfactory.replaceStructContent()
+	assert.Nil(t, err)
 }
 

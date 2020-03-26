@@ -142,6 +142,8 @@ type esimFactory struct {
 	withPool bool
 
 	withStar bool
+
+	writer file_dir.IfaceWrite
 }
 
 func NewEsimFactory() *esimFactory {
@@ -154,6 +156,8 @@ func NewEsimFactory() *esimFactory {
 	factory.logger = logger.NewLogger()
 
 	factory.structFieldIface = NewRpcPluginStructField()
+
+	factory.writer = file_dir.EsimWriter{}
 
 	return factory
 }
@@ -203,7 +207,7 @@ func (this *esimFactory) Run(v *viper.Viper) error {
 	this.copyOldStructInfo()
 
 	if this.ExtendField() {
-		err = this.ReWriteStructContent()
+		err = this.replaceStructContent()
 		if err != nil {
 			return err
 		}
@@ -316,8 +320,8 @@ func (this *esimFactory) buildFrame()  {
 }
 
 
-//@ 查找模型
-//@ 解析模型
+//@ find struct
+//@ parse struct
 func (this *esimFactory) FindStruct() bool {
 
 	exists, err := file_dir.IsExistsDir(this.structDir)
@@ -501,12 +505,13 @@ func (this *esimFactory) ExtendField() bool {
 }
 
 
-//struct有扩展字段才重写
-func (this *esimFactory) ReWriteStructContent() error {
+//if struct field had extend logger or conf
+// so build a new struct and replace it
+func (this *esimFactory) replaceStructContent() error {
 
-	if this.newStructInfo.importStr != "" {
+	if this.oldStructInfo.importStr != "" {
 		this.newStructInfo.structFileContent = strings.Replace(this.oldStructInfo.structFileContent,
-			this.newStructInfo.importStr, this.genImport(this.newStructInfo.imports), -1)
+			this.oldStructInfo.importStr, this.genImport(this.newStructInfo.imports), -1)
 	} else if this.packStr != "" {
 		//not find import
 		this.getFirstPart()
@@ -516,19 +521,20 @@ func (this *esimFactory) ReWriteStructContent() error {
 
 	this.newStructInfo.importStr = this.genImport(this.newStructInfo.imports)
 
-	this.oldStructInfo.structFileContent = strings.Replace(this.oldStructInfo.structFileContent,
-		this.oldStructInfo.structStr, db2entity.GetNewStruct(this.structName,
-			this.oldStructInfo.fields), -1)
-	this.oldStructInfo.structStr = db2entity.GetNewStruct(this.structName, this.oldStructInfo.fields)
+	this.newStructInfo.structStr = db2entity.GetNewStruct(this.structName, this.newStructInfo.fields)
+	this.newStructInfo.structFileContent = strings.Replace(this.newStructInfo.structFileContent,
+		this.oldStructInfo.structStr, this.newStructInfo.structStr, -1)
 
-	src, err := imports.Process("", []byte(this.oldStructInfo.structFileContent), nil)
+	src, err := imports.Process("", []byte(this.newStructInfo.structFileContent), nil)
 	if err != nil{
 		return err
 	}
 
-	return file_dir.EsimWrite(this.structDir +
+	this.newStructInfo.structFileContent = string(src)
+
+	return this.writer.Write(this.structDir +
 		string(filepath.Separator) + this.structFileName,
-			string(src))
+		this.newStructInfo.structFileContent)
 }
 
 

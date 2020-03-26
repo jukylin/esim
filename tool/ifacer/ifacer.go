@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"text/template"
+	"github.com/jukylin/esim/pkg/file-dir"
 )
 
 type Ifacer struct {
@@ -42,12 +43,13 @@ type Ifacer struct {
 	//import in the interface
 	IfaceUsingIngImport map[string]string
 
-	writer IfaceWrite
+	writer file_dir.IfaceWrite
 
 	UsingImportStr string
 }
 
-func NewIface(writer IfaceWrite) *Ifacer {
+
+func NewIface(writer file_dir.IfaceWrite) *Ifacer {
 
 	ifacer := &Ifacer{}
 	ifacer.Parser = mockery.NewParser([]string{})
@@ -63,6 +65,7 @@ func NewIface(writer IfaceWrite) *Ifacer {
 	return ifacer
 }
 
+
 type Method struct {
 	FuncName string
 
@@ -76,6 +79,7 @@ type Method struct {
 
 	ReturnVar []string
 }
+
 
 func (this *Ifacer) Run(v *viper.Viper) error {
 
@@ -120,6 +124,7 @@ func (this *Ifacer) Run(v *viper.Viper) error {
 	return nil
 }
 
+
 func (this *Ifacer) inputBind(v *viper.Viper) error {
 
 	name := v.GetString("iname")
@@ -150,6 +155,7 @@ func (this *Ifacer) inputBind(v *viper.Viper) error {
 	return nil
 }
 
+
 func (this *Ifacer) GenMethods(interacer *types.Interface) {
 	for i := 0; i < interacer.NumMethods(); i++ {
 		fn := interacer.Method(i)
@@ -164,6 +170,7 @@ func (this *Ifacer) GenMethods(interacer *types.Interface) {
 	}
 }
 
+
 func (this *Ifacer) getUsingImportStr() {
 	this.UsingImportStr = "import ( \r\n"
 	for impName, impPkg := range this.IfaceUsingIngImport {
@@ -173,6 +180,7 @@ func (this *Ifacer) getUsingImportStr() {
 	this.UsingImportStr += ")"
 }
 
+
 func (this *Ifacer) ManageNoConflictImport(imports []*types.Package) bool {
 	for _, imp := range imports {
 		this.setNoConflictImport(imp.Name(), imp.Path())
@@ -180,6 +188,7 @@ func (this *Ifacer) ManageNoConflictImport(imports []*types.Package) bool {
 
 	return true
 }
+
 
 func (this *Ifacer) setNoConflictImport(importName string, importPath string) bool {
 	if impPath, ok := this.PkgNoConflictImport[importName]; ok {

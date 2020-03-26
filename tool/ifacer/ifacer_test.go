@@ -83,7 +83,7 @@ var ifacer *Ifacer
 
 func TestMain(m *testing.M) {
 
-	writer := &NullWrite{}
+	writer := &file_dir.NullWrite{}
 	ifacer = NewIface(writer)
 
 	code := m.Run()
@@ -116,7 +116,7 @@ func TestIface_Write(t *testing.T) {
 
 	v.Set("ipath", "./example/iface.go")
 
-	ifacer.writer = &EsimWrite{}
+	ifacer.writer = &file_dir.EsimWriter{}
 
 	err := ifacer.Run(v)
 	assert.Equal(t, Result, ifacer.Content)
