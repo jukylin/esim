@@ -207,13 +207,18 @@ func (this *esimFactory) Run(v *viper.Viper) error {
 	this.copyOldStructInfo()
 
 	if this.ExtendField() {
-		err = this.replaceStructContent()
+		err = this.buildNewStructFileContent()
 		if err != nil {
 			return err
 		}
 	}
 
 	if len(this.oldStructInfo.fields) > 0 {
+
+		this.structFieldIface.SetStructDir(this.structDir)
+		this.structFieldIface.SetStructName(this.structName)
+		this.structFieldIface.SetFields(this.newStructInfo.fields)
+
 		if this.withSort == true{
 			sortedField := this.structFieldIface.SortField()
 
@@ -507,7 +512,7 @@ func (this *esimFactory) ExtendField() bool {
 
 //if struct field had extend logger or conf
 // so build a new struct and replace it
-func (this *esimFactory) replaceStructContent() error {
+func (this *esimFactory) buildNewStructFileContent() error {
 
 	if this.oldStructInfo.importStr != "" {
 		this.newStructInfo.structFileContent = strings.Replace(this.oldStructInfo.structFileContent,
@@ -517,6 +522,8 @@ func (this *esimFactory) replaceStructContent() error {
 		this.getFirstPart()
 		this.newStructInfo.structFileContent = strings.Replace(this.oldStructInfo.structFileContent,
 			this.packStr, this.firstPart, -1)
+	}else{
+		return errors.New("can't build the first part")
 	}
 
 	this.newStructInfo.importStr = this.genImport(this.newStructInfo.imports)
@@ -532,9 +539,7 @@ func (this *esimFactory) replaceStructContent() error {
 
 	this.newStructInfo.structFileContent = string(src)
 
-	return this.writer.Write(this.structDir +
-		string(filepath.Separator) + this.structFileName,
-		this.newStructInfo.structFileContent)
+	return nil
 }
 
 
@@ -598,6 +603,8 @@ func GetNewStr(v *viper.Viper, info *esimFactory) string {
 func GetReturnStr(info *esimFactory) string {
 	return "	return " + strings.ToLower(string(info.structName[0]))
 }
+
+
 //
 //func (this *esimFactory) NewFrame(v *viper.Viper, info *esimFactory) string {
 //	var newFrame string
@@ -625,6 +632,7 @@ func GetReturnStr(info *esimFactory) string {
 //
 //	return newFrame
 //}
+
 
 func replaceFrame(newFrame string, info *esimFactory) string {
 	newFrame = strings.Replace(newFrame, "{{options1}}", info.option1, -1)
@@ -677,6 +685,7 @@ func (` + this.structName + `Options) WithLogger(logger log.Logger) ` + this.str
 	}
 }
 
+
 //
 //func ReplaceContent(v *viper.Viper, info *esimFactory) (string, error) {
 //
@@ -706,7 +715,6 @@ func (` + this.structName + `Options) WithLogger(logger log.Logger) ` + this.str
 //}
 
 
-
 func (this *esimFactory) genNewStruct(structName string, fields Fields,
 	oldFields []db2entity.Field) string {
 	var newStruct string
@@ -731,6 +739,7 @@ func (this *esimFactory) genNewStruct(structName string, fields Fields,
 	return newStruct
 }
 
+
 //
 //func HandleNewStruct(info *esimFactory, newStrcut string) bool {
 //	src, err := ioutil.ReadFile(info.structDir + "/" + info.structFileName)
@@ -754,6 +763,7 @@ func (this *esimFactory) genNewStruct(structName string, fields Fields,
 //
 //	return true
 //}
+
 
 //初始化变量，生成临时对象池
 func (this *esimFactory) genInitFieldsAndPool() bool {
@@ -782,7 +792,7 @@ func (this *esimFactory) HandelPlural() bool {
 
 func (this *esimFactory) incrPoolVar(structName string) bool {
 	poolName := strings.ToLower(structName) + "Pool"
-	if varNameExists(this.newStructInfo.vars, poolName) == true {
+	if this.varNameExists(this.newStructInfo.vars, poolName) == true {
 		this.logger.Debugf("变量已存在 : %s", poolName)
 	} else {
 
@@ -928,7 +938,7 @@ func (this *esimFactory) genPoolVar(pollVarName, structName string) Var {
 }
 
 //变量是否存在
-func varNameExists(vars []Var, poolVarName string) bool {
+func (this *esimFactory) varNameExists(vars []Var, poolVarName string) bool {
 	for _, varInfo := range vars {
 		if varInfo.name == poolVarName {
 			return true
@@ -938,16 +948,20 @@ func varNameExists(vars []Var, poolVarName string) bool {
 	return false
 }
 
-//import + var
+//package + import
 func (this *esimFactory) getFirstPart() {
 
-	if this.newStructInfo.importStr == "" {
-		this.firstPart += this.packStr + "\n"
+	if this.oldStructInfo.importStr == "" {
+		this.firstPart += this.packStr + "\n\n"
 	}
 
 	this.firstPart += this.genImport(this.newStructInfo.imports)
 	this.firstPart += "\n"
-	this.firstPart += this.oldStructInfo.varStr
+}
+
+//var
+func (this *esimFactory) getSecondPart() {
+	this.secondPart += this.oldStructInfo.varStr
 }
 
 //struct body

@@ -8,13 +8,14 @@ import (
 	"regexp"
 	"io/ioutil"
 	"path/filepath"
-	"strconv"
+	"bytes"
 	"os/exec"
 	"fmt"
 	"encoding/json"
 	log2 "github.com/jukylin/esim/log"
 	go_plugin "github.com/hashicorp/go-plugin"
 	"github.com/hashicorp/go-hclog"
+	"html/template"
 )
 
 type StructFieldIface interface {
@@ -27,6 +28,8 @@ type StructFieldIface interface {
 	SetStructDir(string)
 
 	SetStructName(string)
+
+	SetFields(fields []db2entity.Field)
 }
 
 
@@ -36,7 +39,7 @@ type rpcPluginStructField struct{
 
 	structDir string
 
-	structName string
+	StructName string
 
 	packName string
 
@@ -44,7 +47,7 @@ type rpcPluginStructField struct{
 
 	buildBeforeFunc func()
 
-	oldFields []db2entity.Field
+	Fields []db2entity.Field
 
 	oldImport []string
 
@@ -96,7 +99,6 @@ func (this *rpcPluginStructField) buildPluginEnv() error {
 				this.packName)
 	}
 
-	//TODO 生成 modelName_plugin.go 文件
 	this.genStructPlugin(targetDir)
 	if err != nil {
 		return err
@@ -138,228 +140,33 @@ func (this *rpcPluginStructField) copyFile(dstName, srcName string, packageName 
 }
 
 
+// gen modelName_plugin.go
 func (this *rpcPluginStructField) genStructPlugin(dir string)  {
-	str := `package main
 
-import (
-	"unsafe"
-	"sort"
-	"encoding/json"
-	"reflect"
-	"strings"
-	"github.com/hashicorp/go-plugin"
-	"github.com/jukylin/esim/tool/factory"
-)
+	tmpl, err := template.New("rpc_plugin").Funcs(EsimFuncMap()).
+		Parse(rpcPluginTemplate)
+	if err != nil{
+		this.logger.Panicf(err.Error())
+	}
 
+	err = tmpl.Execute(os.Stdout, this)
+	if err != nil{
+		this.logger.Panicf(err.Error())
+	}
 
-type InitFieldsReturn struct{
-	Fields []string
-	SpecFields []Field
-}
+	var buf bytes.Buffer
+	err = tmpl.Execute(&buf, this)
+	if err != nil{
+		this.logger.Panicf(err.Error())
+	}
 
-type Field struct{
-	Name string
-	Size int
-	Type string
-	TypeName string
-}
-
-type Fields []Field
-
-func (f Fields) Len() int { return len(f) }
-
-func (f Fields) Less(i, j int) bool {
-	return f[i].Size < f[j].Size
-}
-
-func (f Fields) Swap(i, j int) { f[i], f[j] = f[j], f[i] }
-`
-	str += "type Return struct{ \r\n"
-	str += "Fields Fields `json:\"fields\"` \r\n"
-	str += "Size int `json:\"size\"` \r\n"
-	str += "} \r\n"
-
-	str += this.getSortBody()
-
-	str += this.genInitField()
-
-	file := dir + string(filepath.Separator) + this.structName + "_plugin.go"
-
-	err := ioutil.WriteFile(file, []byte(str), 0666)
+	file := dir + string(filepath.Separator) + this.StructName + "_plugin.go"
+	err = ioutil.WriteFile(file, buf.Bytes(), 0666)
 	if err != nil {
 		this.logger.Panicf(err.Error())
 	}
 
 	return
-}
-
-
-func (this *rpcPluginStructField) getSortBody() string {
-	str := "func (ModelImp) Sort() string { \r\n"
-
-	str += "	" + strings.ToLower(this.structName) + " := " + this.structName + "{} \r\n"
-
-	str += "	originSize := unsafe.Sizeof(" + strings.ToLower(this.structName) + ")\r\n"
-
-	str += "	getType := reflect.TypeOf(" + strings.ToLower(this.structName) + ") \n"
-
-	str += "	var fields Fields\r\n"
-
-	for k, field := range this.oldFields {
-		str += "	field" + strconv.Itoa(k) + " := Field{}\r\n"
-
-		str += "	field" + strconv.Itoa(k) + ".Name = \"" + field.Filed + "\"\r\n"
-		str += "	field" + strconv.Itoa(k) + ".Size =  + int(getType.Field(" + strconv.Itoa(k) + ").Type.Size())\r\n"
-
-		str += "	fields = append(fields, field" + strconv.Itoa(k) + ")\r\n"
-	}
-
-	str += "	sort.Sort(fields)\r\n"
-
-	str += "	re := &Return{}\r\n"
-
-	str += "	re.Fields = fields\r\n"
-	str += "	re.Size = int(originSize)\r\n"
-
-	str += "	by, _ := json.Marshal(re)\r\n"
-
-	str += "	return string(by)\r\n"
-
-	str += "}"
-
-	return str
-}
-
-
-func (this *rpcPluginStructField) genInitField() string {
-	var str string
-	str = `
-func (ModelImp) InitField() string {
-		` + strings.ToLower(this.structName) + ` := ` + this.structName + `{}
-
-		initReturn := &InitFieldsReturn{}
-	 	fields := &Fields{}
-
-		getType := reflect.TypeOf(` + strings.ToLower(this.structName) + `)
-		structFields := getInitStr(getType, strings.ToLower(getType.Name()), fields)
-
-		initReturn.SpecFields = *fields
-		initReturn.Fields = structFields
-		j, _ := json.Marshal(initReturn)
-		return string(j)
-	}
-
-	func getInitStr(getType reflect.Type, name string, specFilds *Fields) []string {
-		typeNum := getType.NumField()
-		var structFields []string
-		var initStr string
-		field  := Field{}
-
-		for i := 0; i < typeNum; i++ {
-		switch getType.Field(i).Type.Kind() {
-			case reflect.Array:
-				structFields = append(structFields, "for k, _ := range "+ name + "." + getType.Field(i).Name+" {")
-					switch getType.Field(i).Type.Elem().Kind() {
-					case reflect.Struct:
-						structFields = append(structFields,
-							getInitStr(getType.Field(i).Type.Elem(),
-								name + "." + getType.Field(i).Name + "[k]", nil)...)
-					default:
-						initStr = KindToInit(getType.Field(i).Type.Elem(),  name + "." + getType.Field(i).Name + "[k]", nil)
-						structFields = append(structFields, name + "." + getType.Field(i).Name+ "[k] = " + initStr)
-					}
-				structFields = append(structFields, "}")
-				continue
-			case reflect.Map:
-				structFields = append(structFields, "for k, _ := range "+ name + "." + getType.Field(i).Name+" {")
-				structFields = append(structFields, "delete(" + name + "." + getType.Field(i).Name + ", k)")
-				structFields = append(structFields, "}")
-				if specFilds != nil {
-					field.Name = name + "." + getType.Field(i).Name
-					field.Type = "map"
-					field.TypeName = getType.Field(i).Type.String()
-					*specFilds = append(*specFilds, field)
-				}
-				continue
-			case reflect.Struct:
-				if getType.Field(i).Type.String() == "time.Time"{
-					initStr = "time.Time{}"
-				}else {
-					structFields = append(structFields, getInitStr(getType.Field(i).Type,
-						name+"."+getType.Field(i).Name, nil)...)
-					continue
-				}
-			default:
-				initStr = KindToInit(getType.Field(i).Type,
-					name + "." + getType.Field(i).Name, specFilds)
-			}
-
-			structFields = append(structFields, name + "." + getType.Field(i).Name + " = " + initStr)
-		}
-
-		return structFields
-	}
-
-
-func KindToInit(refType reflect.Type, name string, specFilds *Fields) string {
-	var initStr string
-	field  := Field{}
-
-	switch refType.Kind() {
-	case reflect.String:
-		initStr = "\"\""
-	case reflect.Int, reflect.Int64, reflect.Int8, reflect.Int16, reflect.Int32:
-		initStr = "0"
-	case reflect.Uint, reflect.Uint64, reflect.Uint8, reflect.Uint16, reflect.Uint32:
-		initStr = "0"
-	case reflect.Bool:
-		initStr = "false"
-	case reflect.Float32, reflect.Float64:
-		initStr = "0.00"
-	case reflect.Complex64, reflect.Complex128:
-		initStr = "0+0i"
-	case reflect.Interface:
-		initStr = "nil"
-	case reflect.Uintptr:
-		initStr = "0"
-	case reflect.Invalid, reflect.Func, reflect.Chan, reflect.Ptr, reflect.UnsafePointer:
-		initStr = "nil"
-	case reflect.Slice:
-		if specFilds != nil {
-			field.Name = name
-			field.TypeName = refType.String()
-			field.Type = "slice"
-			*specFilds = append(*specFilds, field)
-		}
-		initStr = name + "[:0]"
-	case reflect.Map:
-		initStr = "nil"
-	case reflect.Array:
-		initStr = "nil"
-	}
-
-	return initStr
-}
-
-type ModelImp struct{}
-
-func main() {
-
-	plugin.Serve(&plugin.ServeConfig{
-		HandshakeConfig: factory.HandshakeConfig,
-		Plugins: map[string]plugin.Plugin{
-			"model": &factory.ModelPlugin{Impl: &ModelImp{}},
-		},
-
-		// A non-nil value here enables gRPC serving for this plugin...
-		GRPCServer: plugin.DefaultGRPCServer,
-	})
-}
-
-
-`
-
-	return str
 }
 
 
@@ -409,8 +216,8 @@ func (this *rpcPluginStructField) run()  {
 		this.logger.Panicf("%s is empty", this.structDir)
 	}
 
-	if this.structName == ""{
-		this.logger.Panicf("%s is empty", this.structName)
+	if this.StructName == ""{
+		this.logger.Panicf("%s is empty", this.StructName)
 	}
 
 	this.pluginClient = go_plugin.NewClient(&go_plugin.ClientConfig{
@@ -467,9 +274,12 @@ func (this *rpcPluginStructField) SetStructDir(structDir string)  {
 
 
 func (this *rpcPluginStructField) SetStructName(structName string)  {
-	this.structName = structName
+	this.StructName = structName
 }
 
+func (this *rpcPluginStructField) SetFields(fields []db2entity.Field)  {
+	this.Fields = fields
+}
 
 func (this *rpcPluginStructField) Close()  {
 	this.pluginClient.Kill()

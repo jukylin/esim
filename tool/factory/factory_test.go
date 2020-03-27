@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	//"golang.org/x/tools/imports"
 	"github.com/jukylin/esim/pkg/file-dir"
+	"github.com/jukylin/esim/tool/db2entity"
 )
 
 
@@ -261,6 +262,24 @@ func TestCopyOldStructInfo(t *testing.T)  {
 }
 
 
+var replaceStructContent = `package main
+
+import (
+	"github.com/jukylin/esim/config"
+	"github.com/jukylin/esim/log"
+)
+
+type test struct {
+	logger log.Logger
+
+	conf config.Config
+
+	a int
+
+	b string
+}
+`
+
 func TestExtendFieldAndReplaceStructContent(t *testing.T)  {
 
 	esimfactory.withOption = true
@@ -274,6 +293,12 @@ func TestExtendFieldAndReplaceStructContent(t *testing.T)  {
 	assert.Equal(t, 2, len(esimfactory.newStructInfo.imports))
 
 	esimfactory.writer = file_dir.NullWrite{}
+
+	afield := db2entity.Field{}
+	afield.Filed = "a int"
+	bfield := db2entity.Field{}
+	bfield.Filed = "b string"
+	esimfactory.newStructInfo.fields = append(esimfactory.newStructInfo.fields, afield, bfield)
 
 	esimfactory.oldStructInfo.structFileContent = `package main
 
@@ -304,7 +329,15 @@ type test struct {
 }
 `
 	esimfactory.structName = "test"
-	err := esimfactory.replaceStructContent()
+	err := esimfactory.buildNewStructFileContent()
 	assert.Nil(t, err)
+	assert.Equal(t, replaceStructContent, esimfactory.newStructInfo.structFileContent)
+
+	esimfactory.oldStructInfo.importStr = ""
+	esimfactory.packStr = "package main"
+	err = esimfactory.buildNewStructFileContent()
+	assert.Nil(t, err)
+	assert.Equal(t, replaceStructContent, esimfactory.newStructInfo.structFileContent)
 }
+
 
