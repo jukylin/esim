@@ -15,7 +15,7 @@ import (
 	log2 "github.com/jukylin/esim/log"
 	go_plugin "github.com/hashicorp/go-plugin"
 	"github.com/hashicorp/go-hclog"
-	"html/template"
+	"text/template"
 )
 
 type StructFieldIface interface {
@@ -25,11 +25,11 @@ type StructFieldIface interface {
 
 	Close()
 
-	SetStructDir(string)
+	SetStructInfo(*structInfo)
 
 	SetStructName(string)
 
-	SetFields(fields []db2entity.Field)
+	SetStructDir(string)
 }
 
 
@@ -40,6 +40,8 @@ type rpcPluginStructField struct{
 	structDir string
 
 	StructName string
+
+	StrcutInfo *structInfo
 
 	packName string
 
@@ -54,21 +56,24 @@ type rpcPluginStructField struct{
 	pluginClient *go_plugin.Client
 
 	model Model
+
+	writer file_dir.IfaceWrite
 }
 
 var pluginMap = map[string]go_plugin.Plugin{
 	"model": &ModelPlugin{},
 }
 
-var handshakeConfig = go_plugin.HandshakeConfig{
+var HandshakeConfig = go_plugin.HandshakeConfig{
 	ProtocolVersion:  1,
 	MagicCookieKey:   "BASIC_PLUGIN",
 	MagicCookieValue: "hello",
 }
 
-func NewRpcPluginStructField() *rpcPluginStructField {
+func NewRpcPluginStructField(writer file_dir.IfaceWrite) *rpcPluginStructField {
 	rpcPlugin := &rpcPluginStructField{}
 
+	rpcPlugin.writer = writer
 
 	return rpcPlugin
 }
@@ -94,6 +99,13 @@ func (this *rpcPluginStructField) buildPluginEnv() error {
 	//TODO 复制文件
 	//TODO 改 package 名称
 	for _, name := range this.filesName {
+
+		if name == this.StructName{
+			this.writer.Write(targetDir + string(filepath.Separator) + this.StructName,
+				this.StrcutInfo.structFileContent)
+			continue
+		}
+
 		this.copyFile(targetDir + string(filepath.Separator) + name,
 			this.structDir + string(filepath.Separator) + name,
 				this.packName)
@@ -149,11 +161,6 @@ func (this *rpcPluginStructField) genStructPlugin(dir string)  {
 		this.logger.Panicf(err.Error())
 	}
 
-	err = tmpl.Execute(os.Stdout, this)
-	if err != nil{
-		this.logger.Panicf(err.Error())
-	}
-
 	var buf bytes.Buffer
 	err = tmpl.Execute(&buf, this)
 	if err != nil{
@@ -171,7 +178,7 @@ func (this *rpcPluginStructField) genStructPlugin(dir string)  {
 
 
 func (this *rpcPluginStructField) buildPlugin(dir string) error {
-	cmd_line := fmt.Sprintf("go build -o plugin %s", dir)
+	cmd_line := fmt.Sprintf("go build -o %s/plugin %s", dir, dir)
 
 	println(cmd_line)
 
@@ -189,7 +196,7 @@ func (this *rpcPluginStructField) buildPlugin(dir string) error {
 		return err
 	}
 
-	os.Chmod(dir + "/plugin", 0777)
+	os.Chmod(dir + string(filepath.Separator) + "plugin", 0777)
 	return nil
 }
 
@@ -221,7 +228,7 @@ func (this *rpcPluginStructField) run()  {
 	}
 
 	this.pluginClient = go_plugin.NewClient(&go_plugin.ClientConfig{
-		HandshakeConfig: handshakeConfig,
+		HandshakeConfig: HandshakeConfig,
 		Plugins:         pluginMap,
 		Cmd:             exec.Command(this.structDir + string(filepath.Separator) + "plugin" + string(filepath.Separator) + "plugin"),
 		Logger : hclog.New(&hclog.LoggerOptions{
@@ -277,9 +284,12 @@ func (this *rpcPluginStructField) SetStructName(structName string)  {
 	this.StructName = structName
 }
 
-func (this *rpcPluginStructField) SetFields(fields []db2entity.Field)  {
-	this.Fields = fields
+
+func (this *rpcPluginStructField) SetStructInfo(s *structInfo)  {
+	this.StrcutInfo = s
 }
+
+
 
 func (this *rpcPluginStructField) Close()  {
 	this.pluginClient.Kill()

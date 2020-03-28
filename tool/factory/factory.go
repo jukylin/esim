@@ -155,9 +155,10 @@ func NewEsimFactory() *esimFactory {
 
 	factory.logger = logger.NewLogger()
 
-	factory.structFieldIface = NewRpcPluginStructField()
-
 	factory.writer = file_dir.EsimWriter{}
+
+	factory.structFieldIface = NewRpcPluginStructField(factory.writer)
+
 
 	return factory
 }
@@ -215,9 +216,9 @@ func (this *esimFactory) Run(v *viper.Viper) error {
 
 	if len(this.oldStructInfo.fields) > 0 {
 
-		this.structFieldIface.SetStructDir(this.structDir)
+		this.structFieldIface.SetStructInfo(this.newStructInfo)
 		this.structFieldIface.SetStructName(this.structName)
-		this.structFieldIface.SetFields(this.newStructInfo.fields)
+		this.structFieldIface.SetStructDir(this.structDir)
 
 		if this.withSort == true{
 			sortedField := this.structFieldIface.SortField()

@@ -2,7 +2,7 @@ package factory
 
 import (
 	"testing"
-	"html/template"
+	"text/template"
 	"github.com/stretchr/testify/assert"
 	"bytes"
 	"github.com/jukylin/esim/tool/db2entity"
