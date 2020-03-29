@@ -43,6 +43,8 @@ func init() {
 
 	factoryCmd.Flags().StringP("sname", "", "", "结构体名称")
 
+	factoryCmd.Flags().StringP("sdir", "", "", "结构体路径")
+
 	factoryCmd.Flags().BoolP("plural", "", false, "支持复数")
 
 	factoryCmd.Flags().StringP("imp_iface", "", "", "实现了接口")

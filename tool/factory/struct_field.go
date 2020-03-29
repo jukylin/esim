@@ -19,9 +19,9 @@ import (
 )
 
 type StructFieldIface interface {
-	SortField() *SortReturn
+	SortField(fields []db2entity.Field) *SortReturn
 
-	InitField() *InitFieldsReturn
+	InitField(fields []db2entity.Field) *InitFieldsReturn
 
 	Close()
 
@@ -30,6 +30,12 @@ type StructFieldIface interface {
 	SetStructName(string)
 
 	SetStructDir(string)
+
+	SetStructFileName(string)
+
+	SetFilesName(filesName []string)
+
+	SetPackName(packName string)
 }
 
 
@@ -40,6 +46,8 @@ type rpcPluginStructField struct{
 	structDir string
 
 	StructName string
+
+	StructFileName string
 
 	StrcutInfo *structInfo
 
@@ -98,17 +106,18 @@ func (this *rpcPluginStructField) buildPluginEnv() error {
 
 	//TODO 复制文件
 	//TODO 改 package 名称
-	for _, name := range this.filesName {
+	reg, _ := regexp.Compile(`package[\s*]` + this.packName)
 
-		if name == this.StructName{
-			this.writer.Write(targetDir + string(filepath.Separator) + this.StructName,
-				this.StrcutInfo.structFileContent)
+	for _, name := range this.filesName {
+		if name == this.StructFileName{
+			src := reg.ReplaceAll([]byte(this.StrcutInfo.structFileContent), []byte("package main"))
+			this.writer.Write(targetDir + string(filepath.Separator) + this.StructFileName,
+				string(src))
 			continue
 		}
 
 		this.copyFile(targetDir + string(filepath.Separator) + name,
-			this.structDir + string(filepath.Separator) + name,
-				this.packName)
+			this.structDir + string(filepath.Separator) + name, reg)
 	}
 
 	this.genStructPlugin(targetDir)
@@ -130,7 +139,7 @@ func (this *rpcPluginStructField) buildPluginEnv() error {
 
 //@ Copy File
 //@ repackagename
-func (this *rpcPluginStructField) copyFile(dstName, srcName string, packageName string) {
+func (this *rpcPluginStructField) copyFile(dstName, srcName string, reg *regexp.Regexp) {
 	src, err := os.Open(srcName)
 	if err != nil {
 		this.logger.Panicf(err.Error())
@@ -142,8 +151,6 @@ func (this *rpcPluginStructField) copyFile(dstName, srcName string, packageName 
 		this.logger.Panicf(err.Error())
 	}
 	defer dst.Close()
-
-	reg, _ := regexp.Compile(`package[\s*]` + packageName)
 
 	contents, err := ioutil.ReadAll(src)
 	contents = reg.ReplaceAll(contents, []byte("package main"))
@@ -244,7 +251,9 @@ func (this *rpcPluginStructField) run()  {
 }
 
 
-func (this *rpcPluginStructField) SortField() *SortReturn {
+func (this *rpcPluginStructField) SortField(fields []db2entity.Field) *SortReturn {
+
+	this.Fields = fields
 
 	if this.model == nil{
 		this.run()
@@ -260,7 +269,8 @@ func (this *rpcPluginStructField) SortField() *SortReturn {
 }
 
 
-func (this *rpcPluginStructField) InitField() *InitFieldsReturn {
+func (this *rpcPluginStructField) InitField(fields []db2entity.Field) *InitFieldsReturn {
+	this.Fields = fields
 
 	if this.model == nil{
 		this.run()
@@ -289,7 +299,19 @@ func (this *rpcPluginStructField) SetStructInfo(s *structInfo)  {
 	this.StrcutInfo = s
 }
 
+func (this *rpcPluginStructField) SetStructFileName (structFileName string)  {
+	this.StructFileName = structFileName
+}
 
+
+func (this *rpcPluginStructField) SetFilesName(filesName []string)  {
+	this.filesName = filesName
+}
+
+
+func (this *rpcPluginStructField) SetPackName(packName string)  {
+	this.packName = packName
+}
 
 func (this *rpcPluginStructField) Close()  {
 	this.pluginClient.Kill()

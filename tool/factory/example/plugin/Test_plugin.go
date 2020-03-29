@@ -93,7 +93,7 @@ func (ModelImp) Sort() string {
 
 	
 	field7 := Field{}
-	field7.Name = "u [3]string"
+	field7.Name = "e string"
 	field7.Size = int(getType.Field(7).Type.Size())
 	fields = append(fields, field7)
 
@@ -102,6 +102,30 @@ func (ModelImp) Sort() string {
 	field8.Name = "g byte"
 	field8.Size = int(getType.Field(8).Type.Size())
 	fields = append(fields, field8)
+
+	
+	field9 := Field{}
+	field9.Name = "u [3]string"
+	field9.Size = int(getType.Field(9).Type.Size())
+	fields = append(fields, field9)
+
+	
+	field10 := Field{}
+	field10.Name = "d int16"
+	field10.Size = int(getType.Field(10).Type.Size())
+	fields = append(fields, field10)
+
+	
+	field11 := Field{}
+	field11.Name = "logger log.Logger"
+	field11.Size = int(getType.Field(11).Type.Size())
+	fields = append(fields, field11)
+
+	
+	field12 := Field{}
+	field12.Name = "conf config.Config"
+	field12.Size = int(getType.Field(12).Type.Size())
+	fields = append(fields, field12)
 
 	
 

@@ -10,6 +10,7 @@ import (
 	//"golang.org/x/tools/imports"
 	"github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/tool/db2entity"
+	"github.com/spf13/viper"
 )
 
 
@@ -22,15 +23,17 @@ func TestMain(m *testing.M) {
 	code := m.Run()
 
 
-
 	os.Exit(code)
 }
 
+
 var esimfactory *esimFactory
+
 
 func setUp()  {
 	esimfactory = NewEsimFactory()
 }
+
 
 func getCurDir() string {
 	modelpath, err := os.Getwd()
@@ -41,6 +44,30 @@ func getCurDir() string {
 	return modelpath
 }
 
+
+func TestEsimFactory_Run(t *testing.T) {
+	v := viper.New()
+	v.Set("sname", "Test")
+	v.Set("option", true)
+	v.Set("sort", true)
+	v.Set("gen_logger_option", true)
+	v.Set("gen_conf_option", true)
+	v.Set("sdir", "./example")
+
+	esimfactory.Run(v)
+}
+
+func TestEsimFactory_InputBind(t *testing.T) {
+	v := viper.New()
+	v.Set("sname", "Test")
+	v.Set("option", true)
+	v.Set("sort", true)
+	v.Set("gen_logger_option", true)
+	v.Set("gen_conf_option", true)
+	v.Set("sdir", "./example")
+	err := esimfactory.inputBind(v)
+	assert.Nil(t, err)
+}
 
 //func delModelFile() {
 //	os.Remove(getCurDir() + "/plugin/model.go")
@@ -61,68 +88,6 @@ func getCurDir() string {
 //		t.Error("error")
 //		return
 //	}
-//}
-//
-//
-//func TestBuildVirEnv(t *testing.T) {
-//
-//	modelName := "Test"
-//	modelPath := getCurDir() + "/example"
-//
-//	info, err := FindModel(modelPath, modelName, "")
-//	if err != nil {
-//		t.Error(err.Error())
-//		return
-//	}
-//
-//	err = BuildPluginEnv(info, delModelFile)
-//	if err != nil {
-//		t.Error(err.Error())
-//		return
-//	}
-//
-//	e, err := file_dir.IsExistsDir("./example/plugin")
-//	if err != nil {
-//		t.Error(err.Error())
-//		return
-//	}
-//
-//	if e == false {
-//		t.Error("plugin 创建失败")
-//		return
-//	}
-//	Clear(info)
-//}
-//
-//
-//func TestExecPlugin(t *testing.T) {
-//
-//	modelName := "Test"
-//	modelPath := getCurDir() + "/example"
-//
-//	v := viper.New()
-//	v.Set("sort", false)
-//	v.Set("pool", false)
-//
-//	info, err := FindModel(modelPath, modelName, "")
-//	if err != nil {
-//		t.Error(err.Error())
-//		return
-//	}
-//
-//	err = BuildPluginEnv(info, delModelFile)
-//	if err != nil {
-//		t.Error(err.Error())
-//		return
-//	}
-//
-//	err = ExecPlugin(v, info)
-//	if err != nil {
-//		t.Error(err.Error())
-//		return
-//	}
-//
-//	Clear(info)
 //}
 //
 //
@@ -257,8 +222,8 @@ func TestCopyOldStructInfo(t *testing.T)  {
 	esimfactory.oldStructInfo.imports = append(esimfactory.oldStructInfo.imports, "fmt")
 	esimfactory.oldStructInfo.structFileContent = "package main"
 	esimfactory.copyOldStructInfo()
-	assert.Equal(t, "fmt", esimfactory.newStructInfo.imports[0])
-	assert.Empty(t, esimfactory.newStructInfo.structFileContent)
+	assert.Equal(t, "fmt", esimfactory.NewStructInfo.imports[0])
+	assert.Empty(t, esimfactory.NewStructInfo.structFileContent)
 }
 
 
@@ -289,8 +254,8 @@ func TestExtendFieldAndReplaceStructContent(t *testing.T)  {
 	result := esimfactory.ExtendField()
 	assert.True(t, result)
 
-	assert.Equal(t, 2, len(esimfactory.newStructInfo.fields))
-	assert.Equal(t, 2, len(esimfactory.newStructInfo.imports))
+	assert.Equal(t, 2, len(esimfactory.NewStructInfo.Fields))
+	assert.Equal(t, 2, len(esimfactory.NewStructInfo.imports))
 
 	esimfactory.writer = file_dir.NullWrite{}
 
@@ -298,7 +263,7 @@ func TestExtendFieldAndReplaceStructContent(t *testing.T)  {
 	afield.Filed = "a int"
 	bfield := db2entity.Field{}
 	bfield.Filed = "b string"
-	esimfactory.newStructInfo.fields = append(esimfactory.newStructInfo.fields, afield, bfield)
+	esimfactory.NewStructInfo.Fields = append(esimfactory.NewStructInfo.Fields, afield, bfield)
 
 	esimfactory.oldStructInfo.structFileContent = `package main
 
@@ -328,16 +293,16 @@ type test struct {
 	b string
 }
 `
-	esimfactory.structName = "test"
+	esimfactory.StructName = "test"
 	err := esimfactory.buildNewStructFileContent()
 	assert.Nil(t, err)
-	assert.Equal(t, replaceStructContent, esimfactory.newStructInfo.structFileContent)
+	assert.Equal(t, replaceStructContent, esimfactory.NewStructInfo.structFileContent)
 
 	esimfactory.oldStructInfo.importStr = ""
 	esimfactory.packStr = "package main"
 	err = esimfactory.buildNewStructFileContent()
 	assert.Nil(t, err)
-	assert.Equal(t, replaceStructContent, esimfactory.newStructInfo.structFileContent)
+	assert.Equal(t, replaceStructContent, esimfactory.NewStructInfo.structFileContent)
 }
 
 

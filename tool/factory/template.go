@@ -2,32 +2,31 @@ package factory
 
 var factoryTemplate = `
 type {{.StructName}} struct{
-{{ range .StructFields }}
-
-{{.FiledCom}}
-{{.FieldName}} {{.FieldType}} {{.FiledTag}}
-{{ end -}}
+{{ range .NewStructInfo.Fields }}
+	{{ range .Doc}}
+		T1
+	{{end}}
+	{{.Filed}} {{.Tag}}
+{{ end }}
 
 }
 
-{{.Options1}}
+{{.Option1}}
 
-{{.Options2}}
+{{.Option2}}
 
-func New{{.StructName}}({{.Options3}}) *StructName{
+func New{{.StructName}}({{.Option3}}) {{.NewStructInfo.ReturnVarStr}}{
 
-{{.NewStr}}
+{{.NewStructInfo.StructInitStr}}
 
-{{.Options4}}
+{{.Option4}}
 
-{{.InitFileStr}}
+{{.SpecFieldInitStr}}
 
-{{.ReturnStr}}
+	return {{.ReturnStr}}
 }
 
-{{.Options5}}
+{{.Option5}}
 
-{{.Options6}}
-
-
+{{.Option6}}
 `

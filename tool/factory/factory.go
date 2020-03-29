@@ -11,11 +11,12 @@ import (
 	"go/parser"
 	"go/token"
 	"io/ioutil"
-	"os"
 	"path"
 	"strings"
 	"golang.org/x/tools/imports"
 	"path/filepath"
+	"text/template"
+	"bytes"
 )
 
 
@@ -60,7 +61,7 @@ type Var struct {
 type esimFactory struct {
 
 	//struct name which be search
-	structName string
+	StructName string
 
 	//struct Absolute path
 	structDir string
@@ -80,14 +81,16 @@ type esimFactory struct {
 	oldStructInfo *structInfo
 
 	//Struct will be create
-	newStructInfo *structInfo
+	NewStructInfo *structInfo
 
-	//true if find the structName
+	//true if find the StructName
 	//false if not find
 	found bool
 
 	//Struct plural form
-	structNamePlural string
+	StructNamePlural string
+
+	withPlural bool
 
 	withOption bool
 
@@ -99,7 +102,7 @@ type esimFactory struct {
 
 	newObjStr string
 
-	releaseStr string
+	ReleaseStr string
 
 	firstPart string
 
@@ -112,21 +115,23 @@ type esimFactory struct {
 	///模型的复数
 	pluralName string
 
-	newPluralNewBody string
+	NewPluralStr string
 
-	newPluralReleaseBody string
+	ReleasePluralStr string
 	///模型的复数
 
 	///options start
-	option1 string
+	Option1 string
 
-	option2 string
+	Option2 string
 
-	option3 string
+	Option3 string
 
-	option4 string
+	Option4 string
 
-	option5 string
+	Option5 string
+
+	Option6 string
 	///options end
 
 	NewStr string
@@ -144,6 +149,10 @@ type esimFactory struct {
 	withStar bool
 
 	writer file_dir.IfaceWrite
+
+	SpecFieldInitStr string
+
+	ReturnStr string
 }
 
 func NewEsimFactory() *esimFactory {
@@ -151,11 +160,12 @@ func NewEsimFactory() *esimFactory {
 
 	factory.oldStructInfo = &structInfo{}
 
-	factory.newStructInfo = &structInfo{}
+	factory.NewStructInfo = &structInfo{}
 
 	factory.logger = logger.NewLogger()
 
 	factory.writer = file_dir.EsimWriter{}
+
 
 	factory.structFieldIface = NewRpcPluginStructField(factory.writer)
 
@@ -165,7 +175,7 @@ func NewEsimFactory() *esimFactory {
 
 type structInfo struct{
 
-	fields []db2entity.Field
+	Fields []db2entity.Field
 
 	structStr string
 
@@ -181,6 +191,10 @@ type structInfo struct{
 	imports []string
 
 	importStr string
+
+	ReturnVarStr string
+
+	StructInitStr string
 }
 
 //获取单词的复数形式
@@ -202,7 +216,7 @@ func (this *esimFactory) Run(v *viper.Viper) error {
 	}
 
 	if this.FindStruct() == false{
-		this.logger.Panicf("not found this struct %s", this.structName)
+		this.logger.Panicf("not found this struct %s", this.StructName)
 	}
 	
 	this.copyOldStructInfo()
@@ -214,23 +228,26 @@ func (this *esimFactory) Run(v *viper.Viper) error {
 		}
 	}
 
-	if len(this.oldStructInfo.fields) > 0 {
+	if len(this.oldStructInfo.Fields) > 0 {
 
-		this.structFieldIface.SetStructInfo(this.newStructInfo)
-		this.structFieldIface.SetStructName(this.structName)
+		this.structFieldIface.SetStructInfo(this.NewStructInfo)
+		this.structFieldIface.SetStructName(this.StructName)
 		this.structFieldIface.SetStructDir(this.structDir)
+		this.structFieldIface.SetStructFileName(this.structFileName)
+		this.structFieldIface.SetFilesName(this.filesName)
+		this.structFieldIface.SetPackName(this.packName)
 
 		if this.withSort == true{
-			sortedField := this.structFieldIface.SortField()
+			sortedField := this.structFieldIface.SortField(this.NewStructInfo.Fields)
 
-			this.newStructInfo.structStr = this.genNewStruct(this.structName,
-				sortedField.Fields, this.oldStructInfo.fields)
+			this.NewStructInfo.structStr = this.genNewStruct(this.StructName,
+				sortedField.Fields, this.oldStructInfo.Fields)
 		}
 
-		this.InitField = this.structFieldIface.InitField()
+		this.InitField = this.structFieldIface.InitField(this.NewStructInfo.Fields)
 	}
 
-	this.buildFrame()
+	this.genStr()
 
 	err = file_dir.EsimBackUpFile(this.structDir +
 		string(filepath.Separator) + this.structFileName)
@@ -240,7 +257,18 @@ func (this *esimFactory) Run(v *viper.Viper) error {
 				err.Error())
 	}
 
+	tmpl, err := template.New("factory").Funcs(EsimFuncMap()).
+		Parse(factoryTemplate)
+	if err != nil{
+		this.logger.Panicf(err.Error())
+	}
 
+	var buf bytes.Buffer
+	err = tmpl.Execute(&buf, this)
+	if err != nil{
+		this.logger.Panicf(err.Error())
+	}
+	println(buf.String())
 	//res, err := imports.Process("", []byte(src), nil)
 	//if err != nil {
 	//	return err
@@ -257,11 +285,11 @@ func (this *esimFactory) Run(v *viper.Viper) error {
 }
 
 
-//copy oldStructInfo to newStructInfo
+//copy oldStructInfo to NewStructInfo
 func (this *esimFactory) copyOldStructInfo()  {
 	copyStructInfo := *this.oldStructInfo
 	copyStructInfo.structFileContent = ""
-	this.newStructInfo = &copyStructInfo
+	this.NewStructInfo = &copyStructInfo
 }
 
 func (this *esimFactory) inputBind(v *viper.Viper) error {
@@ -269,17 +297,23 @@ func (this *esimFactory) inputBind(v *viper.Viper) error {
 	if sname == "" {
 		return errors.New("请输入结构体名称")
 	}
-	this.structName = sname
+	this.StructName = sname
 
-	wd, err := os.Getwd()
-	if err != nil {
+	sdir := v.GetString("sdir")
+	if sdir == ""{
+		sdir = "."
+	}
+
+	dir, err := filepath.Abs(sdir)
+	if err != nil{
 		return err
 	}
-	this.structDir = strings.TrimRight(wd, "/")
+	this.structDir = strings.TrimRight(dir, "/")
 
 	plural := v.GetBool("plural")
 	if plural == true {
-		this.structNamePlural = this.getPluralWord(sname)
+		this.withPlural = true
+		this.StructNamePlural = this.getPluralWord(sname)
 	}
 
 	this.withOption = v.GetBool("option")
@@ -300,21 +334,27 @@ func (this *esimFactory) inputBind(v *viper.Viper) error {
 	return nil
 }
 
-func (this *esimFactory) buildFrame()  {
+func (this *esimFactory) genStr()  {
 
-	this.NewVarStr()
+	this.genReturnVarStr()
+	this.genStructInitStr()
+	this.genSpecFieldInitStr()
+	this.genReturnStr()
 
 	if this.withOption == true{
-		this.NewOptionParam()
-		this.getOptions()
+		this.genOptionParam()
+		this.genOptions()
 	}
 
 	if this.withPool == true && len(this.InitField.Fields) > 0{
-
-		this.genInitFieldsAndPool()
-		this.HandelPlural()
-		this.oldStructInfo.varStr = this.genVarStr(this.oldStructInfo.vars)
+		this.genPool()
 	}
+
+	if this.withPlural {
+		this.genPlural()
+	}
+
+	this.genVarStr(this.NewStructInfo.vars)
 
 	//info.newObjStr = replaceFrame(frame, info)
 
@@ -378,13 +418,13 @@ func (this *esimFactory) FindStruct() bool {
 						for _, specs := range GenDecl.Specs {
 							if typeSpec, ok := specs.(*ast.TypeSpec); ok {
 
-								if typeSpec.Name.String() == this.structName {
+								if typeSpec.Name.String() == this.StructName {
 									this.oldStructInfo.structFileContent = strSrc
 									this.structFileName = fileInfo.Name()
 									this.found = true
 									this.packName = f.Name.String()
 									this.packStr = strSrc[f.Name.Pos()-1 : f.Name.End()]
-									this.oldStructInfo.fields = db2entity.GetOldFields(GenDecl, strSrc)
+									this.oldStructInfo.Fields = db2entity.GetOldFields(GenDecl, strSrc)
 									this.oldStructInfo.structStr = string(src[GenDecl.TokPos-1 : typeSpec.Type.(*ast.StructType).Fields.Closing])
 								}
 							}
@@ -453,20 +493,20 @@ func (this *esimFactory) ExtendField() bool {
 		if this.withGenLoggerOption == true{
 			HasExtend = true
 			var foundLogField bool
-			for _, field := range this.newStructInfo.fields {
+			for _, field := range this.NewStructInfo.Fields {
 				if strings.Contains(field.Filed, "log.Logger") == true && foundLogField == false{
 					foundLogField = true
 				}
 			}
 
-			if foundLogField == false || len(this.newStructInfo.fields) == 0{
+			if foundLogField == false || len(this.NewStructInfo.Fields) == 0{
 				fld := db2entity.Field{}
 				fld.Filed = "logger log.Logger"
-				this.newStructInfo.fields = append(this.newStructInfo.fields, fld)
+				this.NewStructInfo.Fields = append(this.NewStructInfo.Fields, fld)
 			}
 
 			var foundLogImport bool
-			for _, oim := range this.newStructInfo.imports{
+			for _, oim := range this.NewStructInfo.imports{
 				if oim == "github.com/jukylin/esim/log"{
 					foundLogImport = true
 				}
@@ -481,21 +521,21 @@ func (this *esimFactory) ExtendField() bool {
 			HasExtend = true
 
 			var foundConfField bool
-			for _, field := range this.newStructInfo.fields {
+			for _, field := range this.NewStructInfo.Fields {
 				if strings.Contains(field.Filed, "config.Config") == 
 					true && foundConfField == false{
 					foundConfField = true
 				}
 			}
 
-			if foundConfField == false || len(this.newStructInfo.fields) == 0{
+			if foundConfField == false || len(this.NewStructInfo.Fields) == 0{
 				fld := db2entity.Field{}
 				fld.Filed = "conf config.Config"
-				this.newStructInfo.fields = append(this.newStructInfo.fields, fld)
+				this.NewStructInfo.Fields = append(this.NewStructInfo.Fields, fld)
 			}
 
 			var foundConfImport bool
-			for _, oim := range this.newStructInfo.imports{
+			for _, oim := range this.NewStructInfo.imports{
 				if oim == "github.com/jukylin/esim/config"{
 					foundConfImport = true
 				}
@@ -512,33 +552,33 @@ func (this *esimFactory) ExtendField() bool {
 
 
 //if struct field had extend logger or conf
-// so build a new struct and replace it
+// so build a new struct
 func (this *esimFactory) buildNewStructFileContent() error {
 
 	if this.oldStructInfo.importStr != "" {
-		this.newStructInfo.structFileContent = strings.Replace(this.oldStructInfo.structFileContent,
-			this.oldStructInfo.importStr, this.genImport(this.newStructInfo.imports), -1)
+		this.NewStructInfo.structFileContent = strings.Replace(this.oldStructInfo.structFileContent,
+			this.oldStructInfo.importStr, this.genImport(this.NewStructInfo.imports), -1)
 	} else if this.packStr != "" {
 		//not find import
 		this.getFirstPart()
-		this.newStructInfo.structFileContent = strings.Replace(this.oldStructInfo.structFileContent,
+		this.NewStructInfo.structFileContent = strings.Replace(this.oldStructInfo.structFileContent,
 			this.packStr, this.firstPart, -1)
 	}else{
 		return errors.New("can't build the first part")
 	}
 
-	this.newStructInfo.importStr = this.genImport(this.newStructInfo.imports)
+	this.NewStructInfo.importStr = this.genImport(this.NewStructInfo.imports)
 
-	this.newStructInfo.structStr = db2entity.GetNewStruct(this.structName, this.newStructInfo.fields)
-	this.newStructInfo.structFileContent = strings.Replace(this.newStructInfo.structFileContent,
-		this.oldStructInfo.structStr, this.newStructInfo.structStr, -1)
+	this.NewStructInfo.structStr = db2entity.GetNewStruct(this.StructName, this.NewStructInfo.Fields)
+	this.NewStructInfo.structFileContent = strings.Replace(this.NewStructInfo.structFileContent,
+		this.oldStructInfo.structStr, this.NewStructInfo.structStr, -1)
 
-	src, err := imports.Process("", []byte(this.newStructInfo.structFileContent), nil)
+	src, err := imports.Process("", []byte(this.NewStructInfo.structFileContent), nil)
 	if err != nil{
 		return err
 	}
 
-	this.newStructInfo.structFileContent = string(src)
+	this.NewStructInfo.structFileContent = string(src)
 
 	return nil
 }
@@ -562,47 +602,50 @@ func (this *esimFactory) genImport(imports []string) string {
 
 
 //
-// func NewStruct() {{.varStr}} {
+// func NewStruct() {{.ReturnvarStr}} {
 // }
 //
-func (this *esimFactory) NewVarStr()  {
+func (this *esimFactory) genReturnVarStr()  {
 	if this.withImpIface != ""{
-		this.newStructInfo.varStr = this.withImpIface
+		this.NewStructInfo.ReturnVarStr = this.withImpIface
 	}else if this.withPool == true || this.withStar == true{
-		this.newStructInfo.varStr = "*" + this.structName
+		this.NewStructInfo.ReturnVarStr = "*" + this.StructName
 	}else{
-		this.newStructInfo.varStr = this.structName
+		this.NewStructInfo.ReturnVarStr = this.StructName
 	}
 }
 
 
 //type Option func(c *{{.OptionParam}})
-func (this *esimFactory) NewOptionParam()  {
+func (this *esimFactory) genOptionParam()  {
 	if this.withPool == true || this.withStar == true{
-		this.OptionParam = "*" + this.structName
+		this.OptionParam = "*" + this.StructName
 	}else{
-		this.OptionParam = this.structName
+		this.OptionParam = this.StructName
 	}
 }
 
-
-func GetNewStr(v *viper.Viper, info *esimFactory) string {
-	if v.GetBool("star") == true{
-		return strings.ToLower(string(info.structName[0]))  + " := &" + info.structName + "{}"
-	}else if v.GetBool("pool") == true{
-		return strings.ToLower(string(info.structName[0])) + ` := ` +
-			strings.ToLower(info.structName) + `Pool.Get().(*` +
-				info.structName + `)`
+// StructObj := Struct{} => {{.StructInitStr}}
+func (this *esimFactory) genStructInitStr() {
+	var structInitStr string
+	if this.withStar == true{
+		structInitStr = strings.ToLower(string(this.StructName[0]))  +
+			" := &" + this.StructName + "{}"
+	}else if this.withPool == true{
+		structInitStr = strings.ToLower(string(this.StructName[0])) + ` := ` +
+			strings.ToLower(this.StructName) + `Pool.Get().(*` +
+				this.StructName + `)`
 	}else{
-		return strings.ToLower(string(info.structName[0]))  + " := " + info.structName + "{}"
+		structInitStr = strings.ToLower(string(this.StructName[0]))  +
+			" := " + this.StructName + "{}"
 	}
 
-	return ""
+	this.NewStructInfo.StructInitStr = structInitStr
 }
 
 
-func GetReturnStr(info *esimFactory) string {
-	return "	return " + strings.ToLower(string(info.structName[0]))
+func (this *esimFactory) genReturnStr() {
+	this.ReturnStr = strings.ToLower(string(this.StructName[0]))
 }
 
 
@@ -615,8 +658,8 @@ func GetReturnStr(info *esimFactory) string {
 //
 //{{options2}}
 //
-//func New` + strings.ToUpper(string(info.structName[0])) +
-//	string(info.structName[1:]) + `({{options3}}) ` + info.NewVarStr + ` {
+//func New` + strings.ToUpper(string(info.StructName[0])) +
+//	string(info.StructName[1:]) + `({{options3}}) ` + info.NewVarStr + ` {
 //
 //	`+ GetNewStr(v, info) +`
 //
@@ -635,40 +678,40 @@ func GetReturnStr(info *esimFactory) string {
 //}
 
 
-func replaceFrame(newFrame string, info *esimFactory) string {
-	newFrame = strings.Replace(newFrame, "{{options1}}", info.option1, -1)
+//func replaceFrame(newFrame string, info *esimFactory) string {
+//	newFrame = strings.Replace(newFrame, "{{options1}}", info.option1, -1)
+//
+//	newFrame = strings.Replace(newFrame, "{{options2}}", info.option2, -1)
+//
+//	newFrame = strings.Replace(newFrame, "{{options3}}", info.option3, -1)
+//
+//	newFrame = strings.Replace(newFrame, "{{options4}}", info.option4, -1)
+//
+//	newFrame = strings.Replace(newFrame, "{{options5}}", info.option5, -1)
+//
+//	return newFrame
+//}
 
-	newFrame = strings.Replace(newFrame, "{{options2}}", info.option2, -1)
 
-	newFrame = strings.Replace(newFrame, "{{options3}}", info.option3, -1)
+func (this *esimFactory) genOptions()  {
 
-	newFrame = strings.Replace(newFrame, "{{options4}}", info.option4, -1)
+	this.Option1 = `type ` + this.StructName + `Option func(` + this.OptionParam + `)`
 
-	newFrame = strings.Replace(newFrame, "{{options5}}", info.option5, -1)
+	this.Option2 = `type ` + this.StructName + `Options struct{}`
 
-	return newFrame
-}
+	this.Option3 = `options ...` + this.StructName +`Option`
 
-
-func (this *esimFactory) getOptions()  {
-
-	this.option1 = `type ` + this.structName + `Option func(` + this.OptionParam + `)`
-
-	this.option2 = `type ` + this.structName + `Options struct{}`
-
-	this.option3 = `options ...` + this.structName +`Option`
-
-	this.option4 = `
+	this.Option4 = `
 	for _, option := range options {
-		option(` + strings.ToLower(string(this.structName[0])) + `)
+		option(` + strings.ToLower(string(this.StructName[0])) + `)
 	}`
 
 	if this.withGenConfOption == true{
 
-		this.option5 += `
-func (` + this.structName + `Options) WithConf(conf config.Config) ` + this.structName + `Option {
-	return func(` + string(this.structName[0]) + ` `+ this.newStructInfo.varStr +`) {
-	` + string(this.structName[0]) + `.conf = conf
+		this.Option5 += `
+func (` + this.StructName + `Options) WithConf(conf config.Config) ` + this.StructName + `Option {
+	return func(` + string(this.StructName[0]) + ` `+ this.NewStructInfo.ReturnVarStr +`) {
+	` + string(this.StructName[0]) + `.conf = conf
 	}
 }
 `
@@ -676,10 +719,10 @@ func (` + this.structName + `Options) WithConf(conf config.Config) ` + this.stru
 	}
 
 	if this.withGenLoggerOption == true {
-		this.option5 += `
-func (` + this.structName + `Options) WithLogger(logger log.Logger) ` + this.structName + `Option {
-	return func(` + string(this.structName[0]) + ` ` + this.newStructInfo.varStr + `) {
-		` + string(this.structName[0]) + `.logger = logger
+		this.Option6 += `
+func (` + this.StructName + `Options) WithLogger(logger log.Logger) ` + this.StructName + `Option {
+	return func(` + string(this.StructName[0]) + ` ` + this.NewStructInfo.ReturnVarStr + `) {
+		` + string(this.StructName[0]) + `.logger = logger
 	}
 }
 `
@@ -716,11 +759,11 @@ func (` + this.structName + `Options) WithLogger(logger log.Logger) ` + this.str
 //}
 
 
-func (this *esimFactory) genNewStruct(structName string, fields Fields,
+func (this *esimFactory) genNewStruct(StructName string, fields Fields,
 	oldFields []db2entity.Field) string {
 	var newStruct string
 
-	newStruct = "type " + structName + " struct{ \r\n"
+	newStruct = "type " + StructName + " struct{ \r\n"
 
 	for _, field := range fields {
 		for _, ofield := range oldFields {
@@ -767,38 +810,39 @@ func (this *esimFactory) genNewStruct(structName string, fields Fields,
 
 
 //初始化变量，生成临时对象池
-func (this *esimFactory) genInitFieldsAndPool() bool {
+func (this *esimFactory) genPool() bool {
 
-	this.incrPoolVar(this.structName)
+	this.incrPoolVar(this.StructName)
 
-	this.genPool()
-
-	return true
-}
-
-
-//处理复数
-func (this *esimFactory) HandelPlural() bool {
-
-	if this.pluralName != "" {
-
-		this.incrPoolVar(this.pluralName)
-
-		this.genPluralPool()
-	}
+	this.ReleaseStr = this.genReleaseStructStr(this.InitField.Fields)
 
 	return true
 }
 
 
-func (this *esimFactory) incrPoolVar(structName string) bool {
-	poolName := strings.ToLower(structName) + "Pool"
-	if this.varNameExists(this.newStructInfo.vars, poolName) == true {
+//复数池
+func (this *esimFactory) genPlural() bool {
+
+	this.incrPoolVar(this.pluralName)
+
+	this.NewPluralStr = this.genNewPluralStr()
+
+	this.ReleasePluralStr = this.genReleasePluralStr()
+
+
+	return true
+}
+
+
+
+func (this *esimFactory) incrPoolVar(StructName string) bool {
+	poolName := strings.ToLower(StructName) + "Pool"
+	if this.varNameExists(this.NewStructInfo.vars, poolName) == true {
 		this.logger.Debugf("变量已存在 : %s", poolName)
 	} else {
 
-		this.newStructInfo.vars = append(this.newStructInfo.vars,
-			this.genPoolVar(poolName, structName))
+		this.NewStructInfo.vars = append(this.NewStructInfo.vars,
+			this.genPoolVar(poolName, StructName))
 		this.appendNewImport("sync")
 	}
 
@@ -806,26 +850,10 @@ func (this *esimFactory) incrPoolVar(structName string) bool {
 }
 
 
-//单数池
-func (this *esimFactory) genPool() {
-	//info.newObjStr = getNewObjStr(info)
-
-	this.releaseStr = this.genReleaseStructStr(this.InitField.Fields)
-}
-
-
-//复数池
-func (this *esimFactory) genPluralPool() {
-	this.newPluralNewBody = this.genNewPluralObjStr()
-
-	this.newPluralReleaseBody = this.genReleasePluralObjStr()
-}
-
-
-func (this *esimFactory) genInitStr(info *esimFactory) string {
+func (this *esimFactory) genSpecFieldInitStr()  {
 	var str string
 
-	for _, f := range info.InitField.SpecFields {
+	for _, f := range this.InitField.SpecFields {
 		if f.Type == "slice" {
 			str += `if ` + f.Name + ` == nil {
 `
@@ -847,14 +875,14 @@ func (this *esimFactory) genInitStr(info *esimFactory) string {
 		}
 	}
 
-
-	return str
+	this.SpecFieldInitStr = str
+	return
 }
 
 
 func (this *esimFactory) genReleaseStructStr(initFields []string) string {
-	str := "func (" + strings.ToLower(this.structName) +
-		this.newStructInfo.varStr + ") Release() {\n"
+	str := "func (" + strings.ToLower(this.StructName) +
+		this.NewStructInfo.varStr + ") Release() {\n"
 
 	for _, field := range this.InitField.Fields {
 		if strings.Contains(field, "time.Time") {
@@ -863,14 +891,14 @@ func (this *esimFactory) genReleaseStructStr(initFields []string) string {
 		str += "		" + field + "\n"
 	}
 
-	str += "		" + strings.ToLower(this.structName) +
-		"Pool.Put(" + strings.ToLower(this.structName) + ")\n"
+	str += "		" + strings.ToLower(this.StructName) +
+		"Pool.Put(" + strings.ToLower(this.StructName) + ")\n"
 	str += "}"
 
 	return str
 }
 
-func (this *esimFactory) genNewPluralObjStr() string {
+func (this *esimFactory) genNewPluralStr() string {
 	str := `func New` + this.pluralName + `() *` + this.pluralName + ` {
 	` + strings.ToLower(this.pluralName) + ` := ` +
 		strings.ToLower(this.pluralName) + `Pool.Get().(*` + this.pluralName + `)
@@ -883,7 +911,7 @@ func (this *esimFactory) genNewPluralObjStr() string {
 	return str
 }
 
-func (this *esimFactory) genReleasePluralObjStr() string {
+func (this *esimFactory) genReleasePluralStr() string {
 	str := "func (" + strings.ToLower(this.pluralName) + " *" +
 		this.pluralName + ") Release() {\n"
 
@@ -899,20 +927,20 @@ func (this *esimFactory) genReleasePluralObjStr() string {
 func (this *esimFactory) appendNewImport(importName string) bool {
 	var found bool
 	importName = "\"" + importName + "\""
-	for _, importStr := range this.newStructInfo.imports {
+	for _, importStr := range this.NewStructInfo.imports {
 		if importStr == importName {
 			found = true
 		}
 	}
 
 	if found == false {
-		this.newStructInfo.imports = append(this.newStructInfo.imports, importName)
+		this.NewStructInfo.imports = append(this.NewStructInfo.imports, importName)
 	}
 
 	return true
 }
 
-func (this *esimFactory) genVarStr(vars []Var) string {
+func (this *esimFactory) genVarStr(vars []Var) {
 	varStr := "var ( \n"
 	for _, varInfo := range vars {
 		for _, doc := range varInfo.doc {
@@ -922,15 +950,16 @@ func (this *esimFactory) genVarStr(vars []Var) string {
 	}
 	varStr += ") \n"
 
-	return varStr
+	this.NewStructInfo.varStr = varStr
+	return
 }
 
 
-func (this *esimFactory) genPoolVar(pollVarName, structName string) Var {
+func (this *esimFactory) genPoolVar(pollVarName, StructName string) Var {
 	var poolVar Var
 	poolVar.val = pollVarName + ` = sync.Pool{
         New: func() interface{} {
-                return &` + structName + `{}
+                return &` + StructName + `{}
         },
 	}
 `
@@ -956,7 +985,7 @@ func (this *esimFactory) getFirstPart() {
 		this.firstPart += this.packStr + "\n\n"
 	}
 
-	this.firstPart += this.genImport(this.newStructInfo.imports)
+	this.firstPart += this.genImport(this.NewStructInfo.imports)
 	this.firstPart += "\n"
 }
 
@@ -977,7 +1006,7 @@ func (this *esimFactory) getSecondPart() {
 //
 //	if info.pluralName != "" {
 //		bodyStr += "\n"
-//		bodyStr += "type " + info.pluralName + " []" + info.structName
+//		bodyStr += "type " + info.pluralName + " []" + info.StructName
 //	}
 //
 //	if info.newObjStr != "" {

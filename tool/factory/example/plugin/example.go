@@ -1,5 +1,9 @@
 package main
 
+import (
+	"github.com/jukylin/esim/config"
+	"github.com/jukylin/esim/log"
+)
 
 type Test struct {
 	b int64
@@ -23,11 +27,10 @@ type Test struct {
 	u [3]string
 
 	d int16
+
+	logger log.Logger
+
+	conf config.Config
 }
 
-type empty struct {}
-
-
-
-
-
+type empty struct{}
