@@ -53,8 +53,12 @@ func TestEsimFactory_Run(t *testing.T) {
 	v.Set("gen_logger_option", true)
 	v.Set("gen_conf_option", true)
 	v.Set("sdir", "./example")
+	v.Set("pool", true)
+	v.Set("plural", true)
+	v.Set("print", true)
 
 	esimfactory.Run(v)
+	esimfactory.Close()
 }
 
 func TestEsimFactory_InputBind(t *testing.T) {
@@ -64,6 +68,8 @@ func TestEsimFactory_InputBind(t *testing.T) {
 	v.Set("sort", true)
 	v.Set("gen_logger_option", true)
 	v.Set("gen_conf_option", true)
+	v.Set("print", true)
+
 	v.Set("sdir", "./example")
 	err := esimfactory.inputBind(v)
 	assert.Nil(t, err)
@@ -223,7 +229,6 @@ func TestCopyOldStructInfo(t *testing.T)  {
 	esimfactory.oldStructInfo.structFileContent = "package main"
 	esimfactory.copyOldStructInfo()
 	assert.Equal(t, "fmt", esimfactory.NewStructInfo.imports[0])
-	assert.Empty(t, esimfactory.NewStructInfo.structFileContent)
 }
 
 

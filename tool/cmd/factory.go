@@ -37,7 +37,7 @@ func init() {
 
 	factoryCmd.Flags().BoolP("star", "", false, "返回指针变量")
 
-	//modelCmd.Flags().BoolP("print", "", false, "扩展print方法")
+	factoryCmd.Flags().BoolP("print", "", false, "print the result")
 
 	//modelCmd.Flags().BoolP("Print", "", false, "打印到终端")
 

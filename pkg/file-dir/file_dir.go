@@ -186,7 +186,7 @@ func EsimWrite(filePath string, content string) error {
 		}
 	}
 
-	dst, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE, 0644)
+	dst, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		return err
 	}

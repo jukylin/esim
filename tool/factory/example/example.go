@@ -26,8 +26,3 @@ type Test struct {
 }
 
 type empty struct {}
-
-
-
-
-

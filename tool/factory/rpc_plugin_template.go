@@ -25,6 +25,7 @@ type InitFieldsReturn struct{
 
 type Field struct{
 	Name string
+	Str string
 	Size int
 	Type string
 	TypeName string
@@ -58,7 +59,8 @@ func (ModelImp) Sort() string {
 
 	{{range $i, $field := .Fields}}
 	field{{$i}} := Field{}
-	field{{$i}}.Name = "{{$field.Filed}}"
+	field{{$i}}.Name = "{{$field.Name}}"
+	field{{$i}}.Str = "{{$field.Filed}}"
 	field{{$i}}.Size = int(getType.Field({{$i}}).Type.Size())
 	fields = append(fields, field{{$i}})
 
@@ -82,7 +84,7 @@ func (ModelImp) InitField() string {
 	 	fields := &Fields{}
 
 		getType := reflect.TypeOf({{.StructName | tolower}})
-		structFields := getInitStr(getType, strings.ToLower(getType.Name()), fields)
+		structFields := getInitStr(getType, string(strings.ToLower(getType.Name())[0]), fields)
 
 		initReturn.SpecFields = *fields
 		initReturn.Fields = structFields
@@ -99,21 +101,21 @@ func (ModelImp) InitField() string {
 		for i := 0; i < typeNum; i++ {
 		switch getType.Field(i).Type.Kind() {
 			case reflect.Array:
-				structFields = append(structFields, "for k, _ := range "+ name + "." + getType.Field(i).Name+" {")
+				structFields = append(structFields, "for k, _ := range this." + getType.Field(i).Name+" {")
 					switch getType.Field(i).Type.Elem().Kind() {
 					case reflect.Struct:
 						structFields = append(structFields,
 							getInitStr(getType.Field(i).Type.Elem(),
-								name + "." + getType.Field(i).Name + "[k]", nil)...)
+								"this." + getType.Field(i).Name + "[k]", nil)...)
 					default:
 						initStr = KindToInit(getType.Field(i).Type.Elem(),  name + "." + getType.Field(i).Name + "[k]", nil)
-						structFields = append(structFields, name + "." + getType.Field(i).Name+ "[k] = " + initStr)
+						structFields = append(structFields, "this." + getType.Field(i).Name+ "[k] = " + initStr)
 					}
 				structFields = append(structFields, "}")
 				continue
 			case reflect.Map:
-				structFields = append(structFields, "for k, _ := range "+ name + "." + getType.Field(i).Name+" {")
-				structFields = append(structFields, "delete(" + name + "." + getType.Field(i).Name + ", k)")
+				structFields = append(structFields, "for k, _ := range this." + getType.Field(i).Name+" {")
+				structFields = append(structFields, "delete(this." + getType.Field(i).Name + ", k)")
 				structFields = append(structFields, "}")
 				if specFilds != nil {
 					field.Name = name + "." + getType.Field(i).Name
@@ -130,12 +132,22 @@ func (ModelImp) InitField() string {
 						name+"."+getType.Field(i).Name, nil)...)
 					continue
 				}
+			case reflect.Slice:
+				if specFilds != nil {
+					field.Name = name + "." + getType.Field(i).Name
+					field.TypeName = getType.Field(i).Type.String()
+					field.Type = "slice"
+					*specFilds = append(*specFilds, field)
+				}
+				structFields = append(structFields, "this." + getType.Field(i).Name + " = " + "this." + getType.Field(i).Name + "[:0]")
+
+				continue
 			default:
 				initStr = KindToInit(getType.Field(i).Type,
 					name + "." + getType.Field(i).Name, specFilds)
 			}
 
-			structFields = append(structFields, name + "." + getType.Field(i).Name + " = " + initStr)
+			structFields = append(structFields, "this." + getType.Field(i).Name + " = " + initStr)
 		}
 
 		return structFields
@@ -144,7 +156,6 @@ func (ModelImp) InitField() string {
 
 func KindToInit(refType reflect.Type, name string, specFilds *Fields) string {
 	var initStr string
-	field  := Field{}
 
 	switch refType.Kind() {
 	case reflect.String:
@@ -166,13 +177,7 @@ func KindToInit(refType reflect.Type, name string, specFilds *Fields) string {
 	case reflect.Invalid, reflect.Func, reflect.Chan, reflect.Ptr, reflect.UnsafePointer:
 		initStr = "nil"
 	case reflect.Slice:
-		if specFilds != nil {
-			field.Name = name
-			field.TypeName = refType.String()
-			field.Type = "slice"
-			*specFilds = append(*specFilds, field)
-		}
-		initStr = name + "[:0]"
+		initStr = "nil"
 	case reflect.Map:
 		initStr = "nil"
 	case reflect.Array:

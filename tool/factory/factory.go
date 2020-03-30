@@ -17,6 +17,7 @@ import (
 	"path/filepath"
 	"text/template"
 	"bytes"
+	//"github.com/davecgh/go-spew/spew"
 )
 
 
@@ -87,8 +88,6 @@ type esimFactory struct {
 	//false if not find
 	found bool
 
-	//Struct plural form
-	StructNamePlural string
 
 	withPlural bool
 
@@ -97,7 +96,9 @@ type esimFactory struct {
 	withGenLoggerOption bool
 
 	withGenConfOption bool
-	
+
+	withPrint bool
+
 	structFieldIface StructFieldIface
 
 	newObjStr string
@@ -112,15 +113,16 @@ type esimFactory struct {
 
 	InitField *InitFieldsReturn
 
-	///模型的复数
+	//Struct plural form
 	pluralName string
 
 	NewPluralStr string
 
 	ReleasePluralStr string
-	///模型的复数
 
-	///options start
+	TypePluralStr string
+
+	//option start
 	Option1 string
 
 	Option2 string
@@ -132,7 +134,7 @@ type esimFactory struct {
 	Option5 string
 
 	Option6 string
-	///options end
+	//option end
 
 	NewStr string
 
@@ -147,6 +149,8 @@ type esimFactory struct {
 	withPool bool
 
 	withStar bool
+
+	WithNew bool
 
 	writer file_dir.IfaceWrite
 
@@ -197,9 +201,9 @@ type structInfo struct{
 	StructInitStr string
 }
 
-//获取单词的复数形式
-//识别不了或单复同形，后面直接加s
-func (this *esimFactory)  getPluralWord(word string) string {
+//getPluralWord Struct plural form
+//If plural is not obtained, add "s" at the end of the word
+func (this *esimFactory)  getPluralForm(word string) string {
 	newWord := inflect.Pluralize(word)
 	if newWord == word || newWord == "" {
 		newWord = word + "s"
@@ -212,7 +216,7 @@ func (this *esimFactory) Run(v *viper.Viper) error {
 
 	err := this.inputBind(v)
 	if err != nil {
-		return err
+		this.logger.Panicf(err.Error())
 	}
 
 	if this.FindStruct() == false{
@@ -239,9 +243,7 @@ func (this *esimFactory) Run(v *viper.Viper) error {
 
 		if this.withSort == true{
 			sortedField := this.structFieldIface.SortField(this.NewStructInfo.Fields)
-
-			this.NewStructInfo.structStr = this.genNewStruct(this.StructName,
-				sortedField.Fields, this.oldStructInfo.Fields)
+			this.genNewStructField(sortedField.Fields, this.NewStructInfo.Fields)
 		}
 
 		this.InitField = this.structFieldIface.InitField(this.NewStructInfo.Fields)
@@ -249,16 +251,44 @@ func (this *esimFactory) Run(v *viper.Viper) error {
 
 	this.genStr()
 
-	err = file_dir.EsimBackUpFile(this.structDir +
-		string(filepath.Separator) + this.structFileName)
-	if err != nil{
-		this.logger.Warnf("backup err %s:%s", this.structDir +
-			string(filepath.Separator) + this.structFileName,
+	this.executeNewTmpl()
+
+	this.organizePart()
+
+	if this.withPrint {
+		this.printResult()
+	}else{
+		err = file_dir.EsimBackUpFile(this.structDir +
+			string(filepath.Separator) + this.structFileName)
+		if err != nil{
+			this.logger.Warnf("backup err %s:%s", this.structDir +
+				string(filepath.Separator) + this.structFileName,
 				err.Error())
+		}
+
+		originContent := this.replaceOriginContent()
+
+		res, err := imports.Process("", []byte(originContent), nil)
+		if err != nil {
+			this.logger.Panicf("%s:%s", err.Error(), originContent)
+		}
+
+		err = file_dir.EsimWrite(this.structDir +
+			string(filepath.Separator) + this.structFileName,
+				string(res))
+		if err != nil {
+			this.logger.Panicf(err.Error())
+		}
 	}
 
+	return nil
+}
+
+
+
+func (this *esimFactory) executeNewTmpl() {
 	tmpl, err := template.New("factory").Funcs(EsimFuncMap()).
-		Parse(factoryTemplate)
+		Parse(newTemplate)
 	if err != nil{
 		this.logger.Panicf(err.Error())
 	}
@@ -268,29 +298,65 @@ func (this *esimFactory) Run(v *viper.Viper) error {
 	if err != nil{
 		this.logger.Panicf(err.Error())
 	}
-	println(buf.String())
-	//res, err := imports.Process("", []byte(src), nil)
-	//if err != nil {
-	//	return err
-	//}
 
-	//err = file_dir.EsimWrite(this.structDir +
-	//	string(filepath.Separator) + this.oldStructInfo.structFileName,
-	//		string(res))
-	//if err != nil {
-	//	return err
-	//}
+	this.NewStructInfo.structStr = buf.String()
+}
 
-	return err
+//replaceOriginContent gen a new struct file content
+func (this *esimFactory) replaceOriginContent() string {
+	originContent := this.oldStructInfo.structFileContent
+	if this.oldStructInfo.importStr != ""{
+		originContent = strings.Replace(originContent, this.oldStructInfo.importStr, "", 1)
+	}
+
+	originContent = strings.Replace(originContent, this.packStr, this.firstPart, 1)
+
+	if this.secondPart != ""{
+		originContent = strings.Replace(originContent, this.oldStructInfo.varStr, this.secondPart, 1)
+	}
+
+	originContent = strings.Replace(originContent, this.oldStructInfo.structStr, this.thirdPart, 1)
+
+	return originContent
+}
+
+
+func (this *esimFactory) printResult()  {
+	src := this.firstPart + "\n"
+	src += this.secondPart + "\n"
+	src += this.thirdPart + "\n"
+
+	res, err := imports.Process("", []byte(src), nil)
+	if err != nil{
+		this.logger.Panicf(err.Error())
+	}else{
+		println(string(res))
+	}
+}
+
+
+//organizePart  organize pack, import, var, struct
+func (this *esimFactory) organizePart()  {
+	this.firstPart = this.packStr + "\n"
+	this.firstPart += this.NewStructInfo.importStr + "\n"
+
+	if this.oldStructInfo.varStr != ""{
+		this.secondPart = this.NewStructInfo.varStr
+	}else{
+		//merge firstPart and secondPart
+		this.firstPart += this.NewStructInfo.varStr
+	}
+
+	this.thirdPart = this.NewStructInfo.structStr
 }
 
 
 //copy oldStructInfo to NewStructInfo
 func (this *esimFactory) copyOldStructInfo()  {
 	copyStructInfo := *this.oldStructInfo
-	copyStructInfo.structFileContent = ""
 	this.NewStructInfo = &copyStructInfo
 }
+
 
 func (this *esimFactory) inputBind(v *viper.Viper) error {
 	sname := v.GetString("sname")
@@ -313,7 +379,7 @@ func (this *esimFactory) inputBind(v *viper.Viper) error {
 	plural := v.GetBool("plural")
 	if plural == true {
 		this.withPlural = true
-		this.StructNamePlural = this.getPluralWord(sname)
+		this.pluralName = this.getPluralForm(sname)
 	}
 
 	this.withOption = v.GetBool("option")
@@ -330,9 +396,13 @@ func (this *esimFactory) inputBind(v *viper.Viper) error {
 
 	this.withStar = v.GetBool("star")
 
+	this.withPrint = v.GetBool("print")
+
+	this.WithNew = v.GetBool("new")
 
 	return nil
 }
+
 
 func (this *esimFactory) genStr()  {
 
@@ -355,14 +425,6 @@ func (this *esimFactory) genStr()  {
 	}
 
 	this.genVarStr(this.NewStructInfo.vars)
-
-	//info.newObjStr = replaceFrame(frame, info)
-
-	//if v.GetBool("pool") == true {
-	//	this.getHeader(info)
-	//}
-	//
-	//getTwoPart(info)
 }
 
 
@@ -423,7 +485,7 @@ func (this *esimFactory) FindStruct() bool {
 									this.structFileName = fileInfo.Name()
 									this.found = true
 									this.packName = f.Name.String()
-									this.packStr = strSrc[f.Name.Pos()-1 : f.Name.End()]
+									this.packStr = "package " + strSrc[f.Name.Pos()-1 : f.Name.End()]
 									this.oldStructInfo.Fields = db2entity.GetOldFields(GenDecl, strSrc)
 									this.oldStructInfo.structStr = string(src[GenDecl.TokPos-1 : typeSpec.Type.(*ast.StructType).Fields.Closing])
 								}
@@ -502,6 +564,7 @@ func (this *esimFactory) ExtendField() bool {
 			if foundLogField == false || len(this.NewStructInfo.Fields) == 0{
 				fld := db2entity.Field{}
 				fld.Filed = "logger log.Logger"
+				fld.Name = "logger"
 				this.NewStructInfo.Fields = append(this.NewStructInfo.Fields, fld)
 			}
 
@@ -531,6 +594,7 @@ func (this *esimFactory) ExtendField() bool {
 			if foundConfField == false || len(this.NewStructInfo.Fields) == 0{
 				fld := db2entity.Field{}
 				fld.Filed = "conf config.Config"
+				fld.Name = "conf"
 				this.NewStructInfo.Fields = append(this.NewStructInfo.Fields, fld)
 			}
 
@@ -555,9 +619,11 @@ func (this *esimFactory) ExtendField() bool {
 // so build a new struct
 func (this *esimFactory) buildNewStructFileContent() error {
 
+	this.NewStructInfo.importStr = this.genImport(this.NewStructInfo.imports)
+
 	if this.oldStructInfo.importStr != "" {
 		this.NewStructInfo.structFileContent = strings.Replace(this.oldStructInfo.structFileContent,
-			this.oldStructInfo.importStr, this.genImport(this.NewStructInfo.imports), -1)
+			this.oldStructInfo.importStr, this.NewStructInfo.importStr, -1)
 	} else if this.packStr != "" {
 		//not find import
 		this.getFirstPart()
@@ -566,8 +632,6 @@ func (this *esimFactory) buildNewStructFileContent() error {
 	}else{
 		return errors.New("can't build the first part")
 	}
-
-	this.NewStructInfo.importStr = this.genImport(this.NewStructInfo.imports)
 
 	this.NewStructInfo.structStr = db2entity.GetNewStruct(this.StructName, this.NewStructInfo.Fields)
 	this.NewStructInfo.structFileContent = strings.Replace(this.NewStructInfo.structFileContent,
@@ -585,6 +649,11 @@ func (this *esimFactory) buildNewStructFileContent() error {
 
 
 func (this *esimFactory) genImport(imports []string) string {
+
+	if len(imports) <= 0{
+		return ""
+	}
+
 	var newImport string
 	newImport +=
 `import (
@@ -625,6 +694,7 @@ func (this *esimFactory) genOptionParam()  {
 	}
 }
 
+
 // StructObj := Struct{} => {{.StructInitStr}}
 func (this *esimFactory) genStructInitStr() {
 	var structInitStr string
@@ -647,50 +717,6 @@ func (this *esimFactory) genStructInitStr() {
 func (this *esimFactory) genReturnStr() {
 	this.ReturnStr = strings.ToLower(string(this.StructName[0]))
 }
-
-
-//
-//func (this *esimFactory) NewFrame(v *viper.Viper, info *esimFactory) string {
-//	var newFrame string
-//	newFrame = `
-//
-//{{options1}}
-//
-//{{options2}}
-//
-//func New` + strings.ToUpper(string(info.StructName[0])) +
-//	string(info.StructName[1:]) + `({{options3}}) ` + info.NewVarStr + ` {
-//
-//	`+ GetNewStr(v, info) +`
-//
-//	{{options4}}
-//
-//	` + getInitStr(info) + `
-//
-//` + GetReturnStr(info) + `
-//}
-//
-//{{options5}}
-//
-//`
-//
-//	return newFrame
-//}
-
-
-//func replaceFrame(newFrame string, info *esimFactory) string {
-//	newFrame = strings.Replace(newFrame, "{{options1}}", info.option1, -1)
-//
-//	newFrame = strings.Replace(newFrame, "{{options2}}", info.option2, -1)
-//
-//	newFrame = strings.Replace(newFrame, "{{options3}}", info.option3, -1)
-//
-//	newFrame = strings.Replace(newFrame, "{{options4}}", info.option4, -1)
-//
-//	newFrame = strings.Replace(newFrame, "{{options5}}", info.option5, -1)
-//
-//	return newFrame
-//}
 
 
 func (this *esimFactory) genOptions()  {
@@ -730,86 +756,23 @@ func (` + this.StructName + `Options) WithLogger(logger log.Logger) ` + this.Str
 }
 
 
-//
-//func ReplaceContent(v *viper.Viper, info *esimFactory) (string, error) {
-//
-//	src, err := ioutil.ReadFile(info.structDir + "/" + info.structFileName)
-//	if err != nil {
-//		return "", err
-//	}
-//
-//	strSrc := string(src)
-//
-//	if info.headerStr != "" {
-//
-//		for _, varBody := range info.oldVarBody {
-//			strSrc = strings.Replace(strSrc, varBody, " ", -1)
-//		}
-//
-//		if info.oldImportStr != "" {
-//			strSrc = strings.Replace(strSrc, info.oldImportStr, info.headerStr, -1)
-//		} else if info.packStr != "" {
-//			strSrc = strings.Replace(strSrc, info.packStr, info.headerStr, -1)
-//		}
-//	}
-//
-//	strSrc = strings.Replace(strSrc, info.oldStruct, info.bodyStr, -1)
-//
-//	return strSrc, nil
-//}
+func (this *esimFactory) genNewStructField(sortFields Fields,
+	oriFields []db2entity.Field) {
 
+	oriFieldMap := make(map[string]db2entity.Field)
+	for _, ofield := range oriFields {
+		oriFieldMap[ofield.Name] = ofield
+	}
 
-func (this *esimFactory) genNewStruct(StructName string, fields Fields,
-	oldFields []db2entity.Field) string {
-	var newStruct string
-
-	newStruct = "type " + StructName + " struct{ \r\n"
-
-	for _, field := range fields {
-		for _, ofield := range oldFields {
-			if field.Name == ofield.Filed {
-				if len(ofield.Doc) > 0 {
-					for _, doc := range ofield.Doc {
-						newStruct += "	" + doc + "\r\n"
-					}
-				}
-				newStruct += "	" + field.Name + " " + ofield.Tag + "\r\n"
-				newStruct += "\r\n"
-			}
+	this.NewStructInfo.Fields = this.NewStructInfo.Fields[:0]
+	for _, field := range sortFields {
+		if of, ok := oriFieldMap[field.Name]; ok{
+			this.NewStructInfo.Fields = append(this.NewStructInfo.Fields, of)
 		}
 	}
-	newStruct += "} \r\n"
-
-	return newStruct
 }
 
 
-//
-//func HandleNewStruct(info *esimFactory, newStrcut string) bool {
-//	src, err := ioutil.ReadFile(info.structDir + "/" + info.structFileName)
-//	if err != nil {
-//		log.Errorf(err.Error())
-//		return false
-//	}
-//
-//	strSrc := string(src)
-//
-//	strSrc = strings.Replace(strSrc, info.oldStruct, newStrcut, -1)
-//
-//	dst, err := os.OpenFile(info.structDir+"/"+info.structFileName, os.O_WRONLY|os.O_CREATE, 0644)
-//	if err != nil {
-//		log.Errorf(err.Error())
-//		return false
-//	}
-//	defer dst.Close()
-//
-//	dst.Write([]byte(strSrc))
-//
-//	return true
-//}
-
-
-//初始化变量，生成临时对象池
 func (this *esimFactory) genPool() bool {
 
 	this.incrPoolVar(this.StructName)
@@ -820,19 +783,18 @@ func (this *esimFactory) genPool() bool {
 }
 
 
-//复数池
 func (this *esimFactory) genPlural() bool {
 
 	this.incrPoolVar(this.pluralName)
+
+	this.TypePluralStr = this.genTypePluralStr()
 
 	this.NewPluralStr = this.genNewPluralStr()
 
 	this.ReleasePluralStr = this.genReleasePluralStr()
 
-
 	return true
 }
-
 
 
 func (this *esimFactory) incrPoolVar(StructName string) bool {
@@ -881,8 +843,7 @@ func (this *esimFactory) genSpecFieldInitStr()  {
 
 
 func (this *esimFactory) genReleaseStructStr(initFields []string) string {
-	str := "func (" + strings.ToLower(this.StructName) +
-		this.NewStructInfo.varStr + ") Release() {\n"
+	str := "func (this " + this.NewStructInfo.ReturnVarStr + ") Release() {\n"
 
 	for _, field := range this.InitField.Fields {
 		if strings.Contains(field, "time.Time") {
@@ -892,11 +853,12 @@ func (this *esimFactory) genReleaseStructStr(initFields []string) string {
 	}
 
 	str += "		" + strings.ToLower(this.StructName) +
-		"Pool.Put(" + strings.ToLower(this.StructName) + ")\n"
+		"Pool.Put(this)\n"
 	str += "}"
 
 	return str
 }
+
 
 func (this *esimFactory) genNewPluralStr() string {
 	str := `func New` + this.pluralName + `() *` + this.pluralName + ` {
@@ -911,18 +873,23 @@ func (this *esimFactory) genNewPluralStr() string {
 	return str
 }
 
+func (this *esimFactory) genTypePluralStr() string {
+	return "type " + this.pluralName + " []" + this.StructName
+}
+
+
 func (this *esimFactory) genReleasePluralStr() string {
-	str := "func (" + strings.ToLower(this.pluralName) + " *" +
+	str := "func (this *" +
 		this.pluralName + ") Release() {\n"
 
-	str += "*" + strings.ToLower(this.pluralName) + " = (*" +
-		strings.ToLower(this.pluralName) + ")[:0]\n"
+	str += "*this = (*this)[:0]\n"
 	str += "		" + strings.ToLower(this.pluralName) +
-		"Pool.Put(" + strings.ToLower(this.pluralName) + ")\n"
+		"Pool.Put(this)\n"
 	str += "}"
 
 	return str
 }
+
 
 func (this *esimFactory) appendNewImport(importName string) bool {
 	var found bool
@@ -940,7 +907,13 @@ func (this *esimFactory) appendNewImport(importName string) bool {
 	return true
 }
 
+
 func (this *esimFactory) genVarStr(vars []Var) {
+
+	if len(vars) <= 0{
+		return
+	}
+
 	varStr := "var ( \n"
 	for _, varInfo := range vars {
 		for _, doc := range varInfo.doc {
@@ -967,6 +940,7 @@ func (this *esimFactory) genPoolVar(pollVarName, StructName string) Var {
 	return poolVar
 }
 
+
 //变量是否存在
 func (this *esimFactory) varNameExists(vars []Var, poolVarName string) bool {
 	for _, varInfo := range vars {
@@ -978,6 +952,7 @@ func (this *esimFactory) varNameExists(vars []Var, poolVarName string) bool {
 	return false
 }
 
+
 //package + import
 func (this *esimFactory) getFirstPart() {
 
@@ -985,51 +960,19 @@ func (this *esimFactory) getFirstPart() {
 		this.firstPart += this.packStr + "\n\n"
 	}
 
-	this.firstPart += this.genImport(this.NewStructInfo.imports)
-	this.firstPart += "\n"
+	this.firstPart += this.NewStructInfo.importStr
+
 }
+
 
 //var
 func (this *esimFactory) getSecondPart() {
-	this.secondPart += this.oldStructInfo.varStr
+	this.secondPart = this.oldStructInfo.varStr
 }
 
-//struct body
-//func getTwoPart(info *esimFactory) {
-//	bodyStr := ""
-//
-//	if info.newStruct != "" {
-//		bodyStr += info.newStruct
-//	} else {
-//		bodyStr += info.oldStruct
-//	}
-//
-//	if info.pluralName != "" {
-//		bodyStr += "\n"
-//		bodyStr += "type " + info.pluralName + " []" + info.StructName
-//	}
-//
-//	if info.newObjStr != "" {
-//		bodyStr += "\n\n"
-//		bodyStr += info.newObjStr
-//	}
-//
-//	if info.releaseStr != "" {
-//		bodyStr += "\n"
-//		bodyStr += info.releaseStr
-//	}
-//
-//	if info.newPluralNewBody != "" {
-//		bodyStr += "\n\n"
-//		bodyStr += info.newPluralNewBody
-//	}
-//
-//	if info.newPluralReleaseBody != "" {
-//		bodyStr += "\n"
-//		bodyStr += info.newPluralReleaseBody
-//	}
-//
-//	info.bodyStr = bodyStr
-//}
+
+func (this *esimFactory) Close() {
+	this.structFieldIface.Close()
+}
 
 

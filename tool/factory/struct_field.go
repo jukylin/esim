@@ -104,8 +104,8 @@ func (this *rpcPluginStructField) buildPluginEnv() error {
 		}
 	}
 
-	//TODO 复制文件
-	//TODO 改 package 名称
+	// 复制文件
+	// 改 package 名称
 	reg, _ := regexp.Compile(`package[\s*]` + this.packName)
 
 	for _, name := range this.filesName {
@@ -320,5 +320,7 @@ func (this *rpcPluginStructField) Close()  {
 
 func (this *rpcPluginStructField) clear() {
 	err := os.RemoveAll(this.structDir + string(filepath.Separator) + "plugin")
-	this.logger.Panicf(err.Error())
+	if err != nil {
+		this.logger.Panicf(err.Error())
+	}
 }

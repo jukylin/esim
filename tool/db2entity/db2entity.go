@@ -707,6 +707,7 @@ type Field struct {
 	Doc   []string
 	Filed string
 	Tag   string
+	Name string
 }
 
 func GetOldFields(GenDecl *ast.GenDecl, strSrc string) []Field {
@@ -728,6 +729,7 @@ func GetOldFields(GenDecl *ast.GenDecl, strSrc string) []Field {
 					var name string
 					if len(astField.Names) > 0 {
 						name = astField.Names[0].String()
+						field.Name = name
 						field.Filed = name + " " + strSrc[astField.Type.Pos()-1:astField.Type.End()-1]
 					} else {
 						field.Filed = strSrc[astField.Type.Pos()-1 : astField.Type.End()-1]
