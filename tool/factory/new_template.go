@@ -3,8 +3,8 @@ package factory
 var newTemplate = `
 type {{.StructName}} struct{
 {{ range .NewStructInfo.Fields }}
-	{{ range .Doc}}
-		T1
+	{{ range $i, $a := .Doc}}
+		$a
 	{{end}}
 	{{.Filed}} {{.Tag}}
 {{ end }}

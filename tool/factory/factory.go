@@ -101,8 +101,6 @@ type esimFactory struct {
 
 	structFieldIface StructFieldIface
 
-	newObjStr string
-
 	ReleaseStr string
 
 	firstPart string
