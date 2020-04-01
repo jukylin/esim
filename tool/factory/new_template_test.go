@@ -17,9 +17,11 @@ func TestExecuteFactoryTemplate(t *testing.T)  {
 
 	Field1 := db2entity.Field{}
 	Field1.Filed = "a int"
+	Field1.Doc = []string{"a", "int"}
 
 	Field2 := db2entity.Field{}
 	Field2.Filed = "b string"
+	Field2.Doc = []string{"b", "string"}
 
 	//fields := []db2entity.Field{}
 	s.Fields = append(s.Fields, Field1, Field2)
@@ -35,6 +37,7 @@ func TestExecuteFactoryTemplate(t *testing.T)  {
 	if err != nil{
 		println(err.Error())
 	}
+	println(buf.String())
 	assert.Nil(t, err)
 }
 
