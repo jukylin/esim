@@ -35,15 +35,6 @@ func setUp()  {
 }
 
 
-func getCurDir() string {
-	modelpath, err := os.Getwd()
-	if err != nil {
-		println(err.Error())
-	}
-
-	return modelpath
-}
-
 
 func TestEsimFactory_Run(t *testing.T) {
 	v := viper.New()

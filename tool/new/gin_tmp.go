@@ -121,13 +121,13 @@ func NewGinServer(app *{{package_name}}.App) *GinServer {
 		httpport = ":"+httpport
 	}
 
-	en := gin.Default()
-
 	if app.Conf.GetString("runmode") != "pro"{
 		gin.SetMode(gin.DebugMode)
 	}else{
 		gin.SetMode(gin.ReleaseMode)
 	}
+
+	en := gin.Default()
 
 	if app.Conf.GetBool("http_tracer") == true{
 		en.Use(middle_ware.GinTracer(app.Tracer))
@@ -155,7 +155,9 @@ func (this *GinServer) Start(){
 	this.server = server
 	go func() {
 		if err := server.ListenAndServe(); err != nil{
-			this.logger.Fatalf("start http server err %s", err.Error())
+			if err != http.ErrServerClosed {
+				this.logger.Fatalf("start http server err %s", err.Error())
+			}
 			return
 		}
 	}()

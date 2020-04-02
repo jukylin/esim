@@ -53,7 +53,7 @@ func NewApp(options ...Option) *App {
 		conf := config.NewViperConfig(options.WithConfigType("yaml"),
 			options.WithConfFile(file))
 
-		env := os.Getenv("ESIM_ENV")
+		env := os.Getenv("ENV")
 		if env == "" {
 			conf.Set("runmode", "dev")
 		}
