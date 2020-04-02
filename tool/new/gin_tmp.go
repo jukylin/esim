@@ -176,104 +176,40 @@ func (this *GinServer) GracefulShutDown()  {
 	fc4 := &FileContent{
 		FileName: "component_test.go",
 		Dir:      "internal/transports/http/component-test",
-		Content: `// +build component_test
-
-package component_test
+		Content: `package component_test
 
 import (
-	"os"
-	"testing"
 	"context"
 	"io/ioutil"
-	{{service_name}} "{{PROPATH}}{{service_name}}/internal"
-	"{{PROPATH}}{{service_name}}/internal/transports/http"
-	"{{PROPATH}}{{service_name}}/internal/infra"
+	"testing"
+
 	http_client "github.com/jukylin/esim/http"
-	"github.com/stretchr/testify/assert"
 	"github.com/jukylin/esim/log"
-	_grpc "google.golang.org/grpc"
-	"github.com/jukylin/esim/container"
-	"github.com/jukylin/esim/grpc"
+	"github.com/stretchr/testify/assert"
 )
 
 
-func TestMain(m *testing.M) {
-	appOptions := {{package_name}}.AppOptions{}
-	app := {{package_name}}.NewApp(appOptions.WithConfPath("../../../../conf/"))
-
-	setUp(app)
-
-	code := m.Run()
-
-	tearDown(app)
-
-	os.Exit(code)
-}
-
-
-func provideStubsGrpcClient(esim *container.Esim) *grpc.GrpcClient {
-	clientOptional := grpc.ClientOptionals{}
-	clientOptions := grpc.NewClientOptions(
-		clientOptional.WithLogger(esim.Logger),
-		clientOptional.WithConf(esim.Conf),
-		clientOptional.WithDialOptions(_grpc.WithUnaryInterceptor(
-			grpc.ClientStubs(func(ctx context.Context, method string, req, reply interface{}, cc *_grpc.ClientConn, invoker _grpc.UnaryInvoker, opts ..._grpc.CallOption) error {
-				esim.Logger.Infof(method)
-				err := invoker(ctx, method, req, reply, cc, opts...)
-				return err
-			}),
-		),),
-	)
-
-	grpcClient := grpc.NewClient(clientOptions)
-
-	return grpcClient
-}
-
-func setUp(app *{{package_name}}.App)  {
-
-	app.Infra = infra.NewStubsInfra(provideStubsGrpcClient(app.Esim))
-
-	app.Trans = append(app.Trans, http.NewGinServer(app))
-
-	app.Start()
-
-	errs := app.Infra.HealthCheck()
-	if len(errs) > 0{
-		for _, err := range errs {
-			app.Logger.Errorf(err.Error())
-		}
-	}
-}
-
-
-func tearDown(app *{{package_name}}.App)  {
-	app.Infra.Close()
-}
-
-//go test -v -tags="component_test"
-func TestControllers_Esim(t *testing.T)  {
+//go test
+func TestControllers_Esim(t *testing.T) {
 	logger := log.NewLogger()
 
 	client := http_client.NewHttpClient()
 	ctx := context.Background()
 	resp, err := client.Get(ctx, "http://localhost:8080")
 
-	if err != nil{
+	if err != nil {
 		logger.Errorf(err.Error())
 	}
 
 	defer resp.Body.Close()
 
-
 	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil{
+	if err != nil {
 		logger.Errorf(err.Error())
 	}
 	logger.Debugf(string(body))
 	assert.Equal(t, 200, resp.StatusCode)
-}
-`,
+}`,
 	}
 
 	fc5 := &FileContent{
@@ -422,5 +358,79 @@ func NewUser(user entity.User) User {
 }`,
 	}
 
-	Files = append(Files, fc1, fc2, fc3, fc4, fc5, fc6, fc7, fc8)
+	fc9 := &FileContent{
+		FileName: "main_test.go",
+		Dir:      "internal/transports/http/component-test",
+		Content: `package component_test
+
+import (
+	"os"
+	"testing"
+	"context"
+	"{{PROPATH}}{{service_name}}/internal"
+	"github.com/jukylin/esim/container"
+	"github.com/jukylin/esim/grpc"
+	_grpc "google.golang.org/grpc"
+	"{{PROPATH}}{{service_name}}/internal/infra"
+	"{{PROPATH}}{{service_name}}/internal/transports/http"
+)
+
+
+func TestMain(m *testing.M) {
+	appOptions := {{package_name}}.AppOptions{}
+	app := {{package_name}}.NewApp(appOptions.WithConfPath("../../../../conf/"))
+
+	setUp(app)
+
+	code := m.Run()
+
+	tearDown(app)
+
+	os.Exit(code)
+}
+
+
+func provideStubsGrpcClient(esim *container.Esim) *grpc.GrpcClient {
+	clientOptional := grpc.ClientOptionals{}
+	clientOptions := grpc.NewClientOptions(
+		clientOptional.WithLogger(esim.Logger),
+		clientOptional.WithConf(esim.Conf),
+		clientOptional.WithDialOptions(_grpc.WithUnaryInterceptor(
+			grpc.ClientStubs(func(ctx context.Context, method string, req, reply interface{}, cc *_grpc.ClientConn, invoker _grpc.UnaryInvoker, opts ..._grpc.CallOption) error {
+				esim.Logger.Infof(method)
+				err := invoker(ctx, method, req, reply, cc, opts...)
+				return err
+			}),
+		)),
+	)
+
+	grpcClient := grpc.NewClient(clientOptions)
+
+	return grpcClient
+}
+
+
+func setUp(app *{{package_name}}.App) {
+
+	app.Infra = infra.NewStubsInfra(provideStubsGrpcClient(app.Esim))
+
+	app.Trans = append(app.Trans, http.NewGinServer(app))
+
+	app.Start()
+
+	errs := app.Infra.HealthCheck()
+	if len(errs) > 0 {
+		for _, err := range errs {
+			app.Logger.Errorf(err.Error())
+		}
+	}
+}
+
+
+func tearDown(app *{{package_name}}.App) {
+	app.Infra.Close()
+}`,
+	}
+
+	Files = append(Files, fc1, fc2, fc3, fc4, fc5, fc6, fc7, fc8, fc9)
 }

@@ -101,7 +101,7 @@ func provideDb(esim *container.Esim) *mysql.MysqlClient {
 
 
 func provideUserRepo(esim *container.Esim) repo.UserRepo {
-	return repo.NewUserRepo(esim.Logger)
+	return repo.NewDBUserRepo(esim.Logger)
 }
 
 

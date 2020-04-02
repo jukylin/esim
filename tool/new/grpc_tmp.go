@@ -100,83 +100,20 @@ func NewGrpcServer(app *{{package_name}}.App) *grpc.GrpcServer {
 	fc4 := &FileContent{
 		FileName: "component_test.go",
 		Dir:      "internal/transports/grpc/component-test",
-		Content: `// +build component_test
-
-package component_test
+		Content: `package component_test
 
 import (
-	"os"
-	"testing"
 	"context"
-	{{service_name}} "{{PROPATH}}{{service_name}}/internal"
-	"{{PROPATH}}{{service_name}}/internal/transports/grpc"
-	"{{PROPATH}}{{service_name}}/internal/infra"
-	gp "{{PROPATH}}{{service_name}}/internal/infra/third_party/protobuf/passport"
-	"github.com/stretchr/testify/assert"
-	_grpc "google.golang.org/grpc"
-	"github.com/jukylin/esim/container"
+	"testing"
+
 	egrpc "github.com/jukylin/esim/grpc"
 	"github.com/jukylin/esim/log"
+	"github.com/stretchr/testify/assert"
+	gp "{{PROPATH}}{{service_name}}/internal/infra/third_party/protobuf/passport"
 )
 
-
-func TestMain(m *testing.M) {
-	appOptions := {{package_name}}.AppOptions{}
-	app := {{package_name}}.NewApp(appOptions.WithConfPath("../../../../conf/"))
-
-	setUp(app)
-
-	code := m.Run()
-
-	tearDown(app)
-
-	os.Exit(code)
-}
-
-
-func provideStubsGrpcClient(esim *container.Esim) *egrpc.GrpcClient {
-	clientOptional := egrpc.ClientOptionals{}
-	clientOptions := egrpc.NewClientOptions(
-		clientOptional.WithLogger(esim.Logger),
-		clientOptional.WithConf(esim.Conf),
-		clientOptional.WithDialOptions(_grpc.WithUnaryInterceptor(
-			egrpc.ClientStubs(func(ctx context.Context, method string, req, reply interface{}, cc *_grpc.ClientConn, invoker _grpc.UnaryInvoker, opts ..._grpc.CallOption) error {
-				esim.Logger.Infof(method)
-				err := invoker(ctx, method, req, reply, cc, opts...)
-				return err
-			}),
-		),),
-	)
-
-	grpcClient := egrpc.NewClient(clientOptions)
-
-	return grpcClient
-}
-
-
-func setUp(app *{{package_name}}.App)  {
-
-	app.Infra = infra.NewStubsInfra(provideStubsGrpcClient(app.Esim))
-
-	app.Trans = append(app.Trans, grpc.NewGrpcServer(app))
-
-	app.Start()
-
-	errs := app.Infra.HealthCheck()
-	if len(errs) > 0{
-		for _, err := range errs {
-			app.Logger.Errorf(err.Error())
-		}
-	}
-}
-
-
-func tearDown(app *{{package_name}}.App)  {
-	app.Infra.Close()
-}
-
-//go test -v -tags="component_test"
-func TestUserService_GetUserByUserName(t *testing.T)  {
+//go test
+func TestUserService_GetUserByUserName(t *testing.T) {
 	logger := log.NewLogger()
 
 	ctx := context.Background()
@@ -190,14 +127,13 @@ func TestUserService_GetUserByUserName(t *testing.T)  {
 	req := &gp.GetUserByUserNameRequest{}
 	req.Username = "demo"
 	reply, err := client.GetUserByUserName(ctx, req)
-	if err != nil{
+	if err != nil {
 		logger.Errorf(err.Error())
-	}else {
+	} else {
 		assert.Equal(t, "demo", reply.Data.UserName)
 		assert.Equal(t, int32(0), reply.Code)
 	}
-}
-`,
+}`,
 	}
 
 
@@ -323,5 +259,76 @@ func NewUserInfo(user entity.User) *passport.Info {
 }`,
 	}
 
-	Files = append(Files, fc1, fc2, fc3, fc4, fc5, fc6, fc7, fc8)
+	fc9 := &FileContent{
+		FileName: "main_test.go",
+		Dir:      "internal/transports/grpc/component-test",
+		Content: `package component_test
+
+import (
+	"os"
+	"testing"
+	"context"
+
+	"{{PROPATH}}{{service_name}}/internal/transports/grpc"
+	"{{PROPATH}}{{service_name}}/internal/infra"
+	_grpc "google.golang.org/grpc"
+	egrpc "github.com/jukylin/esim/grpc"
+	"github.com/jukylin/esim/container"
+	"{{PROPATH}}{{service_name}}/internal"
+)
+
+func TestMain(m *testing.M) {
+	appOptions := {{package_name}}.AppOptions{}
+	app := {{package_name}}.NewApp(appOptions.WithConfPath("../../../../conf/"))
+
+	setUp(app)
+
+	code := m.Run()
+
+	tearDown(app)
+
+	os.Exit(code)
+}
+
+func provideStubsGrpcClient(esim *container.Esim) *egrpc.GrpcClient {
+	clientOptional := egrpc.ClientOptionals{}
+	clientOptions := egrpc.NewClientOptions(
+		clientOptional.WithLogger(esim.Logger),
+		clientOptional.WithConf(esim.Conf),
+		clientOptional.WithDialOptions(_grpc.WithUnaryInterceptor(
+			egrpc.ClientStubs(func(ctx context.Context, method string, req, reply interface{}, cc *_grpc.ClientConn, invoker _grpc.UnaryInvoker, opts ..._grpc.CallOption) error {
+				esim.Logger.Infof(method)
+				err := invoker(ctx, method, req, reply, cc, opts...)
+				return err
+			}),
+		)),
+	)
+
+	grpcClient := egrpc.NewClient(clientOptions)
+
+	return grpcClient
+}
+
+func setUp(app *{{package_name}}.App) {
+
+	app.Infra = infra.NewStubsInfra(provideStubsGrpcClient(app.Esim))
+
+	app.Trans = append(app.Trans, grpc.NewGrpcServer(app))
+
+	app.Start()
+
+	errs := app.Infra.HealthCheck()
+	if len(errs) > 0 {
+		for _, err := range errs {
+			app.Logger.Errorf(err.Error())
+		}
+	}
+}
+
+func tearDown(app *{{package_name}}.App) {
+	app.Infra.Close()
+}`,
+	}
+
+	Files = append(Files, fc1, fc2, fc3, fc4, fc5, fc6, fc7, fc8, fc9)
 }
