@@ -3,6 +3,7 @@ package factory
 import (
 	"strings"
 	"os"
+	"reflect"
 	"github.com/jukylin/esim/pkg/file-dir"
 	"regexp"
 	"io/ioutil"
@@ -16,6 +17,7 @@ import (
 	"github.com/hashicorp/go-hclog"
 	"text/template"
 	"github.com/jukylin/esim/pkg"
+	"golang.org/x/tools/imports"
 )
 
 type StructFieldIface interface {
@@ -171,12 +173,16 @@ func (this *rpcPluginStructField) genStructPlugin(dir string)  {
 	var buf bytes.Buffer
 	err = tmpl.Execute(&buf, this)
 	if err != nil{
-		println(err.Error())
+		this.logger.Panicf(err.Error())
+	}
+
+	src ,err := imports.Process("", buf.Bytes(), nil)
+	if err != nil{
 		this.logger.Panicf(err.Error())
 	}
 
 	file := dir + string(filepath.Separator) + this.StructName + "_plugin.go"
-	err = ioutil.WriteFile(file, buf.Bytes(), 0666)
+	err = ioutil.WriteFile(file, src, 0666)
 	if err != nil {
 		this.logger.Panicf(err.Error())
 	}
@@ -324,4 +330,98 @@ func (this *rpcPluginStructField) clear() {
 	if err != nil {
 		this.logger.Panicf(err.Error())
 	}
+}
+
+func (this *rpcPluginStructField) GenInitFieldStr(getType reflect.Type, fieldLink, initName string, specFilds *pkg.Fields) []string {
+	typeNum := getType.NumField()
+	var structFields []string
+	var initStr string
+	field := pkg.Field{}
+
+	for i := 0; i < typeNum; i++ {
+		switch getType.Field(i).Type.Kind() {
+		case reflect.Array:
+			structFields = append(structFields, "for k, _ := range "+fieldLink+"."+getType.Field(i).Name+" {")
+			switch getType.Field(i).Type.Elem().Kind() {
+			case reflect.Struct:
+				structFields = append(structFields,
+					this.GenInitFieldStr(getType.Field(i).Type.Elem(), fieldLink+"."+getType.Field(i).Name,
+						initName+"."+getType.Field(i).Name, nil)...)
+			default:
+				initStr = this.KindToInit(getType.Field(i).Type.Elem())
+				structFields = append(structFields, fieldLink+"."+getType.Field(i).Name+"[k] = "+initStr)
+			}
+			structFields = append(structFields, "}")
+			continue
+		case reflect.Map:
+			structFields = append(structFields, "for k, _ := range "+fieldLink+"."+getType.Field(i).Name+" {")
+			structFields = append(structFields, "delete("+fieldLink+"."+getType.Field(i).Name+", k)")
+			structFields = append(structFields, "}")
+			if specFilds != nil {
+				field.Name = initName + "." + getType.Field(i).Name
+				field.Type = "map"
+				field.TypeName = getType.Field(i).Type.String()
+				*specFilds = append(*specFilds, field)
+			}
+			continue
+		case reflect.Struct:
+			if getType.Field(i).Type.String() == "time.Time" {
+				initStr = "time.Time{}"
+			} else {
+				structFields = append(structFields, this.GenInitFieldStr(getType.Field(i).Type,
+					fieldLink+"."+getType.Field(i).Name, initName+"."+getType.Field(i).Name, nil)...)
+				continue
+			}
+		case reflect.Slice:
+			if specFilds != nil {
+				field.Name = initName + "." + getType.Field(i).Name
+				field.TypeName = getType.Field(i).Type.String()
+				field.Type = "slice"
+				*specFilds = append(*specFilds, field)
+			}
+			structFields = append(structFields, fieldLink+"."+getType.Field(i).Name+" = "+fieldLink+"."+getType.Field(i).Name+"[:0]")
+
+			continue
+		default:
+			initStr = this.KindToInit(getType.Field(i).Type)
+		}
+
+		structFields = append(structFields, fieldLink+"."+getType.Field(i).Name+" = "+initStr)
+	}
+
+	return structFields
+}
+
+
+func (this *rpcPluginStructField) KindToInit(refType reflect.Type) string {
+	var initStr string
+
+	switch refType.Kind() {
+	case reflect.String:
+		initStr = "\"\""
+	case reflect.Int, reflect.Int64, reflect.Int8, reflect.Int16, reflect.Int32:
+		initStr = "0"
+	case reflect.Uint, reflect.Uint64, reflect.Uint8, reflect.Uint16, reflect.Uint32:
+		initStr = "0"
+	case reflect.Bool:
+		initStr = "false"
+	case reflect.Float32, reflect.Float64:
+		initStr = "0.00"
+	case reflect.Complex64, reflect.Complex128:
+		initStr = "0+0i"
+	case reflect.Interface:
+		initStr = "nil"
+	case reflect.Uintptr:
+		initStr = "0"
+	case reflect.Invalid, reflect.Func, reflect.Chan, reflect.Ptr, reflect.UnsafePointer:
+		initStr = "nil"
+	case reflect.Slice:
+		initStr = "nil"
+	case reflect.Map:
+		initStr = "nil"
+	case reflect.Array:
+		initStr = "nil"
+	}
+
+	return initStr
 }

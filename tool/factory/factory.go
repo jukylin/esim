@@ -143,14 +143,14 @@ type esimFactory struct {
 	ReturnStr string
 }
 
-func NewEsimFactory() *esimFactory {
+func NewEsimFactory(logger logger.Logger) *esimFactory {
 	factory := &esimFactory{}
 
 	factory.oldStructInfo = &structInfo{}
 
 	factory.NewStructInfo = &structInfo{}
 
-	factory.logger = logger.NewLogger()
+	factory.logger = logger
 
 	factory.writer = file_dir.EsimWriter{}
 
@@ -163,7 +163,7 @@ func NewEsimFactory() *esimFactory {
 
 type structInfo struct{
 
-	Fields []pkg.Field
+	Fields pkg.Fields
 
 	structStr string
 
@@ -227,7 +227,8 @@ func (this *esimFactory) Run(v *viper.Viper) error {
 
 		if this.withSort == true{
 			sortedField := this.structFieldIface.SortField(this.NewStructInfo.Fields)
-			this.genNewStructField(sortedField.Fields, this.NewStructInfo.Fields)
+			this.logger.Debugf("sorted fields %+v", sortedField.Fields)
+			this.NewStructInfo.Fields = sortedField.Fields
 		}
 
 		this.InitField = this.structFieldIface.InitField(this.NewStructInfo.Fields)
@@ -429,7 +430,6 @@ func (this *esimFactory) FindStruct() bool {
 		this.logger.Panicf(err.Error())
 	}
 
-	var found bool
 	for _, fileInfo := range files {
 
 		ext := path.Ext(fileInfo.Name())
@@ -480,7 +480,7 @@ func (this *esimFactory) FindStruct() bool {
 
 			for _, decl := range f.Decls {
 				if GenDecl, ok := decl.(*ast.GenDecl); ok {
-					if GenDecl.Tok.String() == "var" && found == true {
+					if GenDecl.Tok.String() == "var" && this.found == true {
 
 						for _, specs := range GenDecl.Specs {
 
@@ -508,7 +508,7 @@ func (this *esimFactory) FindStruct() bool {
 						}
 					}
 
-					if GenDecl.Tok.String() == "import" && found == true {
+					if GenDecl.Tok.String() == "import" && this.found == true {
 						for _, specs := range GenDecl.Specs {
 							if typeSpec, ok := specs.(*ast.ImportSpec); ok {
 								if typeSpec.Name.String() != "<nil>" {
@@ -736,23 +736,6 @@ func (` + this.StructName + `Options) WithLogger(logger log.Logger) ` + this.Str
 	}
 }
 `
-	}
-}
-
-
-func (this *esimFactory) genNewStructField(sortFields pkg.Fields,
-	oriFields []pkg.Field) {
-
-	oriFieldMap := make(map[string]pkg.Field)
-	for _, ofield := range oriFields {
-		oriFieldMap[ofield.Name] = ofield
-	}
-
-	this.NewStructInfo.Fields = this.NewStructInfo.Fields[:0]
-	for _, field := range sortFields {
-		if of, ok := oriFieldMap[field.Name]; ok{
-			this.NewStructInfo.Fields = append(this.NewStructInfo.Fields, of)
-		}
 	}
 }
 

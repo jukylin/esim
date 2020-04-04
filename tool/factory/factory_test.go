@@ -9,6 +9,7 @@ import (
 	"github.com/jukylin/esim/pkg/file-dir"
 	"github.com/spf13/viper"
 	"github.com/jukylin/esim/pkg"
+	"github.com/jukylin/esim/log"
 )
 
 
@@ -29,9 +30,10 @@ var esimfactory *esimFactory
 
 
 func setUp()  {
-	esimfactory = NewEsimFactory()
+	loggerOptions := log.LoggerOptions{}
+	logger := log.NewLogger(loggerOptions.WithDebug(true))
+	esimfactory = NewEsimFactory(logger)
 }
-
 
 
 func TestEsimFactory_Run(t *testing.T) {
@@ -44,10 +46,11 @@ func TestEsimFactory_Run(t *testing.T) {
 	v.Set("sdir", "./example")
 	v.Set("pool", true)
 	v.Set("plural", true)
-	//v.Set("print", true)
+	v.Set("new", true)
+	v.Set("print", true)
 
 	esimfactory.Run(v)
-	//esimfactory.Close()
+	esimfactory.Close()
 }
 
 

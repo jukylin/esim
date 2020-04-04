@@ -26,6 +26,10 @@ func init() {
 	log = logger.NewLogger()
 }
 
+type Field struct{
+	Name string
+}
+
 func GenEntity(v *viper.Viper) error {
 
 	debug := v.GetBool("debug")
@@ -706,7 +710,7 @@ func getOldImports(GenDecl *ast.GenDecl) []string {
 
 
 func GetOldFields(GenDecl *ast.GenDecl, strSrc string) []pkg.Field {
-	var fields []pkg.Field
+	var fields pkg.Fields
 	for _, specs := range GenDecl.Specs {
 		if spec, ok := specs.(*ast.TypeSpec); ok {
 			if structType, ok := spec.Type.(*ast.StructType); ok {
@@ -727,7 +731,9 @@ func GetOldFields(GenDecl *ast.GenDecl, strSrc string) []pkg.Field {
 						field.Name = name
 						field.Field = name + " " + strSrc[astField.Type.Pos()-1:astField.Type.End()-1]
 					} else {
-						field.Field = strSrc[astField.Type.Pos()-1 : astField.Type.End()-1]
+						nameSplit := strings.Split(strSrc[astField.Type.Pos()-1 : astField.Type.End()-1], ".")
+						field.Name = nameSplit[len(nameSplit) - 1]
+						field.Field =  strSrc[astField.Type.Pos()-1 : astField.Type.End()-1]
 					}
 
 					fields = append(fields, field)

@@ -13,7 +13,8 @@ var factoryCmd = &cobra.Command{
 	Short: "初始化结构体",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		err := factory.NewEsimFactory().Run(v)
+		logger := log.NewLogger()
+		err := factory.NewEsimFactory(logger).Run(v)
 		if err != nil {
 			log.Log.Error(err.Error())
 		}
