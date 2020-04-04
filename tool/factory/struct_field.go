@@ -4,7 +4,6 @@ import (
 	"strings"
 	"os"
 	"github.com/jukylin/esim/pkg/file-dir"
-	"github.com/jukylin/esim/tool/db2entity"
 	"regexp"
 	"io/ioutil"
 	"path/filepath"
@@ -16,12 +15,13 @@ import (
 	go_plugin "github.com/hashicorp/go-plugin"
 	"github.com/hashicorp/go-hclog"
 	"text/template"
+	"github.com/jukylin/esim/pkg"
 )
 
 type StructFieldIface interface {
-	SortField(fields []db2entity.Field) *SortReturn
+	SortField(fields []pkg.Field) *SortReturn
 
-	InitField(fields []db2entity.Field) *InitFieldsReturn
+	InitField(fields []pkg.Field) *InitFieldsReturn
 
 	Close()
 
@@ -57,7 +57,7 @@ type rpcPluginStructField struct{
 
 	buildBeforeFunc func()
 
-	Fields []db2entity.Field
+	Fields []pkg.Field
 
 	oldImport []string
 
@@ -171,6 +171,7 @@ func (this *rpcPluginStructField) genStructPlugin(dir string)  {
 	var buf bytes.Buffer
 	err = tmpl.Execute(&buf, this)
 	if err != nil{
+		println(err.Error())
 		this.logger.Panicf(err.Error())
 	}
 
@@ -251,7 +252,7 @@ func (this *rpcPluginStructField) run()  {
 }
 
 
-func (this *rpcPluginStructField) SortField(fields []db2entity.Field) *SortReturn {
+func (this *rpcPluginStructField) SortField(fields []pkg.Field) *SortReturn {
 
 	this.Fields = fields
 
@@ -269,7 +270,7 @@ func (this *rpcPluginStructField) SortField(fields []db2entity.Field) *SortRetur
 }
 
 
-func (this *rpcPluginStructField) InitField(fields []db2entity.Field) *InitFieldsReturn {
+func (this *rpcPluginStructField) InitField(fields []pkg.Field) *InitFieldsReturn {
 	this.Fields = fields
 
 	if this.model == nil{

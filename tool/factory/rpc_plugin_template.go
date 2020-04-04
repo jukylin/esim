@@ -15,37 +15,19 @@ import (
 	"strings"
 	"github.com/hashicorp/go-plugin"
 	"github.com/jukylin/esim/tool/factory"
+	"github.com/jukylin/esim/pkg"
 )
 
 
 type InitFieldsReturn struct{
 	Fields []string
-	SpecFields []Field
+	SpecFields []pkg.Field
 }
-
-type Field struct{
-	Name string
-	Str string
-	Size int
-	Type string
-	TypeName string
-}
-
-type Fields []Field
-
-func (f Fields) Len() int { return len(f) }
-
-func (f Fields) Less(i, j int) bool {
-	return f[i].Size <  f[j].Size
-}
-
-func (f Fields) Swap(i, j int) { f[i], f[j] = f[j], f[i] }
 
 type Return struct{
-	Fields Fields
+	Fields pkg.Fields
 	Size int
 }
-
 
 func (ModelImp) Sort() string {
 
@@ -55,12 +37,12 @@ func (ModelImp) Sort() string {
 
 	getType := reflect.TypeOf({{.StructName | tolower}})
 
-	var fields Fields
+	var fields pkg.Fields
 
 	{{range $i, $field := .Fields}}
-	field{{$i}} := Field{}
+	field{{$i}} := pkg.Field{}
 	field{{$i}}.Name = "{{$field.Name}}"
-	field{{$i}}.Str = "{{$field.Filed}}"
+	field{{$i}}.Field = "{{$field.Field}}"
 	field{{$i}}.Size = int(getType.Field({{$i}}).Type.Size())
 	fields = append(fields, field{{$i}})
 
@@ -81,7 +63,7 @@ func (ModelImp) InitField() string {
 		{{.StructName | tolower}} := {{.StructName}}{}
 
 		initReturn := &InitFieldsReturn{}
-	 	fields := &Fields{}
+	 	fields := &pkg.Fields{}
 
 		getType := reflect.TypeOf({{.StructName | tolower}})
 		structFields := getInitStr(getType, string(strings.ToLower(getType.Name())[0]), fields)
@@ -92,11 +74,11 @@ func (ModelImp) InitField() string {
 		return string(j)
 	}
 
-	func getInitStr(getType reflect.Type, name string, specFilds *Fields) []string {
+	func getInitStr(getType reflect.Type, name string, specFilds *pkg.Fields) []string {
 		typeNum := getType.NumField()
 		var structFields []string
 		var initStr string
-		field  := Field{}
+		field  := pkg.Field{}
 
 		for i := 0; i < typeNum; i++ {
 		switch getType.Field(i).Type.Kind() {
@@ -154,7 +136,7 @@ func (ModelImp) InitField() string {
 	}
 
 
-func KindToInit(refType reflect.Type, name string, specFilds *Fields) string {
+func KindToInit(refType reflect.Type, name string, specFilds *pkg.Fields) string {
 	var initStr string
 
 	switch refType.Kind() {

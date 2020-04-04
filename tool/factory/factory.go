@@ -17,30 +17,19 @@ import (
 	"path/filepath"
 	"text/template"
 	"bytes"
-	//"github.com/davecgh/go-spew/spew"
+	"github.com/jukylin/esim/pkg"
 )
 
 
 type SortReturn struct {
-	Fields Fields `json:"fields"`
+	Fields pkg.Fields `json:"fields"`
 }
 
 
 type InitFieldsReturn struct {
 	Fields     []string `json:"fields"`
-	SpecFields []Field  `json:"SpecFields"`
+	SpecFields []pkg.Field  `json:"SpecFields"`
 }
-
-
-type Field struct {
-	Name     string `json:"Name"`
-	Size     int    `json:"Size"`
-	Type     string `json:"Type"`
-	TypeName string `json:"TypeName"`
-}
-
-
-type Fields []Field
 
 
 type Var struct {
@@ -85,9 +74,8 @@ type esimFactory struct {
 	NewStructInfo *structInfo
 
 	//true if find the StructName
-	//false if not find
+	//false if not
 	found bool
-
 
 	withPlural bool
 
@@ -134,8 +122,6 @@ type esimFactory struct {
 	Option6 string
 	//option end
 
-	NewStr string
-
 	OptionParam string
 
 	logger logger.Logger
@@ -177,7 +163,7 @@ func NewEsimFactory() *esimFactory {
 
 type structInfo struct{
 
-	Fields []db2entity.Field
+	Fields []pkg.Field
 
 	structStr string
 
@@ -281,7 +267,6 @@ func (this *esimFactory) Run(v *viper.Viper) error {
 
 	return nil
 }
-
 
 
 func (this *esimFactory) executeNewTmpl() {
@@ -554,14 +539,14 @@ func (this *esimFactory) ExtendField() bool {
 			HasExtend = true
 			var foundLogField bool
 			for _, field := range this.NewStructInfo.Fields {
-				if strings.Contains(field.Filed, "log.Logger") == true && foundLogField == false{
+				if strings.Contains(field.Field, "log.Logger") == true && foundLogField == false{
 					foundLogField = true
 				}
 			}
 
 			if foundLogField == false || len(this.NewStructInfo.Fields) == 0{
-				fld := db2entity.Field{}
-				fld.Filed = "logger log.Logger"
+				fld := pkg.Field{}
+				fld.Field = "logger log.Logger"
 				fld.Name = "logger"
 				this.NewStructInfo.Fields = append(this.NewStructInfo.Fields, fld)
 			}
@@ -583,15 +568,15 @@ func (this *esimFactory) ExtendField() bool {
 
 			var foundConfField bool
 			for _, field := range this.NewStructInfo.Fields {
-				if strings.Contains(field.Filed, "config.Config") == 
+				if strings.Contains(field.Field, "config.Config") ==
 					true && foundConfField == false{
 					foundConfField = true
 				}
 			}
 
 			if foundConfField == false || len(this.NewStructInfo.Fields) == 0{
-				fld := db2entity.Field{}
-				fld.Filed = "conf config.Config"
+				fld := pkg.Field{}
+				fld.Field = "conf config.Config"
 				fld.Name = "conf"
 				this.NewStructInfo.Fields = append(this.NewStructInfo.Fields, fld)
 			}
@@ -712,6 +697,7 @@ func (this *esimFactory) genStructInitStr() {
 }
 
 
+//return {{.ReturnStr}}
 func (this *esimFactory) genReturnStr() {
 	this.ReturnStr = strings.ToLower(string(this.StructName[0]))
 }
@@ -754,10 +740,10 @@ func (` + this.StructName + `Options) WithLogger(logger log.Logger) ` + this.Str
 }
 
 
-func (this *esimFactory) genNewStructField(sortFields Fields,
-	oriFields []db2entity.Field) {
+func (this *esimFactory) genNewStructField(sortFields pkg.Fields,
+	oriFields []pkg.Field) {
 
-	oriFieldMap := make(map[string]db2entity.Field)
+	oriFieldMap := make(map[string]pkg.Field)
 	for _, ofield := range oriFields {
 		oriFieldMap[ofield.Name] = ofield
 	}

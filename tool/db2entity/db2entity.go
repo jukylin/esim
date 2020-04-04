@@ -15,6 +15,7 @@ import (
 	"os"
 	"strings"
 	"golang.org/x/tools/imports"
+	"github.com/jukylin/esim/pkg"
 )
 
 var (
@@ -637,7 +638,7 @@ func handleInject(srcStr string, structName string, fieldName, packageName, inte
 							hasStruct = true
 							oldStruct = srcStr[GenDecl.Pos()-1 : GenDecl.End()]
 							oldFields := GetOldFields(GenDecl, srcStr)
-							newFields := append(oldFields, Field{Filed: interName + " repo." + interName})
+							newFields := append(oldFields, pkg.Field{Field: interName + " repo." + interName})
 							newStruct = GetNewStruct(structName, newFields)
 						}
 					}
@@ -703,20 +704,14 @@ func getOldImports(GenDecl *ast.GenDecl) []string {
 	return imports
 }
 
-type Field struct {
-	Doc   []string
-	Filed string
-	Tag   string
-	Name string
-}
 
-func GetOldFields(GenDecl *ast.GenDecl, strSrc string) []Field {
-	var fields []Field
+func GetOldFields(GenDecl *ast.GenDecl, strSrc string) []pkg.Field {
+	var fields []pkg.Field
 	for _, specs := range GenDecl.Specs {
 		if spec, ok := specs.(*ast.TypeSpec); ok {
 			if structType, ok := spec.Type.(*ast.StructType); ok {
 				for _, astField := range structType.Fields.List {
-					var field Field
+					var field pkg.Field
 					if astField.Doc != nil {
 						for _, doc := range astField.Doc.List {
 							field.Doc = append(field.Doc, doc.Text)
@@ -730,9 +725,9 @@ func GetOldFields(GenDecl *ast.GenDecl, strSrc string) []Field {
 					if len(astField.Names) > 0 {
 						name = astField.Names[0].String()
 						field.Name = name
-						field.Filed = name + " " + strSrc[astField.Type.Pos()-1:astField.Type.End()-1]
+						field.Field = name + " " + strSrc[astField.Type.Pos()-1:astField.Type.End()-1]
 					} else {
-						field.Filed = strSrc[astField.Type.Pos()-1 : astField.Type.End()-1]
+						field.Field = strSrc[astField.Type.Pos()-1 : astField.Type.End()-1]
 					}
 
 					fields = append(fields, field)
@@ -795,7 +790,7 @@ func provide` + instName + `(esim *container.Esim) repo.` + interName + ` {
 	return funcStr
 }
 
-func GetNewStruct(name string, fields []Field) string {
+func GetNewStruct(name string, fields []pkg.Field) string {
 	var structStr string
 	structStr = " type " + name + " struct {\r\n"
 
@@ -805,7 +800,7 @@ func GetNewStruct(name string, fields []Field) string {
 				structStr += "	" + d + "\r\n"
 			}
 		}
-		structStr += "	" + f.Filed + "\r\n"
+		structStr += "	" + f.Field + "\r\n"
 		structStr += "\r\n"
 	}
 

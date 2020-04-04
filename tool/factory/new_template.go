@@ -4,7 +4,7 @@ var newTemplate = `
 type {{.StructName}} struct{
 {{ range .NewStructInfo.Fields }}
 {{ range $a := .Doc}}{{$a}}
-{{end}}{{.Filed}} {{.Tag}}
+{{end}}{{.Field}} {{.Tag}}
 {{end}}
 }
 

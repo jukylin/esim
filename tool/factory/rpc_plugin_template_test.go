@@ -5,24 +5,24 @@ import (
 	"text/template"
 	"github.com/stretchr/testify/assert"
 	"bytes"
-	"github.com/jukylin/esim/tool/db2entity"
+	"github.com/jukylin/esim/pkg"
 )
 
 
 func TestExecuteRpcPluginTemplate(t *testing.T)  {
 
-	Field1 := db2entity.Field{}
-	Field1.Filed = "a int"
+	Field1 := pkg.Field{}
+	Field1.Field = "a int"
 
-	Field2 := db2entity.Field{}
-	Field2.Filed = "b string"
+	Field2 := pkg.Field{}
+	Field2.Field = "b string"
 
-	fields := []db2entity.Field{}
+	fields := []pkg.Field{}
 	fields = append(fields, Field1, Field2)
 
 	data := struct {
 		StructName string
-		Fields []db2entity.Field
+		Fields []pkg.Field
 	}{
 		"Test",
 		fields,

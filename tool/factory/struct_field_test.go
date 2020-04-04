@@ -2,10 +2,10 @@ package factory
 
 import (
 	"testing"
-	"github.com/jukylin/esim/tool/db2entity"
 	"github.com/jukylin/esim/pkg/file-dir"
 	"path/filepath"
 	"github.com/stretchr/testify/assert"
+	"github.com/jukylin/esim/pkg"
 )
 
 func TestRpcPluginStructField_SortField(t *testing.T) {
@@ -47,34 +47,34 @@ type Test struct {
 
 type empty struct {}`
 
-	Field1 := db2entity.Field{}
-	Field1.Filed = "b int64"
+	Field1 := pkg.Field{}
+	Field1.Field = "b int64"
 
-	Field2 := db2entity.Field{}
-	Field2.Filed = "c int8"
+	Field2 := pkg.Field{}
+	Field2.Field = "c int8"
 
-	Field3 := db2entity.Field{}
-	Field3.Filed = "i bool"
+	Field3 := pkg.Field{}
+	Field3.Field = "i bool"
 
-	Field4 := db2entity.Field{}
-	Field4.Filed = "f float32"
+	Field4 := pkg.Field{}
+	Field4.Field = "f float32"
 
-	Field5 := db2entity.Field{}
-	Field5.Filed = "a int32"
+	Field5 := pkg.Field{}
+	Field5.Field = "a int32"
 
-	Field6 := db2entity.Field{}
-	Field6.Filed = "h []int"
+	Field6 := pkg.Field{}
+	Field6.Field = "h []int"
 
-	Field7 := db2entity.Field{}
-	Field7.Filed = "m map[string]interface{}"
+	Field7 := pkg.Field{}
+	Field7.Field = "m map[string]interface{}"
 
-	Field8 := db2entity.Field{}
-	Field8.Filed = "u [3]string"
+	Field8 := pkg.Field{}
+	Field8.Field = "u [3]string"
 
-	Field9 := db2entity.Field{}
-	Field9.Filed = "g byte"
+	Field9 := pkg.Field{}
+	Field9.Field = "g byte"
 
-	fields := []db2entity.Field{}
+	fields := []pkg.Field{}
 	fields = append(fields, Field1, Field2, Field3, Field4,
 		Field5, Field6, Field7, Field8, Field9)
 	rpcPlugin.Fields = fields

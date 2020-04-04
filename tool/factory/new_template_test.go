@@ -5,7 +5,7 @@ import (
 	"text/template"
 	"github.com/stretchr/testify/assert"
 	"bytes"
-	"github.com/jukylin/esim/tool/db2entity"
+	"github.com/jukylin/esim/pkg"
 )
 
 
@@ -15,12 +15,12 @@ func TestExecuteFactoryTemplate(t *testing.T)  {
 	factory.StructName = "Test"
 	s := &structInfo{}
 
-	Field1 := db2entity.Field{}
-	Field1.Filed = "a int"
+	Field1 := pkg.Field{}
+	Field1.Field = "a int"
 	Field1.Doc = []string{"a", "int"}
 
-	Field2 := db2entity.Field{}
-	Field2.Filed = "b string"
+	Field2 := pkg.Field{}
+	Field2.Field = "b string"
 	Field2.Doc = []string{"b", "string"}
 
 	//fields := []db2entity.Field{}
