@@ -3,14 +3,19 @@ package db2entity
 
 var daoTemplate = `package dao
 
-import (
-	"errors"
-	"context"
-	"{{.CurrentDir}}/internal/domain/{{.Boubctx}}entity"
-	"github.com/jinzhu/gorm"
-	"github.com/jukylin/esim/mysql"
-)
+//import (
+//	"errors"
+//	"context"
+//	"{{.CurrentDir}}/internal/domain/{{.Boubctx}}entity"
+//	"github.com/jinzhu/gorm"
+//	"github.com/jukylin/esim/mysql"
+//)
 
+import (
+{{ range $i := .Import }}
+"{{$i}}"
+{{end}}
+)
 
 type {{.StructName}}Dao struct{
 	mysql *mysql.MysqlClient

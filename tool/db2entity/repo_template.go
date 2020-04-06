@@ -1,14 +1,23 @@
 package db2entity
 
 
+type repoTmp struct {
+	Import []string
+
+	StructName string
+
+	TableName string
+
+	DelField string
+}
+
 var repoTemplate = `
 package repo
 
 import (
-	"context"
-	"{{.CurrentDir}}/internal/domain/{{.Boubctx}}entity"
-	"{{.CurrentDir}}/internal/infra/dao"
-	"github.com/jukylin/esim/log"
+{{ range $i := .Import }}
+"{{$i}}"
+{{end}}
 )
 
 
@@ -20,7 +29,7 @@ type DB{{.StructName}}Repo struct{
 
 	logger log.Logger
 
-	{{.StructName| firstToLower}}Dao *dao.{{.StructName}}Dao
+	{{.StructName| tolower}}Dao *dao.{{.StructName}}Dao
 }
 
 func NewDB{{.StructName}}Repo(logger log.Logger) {{.StructName}}Repo {
@@ -28,8 +37,8 @@ func NewDB{{.StructName}}Repo(logger log.Logger) {{.StructName}}Repo {
 		logger : logger,
 	}
 
-	if repo.{{.StructName| firstToLower}}Dao == nil{
-		repo.{{.StructName| firstToLower}}Dao = dao.New{{.StructName}}Dao()
+	if repo.{{.StructName| tolower}}Dao == nil{
+		repo.{{.StructName| tolower}}Dao = dao.New{{.StructName}}Dao()
 	}
 
 
@@ -40,12 +49,7 @@ func (this *DB{{.StructName}}Repo) FindById(ctx context.Context, id int64) entit
 	var {{.TableName}} entity.{{.StructName}}
 	var err error
 
-	{{.TableName}}, err = this.{{.StructName| firstToLower}}Dao.Find(ctx, "*", "id = ? ", id)
-
-	if err != nil{
-		this.logger.Errorf(err.Error())
-		return {{.TableName}}
-	}
+	{{.TableName}}, err = this.{{.StructName| tolower}}Dao.Find(ctx, "*", "id = ? and {{.DelField}} = ?", id, 0)
 
 	return {{.TableName}}
 }
