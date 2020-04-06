@@ -29,7 +29,7 @@ func TestExecuteRpcPluginTemplate(t *testing.T)  {
 	}
 
 	var buf bytes.Buffer
-	tmpl, err := template.New("rpc_plugin").Funcs(EsimFuncMap()).
+	tmpl, err := template.New("rpc_plugin").Funcs(pkg.EsimFuncMap()).
 		Parse(rpcPluginTemplate)
 	assert.Nil(t, err)
 	err = tmpl.Execute(&buf, data)

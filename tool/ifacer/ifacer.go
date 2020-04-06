@@ -295,7 +295,7 @@ func (this *Ifacer) getReturnStr(tuple *types.Tuple, m *Method) {
 }
 
 func (this *Ifacer) Process() error {
-	tmpl, err := template.New("iface").Parse(ifaceTemplate)
+	tmpl, err := template.New("ifacer").Parse(ifacerTemplate)
 	if err != nil {
 		return err
 	}

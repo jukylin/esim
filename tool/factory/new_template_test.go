@@ -29,7 +29,7 @@ func TestExecuteFactoryTemplate(t *testing.T)  {
 	factory.NewStructInfo = s
 
 	var buf bytes.Buffer
-	tmpl, err := template.New("factory").Funcs(EsimFuncMap()).
+	tmpl, err := template.New("factory").Funcs(pkg.EsimFuncMap()).
 		Parse(newTemplate)
 
 	assert.Nil(t, err)

@@ -271,7 +271,7 @@ func (this *esimFactory) Run(v *viper.Viper) error {
 
 
 func (this *esimFactory) executeNewTmpl() {
-	tmpl, err := template.New("factory").Funcs(EsimFuncMap()).
+	tmpl, err := template.New("factory").Funcs(pkg.EsimFuncMap()).
 		Parse(newTemplate)
 	if err != nil{
 		this.logger.Panicf(err.Error())

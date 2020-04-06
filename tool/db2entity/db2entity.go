@@ -26,9 +26,60 @@ func init() {
 	log = logger.NewLogger()
 }
 
+type db2entity struct {
+
+	logger logger.Logger
+
+	withDisableRepo bool
+
+	withDisableDao bool
+
+	withBoubctx string
+
+	//true not create entity file
+	//false create a new entity file in withEntityTarget
+	withDisableEntity bool
+
+	withEntityDir string
+
+	withPackage string
+
+	withStruct string
+
+	withInject bool
+
+	dbConf dbConfig
+}
+
+func NewDb2entity(logger logger.Logger) *db2entity {
+
+	db2entity := &db2entity{}
+	db2entity.logger = logger
+
+	return db2entity
+}
+
+
+type dbConfig struct {
+	host string
+
+	port string
+
+	user string
+
+	password string
+
+	database string
+
+	table string
+}
+
+
 type Field struct{
 	Name string
 }
+
+
 
 func GenEntity(v *viper.Viper) error {
 

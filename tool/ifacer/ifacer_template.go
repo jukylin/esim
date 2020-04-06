@@ -1,6 +1,6 @@
 package ifacer
 
-var ifaceTemplate = `package {{.PackageName}}
+var ifacerTemplate = `package {{.PackageName}}
 
 {{- $StructName := .StructName}}
 

@@ -1,9 +1,5 @@
 package factory
 
-import (
-	"text/template"
-	"strings"
-)
 
 var rpcPluginTemplate = `package main
 
@@ -96,10 +92,3 @@ func main() {
 	})
 }
 `
-
-
-func EsimFuncMap() template.FuncMap {
-	return template.FuncMap{
-		"tolower" : strings.ToLower,
-	}
-}
