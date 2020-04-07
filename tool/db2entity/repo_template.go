@@ -1,8 +1,9 @@
 package db2entity
 
+import "github.com/jukylin/esim/pkg"
 
 type repoTmp struct {
-	Import []string
+	Imports pkg.Imports
 
 	StructName string
 
@@ -14,12 +15,7 @@ type repoTmp struct {
 var repoTemplate = `
 package repo
 
-import (
-{{ range $i := .Import }}
-"{{$i}}"
-{{end}}
-)
-
+{{.Imports.String}}
 
 type {{.StructName}}Repo interface {
 	FindById(context.Context, int64) entity.{{.StructName}}

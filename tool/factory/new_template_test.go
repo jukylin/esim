@@ -17,11 +17,11 @@ func TestExecuteFactoryTemplate(t *testing.T)  {
 
 	Field1 := pkg.Field{}
 	Field1.Field = "a int"
-	Field1.Doc = []string{"a", "int"}
+	Field1.Doc = []string{"//a", "//int"}
 
 	Field2 := pkg.Field{}
 	Field2.Field = "b string"
-	Field2.Doc = []string{"b", "string"}
+	Field2.Doc = []string{"//b", "//string"}
 
 	//fields := []db2entity.Field{}
 	s.Fields = append(s.Fields, Field1, Field2)
@@ -31,13 +31,13 @@ func TestExecuteFactoryTemplate(t *testing.T)  {
 	var buf bytes.Buffer
 	tmpl, err := template.New("factory").Funcs(pkg.EsimFuncMap()).
 		Parse(newTemplate)
-
 	assert.Nil(t, err)
+
 	err = tmpl.Execute(&buf, factory)
 	if err != nil{
 		println(err.Error())
 	}
-	println(buf.String())
+	//println(buf.String())
 	assert.Nil(t, err)
 }
 

@@ -13,16 +13,15 @@ func TestRepoTemplate(t *testing.T)  {
 		Parse(repoTemplate)
 	assert.Nil(t, err)
 
-	var imports []string
-	imports = append(imports, "sync")
-	imports = append(imports, "time")
-
+	var imports pkg.Imports
+	imports = append(imports, pkg.Import{Name : "time", Path: "time"})
+	imports = append(imports, pkg.Import{Name : "sync", Path: "sync"})
 
 	var buf bytes.Buffer
 	repoTmp := repoTmp{}
 	repoTmp.StructName = "User"
 	repoTmp.TableName = "user"
-	repoTmp.Import = imports
+	repoTmp.Imports = imports
 	repoTmp.DelField = "is_del"
 
 	err = tmpl.Execute(&buf, repoTmp)
@@ -30,7 +29,6 @@ func TestRepoTemplate(t *testing.T)  {
 		println(err.Error())
 	}
 	assert.Nil(t, err)
-	println(buf.String())
 }
 
 

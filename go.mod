@@ -18,6 +18,7 @@ require (
 	github.com/hashicorp/go-hclog v0.12.0
 	github.com/hashicorp/go-plugin v1.0.1
 	github.com/jinzhu/gorm v1.9.10
+	github.com/magiconair/properties v1.8.0
 	github.com/martinusso/inflect v0.0.0-20161215184957-e234d1ee70de
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/opentracing-contrib/go-stdlib v0.0.0-20190519235532-cf7a6c988dc9

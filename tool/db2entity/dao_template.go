@@ -1,5 +1,20 @@
 package db2entity
 
+import "github.com/jukylin/esim/pkg"
+
+type daoTmp struct{
+	Imports pkg.Imports
+
+	StructName string
+
+	DataBaseName string
+
+	TableName string
+
+	PriKeyType string
+
+
+}
 
 var daoTemplate = `package dao
 
@@ -11,11 +26,8 @@ var daoTemplate = `package dao
 //	"github.com/jukylin/esim/mysql"
 //)
 
-import (
-{{ range $i := .Import }}
-"{{$i}}"
-{{end}}
-)
+{{.Imports.String}}
+
 
 type {{.StructName}}Dao struct{
 	mysql *mysql.MysqlClient
@@ -32,12 +44,12 @@ func New{{.StructName}}Dao() *{{.StructName}}Dao {
 
 //主库
 func (this *{{.StructName}}Dao) GetDb(ctx context.Context) *gorm.DB  {
-	return this.mysql.GetCtxDb(ctx, "{{.PkgName}}").Table("{{.TableName}}")
+	return this.mysql.GetCtxDb(ctx, "{{.DataBaseName}}").Table("{{.TableName}}")
 }
 
 //从库
 func (this *{{.StructName}}Dao) GetSlaveDb(ctx context.Context) *gorm.DB  {
-	return this.mysql.GetCtxDb(ctx, "{{.PkgName}}_slave").Table("{{.TableName}}")
+	return this.mysql.GetCtxDb(ctx, "{{.DataBaseName}}_slave").Table("{{.TableName}}")
 }
 
 

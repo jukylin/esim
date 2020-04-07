@@ -2,10 +2,7 @@ package factory
 
 var newTemplate = `
 type {{.StructName}} struct{
-{{ range .NewStructInfo.Fields }}
-{{ range $a := .Doc}}{{$a}}
-{{end}}{{.Field}} {{.Tag}}
-{{end}}
+{{.NewStructInfo.Fields.String}}
 }
 
 {{.TypePluralStr}}

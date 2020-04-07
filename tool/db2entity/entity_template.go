@@ -3,7 +3,7 @@ package db2entity
 import "github.com/jukylin/esim/pkg"
 
 type entityTmp struct {
-	Import []string
+	Imports pkg.Imports
 
 	Fields pkg.Fields
 
@@ -20,17 +20,10 @@ type entityTmp struct {
 
 var entityTemplate = `package entity
 
-import (
-{{ range $i := .Import }}
-"{{$i}}"
-{{end}}
-)
+{{.Imports.String}}
 
 type {{.StructName}} struct {
-{{ range .Fields }}
-{{ range $a := .Doc}}{{$a}}
-{{end}}{{.Field}} {{.Tag}}
-{{end}}
+{{.Fields.String}}
 }
 
 // delete field

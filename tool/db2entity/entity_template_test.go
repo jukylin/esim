@@ -13,9 +13,9 @@ func TestEntityTemplate(t *testing.T)  {
 		Parse(entityTemplate)
 	assert.Nil(t, err)
 
-	var imports []string
-	imports = append(imports, "sync")
-	imports = append(imports, "time")
+	var imports pkg.Imports
+	imports = append(imports, pkg.Import{Name : "time", Path: "time"})
+	imports = append(imports, pkg.Import{Name : "sync", Path: "sync"})
 
 	Field1 := pkg.Field{}
 	Field1.Name = "id"
@@ -34,14 +34,11 @@ func TestEntityTemplate(t *testing.T)  {
 	entityTmp.CreateTime = "CreateTime"
 	entityTmp.LastUpdateTime = "LastUpdateTime"
 	entityTmp.LastUpdateTimeStr = "last_update_time"
-	entityTmp.Import = imports
+	entityTmp.Imports = imports
 	entityTmp.Fields = append(entityTmp.Fields, Field1, Field2)
 	entityTmp.DelField = "is_del"
 
 	err = tmpl.Execute(&buf, entityTmp)
-	if err != nil{
-		println(err.Error())
-	}
 	assert.Nil(t, err)
 }
 
