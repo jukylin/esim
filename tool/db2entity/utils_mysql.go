@@ -8,17 +8,22 @@ import (
 	"github.com/spf13/viper"
 	"strconv"
 	"strings"
+	"github.com/jukylin/esim/log"
 )
 
+type ColumnsInter interface {
+	GetColumns(dbConf dbConfig) ([]columns, error)
+}
+
 type columns struct {
-	COLUMN_NAME              string `gorm:"column:COLUMN_NAME"`
-	COLUMN_KEY               string `gorm:"column:COLUMN_KEY"`
-	DATA_TYPE                string `gorm:"column:DATA_TYPE"`
-	IS_NULLABLE              string `gorm:"column:IS_NULLABLE"`
-	COLUMN_DEFAULT           string `gorm:"column:COLUMN_DEFAULT"`
-	CHARACTER_MAXIMUM_LENGTH string `gorm:"column:CHARACTER_MAXIMUM_LENGTH"`
-	COLUMN_COMMENT           string `gorm:"column:COLUMN_COMMENT"`
-	EXTRA                    string `gorm:"column:EXTRA"`
+	ColumnName string `gorm:"column:COLUMN_NAME"`
+	ColumnKey string `gorm:"column:COLUMN_KEY"`
+	DataType string `gorm:"column:DATA_TYPE"`
+	IsNullAble string `gorm:"column:IS_NULLABLE"`
+	ColumnDefault string `gorm:"column:COLUMN_DEFAULT"`
+	CharacterMaximumLength string `gorm:"column:CHARACTER_MAXIMUM_LENGTH"`
+	ColumnComment string `gorm:"column:COLUMN_COMMENT"`
+	Extra string `gorm:"column:EXTRA"`
 }
 
 type AutoTime struct {
@@ -26,49 +31,51 @@ type AutoTime struct {
 	OnUpdateTimeStamp []string
 }
 
-// GetColumnsFromMysqlTable Select column details from information schema and return map of map
-func GetColumnsFromMysqlTable(mariadbUser string, mariadbPassword string,
-	mariadbHost string, mariadbPort int, mariadbDatabase string,
-	mariadbTable string) ([]columns, error) {
+type DBColumnsInter struct {
+	logger log.Logger
+}
+
+func NewDBColumnsInter(logger log.Logger) ColumnsInter {
+	dBColumnsInter := &DBColumnsInter{}
+	dBColumnsInter.logger = logger
+	return dBColumnsInter
+}
+
+// GetColumns Select column details
+func (this *DBColumnsInter) GetColumns(dbConf dbConfig) ([]columns, error) {
 
 	var err error
 	var db *gorm.DB
-	if mariadbPassword != "" {
-		db, err = gorm.Open("mysql", mariadbUser+":"+mariadbPassword+"@tcp("+mariadbHost+":"+strconv.Itoa(mariadbPort)+")/"+mariadbDatabase+"?&parseTime=True")
+	if dbConf.password != "" {
+		db, err = gorm.Open("mysql", dbConf.user + ":" + dbConf.password +
+			"@tcp(" + dbConf.host + ":" + strconv.Itoa(dbConf.port)+")/" + dbConf.database + "?&parseTime=True")
 	} else {
-		db, err = gorm.Open("mysql", mariadbUser+"@tcp("+mariadbHost+":"+strconv.Itoa(mariadbPort)+")/"+mariadbDatabase+"?&parseTime=True")
+		db, err = gorm.Open("mysql", dbConf.user + "@tcp(" + dbConf.host + ":" +
+			strconv.Itoa(dbConf.port) + ")/" + dbConf.database + "?&parseTime=True")
 	}
 	defer db.Close()
 
-	// Check for error in db, note this does not check connectivity but does check uri
 	if err != nil {
-		fmt.Println("Error opening mysql db: " + err.Error())
-		return nil, err
+		this.logger.Panicf("Open mysql err: %s" , err.Error())
 	}
 
-	if db.HasTable(mariadbTable) == false {
-		return nil, errors.New(mariadbTable + " 表不存在")
+	if db.HasTable(dbConf.table) == false {
+		this.logger.Panicf("%s 表不存在", dbConf.table)
 	}
 
-	// Select columnd data from INFORMATION_SCHEMA
-	columnDataTypeQuery := "SELECT COLUMN_NAME, COLUMN_KEY, DATA_TYPE, IS_NULLABLE, COLUMN_DEFAULT, " +
+	sql := "SELECT COLUMN_NAME, COLUMN_KEY, DATA_TYPE, IS_NULLABLE, COLUMN_DEFAULT, " +
 		" CHARACTER_MAXIMUM_LENGTH, COLUMN_COMMENT, EXTRA " +
 		"FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND table_name = ?"
 
-	if Debug {
-		fmt.Println("running: " + columnDataTypeQuery)
-	}
-
 	cs := []columns{}
 
-	db.Raw(columnDataTypeQuery, mariadbDatabase, mariadbTable).Scan(&cs)
+	db.Raw(sql, dbConf.database, dbConf.table).Scan(&cs)
 
 	if err != nil {
-		fmt.Println("Error selecting from db: " + err.Error())
-		return nil, err
+		this.logger.Panicf(err.Error())
 	}
 
-	return cs, err
+	return cs, nil
 }
 
 // Generate go struct entries for a map[string]interface{} structure

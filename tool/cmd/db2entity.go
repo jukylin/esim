@@ -6,18 +6,16 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jukylin/esim/tool/db2entity"
 	"os"
+	"github.com/jukylin/esim/log"
 )
 
 var db2entityCmd = &cobra.Command{
 	Use:   "db2entity",
 	Short: "将数据库表结构生成实体",
-	Long: `1：需要在项目根目录下执行
-生成的实体文件会被放到项目的 domain/entity/table.go,
-CRUD文件被放到 infra/dao/table.go下
-`,
+	Long: ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		v.Set("debug", false)
-		db2entity.GenEntity(v)
+		logger := log.NewLogger()
+		db2entity.NewDb2Entity(logger).Run(v)
 	},
 }
 
@@ -56,17 +54,17 @@ func init() {
 
 	db2entityCmd.Flags().BoolP("mar", "", true, "Marshaler to json")
 
-	db2entityCmd.Flags().StringP("etar", "", "", "Save entity file path")
+	db2entityCmd.Flags().StringP("entity_target", "", "", "Save entity file path")
 
-	db2entityCmd.Flags().BoolP("disetar", "", false, "disable Save model")
+	db2entityCmd.Flags().BoolP("disabled_entity", "", false, "disabled Save model")
 
-	db2entityCmd.Flags().StringP("daotar", "", "internal/infra/dao", "Save dao file path")
+	db2entityCmd.Flags().StringP("dao_target", "", "internal/infra/dao", "Save dao file path")
 
-	db2entityCmd.Flags().BoolP("disdaotar", "", false, "disable Save dao")
+	db2entityCmd.Flags().BoolP("disabled_dao", "", false, "disabled Save dao")
 
-	db2entityCmd.Flags().StringP("repotar", "", "internal/infra/repo", "Save dao file path")
+	db2entityCmd.Flags().StringP("repo_target", "", "internal/infra/repo", "Save dao file path")
 
-	db2entityCmd.Flags().BoolP("disrepotar", "", false, "disable Save repo")
+	db2entityCmd.Flags().BoolP("disabled_repo", "", false, "disabled Save repo")
 
 	db2entityCmd.Flags().BoolP("inject", "i", true, "automatic inject")
 
