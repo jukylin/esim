@@ -12,22 +12,11 @@ type daoTmp struct{
 	TableName string
 
 	PriKeyType string
-
-
 }
 
 var daoTemplate = `package dao
 
-//import (
-//	"errors"
-//	"context"
-//	"{{.CurrentDir}}/internal/domain/{{.Boubctx}}entity"
-//	"github.com/jinzhu/gorm"
-//	"github.com/jukylin/esim/mysql"
-//)
-
 {{.Imports.String}}
-
 
 type {{.StructName}}Dao struct{
 	mysql *mysql.MysqlClient
