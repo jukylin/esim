@@ -7,32 +7,34 @@ import (
 	"go/parser"
 	"go/token"
 	"io/ioutil"
-	"os/exec"
 	"os"
+	"os/exec"
 	"strings"
 
-	"github.com/spf13/viper"
-	"github.com/jukylin/esim/pkg/file-dir"
-	logger "github.com/jukylin/esim/log"
-	"golang.org/x/tools/imports"
-	"github.com/jukylin/esim/pkg"
 	"path/filepath"
+
+	logger "github.com/jukylin/esim/log"
+	"github.com/jukylin/esim/pkg"
+	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	"github.com/spf13/viper"
+	"golang.org/x/tools/imports"
 )
 
-
 type db2Entity struct {
-
-	logger logger.Logger
-
 	withDisabledRepo bool
 
 	withDisabledDao bool
 
-	withBoubctx string
-
 	//true not create entity file
 	//false create a new entity file in withEntityTarget
 	withDisabledEntity bool
+
+	//true inject repo to infra.go
+	withInject bool
+
+	logger logger.Logger
+
+	withBoubctx string
 
 	withEntityDir string
 
@@ -40,17 +42,37 @@ type db2Entity struct {
 
 	withStruct string
 
-	withInject bool
+	ColumnsInter ColumnsInter
 
 	dbConf dbConfig
 }
 
-func NewDb2Entity(logger logger.Logger) *db2Entity {
+type db2EntityOption func(*db2Entity)
 
-	db2entity := &db2Entity{}
-	db2entity.logger = logger
+type db2EntityOptions struct{}
 
-	return db2entity
+func NewDb2Entity(options ...db2EntityOption) *db2Entity {
+
+	d := &db2Entity{}
+
+	for _, option := range options {
+		option(d)
+	}
+
+	return d
+}
+
+func (db2EntityOptions) WithLogger(logger logger.Logger) db2EntityOption {
+	return func(d *db2Entity) {
+		d.logger = logger
+	}
+}
+
+
+func (db2EntityOptions) WithColumnsInter(ColumnsInter ColumnsInter) db2EntityOption {
+	return func(d *db2Entity) {
+		d.ColumnsInter = ColumnsInter
+	}
 }
 
 
@@ -68,20 +90,14 @@ type dbConfig struct {
 	table string
 }
 
-
-type Field struct{
-	Name string
-}
-
-
 func (this *db2Entity) Run(v *viper.Viper) error {
 
 	this.inputBind(v)
 
-	var daoTarget string
-	var etar string
+	//var daoTarget string
+	//var etar string
 	//var entityDir string
-	var repoTarget string
+	//var repoTarget string
 
 	//if v.GetBool("disdaotar") == false {
 	//
@@ -134,117 +150,121 @@ func (this *db2Entity) Run(v *viper.Viper) error {
 	//	}
 	//}
 
-	columnDataTypes, err := GetColumnsFromMysqlTable(user, password, host, port, database, table)
-
-	if err != nil {
-		this.logger.Fatalf(err.Error())
+	columns, err := this.ColumnsInter.GetColumns(this.dbConf)
+	if err != nil{
+		this.logger.Panicf(err.Error())
 	}
 
+	this.cloumnsToEntityTmp(columns)
 
 
-	js := v.GetBool("json")
+	//columnDataTypes, err := GetColumnsFromMysqlTable(user, password, host, port, database, table)
 
-	gorm := v.GetBool("gorm")
+	//if err != nil {
+	//}
 
-	guregu := v.GetBool("guregu")
+	//js := v.GetBool("json")
 
-	struc, genMysqlInfo, err := Generate(columnDataTypes, table,
-		st, pk, js, gorm, guregu, v)
-	if err != nil {
-		this.logger.Fatalf("Error in creating struct from json: " + err.Error())
-	}
+	//gorm := v.GetBool("gorm")
 
-	if v.GetBool("disetar") == false {
+	//guregu := v.GetBool("guregu")
 
-		struc, err := format.Source([]byte(struc))
-		if err != nil {
-			this.logger.Fatalf(err.Error())
-		}
+	//struc, genMysqlInfo, err := Generate(columnDataTypes, table,
+	//	st, pk, js, gorm, guregu, v)
+	//if err != nil {
+	//	this.logger.Fatalf("Error in creating struct from json: " + err.Error())
+	//}
 
-		struc, err = imports.Process("", struc, nil)
-		if err != nil{
-			this.logger.Fatalf(err.Error())
-		}
+	//if v.GetBool("disetar") == false {
+	//
+	//	struc, err := format.Source([]byte(struc))
+	//	if err != nil {
+	//		this.logger.Fatalf(err.Error())
+	//	}
+	//
+	//	struc, err = imports.Process("", struc, nil)
+	//	if err != nil{
+	//		this.logger.Fatalf(err.Error())
+	//	}
+	//
+	//	err = ioutil.WriteFile(etar, struc, 0666)
+	//	if err != nil {
+	//		this.logger.Fatalf(err.Error())
+	//	}
+	//	this.logger.Infof("create file  %s success", etar)
+	//} else {
+	//	this.logger.Infof("not create file  %s", etar)
+	//}
 
-		err = ioutil.WriteFile(etar, struc, 0666)
-		if err != nil {
-			this.logger.Fatalf(err.Error())
-		}
-		this.logger.Infof("create file  %s success", etar)
-	} else {
-		this.logger.Infof("not create file  %s", etar)
-	}
+	//if v.GetBool("disdaotar") == false {
+	//
+	//	daoStr, err := GenerateDao(table, st, pk, v, genMysqlInfo, boubctx)
+	//	if err != nil {
+	//		this.logger.Fatalf("Error in creating struct from json: " + err.Error())
+	//	}
+	//
+	//	forDaoStr, err := format.Source([]byte(daoStr))
+	//	if err != nil {
+	//		this.logger.Fatalf(err.Error())
+	//	}
+	//
+	//	forDaoStr, err = imports.Process("", forDaoStr, nil)
+	//	if err != nil{
+	//		this.logger.Fatalf(err.Error())
+	//	}
+	//
+	//	err = ioutil.WriteFile(daoTarget, forDaoStr, 0666)
+	//	if err != nil {
+	//		this.logger.Fatalf(err.Error())
+	//	}
+	//
+	//	this.logger.Infof("create file  %s success", daoTarget)
+	//} else {
+	//	this.logger.Infof("not create file  %s", daoTarget)
+	//}
 
-	if v.GetBool("disdaotar") == false {
+	//if v.GetBool("disrepotar") == false {
+	//
+	//	repoStr := GenerateRepo(table, st, v, boubctx)
+	//
+	//	forRepoStr, err := format.Source([]byte(repoStr))
+	//	if err != nil {
+	//		this.logger.Fatalf(err.Error())
+	//	}
+	//
+	//	forRepoStr, err = imports.Process("", forRepoStr, nil)
+	//	if err != nil{
+	//		this.logger.Fatalf(err.Error())
+	//	}
+	//
+	//	err = ioutil.WriteFile(repoTarget, forRepoStr, 0666)
+	//	if err != nil {
+	//		this.logger.Fatalf(err.Error())
+	//	}
+	//
+	//	this.logger.Infof("create file  %s success", repoTarget)
+	//} else {
+	//	this.logger.Infof("not create file  %s", repoTarget)
+	//}
 
-		daoStr, err := GenerateDao(table, st, pk, v, genMysqlInfo, boubctx)
-		if err != nil {
-			this.logger.Fatalf("Error in creating struct from json: " + err.Error())
-		}
-
-		forDaoStr, err := format.Source([]byte(daoStr))
-		if err != nil {
-			this.logger.Fatalf(err.Error())
-		}
-
-		forDaoStr, err = imports.Process("", forDaoStr, nil)
-		if err != nil{
-			this.logger.Fatalf(err.Error())
-		}
-
-		err = ioutil.WriteFile(daoTarget, forDaoStr, 0666)
-		if err != nil {
-			this.logger.Fatalf(err.Error())
-		}
-
-		this.logger.Infof("create file  %s success", daoTarget)
-	} else {
-		this.logger.Infof("not create file  %s", daoTarget)
-	}
-
-	if v.GetBool("disrepotar") == false {
-
-		repoStr := GenerateRepo(table, st, v, boubctx)
-
-		forRepoStr, err := format.Source([]byte(repoStr))
-		if err != nil {
-			this.logger.Fatalf(err.Error())
-		}
-
-		forRepoStr, err = imports.Process("", forRepoStr, nil)
-		if err != nil{
-			this.logger.Fatalf(err.Error())
-		}
-
-		err = ioutil.WriteFile(repoTarget, forRepoStr, 0666)
-		if err != nil {
-			this.logger.Fatalf(err.Error())
-		}
-
-		this.logger.Infof("create file  %s success", repoTarget)
-	} else {
-		this.logger.Infof("not create file  %s", repoTarget)
-	}
-
-	inject := v.GetBool("inject")
-	if inject == true {
-		pwd, _ := os.Getwd()
-		goPath := os.Getenv("GOPATH") + "/src/"
-		//项目路径
-		proPath := strings.Replace(pwd, goPath, "", -1)
-
-		err = file_dir.EsimBackUpFile(goPath + "/" + proPath + "/internal/infra/infra.go")
-		if err != nil{
-			this.logger.Warnf("backup err %s:%s", proPath + "/internal/infra/infra.go", err.Error())
-		}
-
-		Inject("infra", st, pk,
-			st + "Repo", "DB" + st + "Repo", proPath+"/internal/infra/repo")
-	}
+	//inject := v.GetBool("inject")
+	//if inject == true {
+	//	pwd, _ := os.Getwd()
+	//	goPath := os.Getenv("GOPATH") + "/src/"
+	//	//项目路径
+	//	proPath := strings.Replace(pwd, goPath, "", -1)
+	//
+	//	err = file_dir.EsimBackUpFile(goPath + "/" + proPath + "/internal/infra/infra.go")
+	//	if err != nil{
+	//		this.logger.Warnf("backup err %s:%s", proPath + "/internal/infra/infra.go", err.Error())
+	//	}
+	//
+	//	Inject("infra", st, pk,
+	//		st + "Repo", "DB" + st + "Repo", proPath+"/internal/infra/repo")
+	//}
 
 	return nil
 }
-
 
 func (this *db2Entity) inputBind(v *viper.Viper) {
 
@@ -314,7 +334,7 @@ func (this *db2Entity) inputBind(v *viper.Viper) {
 	}
 
 	boubctx := v.GetString("boubctx")
-	if boubctx != ""{
+	if boubctx != "" {
 		this.withBoubctx = boubctx + string(filepath.Separator)
 	}
 
@@ -323,27 +343,27 @@ func (this *db2Entity) inputBind(v *viper.Viper) {
 }
 
 //写的时候才创建文件
-func (this *db2Entity) bindEntityDir(v *viper.Viper)  {
+func (this *db2Entity) bindEntityDir(v *viper.Viper) {
 	if v.GetBool("disabled_entity") == false {
 
 		this.withEntityDir = v.GetString("entity_target")
 
 		if this.withEntityDir == "" {
-			if this.withBoubctx != ""{
+			if this.withBoubctx != "" {
 				this.withEntityDir = "internal" + string(filepath.Separator) + "domain" + string(filepath.Separator) + this.withBoubctx + "entity"
-			}else{
+			} else {
 				this.withEntityDir = "internal" + string(filepath.Separator) + "domain" + string(filepath.Separator) + "entity"
 			}
 		}
 
 		entityDirExists, err := file_dir.IsExistsDir(this.withEntityDir)
-		if err != nil{
+		if err != nil {
 			this.logger.Fatalf(err.Error())
 		}
 
-		if entityDirExists == false{
+		if entityDirExists == false {
 			err = file_dir.CreateDir(this.withEntityDir)
-			if err != nil{
+			if err != nil {
 				this.logger.Fatalf(err.Error())
 			}
 		}
@@ -358,7 +378,7 @@ func (this *db2Entity) bindEntityDir(v *viper.Viper)  {
 			this.logger.Fatalf(this.withEntityDir + this.dbConf.table + ".go" + " exists")
 		}
 
-		this.logger.Infof("creating dir ... %s", this.withEntityDir + this.dbConf.table + ".go")
+		this.logger.Infof("creating dir ... %s", this.withEntityDir+this.dbConf.table+".go")
 
 		err = file_dir.CreateDir(this.withEntityDir)
 		if err != nil {
@@ -367,7 +387,7 @@ func (this *db2Entity) bindEntityDir(v *viper.Viper)  {
 	}
 }
 
-func (this *db2Entity) bindDbConfig(v *viper.Viper)  {
+func (this *db2Entity) bindDbConfig(v *viper.Viper) {
 	dbConfig := dbConfig{}
 	host := v.GetString("host")
 	if host == "" {
@@ -408,6 +428,74 @@ func (this *db2Entity) bindDbConfig(v *viper.Viper)  {
 	this.dbConf = dbConfig
 }
 
+func (this *db2Entity) cloumnsToEntityTmp(columns []columns) entityTmp {
+
+	entityTmp := entityTmp{}
+
+	if len(columns) < 1 {
+		return entityTmp
+	}
+
+	for _, column := range columns {
+		field := pkg.Field{}
+
+		fieldName := fmtFieldName(stringifyFirstChar(column.ColumnName))
+		field.Name = fieldName
+
+		nullable := false
+		if column.IsNullAble == "YES" {
+			nullable = true
+		}
+
+		var valueType string
+		valueType = this.mysqlTypeToGoType(column.DataType, nullable)
+		if valueType == golangTime {
+			entityTmp.Imports = append(entityTmp.Imports, pkg.Import{Path: "time"})
+		} else if strings.Index(valueType, "sql.") != -1 {
+			entityTmp.Imports = append(entityTmp.Imports, pkg.Import{Path: "database/sql"})
+		}
+		field.Type = valueType
+
+		if column.ColumnDefault == "CURRENT_TIMESTAMP" {
+			entityTmp.CurTimeStamp = append(entityTmp.CurTimeStamp, fieldName)
+		}
+
+		if column.Extra == "on update CURRENT_TIMESTAMP" {
+			entityTmp.OnUpdateTimeStamp = append(entityTmp.OnUpdateTimeStamp, fieldName)
+			entityTmp.OnUpdateTimeStampStr = append(entityTmp.OnUpdateTimeStampStr, column.ColumnName)
+		}
+
+		if column.ColumnComment != "" {
+			column.ColumnComment = strings.Replace(column.ColumnComment, "\r", "\\r", -1)
+			column.ColumnComment = strings.Replace(column.ColumnComment, "\n", "\\n", -1)
+			field.Doc = append(field.Doc, "//" + column.ColumnComment)
+		}
+
+		primary := ""
+		if column.ColumnKey == "PRI" {
+			primary = ";primary_key"
+		}
+
+		col_default := ""
+		if nullable == false {
+			if column.ColumnDefault != "CURRENT_TIMESTAMP" && column.ColumnDefault != "" {
+				col_default = ";default:'" + column.ColumnDefault + "'"
+			}
+		}
+
+		field.Tag = fmt.Sprintf("`gorm:\"column:%s%s%s\"`", column.ColumnName, primary, col_default)
+
+		if strings.Index(column.ColumnName, "del") != -1 &&
+			strings.Index(column.ColumnName, "is") != -1 {
+			entityTmp.DelField = column.ColumnName
+		}
+
+		field.Field = field.Name + " " + field.Type
+		entityTmp.Fields = append(entityTmp.Fields, field)
+	}
+
+	return entityTmp
+}
 
 func GenerateDao(tableName string, structName string, pkgName string,
 	v *viper.Viper, genMysqlInfo generateMysqlInfo, boubctx string) ([]byte, error) {
@@ -630,7 +718,6 @@ func GetFirstStringToLower(str string) string {
 	return strings.ToLower(string(str[0])) + str[1:]
 }
 
-
 func Inject(structName string, fieldName, packageName, interfaceName string,
 	instanceName string, importStr string) {
 
@@ -640,21 +727,21 @@ func Inject(structName string, fieldName, packageName, interfaceName string,
 
 	exists, err := file_dir.IsExistsFile(infrDir + infrFile)
 	if err != nil {
-		log.Errorf(err.Error())
+		//log.Errorf(err.Error())
 		return
 	}
 
 	if exists {
 		src, err := ioutil.ReadFile(infrDir + infrFile)
 		if err != nil {
-			log.Errorf(err.Error())
+			//log.Errorf(err.Error())
 			return
 		}
 
 		//先整理下源文件
 		formatSrc, err := format.Source([]byte(src))
 		if err != nil {
-			log.Errorf(err.Error())
+			//log.Errorf(err.Error())
 			return
 		}
 
@@ -667,14 +754,14 @@ func Inject(structName string, fieldName, packageName, interfaceName string,
 
 		//整理，写入
 		formatSrc, err = format.Source([]byte(source))
-		if err != nil{
-			log.Errorf(err.Error())
+		if err != nil {
+			//log.Errorf(err.Error())
 			return
 		}
 
 		formatSrc, err = imports.Process("", formatSrc, nil)
-		if err != nil{
-			log.Errorf(err.Error())
+		if err != nil {
+			//log.Errorf(err.Error())
 			return
 		}
 
@@ -687,13 +774,13 @@ func Inject(structName string, fieldName, packageName, interfaceName string,
 
 		err = ExecWire(infrDir)
 		if err != nil {
-			log.Fatalf(err.Error())
+			//log.Fatalf(err.Error())
 		}
 
-		log.Infof("注入成功")
+		//log.Infof("注入成功")
 
 	} else {
-		log.Errorf("不存在 %s", infrDir+infrFile)
+		//log.Errorf("不存在 %s", infrDir+infrFile)
 	}
 }
 
@@ -764,7 +851,7 @@ func handleInject(srcStr string, structName string, fieldName, packageName, inte
 
 	//println(srcStr)
 	if hasStruct == false {
-		log.Errorf("不存在 %s", structName)
+		//log.Errorf("不存在 %s", structName)
 		return ""
 	}
 
@@ -790,17 +877,16 @@ func getOldImports(GenDecl *ast.GenDecl) []string {
 	for _, specs := range GenDecl.Specs {
 		if spec, ok := specs.(*ast.ImportSpec); ok {
 			var name string
-			if  spec.Name.String() != "<nil>"{
+			if spec.Name.String() != "<nil>" {
 				name = spec.Name.String()
 			}
 
-			imports = append(imports,  name +  " " + spec.Path.Value)
+			imports = append(imports, name+" "+spec.Path.Value)
 		}
 	}
 
 	return imports
 }
-
 
 func GetOldFields(GenDecl *ast.GenDecl, strSrc string) []pkg.Field {
 	var fields pkg.Fields
@@ -824,9 +910,9 @@ func GetOldFields(GenDecl *ast.GenDecl, strSrc string) []pkg.Field {
 						field.Name = name
 						field.Field = name + " " + strSrc[astField.Type.Pos()-1:astField.Type.End()-1]
 					} else {
-						nameSplit := strings.Split(strSrc[astField.Type.Pos()-1 : astField.Type.End()-1], ".")
-						field.Name = nameSplit[len(nameSplit) - 1]
-						field.Field =  strSrc[astField.Type.Pos()-1 : astField.Type.End()-1]
+						nameSplit := strings.Split(strSrc[astField.Type.Pos()-1:astField.Type.End()-1], ".")
+						field.Name = nameSplit[len(nameSplit)-1]
+						field.Field = strSrc[astField.Type.Pos()-1 : astField.Type.End()-1]
 					}
 
 					fields = append(fields, field)
@@ -912,11 +998,10 @@ func GetFirstToUpper(str string) string {
 	return strings.ToUpper(string(str[0])) + str[1:]
 }
 
-
 func ExecGoFmt(file string, dir string) error {
 	cmd_line := fmt.Sprintf("go fmt %s", file)
 
-	log.Infof(cmd_line)
+	//log.Infof(cmd_line)
 
 	args := strings.Split(cmd_line, " ")
 
@@ -935,7 +1020,7 @@ func ExecGoFmt(file string, dir string) error {
 func ExecWire(dir string) error {
 	cmd_line := fmt.Sprintf("wire")
 
-	log.Infof("dir %s, %s", dir, cmd_line)
+	//log.Infof("dir %s, %s", dir, cmd_line)
 
 	args := strings.Split(cmd_line, " ")
 

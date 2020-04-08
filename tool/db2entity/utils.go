@@ -105,7 +105,7 @@ func Generate(columnTypes []columns, tableName string,
 		gormAnnotation, gureguTypes, v)
 
 	if genMysqlInfo.priKeyType == ""{
-		log.Fatalf("没有身份标识")
+		//log.Fatalf("没有身份标识")
 	}
 
 	genMysqlInfo.imports = append(genMysqlInfo.imports, "github.com/jinzhu/gorm")
@@ -116,22 +116,6 @@ func Generate(columnTypes []columns, tableName string,
 		genMysqlInfo.imports = append(genMysqlInfo.imports, "context")
 	}
 
-	if v.GetBool("mar") == true {
-		//vars = append(vars, tableName+`Enc = jingo.NewStructEncoder(`+structName+`{})`)
-		//genMysqlInfo.imports = append(genMysqlInfo.imports, "github.com/bet365/jingo")
-	}
-
-	//if len(genMysqlInfo.autoTime.CurTimeStamp) > 0 || len(genMysqlInfo.autoTime.OnUpdateTimeStamp) > 0 {
-		genMysqlInfo.imports = append(genMysqlInfo.imports, "github.com/jukylin/esim/log")
-	//}
-
-	if len(genMysqlInfo.imports) > 0 {
-		importstr = "import ("
-		for _, v := range genMysqlInfo.imports {
-			importstr += "\"" + v + "\" \n"
-		}
-		importstr += ")"
-	}
 
 	//if len(vars) > 0{
 	//	varstr = "var ("
@@ -165,7 +149,7 @@ func Generate(columnTypes []columns, tableName string,
 			"} \n \n"
 		src = fmt.Sprintf("%s\n%s", src, delKeyFunc)
 	} else {
-		log.Warnf("匹配不到del字段")
+		//log.Warnf("匹配不到del字段")
 		delKeyFunc := "// delete field\n" +
 			"func (" + strings.ToLower(string(structName[0])) + " *" + structName + ") DelKey() string {\n" +
 			"	return \"\" " +
@@ -173,24 +157,13 @@ func Generate(columnTypes []columns, tableName string,
 		src = fmt.Sprintf("%s\n%s", src, delKeyFunc)
 	}
 
-	//if v.GetBool("hasdata") == true {
-	//	src += "//针对查询后是否有结果 \n"
-	//	src += "func (" + strings.ToLower(string(structName[0])) + " *" + structName + ") HasData() bool {\n"
-	//	src += "return " + strings.ToLower(string(structName[0])) + ".hasData \n"
-	//	src += "}\n"
-	//}
 
 	beforeCreateBody := getBeforeCreateBody(genMysqlInfo, v, structName)
 	beforeUpdateBody := getBeforeUpdateBody(genMysqlInfo, v, structName)
-	afterFindBody := getAfterFindBody(genMysqlInfo)
 
 	src += getBeforeCreate(structName, beforeCreateBody)
 	src += getBeforeSave(structName, beforeUpdateBody)
-	src += getAfterFind(structName, afterFindBody, v.GetBool("hasdata"))
 
-	if v.GetBool("mar") == true {
-		//src += getMarshaler(structName, tableName)
-	}
 
 	formatted, err := format.Source([]byte(src))
 	if err != nil {
@@ -332,20 +305,6 @@ func getBeforeSave(structName string, body string) string {
 	return beforeSaveStr
 }
 
-func getMarshaler(structName, tableName string) string {
-	marshalerStr := `func (this *` + structName + `) Marshaler() []byte {
-		buf := jingo.NewBufferFromPool()
-		` + tableName + `Enc.Marshal(this, buf)
-		by := buf.Bytes
-		buf.ReturnToPool()
-
-		return by
-	}
-
-`
-
-	return marshalerStr
-}
 
 func getBeforeCreateBody(getbeforeBody generateMysqlInfo, v *viper.Viper, structName string) string {
 	var getbeforeBodyStr string
@@ -411,36 +370,4 @@ func getBeforeUpdateBody(getbeforeBody generateMysqlInfo, v *viper.Viper, struct
 	return getbeforeBodyStr
 }
 
-func getAfterFindBody(getbeforeBody generateMysqlInfo) string {
-	return ""
-}
 
-func getAfterFind(structName, body string, hasData bool) string {
-
-	afterFindStr := `func (this *` + structName + `) AfterFind(scope *gorm.Scope) (err error) {
-		` + body
-
-	if hasData == true {
-		afterFindStr += `switch scope.Value.(type){
-	case *` + structName + `:
-		if scope.DB().RowsAffected > 0{
-			val := scope.Value.(*` + structName + `)
-			val.HasData = true
-		}
-	case *[]` + structName + `:
-		if scope.DB().RowsAffected > 0 {
-			vals := scope.Value.(*[]` + structName + `)
-			for k, _ := range *vals {
-				(*vals)[k].HasData = true
-			}
-		}
-	default:
-		log.Log.Warnf("unknown type")
-	}
-`
-	}
-	afterFindStr += `return
-	}
-`
-	return afterFindStr
-}

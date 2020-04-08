@@ -368,9 +368,9 @@ func (this *esimFactory) inputBind(v *viper.Viper) error {
 
 	this.withOption = v.GetBool("option")
 
-	this.withGenConfOption = v.GetBool("gen_logger_option")
+	this.withGenConfOption = v.GetBool("gen_conf_option")
 
-	this.withGenLoggerOption = v.GetBool("gen_conf_option")
+	this.withGenLoggerOption = v.GetBool("gen_logger_option")
 
 	this.withSort = v.GetBool("sort")
 

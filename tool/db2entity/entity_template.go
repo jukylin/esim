@@ -9,11 +9,11 @@ type entityTmp struct {
 
 	StructName string
 
-	CreateTime string
+	CurTimeStamp []string
 
-	LastUpdateTime string
+	OnUpdateTimeStamp []string
 
-	LastUpdateTimeStr string
+	OnUpdateTimeStampStr []string
 
 	DelField string
 }
@@ -31,7 +31,7 @@ func (c *{{.StructName}}) DelKey() string {
 	return "{{.DelField}}"
 }
 
-{{if or (.CreateTime) (.LastUpdateTime)}}
+{{if or (.CurTimeStamp) (.OnUpdateTimeStamp)}}
 //自动增加时间
 func (this *{{.StructName}}) BeforeCreate(scope *gorm.Scope) (err error) {
 
@@ -40,15 +40,15 @@ func (this *{{.StructName}}) BeforeCreate(scope *gorm.Scope) (err error) {
 
 		val := scope.Value.(*{{.StructName}})
 
-		{{if .CreateTime}}
-		if val.{{.CreateTime}}.Unix() < 0 {
-			val.{{.CreateTime}} = time.Now()
+		{{range $stamp := .CurTimeStamp}}
+		if val.{{$stamp}}.Unix() < 0 {
+			val.{{$stamp}} = time.Now()
 		}
 		{{end}}
 
-		{{if .LastUpdateTime}}
-		if val.{{.LastUpdateTime}}.Unix() < 0 {
-			val.{{.LastUpdateTime}} = time.Now()
+		{{range $stamp := .OnUpdateTimeStamp}}
+		if val.{{$stamp}}.Unix() < 0 {
+			val.{{$stamp}} = time.Now()
 		}
 		{{end}}
 	}
@@ -57,7 +57,7 @@ func (this *{{.StructName}}) BeforeCreate(scope *gorm.Scope) (err error) {
 }
 {{end}}
 
-{{if .LastUpdateTimeStr }}
+{{if .OnUpdateTimeStampStr }}
 //自动添加更新时间  没有trim
 func (this *{{.StructName}}) BeforeSave(scope *gorm.Scope) (err error) {
 	val, ok := scope.InstanceGet("gorm:update_attrs")
@@ -65,9 +65,11 @@ func (this *{{.StructName}}) BeforeSave(scope *gorm.Scope) (err error) {
 		switch val.(type) {
 		case map[string]interface{}:
 			mapVal := val.(map[string]interface{})
-			if _, ok := mapVal["{{.LastUpdateTimeStr}}"]; !ok {
-				mapVal["{{.LastUpdateTimeStr}}"] = time.Now()
+			{{range $stampStr := .OnUpdateTimeStampStr}}
+			if _, ok := mapVal["{{$stampStr}}"]; !ok {
+				mapVal["{{$stampStr}}"] = time.Now()
 			}
+			{{end}}
 		}
 	}
 	return

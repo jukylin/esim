@@ -26,20 +26,26 @@ func TestEntityTemplate(t *testing.T)  {
 	Field2.Name = "name"
 	Field2.Field = "name string"
 	Field2.Tag = "`json:\"name\"`"
-	Field2.Doc = append(Field2.Doc, "//username")
+	Field2.Doc = append(Field2.Doc, "//username \\r\\n is a test")
 
 	var buf bytes.Buffer
 	entityTmp := entityTmp{}
 	entityTmp.StructName = "Entity"
-	entityTmp.CreateTime = "CreateTime"
-	entityTmp.LastUpdateTime = "LastUpdateTime"
-	entityTmp.LastUpdateTimeStr = "last_update_time"
+	entityTmp.CurTimeStamp = append(entityTmp.CurTimeStamp, "CreateTime1")
+	entityTmp.CurTimeStamp = append(entityTmp.CurTimeStamp, "CreateTime2")
+
+	entityTmp.OnUpdateTimeStamp = append(entityTmp.OnUpdateTimeStamp, "LastUpdateTime")
+
+	entityTmp.OnUpdateTimeStampStr = append(entityTmp.OnUpdateTimeStampStr, "last_update_time1")
+	entityTmp.OnUpdateTimeStampStr = append(entityTmp.OnUpdateTimeStampStr, "last_update_time2")
+
 	entityTmp.Imports = imports
 	entityTmp.Fields = append(entityTmp.Fields, Field1, Field2)
 	entityTmp.DelField = "is_del"
 
 	err = tmpl.Execute(&buf, entityTmp)
 	assert.Nil(t, err)
+	println(buf.String())
 }
 
 

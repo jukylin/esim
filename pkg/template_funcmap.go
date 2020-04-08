@@ -25,8 +25,6 @@ func FirstToLower(s string) string {
 }
 
 
-//snake to camel
-//a_b_c => ABC
 func SnakeToCamel(s string) string {
 	data := make([]byte, 0, len(s))
 	j := false

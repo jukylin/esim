@@ -2,7 +2,7 @@ package db2entity
 
 import (
 	"testing"
-	//"github.com/jukylin/esim/gofmt"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestInject(t *testing.T) {
@@ -57,3 +57,40 @@ func provideEsim() *container.Esim {
 //	gofmt.GoFmt("./infra.go")
 //	t.Error("21231")
 //}
+
+func TestDb2Entity_Run(t *testing.T) {
+
+}
+
+func TestDb2Entity_CloumnsToEntityTmp(t *testing.T)  {
+
+	db2Entity := &db2Entity{}
+
+	cols := []columns{}
+	col1 := columns{
+		ColumnName : "user_name",
+		DataType: "varchar",
+		IsNullAble : "YES",
+		ColumnComment : "user name",
+	}
+	cols = append(cols, col1)
+
+	col2 := columns{
+		ColumnName : "id",
+		ColumnKey : "PRI",
+		DataType: "int",
+		IsNullAble : "NO",
+	}
+	cols = append(cols, col2)
+
+	col3 := columns{
+		ColumnName : "update_time",
+		DataType: "timestamp",
+		IsNullAble : "NO",
+		Extra : "on update CURRENT_TIMESTAMP",
+	}
+	cols = append(cols, col3)
+
+	entityTmp := db2Entity.cloumnsToEntityTmp(cols)
+	assert.Equal(t, 3, len(entityTmp.Fields))
+}
