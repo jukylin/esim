@@ -84,7 +84,7 @@ func GetParDir() string {
 	if err != nil {
 		panic(err)
 	}
-	path := filepath.Dir(wd) + "/"
+	path := filepath.Dir(wd) + string(filepath.Separator)
 	parDir := strings.Replace(wd, path, "", -1)
 
 	return parDir
@@ -102,11 +102,11 @@ func GetCurrentDir() string {
 		panic(errors.New("not set GOPATH"))
 	}
 
-	srcPath := gopath + "/src/"
+	srcPath := gopath + string(filepath.Separator) + "src" + string(filepath.Separator)
 
-	parDir := strings.Replace(wd + "/", srcPath, "", -1)
+	parDir := strings.Replace(wd + string(filepath.Separator), srcPath, "", -1)
 
-	parDir = strings.Trim(parDir, "/")
+	parDir = strings.Trim(parDir, string(filepath.Separator))
 
 	return parDir
 }
@@ -125,9 +125,10 @@ func EsimBackUpFile(backFile string) error {
 	}
 
 	dir := filepath.Dir(backFile)
-	relativeDir := strings.Replace(dir, os.Getenv("GOPATH") + "/src/", "", -1)
+	relativeDir := strings.Replace(dir, os.Getenv("GOPATH") + string(filepath.Separator) +
+		"src" + string(filepath.Separator), "", -1)
 
-	backUpPath := os.Getenv("GOPATH") + "/pkg/esim/backup/"
+	backUpPath := os.Getenv("GOPATH") + string(filepath.Separator) + "pkg " + string(filepath.Separator) + " esim " + string(filepath.Separator) + "backup" + string(filepath.Separator)
 	targetPath := backUpPath + relativeDir
 	exists, err := IsExistsDir(targetPath)
 	if err != nil{
@@ -141,7 +142,8 @@ func EsimBackUpFile(backFile string) error {
 		}
 	}
 
-	relativePath := strings.Replace(backFile, os.Getenv("GOPATH") + "/src/", "", -1)
+	relativePath := strings.Replace(backFile, os.Getenv("GOPATH") + string(filepath.Separator) +
+		"src" + string(filepath.Separator), "", -1)
 	fileExists, err := IsExistsFile(backUpPath + relativePath)
 	if err != nil{
 		return err

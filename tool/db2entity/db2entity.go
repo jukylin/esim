@@ -155,16 +155,13 @@ func (this *db2Entity) Run(v *viper.Viper) error {
 		this.logger.Panicf(err.Error())
 	}
 
-	this.cloumnsToEntityTmp(columns)
+	entityTmp := this.cloumnsToEntityTmp(columns)
 
-	this.cloumnsToDaoTmp(columns)
+	daoTmp := this.cloumnsToDaoTmp(columns)
 
-	this.cloumnsToRepoTmp(columns)
+	repoTmp := this.cloumnsToRepoTmp(columns)
 
 	//columnDataTypes, err := GetColumnsFromMysqlTable(user, password, host, port, database, table)
-
-	//if err != nil {
-	//}
 
 	//js := v.GetBool("json")
 
@@ -516,7 +513,7 @@ func (this *db2Entity) cloumnsToDaoTmp(columns []columns) daoTmp {
 	daoTmp.Imports = append(daoTmp.Imports, pkg.Import{Path: "github.com/jinzhu/gorm"})
 	daoTmp.Imports = append(daoTmp.Imports, pkg.Import{Path: "errors"})
 	daoTmp.Imports = append(daoTmp.Imports, pkg.Import{Path: "github.com/jukylin/esim/mysql"})
-	daoTmp.Imports = append(daoTmp.Imports, pkg.Import{Path: "gitlab.etcchebao.cn/go_service/coupon/internal/domain/entity"})
+	daoTmp.Imports = append(daoTmp.Imports, pkg.Import{Path: file_dir.GetCurrentDir() + "/internal/domain/" + this.withBoubctx + "entity"})
 
 	for _, column := range columns {
 		nullable := false
@@ -531,6 +528,30 @@ func (this *db2Entity) cloumnsToDaoTmp(columns []columns) daoTmp {
 	}
 
 	return daoTmp
+}
+
+func (this *db2Entity) cloumnsToRepoTmp(columns []columns) repoTmp {
+	repoTmp := repoTmp{}
+
+	if len(columns) < 1 {
+		return repoTmp
+	}
+
+	repoTmp.StructName = pkg.SnakeToCamel(this.withStruct)
+	repoTmp.TableName = this.dbConf.table
+
+	repoTmp.Imports = append(repoTmp.Imports, pkg.Import{Path: "context"})
+	repoTmp.Imports = append(repoTmp.Imports, pkg.Import{Path: "github.com/jinzhu/gorm"})
+	repoTmp.Imports = append(repoTmp.Imports, pkg.Import{Path: "github.com/jukylin/esim/log"})
+	repoTmp.Imports = append(repoTmp.Imports, pkg.Import{Path: file_dir.GetCurrentDir() + "/internal/domain/" + this.withBoubctx + "entity"})
+	repoTmp.Imports = append(repoTmp.Imports, pkg.Import{Path: file_dir.GetCurrentDir() + "/internal/infra/dao"})
+
+
+	for _, column := range columns {
+		repoTmp.DelField = this.checkDelField(column)
+	}
+
+	return repoTmp
 }
 
 
