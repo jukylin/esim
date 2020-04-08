@@ -157,6 +157,9 @@ func (this *db2Entity) Run(v *viper.Viper) error {
 
 	this.cloumnsToEntityTmp(columns)
 
+	this.cloumnsToDaoTmp(columns)
+
+	this.cloumnsToRepoTmp(columns)
 
 	//columnDataTypes, err := GetColumnsFromMysqlTable(user, password, host, port, database, table)
 
@@ -387,6 +390,7 @@ func (this *db2Entity) bindEntityDir(v *viper.Viper) {
 	}
 }
 
+
 func (this *db2Entity) bindDbConfig(v *viper.Viper) {
 	dbConfig := dbConfig{}
 	host := v.GetString("host")
@@ -428,13 +432,15 @@ func (this *db2Entity) bindDbConfig(v *viper.Viper) {
 	this.dbConf = dbConfig
 }
 
+
 func (this *db2Entity) cloumnsToEntityTmp(columns []columns) entityTmp {
 
 	entityTmp := entityTmp{}
-
 	if len(columns) < 1 {
 		return entityTmp
 	}
+
+	entityTmp.StructName = pkg.SnakeToCamel(this.withStruct)
 
 	for _, column := range columns {
 		field := pkg.Field{}
@@ -485,10 +491,7 @@ func (this *db2Entity) cloumnsToEntityTmp(columns []columns) entityTmp {
 
 		field.Tag = fmt.Sprintf("`gorm:\"column:%s%s%s\"`", column.ColumnName, primary, col_default)
 
-		if strings.Index(column.ColumnName, "del") != -1 &&
-			strings.Index(column.ColumnName, "is") != -1 {
-			entityTmp.DelField = column.ColumnName
-		}
+		entityTmp.DelField = this.checkDelField(column)
 
 		field.Field = field.Name + " " + field.Type
 		entityTmp.Fields = append(entityTmp.Fields, field)
@@ -496,6 +499,50 @@ func (this *db2Entity) cloumnsToEntityTmp(columns []columns) entityTmp {
 
 	return entityTmp
 }
+
+
+func (this *db2Entity) cloumnsToDaoTmp(columns []columns) daoTmp {
+	daoTmp := daoTmp{}
+
+	if len(columns) < 1 {
+		return daoTmp
+	}
+
+	daoTmp.StructName = pkg.SnakeToCamel(this.withStruct)
+	daoTmp.DataBaseName = this.dbConf.database
+	daoTmp.TableName = this.dbConf.table
+
+	daoTmp.Imports = append(daoTmp.Imports, pkg.Import{Path: "context"})
+	daoTmp.Imports = append(daoTmp.Imports, pkg.Import{Path: "github.com/jinzhu/gorm"})
+	daoTmp.Imports = append(daoTmp.Imports, pkg.Import{Path: "errors"})
+	daoTmp.Imports = append(daoTmp.Imports, pkg.Import{Path: "github.com/jukylin/esim/mysql"})
+	daoTmp.Imports = append(daoTmp.Imports, pkg.Import{Path: "gitlab.etcchebao.cn/go_service/coupon/internal/domain/entity"})
+
+	for _, column := range columns {
+		nullable := false
+		if column.IsNullAble == "YES" {
+			nullable = true
+		}
+
+		if column.ColumnKey == "PRI" {
+			daoTmp.PriKeyType = this.mysqlTypeToGoType(column.DataType, nullable)
+			break;
+		}
+	}
+
+	return daoTmp
+}
+
+
+func (this *db2Entity) checkDelField(column columns) string {
+	if strings.Index(column.ColumnName, "del") != -1 &&
+		strings.Index(column.ColumnName, "is") != -1 {
+		return column.ColumnName
+	}
+
+	return ""
+}
+
 
 func GenerateDao(tableName string, structName string, pkgName string,
 	v *viper.Viper, genMysqlInfo generateMysqlInfo, boubctx string) ([]byte, error) {
