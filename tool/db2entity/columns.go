@@ -10,7 +10,7 @@ import (
 	 _ "github.com/go-sql-driver/mysql"
 )
 
-type ColumnsInter interface {
+type ColumnsRepo interface {
 	GetColumns(dbConf dbConfig) ([]columns, error)
 }
 
@@ -34,7 +34,7 @@ type DBColumnsInter struct {
 	logger log.Logger
 }
 
-func NewDBColumnsInter(logger log.Logger) ColumnsInter {
+func NewDBColumnsInter(logger log.Logger) ColumnsRepo {
 	dBColumnsInter := &DBColumnsInter{}
 	dBColumnsInter.logger = logger
 	return dBColumnsInter

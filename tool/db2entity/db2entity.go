@@ -10,9 +10,9 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-
+	"text/template"
 	"path/filepath"
-
+	"bytes"
 	logger "github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
 	file_dir "github.com/jukylin/esim/pkg/file-dir"
@@ -42,7 +42,7 @@ type db2Entity struct {
 
 	withStruct string
 
-	ColumnsInter ColumnsInter
+	ColumnsRepo ColumnsRepo
 
 	dbConf dbConfig
 }
@@ -69,9 +69,9 @@ func (db2EntityOptions) WithLogger(logger logger.Logger) db2EntityOption {
 }
 
 
-func (db2EntityOptions) WithColumnsInter(ColumnsInter ColumnsInter) db2EntityOption {
+func (db2EntityOptions) WithColumnsInter(ColumnsRepo ColumnsRepo) db2EntityOption {
 	return func(d *db2Entity) {
-		d.ColumnsInter = ColumnsInter
+		d.ColumnsRepo = ColumnsRepo
 	}
 }
 
@@ -90,14 +90,10 @@ type dbConfig struct {
 	table string
 }
 
+
 func (this *db2Entity) Run(v *viper.Viper) error {
 
-	this.inputBind(v)
-
-	//var daoTarget string
-	//var etar string
-	//var entityDir string
-	//var repoTarget string
+	this.bindInput(v)
 
 	//if v.GetBool("disdaotar") == false {
 	//
@@ -150,16 +146,19 @@ func (this *db2Entity) Run(v *viper.Viper) error {
 	//	}
 	//}
 
-	columns, err := this.ColumnsInter.GetColumns(this.dbConf)
+	columns, err := this.ColumnsRepo.GetColumns(this.dbConf)
 	if err != nil{
 		this.logger.Panicf(err.Error())
 	}
 
 	entityTmp := this.cloumnsToEntityTmp(columns)
+	entityContent := this.executeTmpl("entity_tmp", entityTmp, entityTemplate)
 
 	daoTmp := this.cloumnsToDaoTmp(columns)
+	daoContent := this.executeTmpl("dao_tmp", daoTmp, daoTemplate)
 
 	repoTmp := this.cloumnsToRepoTmp(columns)
+	repoContent := this.executeTmpl("repo_tmp", repoTmp, repoTemplate)
 
 	//columnDataTypes, err := GetColumnsFromMysqlTable(user, password, host, port, database, table)
 
@@ -266,7 +265,7 @@ func (this *db2Entity) Run(v *viper.Viper) error {
 	return nil
 }
 
-func (this *db2Entity) inputBind(v *viper.Viper) {
+func (this *db2Entity) bindInput(v *viper.Viper) {
 
 	this.bindDbConfig(v)
 
@@ -564,6 +563,22 @@ func (this *db2Entity) checkDelField(column columns) string {
 	return ""
 }
 
+
+func (this *db2Entity) executeTmpl(tmplName string, data interface{}, text string) string {
+	tmpl, err := template.New(tmplName).Funcs(pkg.EsimFuncMap()).
+		Parse(text)
+	if err != nil {
+		this.logger.Panicf(err.Error())
+	}
+
+	var buf bytes.Buffer
+	err = tmpl.Execute(&buf, data)
+	if err != nil {
+		this.logger.Panicf(err.Error())
+	}
+
+	return buf.String()
+}
 
 func GenerateDao(tableName string, structName string, pkgName string,
 	v *viper.Viper, genMysqlInfo generateMysqlInfo, boubctx string) ([]byte, error) {
