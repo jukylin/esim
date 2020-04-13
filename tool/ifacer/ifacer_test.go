@@ -111,6 +111,7 @@ func TestIfacer_RunNullWrite(t *testing.T) {
 	v.Set("ipath", "./example/iface.go")
 
 	err := ifacer.Run(v)
+	println(ifacer.Content)
 	assert.Equal(t, Result, ifacer.Content)
 	assert.Nil(t, err)
 }

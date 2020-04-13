@@ -14,6 +14,7 @@ import (
 	"text/template"
 	"github.com/jukylin/esim/pkg/file-dir"
 	//"github.com/davecgh/go-spew/spew"
+	"fmt"
 )
 
 type Ifacer struct {
@@ -103,7 +104,6 @@ func (this *Ifacer) Run(v *viper.Viper) error {
 	if err != nil {
 		return err
 	}
-
 	this.PackageName = iface.Pkg.Name()
 
 	this.setNoConflictImport(iface.Pkg.Name(), iface.Pkg.Path())
@@ -285,11 +285,50 @@ func (this *Ifacer) parseVarType(typ types.Type) string {
 	case *types.Pointer:
 		varType = "*"
 		varType += this.parseVarType(t.Elem())
+	case *types.Slice:
+		varType = "[]"
+		varType += this.parseVarType(t.Elem())
+	case *types.Array:
+		varType = fmt.Sprintf("[%d]", t.Len())
+		varType += this.parseVarType(t.Elem())
+	case *types.Chan:
+		switch t.Dir() {
+		case types.SendRecv:
+			varType += "chan "
+		case types.RecvOnly:
+			varType += "<-chan "
+		default:
+			varType += "chan<- "
+		}
+		varType += this.parseVarType(t.Elem())
+	case *types.Map:
+		key := this.parseVarType(t.Key())
+		val := this.parseVarType(t.Elem())
+		varType = fmt.Sprintf("map[%s]%s", key, val)
+	case *types.Signature:
+		varType = fmt.Sprintf(
+			"func (%s) (%s)",
+			this.parseTypeTuple(t.Params()),
+			this.parseTypeTuple(t.Results()),
+		)
 	default:
 		varType = t.String()
 	}
 
 	return varType
+}
+
+
+func (this *Ifacer) parseTypeTuple(tup *types.Tuple) string {
+	var parts []string
+
+	for i := 0; i < tup.Len(); i++ {
+		v := tup.At(i)
+
+		parts = append(parts, this.parseVar(v))
+	}
+
+	return strings.Join(parts, " , ")
 }
 
 
