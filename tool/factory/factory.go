@@ -136,7 +136,7 @@ type esimFactory struct {
 
 	WithNew bool
 
-	writer file_dir.IfaceWrite
+	writer file_dir.IfaceWriter
 
 	SpecFieldInitStr string
 
