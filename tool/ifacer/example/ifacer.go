@@ -40,6 +40,10 @@ type Test interface {
 	Iface8(rp repo.Repo) repo.Repo
 
 	Close
+
+	Iface9(TestStruct)
+
+	Iface10(Close)
 }
 
 

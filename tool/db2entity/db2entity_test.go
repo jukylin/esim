@@ -3,63 +3,29 @@ package db2entity
 import (
 	"testing"
 	"github.com/stretchr/testify/assert"
+	"github.com/jukylin/esim/log"
+	"github.com/jukylin/esim/pkg/file-dir"
+	"github.com/spf13/viper"
 )
 
-func TestInject(t *testing.T) {
-
-	src := `package db2entity
-
-import (
-	wire "github.com/google/wire"
-	"github.com/jukylin/esim/container"
-	_ "github.com/jukylin/esim"
-
-	"sync"
-)
-
-var infrOnce sync.Once
-var onceInfr *Infra
-
-type Infra struct {
-
-	//fggh
-
-	*container.Esim
-
-	//Binding
-	//123
-	s wire.Binding
-}
-
-var infrSet = wire.NewSet(
-	wire.Struct(new(infra), "*"),
-
-	provideEsim,
-)
-
-func NewInfr() *Infra {
-	infrOnce.Do(func() {})
-
-	return onceInfr
-}
-
-func provideEsim() *container.Esim {
-	return container.NewEsim()
-}
-`
-
-	src = handleInject(src, "Infra", "UserDao",
-		"passport", "UserRepo", "UserDbRepo","github.com/jukylin/esim/db2entity")
-	println(src)
-}
-
-//func TestGoFmt(t *testing.T)  {
-//	gofmt.GoFmt("./infra.go")
-//	t.Error("21231")
-//}
 
 func TestDb2Entity_Run(t *testing.T) {
 
+
+	db2EntityOptions := Db2EntityOptions{}
+
+	db2Entity := NewDb2Entity(db2EntityOptions.WithLogger(log.NewLogger()),
+		db2EntityOptions.WithColumnsInter(),
+		db2EntityOptions.WithIfaceWrite(file_dir.EsimWriter{}))
+
+	v := viper.New()
+	v.Set("entity_target", "./example")
+	v.Set("dao_target", "./example")
+	v.Set("repo_target", "./example")
+	v.Set("database", "user")
+	v.Set("table", "test")
+
+	db2Entity.Run(v)
 }
 
 func TestDb2Entity_CloumnsToEntityTmp(t *testing.T)  {

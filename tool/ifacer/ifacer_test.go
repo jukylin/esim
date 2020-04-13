@@ -14,7 +14,6 @@ var Result = `package example1
 import (
 	context "context"
 
-	redigoredis "github.com/gomodule/redigo/redis"
 	redis "github.com/jukylin/esim/redis"
 	repo "github.com/jukylin/esim/tool/ifacer/example/repo"
 )
@@ -33,7 +32,12 @@ func (this TestStub) Err() error {
 	return r0
 }
 
-func (this TestStub) Iface1(arg0 func(string) string) (result bool, pool redigoredis.Pool) {
+func (this TestStub) Iface1(arg0 func(string) string) (result bool, pool redis.Pool) {
+
+	return
+}
+
+func (this TestStub) Iface10(arg0 Close) {
 
 	return
 }
@@ -77,6 +81,11 @@ func (this TestStub) Iface8(rp repo.Repo) repo.Repo {
 
 	return r0
 }
+
+func (this TestStub) Iface9(arg0 TestStruct) {
+
+	return
+}
 `
 
 var ifacer *Ifacer
@@ -91,7 +100,7 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func TestIface_RunNullWrite(t *testing.T) {
+func TestIfacer_RunNullWrite(t *testing.T) {
 	v := viper.New()
 	v.Set("out", "./abc/test_stub.go")
 
@@ -106,7 +115,7 @@ func TestIface_RunNullWrite(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestIface_Write(t *testing.T) {
+func TestIfacer_Write(t *testing.T) {
 	v := viper.New()
 	v.Set("out", "./abc/test_stub.go")
 
@@ -124,7 +133,7 @@ func TestIface_Write(t *testing.T) {
 	file_dir.RemoveDir("./abc")
 }
 
-func TestIface_GetUniqueImportName(t *testing.T) {
+func TestIfacer_GetUniqueImportName(t *testing.T) {
 	pkgName := "github.com/jukylin/esim/redis"
 
 	importName := ifacer.getUniqueImportName(pkgName, 0)
@@ -145,7 +154,7 @@ func TestIface_GetUniqueImportName(t *testing.T) {
 	assert.True(t, shouldPanic)
 }
 
-func TestIface_SetNoConflictImport(t *testing.T) {
+func TestIfacer_SetNoConflictImport(t *testing.T) {
 
 	testCases := []struct {
 		caseName   string
@@ -162,16 +171,7 @@ func TestIface_SetNoConflictImport(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.caseName, func(t *testing.T) {
 			ifacer.setNoConflictImport(test.importName, test.pkgName)
-
 			assert.Equal(t, test.expected, ifacer.PkgNoConflictImport[test.caseName])
 		})
 	}
-}
-
-func TestIface_TrimTypeString(t *testing.T) {
-	ifacer.setNoConflictImport("redis", "github.com/jukylin/esim/redis")
-
-	result := ifacer.trimTypeString("*github.com/jukylin/esim/redis.RedisClient")
-	assert.Equal(t, "*redis.RedisClient", result)
-
 }

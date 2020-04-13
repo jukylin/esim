@@ -23,11 +23,17 @@ import (
 type db2Entity struct {
 	withDisabledRepo bool
 
+	withRepoTarget string
+
 	withDisabledDao bool
+
+	withDaoTarget string
 
 	//true not create entity file
 	//false create a new entity file in withEntityTarget
 	withDisabledEntity bool
+
+	withEntityTarget string
 
 	//true inject repo to infra.go
 	withInject bool
@@ -36,8 +42,6 @@ type db2Entity struct {
 
 	withBoubctx string
 
-	withEntityDir string
-
 	withPackage string
 
 	withStruct string
@@ -45,13 +49,15 @@ type db2Entity struct {
 	ColumnsRepo ColumnsRepo
 
 	dbConf dbConfig
+
+	writer file_dir.IfaceWriter
 }
 
-type db2EntityOption func(*db2Entity)
+type Db2EntityOption func(*db2Entity)
 
-type db2EntityOptions struct{}
+type Db2EntityOptions struct{}
 
-func NewDb2Entity(options ...db2EntityOption) *db2Entity {
+func NewDb2Entity(options ...Db2EntityOption) *db2Entity {
 
 	d := &db2Entity{}
 
@@ -62,16 +68,23 @@ func NewDb2Entity(options ...db2EntityOption) *db2Entity {
 	return d
 }
 
-func (db2EntityOptions) WithLogger(logger logger.Logger) db2EntityOption {
+func (Db2EntityOptions) WithLogger(logger logger.Logger) Db2EntityOption {
 	return func(d *db2Entity) {
 		d.logger = logger
 	}
 }
 
 
-func (db2EntityOptions) WithColumnsInter(ColumnsRepo ColumnsRepo) db2EntityOption {
+func (Db2EntityOptions) WithColumnsInter(ColumnsRepo ColumnsRepo) Db2EntityOption {
 	return func(d *db2Entity) {
 		d.ColumnsRepo = ColumnsRepo
+	}
+}
+
+
+func (Db2EntityOptions) WithIfaceWrite(writer file_dir.IfaceWriter) Db2EntityOption {
+	return func(d *db2Entity) {
+		d.writer = writer
 	}
 }
 
@@ -95,57 +108,6 @@ func (this *db2Entity) Run(v *viper.Viper) error {
 
 	this.bindInput(v)
 
-	//if v.GetBool("disdaotar") == false {
-	//
-	//	daotar := v.GetString("daotar")
-	//	if daotar == "" {
-	//		daotar = "internal/infra/dao"
-	//	}
-	//
-	//	daoDir := daotar + "/"
-	//	daoTarget = daoDir + table + ".go"
-	//	ex, err := file_dir.IsExistsFile(daoTarget)
-	//	if err != nil {
-	//		log.Fatalf(err.Error())
-	//	}
-	//
-	//	if ex {
-	//		log.Fatalf(daoDir + " exists")
-	//	}
-	//
-	//	log.Infof("create dir ... %s", daoDir)
-	//
-	//	err = file_dir.CreateDir(daoDir)
-	//	if err != nil {
-	//		log.Fatalf(err.Error())
-	//	}
-	//}
-
-	//if v.GetBool("disrepotar") == false {
-	//
-	//	repotar := v.GetString("repotar")
-	//	if repotar == "" {
-	//		repotar = "internal/infra/repo"
-	//	}
-	//
-	//	repoTarget = repotar + "/" + table + ".go"
-	//	ex, err := file_dir.IsExistsFile(repoTarget)
-	//	if err != nil {
-	//		log.Fatalf(err.Error())
-	//	}
-	//
-	//	if ex {
-	//		log.Fatalf(repotar + " exists")
-	//	}
-	//
-	//	log.Infof("create dir ... %s", repotar)
-	//
-	//	err = file_dir.CreateDir(repotar)
-	//	if err != nil {
-	//		log.Fatalf(err.Error())
-	//	}
-	//}
-
 	columns, err := this.ColumnsRepo.GetColumns(this.dbConf)
 	if err != nil{
 		this.logger.Panicf(err.Error())
@@ -153,98 +115,16 @@ func (this *db2Entity) Run(v *viper.Viper) error {
 
 	entityTmp := this.cloumnsToEntityTmp(columns)
 	entityContent := this.executeTmpl("entity_tmp", entityTmp, entityTemplate)
+	this.writer.Write(this.withEntityTarget + this.dbConf.table + ".go", entityContent)
+
 
 	daoTmp := this.cloumnsToDaoTmp(columns)
 	daoContent := this.executeTmpl("dao_tmp", daoTmp, daoTemplate)
+	this.writer.Write(this.withDaoTarget + this.dbConf.table + ".go", daoContent)
 
 	repoTmp := this.cloumnsToRepoTmp(columns)
 	repoContent := this.executeTmpl("repo_tmp", repoTmp, repoTemplate)
-
-	//columnDataTypes, err := GetColumnsFromMysqlTable(user, password, host, port, database, table)
-
-	//js := v.GetBool("json")
-
-	//gorm := v.GetBool("gorm")
-
-	//guregu := v.GetBool("guregu")
-
-	//struc, genMysqlInfo, err := Generate(columnDataTypes, table,
-	//	st, pk, js, gorm, guregu, v)
-	//if err != nil {
-	//	this.logger.Fatalf("Error in creating struct from json: " + err.Error())
-	//}
-
-	//if v.GetBool("disetar") == false {
-	//
-	//	struc, err := format.Source([]byte(struc))
-	//	if err != nil {
-	//		this.logger.Fatalf(err.Error())
-	//	}
-	//
-	//	struc, err = imports.Process("", struc, nil)
-	//	if err != nil{
-	//		this.logger.Fatalf(err.Error())
-	//	}
-	//
-	//	err = ioutil.WriteFile(etar, struc, 0666)
-	//	if err != nil {
-	//		this.logger.Fatalf(err.Error())
-	//	}
-	//	this.logger.Infof("create file  %s success", etar)
-	//} else {
-	//	this.logger.Infof("not create file  %s", etar)
-	//}
-
-	//if v.GetBool("disdaotar") == false {
-	//
-	//	daoStr, err := GenerateDao(table, st, pk, v, genMysqlInfo, boubctx)
-	//	if err != nil {
-	//		this.logger.Fatalf("Error in creating struct from json: " + err.Error())
-	//	}
-	//
-	//	forDaoStr, err := format.Source([]byte(daoStr))
-	//	if err != nil {
-	//		this.logger.Fatalf(err.Error())
-	//	}
-	//
-	//	forDaoStr, err = imports.Process("", forDaoStr, nil)
-	//	if err != nil{
-	//		this.logger.Fatalf(err.Error())
-	//	}
-	//
-	//	err = ioutil.WriteFile(daoTarget, forDaoStr, 0666)
-	//	if err != nil {
-	//		this.logger.Fatalf(err.Error())
-	//	}
-	//
-	//	this.logger.Infof("create file  %s success", daoTarget)
-	//} else {
-	//	this.logger.Infof("not create file  %s", daoTarget)
-	//}
-
-	//if v.GetBool("disrepotar") == false {
-	//
-	//	repoStr := GenerateRepo(table, st, v, boubctx)
-	//
-	//	forRepoStr, err := format.Source([]byte(repoStr))
-	//	if err != nil {
-	//		this.logger.Fatalf(err.Error())
-	//	}
-	//
-	//	forRepoStr, err = imports.Process("", forRepoStr, nil)
-	//	if err != nil{
-	//		this.logger.Fatalf(err.Error())
-	//	}
-	//
-	//	err = ioutil.WriteFile(repoTarget, forRepoStr, 0666)
-	//	if err != nil {
-	//		this.logger.Fatalf(err.Error())
-	//	}
-	//
-	//	this.logger.Infof("create file  %s success", repoTarget)
-	//} else {
-	//	this.logger.Infof("not create file  %s", repoTarget)
-	//}
+	this.writer.Write(this.withRepoTarget + this.dbConf.table + ".go", repoContent)
 
 	//inject := v.GetBool("inject")
 	//if inject == true {
@@ -281,10 +161,23 @@ func (this *db2Entity) bindInput(v *viper.Viper) {
 	}
 	this.withStruct = stuctName
 
+	boubctx := v.GetString("boubctx")
+	if boubctx != "" {
+		this.withBoubctx = boubctx + string(filepath.Separator)
+	}
+
+	this.bindEntityDir(v)
+
 	this.withDisabledRepo = v.GetBool("disabled_repo")
 	if this.withDisabledRepo == false {
-		//repo 目录是存在
-		existsRepo, err := file_dir.IsExistsDir("." + string(filepath.Separator) + "internal" + string(filepath.Separator) + "infra" + string(filepath.Separator) + "repo")
+
+		this.withRepoTarget = v.GetString("repo_target")
+		if this.withRepoTarget == "" {
+			this.withRepoTarget = "." + string(filepath.Separator) + "internal" + string(filepath.Separator) + "infra" + string(filepath.Separator) + "repo"
+		}
+
+		//repo 目录是否存在
+		existsRepo, err := file_dir.IsExistsDir(this.withRepoTarget)
 		if err != nil {
 			this.logger.Fatalf(err.Error())
 		}
@@ -294,11 +187,16 @@ func (this *db2Entity) bindInput(v *viper.Viper) {
 		}
 	}
 
-	//写的时候才创建文件
 	this.withDisabledDao = v.GetBool("disabled_dao")
 	if this.withDisabledDao == false {
+
+		daoTarget := v.GetString("dao_target")
+		if daoTarget == "" {
+			daoTarget = "." + string(filepath.Separator) + "internal" + string(filepath.Separator) + "infra " + string(filepath.Separator) + "dao"
+		}
+
 		//dao 目录是否存在
-		existsdao, err := file_dir.IsExistsDir("." + string(filepath.Separator) + "internal" + string(filepath.Separator) + "infra " + string(filepath.Separator) + "dao")
+		existsdao, err := file_dir.IsExistsDir(daoTarget)
 		if err != nil {
 			this.logger.Fatalf(err.Error())
 		}
@@ -306,86 +204,56 @@ func (this *db2Entity) bindInput(v *viper.Viper) {
 		if existsdao == false {
 			this.logger.Fatalf("dao dir not exists")
 		}
-
-		//daoTarget := v.GetString("dao_target")
-		//if daoTarget == "" {
-		//	daoTarget = "internal/infra/dao"
-		//}
-		//
-		//daoDir := daoTarget + "/"
-		//daoTarget = daoDir + table + ".go"
-		//ex, err := file_dir.IsExistsFile(daoTarget)
-		//if err != nil {
-		//	this.logger.Fatalf(err.Error())
-		//}
-		//
-		//if ex {
-		//	this.logger.Fatalf(daoDir + " exists")
-		//}
-		//
-		//this.logger.Infof("create dir ... %s", daoDir)
-		//
-		//err = file_dir.CreateDir(daoDir)
-		//if err != nil {
-		//	this.logger.Fatalf(err.Error())
-		//}
-
 	}
-
-	boubctx := v.GetString("boubctx")
-	if boubctx != "" {
-		this.withBoubctx = boubctx + string(filepath.Separator)
-	}
-
-	this.bindEntityDir(v)
-
 }
 
 //写的时候才创建文件
 func (this *db2Entity) bindEntityDir(v *viper.Viper) {
 	if v.GetBool("disabled_entity") == false {
 
-		this.withEntityDir = v.GetString("entity_target")
+		this.withEntityTarget = v.GetString("entity_target")
 
-		if this.withEntityDir == "" {
+		if this.withEntityTarget == "" {
 			if this.withBoubctx != "" {
-				this.withEntityDir = "internal" + string(filepath.Separator) + "domain" + string(filepath.Separator) + this.withBoubctx + "entity"
+				this.withEntityTarget = "internal" + string(filepath.Separator) + "domain" + string(filepath.Separator) + this.withBoubctx + "entity"
 			} else {
-				this.withEntityDir = "internal" + string(filepath.Separator) + "domain" + string(filepath.Separator) + "entity"
+				this.withEntityTarget = "internal" + string(filepath.Separator) + "domain" + string(filepath.Separator) + "entity"
 			}
 		}
 
-		entityDirExists, err := file_dir.IsExistsDir(this.withEntityDir)
+		entityTargetExists, err := file_dir.IsExistsDir(this.withEntityTarget)
 		if err != nil {
 			this.logger.Fatalf(err.Error())
 		}
 
-		if entityDirExists == false {
-			err = file_dir.CreateDir(this.withEntityDir)
+		if entityTargetExists == false {
+			err = file_dir.CreateDir(this.withEntityTarget)
 			if err != nil {
 				this.logger.Fatalf(err.Error())
 			}
 		}
 
-		this.withEntityDir = this.withEntityDir + " + string(filepath.Separator) + "
-		ex, err := file_dir.IsExistsFile(this.withEntityDir + this.dbConf.table + ".go")
-		if err != nil {
-			this.logger.Fatalf(err.Error())
-		}
-
-		if ex {
-			this.logger.Fatalf(this.withEntityDir + this.dbConf.table + ".go" + " exists")
-		}
-
-		this.logger.Infof("creating dir ... %s", this.withEntityDir+this.dbConf.table+".go")
-
-		err = file_dir.CreateDir(this.withEntityDir)
-		if err != nil {
-			this.logger.Fatalf(err.Error())
-		}
+		this.withEntityTarget = this.withEntityTarget + string(filepath.Separator)
 	}
 }
 
+func (this *db2Entity) CreateDomainFile(dir, file string)  {
+	ex, err := file_dir.IsExistsFile(dir + file + ".go")
+	if err != nil {
+		this.logger.Fatalf(err.Error())
+	}
+
+	if ex {
+		this.logger.Fatalf(dir + file + ".go" + " exists")
+	}
+
+	this.logger.Infof("creating dir ... %s", dir + file + ".go")
+
+	err = file_dir.CreateDir(this.withEntityTarget)
+	if err != nil {
+		this.logger.Fatalf(err.Error())
+	}
+}
 
 func (this *db2Entity) bindDbConfig(v *viper.Viper) {
 	dbConfig := dbConfig{}

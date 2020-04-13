@@ -67,7 +67,7 @@ type rpcPluginStructField struct{
 
 	model Model
 
-	writer file_dir.IfaceWrite
+	writer file_dir.IfaceWriter
 }
 
 var pluginMap = map[string]go_plugin.Plugin{
@@ -80,7 +80,7 @@ var HandshakeConfig = go_plugin.HandshakeConfig{
 	MagicCookieValue: "hello",
 }
 
-func NewRpcPluginStructField(writer file_dir.IfaceWrite) *rpcPluginStructField {
+func NewRpcPluginStructField(writer file_dir.IfaceWriter) *rpcPluginStructField {
 	rpcPlugin := &rpcPluginStructField{}
 
 	rpcPlugin.writer = writer

@@ -15,7 +15,8 @@ var db2entityCmd = &cobra.Command{
 	Long: ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		logger := log.NewLogger()
-		db2entity.NewDb2Entity(logger).Run(v)
+		db2EntityOptions := db2entity.Db2EntityOptions{}
+		db2entity.NewDb2Entity(db2EntityOptions.WithLogger(logger)).Run(v)
 	},
 }
 
@@ -40,19 +41,9 @@ func init() {
 
 	db2entityCmd.Flags().StringP("struct", "s", "", "name to set for struct")
 
-	db2entityCmd.Flags().BoolP("json", "j", false, "Add json annotations (default) Disable json annotations")
-
 	db2entityCmd.Flags().BoolP("gorm", "g", true, "Add gorm annotations (tags)")
 
 	db2entityCmd.Flags().StringP("target", "", "", "Save file path")
-
-	db2entityCmd.Flags().BoolP("guregu", "", false, "Add guregu null types")
-
-	db2entityCmd.Flags().BoolP("valid", "", false, "Add valid annotations")
-
-	db2entityCmd.Flags().BoolP("mod", "", false, "Add mod annotations")
-
-	db2entityCmd.Flags().BoolP("mar", "", true, "Marshaler to json")
 
 	db2entityCmd.Flags().StringP("entity_target", "", "", "Save entity file path")
 
@@ -69,8 +60,6 @@ func init() {
 	db2entityCmd.Flags().BoolP("inject", "i", true, "automatic inject")
 
 	db2entityCmd.Flags().StringP("injtar", "", "infra", "inject target, target must in wire dir")
-
-	db2entityCmd.Flags().BoolP("hasdata", "", true, "check hasdata after find")
 
 	v.BindPFlags(db2entityCmd.Flags())
 }

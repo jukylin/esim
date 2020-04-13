@@ -1,7 +1,7 @@
 package file_dir
 
 
-type IfaceWrite interface {
+type IfaceWriter interface {
 	Write(outFile, content string) error
 }
 

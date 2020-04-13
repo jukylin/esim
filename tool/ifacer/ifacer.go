@@ -13,6 +13,7 @@ import (
 	"strings"
 	"text/template"
 	"github.com/jukylin/esim/pkg/file-dir"
+	//"github.com/davecgh/go-spew/spew"
 )
 
 type Ifacer struct {
@@ -43,13 +44,13 @@ type Ifacer struct {
 	//import in the interface
 	IfaceUsingIngImport map[string]string
 
-	writer file_dir.IfaceWrite
+	writer file_dir.IfaceWriter
 
 	UsingImportStr string
 }
 
 
-func NewIface(writer file_dir.IfaceWrite) *Ifacer {
+func NewIface(writer file_dir.IfaceWriter) *Ifacer {
 
 	ifacer := &Ifacer{}
 	ifacer.Parser = mockery.NewParser([]string{})
@@ -105,6 +106,7 @@ func (this *Ifacer) Run(v *viper.Viper) error {
 
 	this.PackageName = iface.Pkg.Name()
 
+	this.setNoConflictImport(iface.Pkg.Name(), iface.Pkg.Path())
 	this.ManageNoConflictImport(iface.Pkg.Imports())
 
 	this.GenMethods(iface.Type)
@@ -173,7 +175,7 @@ func (this *Ifacer) GenMethods(interacer *types.Interface) {
 
 func (this *Ifacer) getUsingImportStr() {
 	this.UsingImportStr = "import ( \r\n"
-	for impName, impPkg := range this.IfaceUsingIngImport {
+	for impName, impPkg := range this.PkgNoConflictImport {
 		this.UsingImportStr += "	" + impName + " \"" + impPkg + "\" \r\n"
 	}
 
@@ -203,6 +205,7 @@ func (this *Ifacer) setNoConflictImport(importName string, importPath string) bo
 			importName := this.getUniqueImportName(importPath, level)
 
 			if _, ok := this.PkgNoConflictImport[importName]; !ok {
+
 				this.PkgNoConflictImport[importName] = importPath
 				flag = false
 			}
@@ -241,17 +244,18 @@ func (this *Ifacer) getUniqueImportName(pkgName string, level int) string {
 	return importName
 }
 
+
 func (this *Ifacer) getArgStr(tuple *types.Tuple, m *Method) {
 	if tuple.Len() > 0 {
 		for i := 0; i < tuple.Len(); i++ {
-			ArgInfo := tuple.At(i)
-			if ArgInfo.Name() != "" {
-				m.ArgStr += ArgInfo.Name() + " "
+			ArgVar := tuple.At(i)
+			if ArgVar.Name() != "" {
+				m.ArgStr += ArgVar.Name() + " "
 			} else {
 				m.ArgStr += "arg" + strconv.Itoa(i) + " "
 			}
 
-			m.ArgStr += this.trimTypeString(ArgInfo.Type().String())
+			m.ArgStr += this.parseVar(ArgVar)
 
 			if i < tuple.Len()-1 {
 				m.ArgStr += ", "
@@ -260,28 +264,46 @@ func (this *Ifacer) getArgStr(tuple *types.Tuple, m *Method) {
 	}
 }
 
-func (this *Ifacer) trimTypeString(typeString string) string {
-	for impName, impPkg := range this.PkgNoConflictImport {
-		if strings.Index(typeString, impPkg) > -1 {
-			this.IfaceUsingIngImport[impName] = impPkg
-			return strings.Replace(typeString, impPkg, impName, -1)
+
+func (this *Ifacer) parseVar(varObj *types.Var) string {
+	return this.parseVarType(varObj.Type())
+}
+
+func (this *Ifacer) parseVarType(typ types.Type) string {
+
+	var varType string
+
+	switch t := typ.(type) {
+	case *types.Named:
+		if t.Obj().Pkg() != nil{
+			if t.Obj().Pkg().Name() != this.PackageName{
+				varType += t.Obj().Pkg().Name() + "."
+				this.IfaceUsingIngImport[t.Obj().Pkg().Name()] = t.Obj().Pkg().Path()
+			}
 		}
+		varType += t.Obj().Name()
+	case *types.Pointer:
+		varType = "*"
+		varType += this.parseVarType(t.Elem())
+	default:
+		varType = t.String()
 	}
 
-	return typeString
+	return varType
 }
+
 
 func (this *Ifacer) getReturnStr(tuple *types.Tuple, m *Method) {
 	if tuple.Len() > 0 {
 		m.ReturnTypeStr += "("
 		for i := 0; i < tuple.Len(); i++ {
-			ArgInfo := tuple.At(i)
-			m.ReturnTypeStr += ArgInfo.Name() + " " + this.trimTypeString(ArgInfo.Type().String())
+			ArgVar := tuple.At(i)
+			m.ReturnTypeStr += ArgVar.Name() + " " + this.parseVar(ArgVar)
 			var returnVarName string
-			if ArgInfo.Name() == "" {
+			if ArgVar.Name() == "" {
 				returnVarName = "r" + strconv.Itoa(i)
 				m.InitReturnVarStr += "	var " + returnVarName + " "
-				m.InitReturnVarStr += this.trimTypeString(ArgInfo.Type().String()) + " \r\n"
+				m.InitReturnVarStr += this.parseVar(ArgVar) + " \r\n"
 			}
 
 			m.ReturnStr += returnVarName + ","
