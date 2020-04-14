@@ -127,7 +127,7 @@ func RemoveDir(dir string) error {
 	return os.RemoveAll(dir)
 }
 
-//BackUpFile backup files to os.Getenv("GOPATH") + "/pkg/esim/"
+//BackUpFile backup files to os.Getenv("GOPATH") + "/pkg/esim/backup/"
 //backFile is Absolute path
 // Overwrite as soon as the file exists
 func EsimBackUpFile(backFile string) error {
@@ -140,7 +140,8 @@ func EsimBackUpFile(backFile string) error {
 	relativeDir := strings.Replace(dir, os.Getenv("GOPATH") + string(filepath.Separator) +
 		"src" + string(filepath.Separator), "", -1)
 
-	backUpPath := os.Getenv("GOPATH") + string(filepath.Separator) + "pkg" + string(filepath.Separator) + "esim" + string(filepath.Separator) + "backup" + string(filepath.Separator)
+	backUpPath := os.Getenv("GOPATH") + string(filepath.Separator) + "pkg" +
+		string(filepath.Separator) + "esim" + string(filepath.Separator) + "backup" + string(filepath.Separator)
 	targetPath := backUpPath + relativeDir
 	exists, err := IsExistsDir(targetPath)
 	if err != nil{
@@ -179,6 +180,56 @@ func EsimBackUpFile(backFile string) error {
 	}
 
 	log.Log.Infof("%s backup to %s", relativePath, backUpPath)
+
+	return nil
+}
+
+//EsimRecoverFile recover file from os.Getenv("GOPATH") + "/pkg/esim/backup/"
+func EsimRecoverFile(recoverFile string) error {
+
+	if recoverFile == ""{
+		return errors.New("没有文件")
+	}
+
+	relativeFile := strings.Replace(recoverFile, os.Getenv("GOPATH") + string(filepath.Separator) +
+		"src" + string(filepath.Separator), "", -1)
+
+	backUpPath := os.Getenv("GOPATH") + string(filepath.Separator) + "pkg" + string(filepath.Separator) +
+		"esim" + string(filepath.Separator) + "backup" + string(filepath.Separator)
+	targetPath := backUpPath + relativeFile
+	exists, err := IsExistsDir(targetPath)
+	if err != nil {
+		return err
+	}
+
+	if exists == false {
+		return errors.New(targetPath + " not exists")
+	}
+
+
+	fileExists, err := IsExistsFile(recoverFile)
+	if err != nil{
+		return err
+	}
+
+	if fileExists == false {
+		_, err = CreateFile(recoverFile)
+		if err != nil {
+			return err
+		}
+	}
+
+	input, err := ioutil.ReadFile(targetPath)
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(recoverFile, input, 0644)
+	if err != nil {
+		return err
+	}
+
+	log.Log.Infof("%s recover success", recoverFile)
 
 	return nil
 }

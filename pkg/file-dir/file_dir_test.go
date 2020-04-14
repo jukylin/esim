@@ -104,3 +104,11 @@ func TestBackUpFile(t *testing.T) {
 	err := EsimBackUpFile("./test/esim.txt")
 	assert.NoError(t, err)
 }
+
+func TestEsimRecoverFile(t *testing.T)  {
+	log.NewLogger()
+	err := EsimBackUpFile("./test/esim.txt")
+	assert.NoError(t, err)
+	err = EsimRecoverFile("./test/esim.txt")
+	assert.NoError(t, err)
+}

@@ -7,6 +7,8 @@ import (
 	"github.com/jukylin/esim/pkg/file-dir"
 	"github.com/spf13/viper"
 	"github.com/jukylin/esim/pkg"
+	"os"
+	"path/filepath"
 )
 
 
@@ -35,7 +37,15 @@ func TestDb2Entity_Run(t *testing.T) {
 	v.Set("database", "user")
 	v.Set("table", "test")
 
-	db2Entity.Run(v)
+	err := db2Entity.Run(v)
+	assert.Nil(t, err)
+
+	os.Remove("./example" + string(filepath.Separator) + "entity" + string(filepath.Separator) + "test.go")
+	os.Remove("./example" + string(filepath.Separator) + "dao" + string(filepath.Separator) + "test.go")
+	os.Remove("./example" + string(filepath.Separator) + "repo" + string(filepath.Separator) + "test.go")
+	err = file_dir.EsimRecoverFile(file_dir.GetCurrentDir() +
+		string(filepath.Separator) + "example" + string(filepath.Separator) + "infra" + string(filepath.Separator) + "infra.go")
+	assert.Nil(t, err)
 }
 
 func TestDb2Entity_CloumnsToEntityTmp(t *testing.T)  {
