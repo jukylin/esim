@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"bytes"
 	"github.com/jukylin/esim/pkg"
+	"github.com/jukylin/esim/pkg/templates"
 )
 
 
@@ -29,7 +30,7 @@ func TestExecuteRpcPluginTemplate(t *testing.T)  {
 	}
 
 	var buf bytes.Buffer
-	tmpl, err := template.New("rpc_plugin").Funcs(pkg.EsimFuncMap()).
+	tmpl, err := template.New("rpc_plugin").Funcs(templates.EsimFuncMap()).
 		Parse(rpcPluginTemplate)
 	assert.Nil(t, err)
 	err = tmpl.Execute(&buf, data)

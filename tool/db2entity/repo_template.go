@@ -2,7 +2,7 @@ package db2entity
 
 import "github.com/jukylin/esim/pkg"
 
-type repoTmp struct {
+type repoTpl struct {
 	Imports pkg.Imports
 
 	StructName string
@@ -43,11 +43,15 @@ func NewDB{{.StructName}}Repo(logger log.Logger) {{.StructName}}Repo {
 
 func (this *DB{{.StructName}}Repo) FindById(ctx context.Context, id int64) entity.{{.StructName}} {
 	var {{.TableName}} entity.{{.StructName}}
-	var err error
 
 	{{.TableName}}, err = this.{{.StructName| tolower}}Dao.Find(ctx, "*", "id = ? and {{.DelField}} = ?", id, 0)
 
 	return {{.TableName}}
-}
+}`
 
-`
+
+
+var provideTemplate = `
+func provide{{.StructName}}Repo(esim *container.Esim) repo.{{.StructName}}Repo {
+	return repo.NewDB{{.StructName}}Repo(esim.Logger)
+}`

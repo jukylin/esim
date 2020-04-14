@@ -6,22 +6,32 @@ import (
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg/file-dir"
 	"github.com/spf13/viper"
+	"github.com/jukylin/esim/pkg"
 )
 
 
 func TestDb2Entity_Run(t *testing.T) {
 
-
 	db2EntityOptions := Db2EntityOptions{}
+	StubsColumnsRepo := StubsColumnsRepo{}
 
 	db2Entity := NewDb2Entity(db2EntityOptions.WithLogger(log.NewLogger()),
-		db2EntityOptions.WithColumnsInter(),
-		db2EntityOptions.WithIfaceWrite(file_dir.EsimWriter{}))
+		db2EntityOptions.WithColumnsInter(StubsColumnsRepo),
+		db2EntityOptions.WithIfaceWrite(file_dir.NewEsimWriter()),
+		db2EntityOptions.WithInfraInfo(NewInfraInfo()),
+		db2EntityOptions.WithExecer(pkg.NewNullExec()),
+	)
 
 	v := viper.New()
-	v.Set("entity_target", "./example")
-	v.Set("dao_target", "./example")
-	v.Set("repo_target", "./example")
+	v.Set("entity_target", "./example/entity")
+	v.Set("dao_target", "./example/dao")
+	v.Set("repo_target", "./example/repo")
+	v.Set("infra_dir", "./example/infra")
+
+	v.Set("host", "127.0.0.1")
+	v.Set("port", "3306")
+	v.Set("user", "root")
+	v.Set("passport", "")
 	v.Set("database", "user")
 	v.Set("table", "test")
 
@@ -32,31 +42,28 @@ func TestDb2Entity_CloumnsToEntityTmp(t *testing.T)  {
 
 	db2Entity := &db2Entity{}
 
-	cols := []columns{}
-	col1 := columns{
-		ColumnName : "user_name",
-		DataType: "varchar",
-		IsNullAble : "YES",
-		ColumnComment : "user name",
-	}
-	cols = append(cols, col1)
-
-	col2 := columns{
-		ColumnName : "id",
-		ColumnKey : "PRI",
-		DataType: "int",
-		IsNullAble : "NO",
-	}
-	cols = append(cols, col2)
-
-	col3 := columns{
-		ColumnName : "update_time",
-		DataType: "timestamp",
-		IsNullAble : "NO",
-		Extra : "on update CURRENT_TIMESTAMP",
-	}
-	cols = append(cols, col3)
-
 	entityTmp := db2Entity.cloumnsToEntityTmp(cols)
-	assert.Equal(t, 3, len(entityTmp.Fields))
+	assert.Equal(t, 3, len(entityTmp.StructInfo.Fields))
+}
+
+
+func TestDb2Entity_DirPathToImportPath(t *testing.T)  {
+	db2Entity := &db2Entity{}
+	importPaht := db2Entity.dirPathToImportPath("./a/b/c/")
+	assert.Equal(t, "a/b/c", importPaht)
+}
+
+func TestDb2Entity_ParseInfra(t *testing.T)  {
+	db2Entity := &db2Entity{}
+	assert.True(t, db2Entity.parseInfra(infraContent))
+}
+
+func TestDb2Entity_ProcessInfraInfo(t *testing.T)  {
+	db2EntityOptions := Db2EntityOptions{}
+	db2Entity := NewDb2Entity(
+		db2EntityOptions.WithInfraInfo(NewInfraInfo()))
+
+	db2Entity.withStruct = "Test"
+
+	assert.True(t, db2Entity.processNewInfra())
 }

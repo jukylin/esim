@@ -1,30 +1,34 @@
 package db2entity
 
-import "github.com/jukylin/esim/pkg"
+import (
+	"github.com/jukylin/esim/pkg"
+	"github.com/jukylin/esim/pkg/templates"
+)
 
-type entityTmp struct {
+
+type entityTpl struct {
 	Imports pkg.Imports
-
-	Fields pkg.Fields
 
 	StructName string
 
+	// CURRENT_TIMESTAMP
 	CurTimeStamp []string
 
+	//on update CURRENT_TIMESTAMP
 	OnUpdateTimeStamp []string
 
 	OnUpdateTimeStampStr []string
 
 	DelField string
+
+	StructInfo templates.StructInfo
 }
 
 var entityTemplate = `package entity
 
 {{.Imports.String}}
 
-type {{.StructName}} struct {
-{{.Fields.String}}
-}
+{{.StructInfo.String}}
 
 // delete field
 func (c *{{.StructName}}) DelKey() string {

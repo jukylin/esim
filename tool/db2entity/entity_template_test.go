@@ -6,10 +6,11 @@ import (
 	"text/template"
 	"github.com/stretchr/testify/assert"
 	"github.com/jukylin/esim/pkg"
+	"github.com/jukylin/esim/pkg/templates"
 )
 
 func TestEntityTemplate(t *testing.T)  {
-	tmpl, err := template.New("entity_template").Funcs(pkg.EsimFuncMap()).
+	tmpl, err := template.New("entity_template").Funcs(templates.EsimFuncMap()).
 		Parse(entityTemplate)
 	assert.Nil(t, err)
 
@@ -29,21 +30,26 @@ func TestEntityTemplate(t *testing.T)  {
 	Field2.Doc = append(Field2.Doc, "//username \\r\\n is a test")
 
 	var buf bytes.Buffer
-	entityTmp := entityTmp{}
-	entityTmp.StructName = "Entity"
-	entityTmp.CurTimeStamp = append(entityTmp.CurTimeStamp, "CreateTime1")
-	entityTmp.CurTimeStamp = append(entityTmp.CurTimeStamp, "CreateTime2")
+	entityTpl := entityTpl{}
+	entityTpl.StructName = "Entity"
+	entityTpl.CurTimeStamp = append(entityTpl.CurTimeStamp, "CreateTime1")
+	entityTpl.CurTimeStamp = append(entityTpl.CurTimeStamp, "CreateTime2")
 
-	entityTmp.OnUpdateTimeStamp = append(entityTmp.OnUpdateTimeStamp, "LastUpdateTime")
+	entityTpl.OnUpdateTimeStamp = append(entityTpl.OnUpdateTimeStamp, "LastUpdateTime")
 
-	entityTmp.OnUpdateTimeStampStr = append(entityTmp.OnUpdateTimeStampStr, "last_update_time1")
-	entityTmp.OnUpdateTimeStampStr = append(entityTmp.OnUpdateTimeStampStr, "last_update_time2")
+	entityTpl.OnUpdateTimeStampStr = append(entityTpl.OnUpdateTimeStampStr, "last_update_time1")
+	entityTpl.OnUpdateTimeStampStr = append(entityTpl.OnUpdateTimeStampStr, "last_update_time2")
 
-	entityTmp.Imports = imports
-	entityTmp.Fields = append(entityTmp.Fields, Field1, Field2)
-	entityTmp.DelField = "is_del"
+	entityTpl.Imports = imports
+	entityTpl.DelField = "is_del"
 
-	err = tmpl.Execute(&buf, entityTmp)
+	structInfo := templates.StructInfo{}
+	structInfo.StructName = entityTpl.StructName
+	structInfo.Fields = append(structInfo.Fields, Field1, Field2)
+
+	entityTpl.StructInfo = structInfo
+
+	err = tmpl.Execute(&buf, entityTpl)
 	assert.Nil(t, err)
 	println(buf.String())
 }

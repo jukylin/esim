@@ -92,6 +92,18 @@ func GetParDir() string {
 
 
 func GetCurrentDir() string {
+	wd, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+
+	wd = strings.TrimRight(wd, string(filepath.Separator))
+
+	return wd
+}
+
+
+func GetGoProPath() string {
 	wd,err := os.Getwd()
 	if err != nil {
 		panic(err)
@@ -128,7 +140,7 @@ func EsimBackUpFile(backFile string) error {
 	relativeDir := strings.Replace(dir, os.Getenv("GOPATH") + string(filepath.Separator) +
 		"src" + string(filepath.Separator), "", -1)
 
-	backUpPath := os.Getenv("GOPATH") + string(filepath.Separator) + "pkg " + string(filepath.Separator) + " esim " + string(filepath.Separator) + "backup" + string(filepath.Separator)
+	backUpPath := os.Getenv("GOPATH") + string(filepath.Separator) + "pkg" + string(filepath.Separator) + "esim" + string(filepath.Separator) + "backup" + string(filepath.Separator)
 	targetPath := backUpPath + relativeDir
 	exists, err := IsExistsDir(targetPath)
 	if err != nil{

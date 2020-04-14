@@ -9,8 +9,7 @@ import (
 
 func TestImports_EmptyString(t *testing.T) {
 	imports := Imports{}
-	str, err := imports.String()
-	assert.Nil(t, err)
+	str := imports.String()
 	assert.Empty(t, str)
 }
 
@@ -35,7 +34,6 @@ func TestImports_String(t *testing.T) {
 	imports = append(imports, Import{Name: "time", Path: "time", Doc: docs1})
 	imports = append(imports, Import{Name: "sync", Path: "sync", Doc: docs2})
 
-	src, err := imports.String()
-	assert.Nil(t, err)
+	src := imports.String()
 	assert.Equal(t, result, string(src))
 }

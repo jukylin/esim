@@ -2,7 +2,7 @@ package db2entity
 
 import "github.com/jukylin/esim/pkg"
 
-type daoTmp struct{
+type daoTpl struct{
 	Imports pkg.Imports
 
 	StructName string
@@ -43,8 +43,7 @@ func (this *{{.StructName}}Dao) GetSlaveDb(ctx context.Context) *gorm.DB  {
 
 
 //返回 自增id，错误
-func (this *{{.StructName}}Dao) Create(ctx context.Context, {{.StructName| firstToLower}}
-	*entity.{{.StructName}}) ({{.PriKeyType}}, error){
+func (this *{{.StructName}}Dao) Create(ctx context.Context, {{.StructName| firstToLower}} *entity.{{.StructName}}) ({{.PriKeyType}}, error){
 	db := this.GetDb(ctx).Create({{.StructName| firstToLower}})
 	if db.Error != nil{
 		return {{.PriKeyType}}(0), db.Error

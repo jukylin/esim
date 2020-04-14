@@ -7,8 +7,6 @@ import (
 	"go/parser"
 	"go/token"
 	"io/ioutil"
-	"os"
-	"os/exec"
 	"strings"
 	"text/template"
 	"path/filepath"
@@ -17,6 +15,7 @@ import (
 	"github.com/jukylin/esim/pkg"
 	file_dir "github.com/jukylin/esim/pkg/file-dir"
 	"github.com/spf13/viper"
+	"github.com/jukylin/esim/pkg/templates"
 	"golang.org/x/tools/imports"
 )
 
@@ -35,7 +34,7 @@ type db2Entity struct {
 
 	withEntityTarget string
 
-	//true inject repo to infra.go
+	//true inject repo to infra
 	withInject bool
 
 	logger logger.Logger
@@ -46,46 +45,26 @@ type db2Entity struct {
 
 	withStruct string
 
+	//Camel Form
+	CamelStruct string
+
 	ColumnsRepo ColumnsRepo
 
 	dbConf dbConfig
 
 	writer file_dir.IfaceWriter
-}
 
-type Db2EntityOption func(*db2Entity)
+	withInfraDir string
 
-type Db2EntityOptions struct{}
+	withInfraFile string
 
-func NewDb2Entity(options ...Db2EntityOption) *db2Entity {
+	hasInfraStruct bool
 
-	d := &db2Entity{}
+	oldInfraInfo *infraInfo
 
-	for _, option := range options {
-		option(d)
-	}
+	newInfraInfo *infraInfo
 
-	return d
-}
-
-func (Db2EntityOptions) WithLogger(logger logger.Logger) Db2EntityOption {
-	return func(d *db2Entity) {
-		d.logger = logger
-	}
-}
-
-
-func (Db2EntityOptions) WithColumnsInter(ColumnsRepo ColumnsRepo) Db2EntityOption {
-	return func(d *db2Entity) {
-		d.ColumnsRepo = ColumnsRepo
-	}
-}
-
-
-func (Db2EntityOptions) WithIfaceWrite(writer file_dir.IfaceWriter) Db2EntityOption {
-	return func(d *db2Entity) {
-		d.writer = writer
-	}
+	execer pkg.Exec
 }
 
 
@@ -104,19 +83,116 @@ type dbConfig struct {
 }
 
 
+type Db2EntityOption func(*db2Entity)
+
+type Db2EntityOptions struct{}
+
+func NewDb2Entity(options ...Db2EntityOption) *db2Entity {
+
+	d := &db2Entity{}
+
+	for _, option := range options {
+		option(d)
+	}
+
+	if d.writer == nil{
+		d.writer = file_dir.NewNullWrite()
+	}
+
+	if d.execer == nil{
+		d.execer = &pkg.NullExec{}
+	}
+
+	return d
+}
+
+func (Db2EntityOptions) WithLogger(logger logger.Logger) Db2EntityOption {
+	return func(d *db2Entity) {
+		d.logger = logger
+	}
+}
+
+func (Db2EntityOptions) WithColumnsInter(ColumnsRepo ColumnsRepo) Db2EntityOption {
+	return func(d *db2Entity) {
+		d.ColumnsRepo = ColumnsRepo
+	}
+}
+
+func (Db2EntityOptions) WithIfaceWrite(writer file_dir.IfaceWriter) Db2EntityOption {
+	return func(d *db2Entity) {
+		d.writer = writer
+	}
+}
+
+func (Db2EntityOptions) WithInfraInfo(infra *infraInfo) Db2EntityOption {
+	return func(d *db2Entity) {
+		d.oldInfraInfo = infra
+		d.newInfraInfo = infra
+	}
+}
+
+func (Db2EntityOptions) WithWriter(writer file_dir.IfaceWriter) Db2EntityOption {
+	return func(d *db2Entity) {
+		d.writer = writer
+	}
+}
+
+func (Db2EntityOptions) WithExecer(execer pkg.Exec) Db2EntityOption {
+	return func(d *db2Entity) {
+		d.execer = execer
+	}
+}
+
+type infraInfo struct{
+	imports pkg.Imports
+
+	importStr string
+
+	structInfo templates.StructInfo
+
+	structStr string
+
+	specialStructName string
+
+	specialVarName string
+
+	infraSetArgs infraSetArgs
+
+	infraSetStr string
+
+	content string
+}
+
+func NewInfraInfo() *infraInfo {
+	ifaInfo := &infraInfo{}
+
+	ifaInfo.specialStructName = "Infra"
+
+	ifaInfo.specialVarName = "infraSet"
+
+	ifaInfo.infraSetArgs = infraSetArgs{}
+
+	structInfo := templates.StructInfo{}
+	structInfo.StructName = ifaInfo.specialStructName
+	ifaInfo.structInfo = structInfo
+
+	ifaInfo.imports = pkg.Imports{}
+
+	return ifaInfo
+}
+
 func (this *db2Entity) Run(v *viper.Viper) error {
 
 	this.bindInput(v)
 
 	columns, err := this.ColumnsRepo.GetColumns(this.dbConf)
 	if err != nil{
-		this.logger.Panicf(err.Error())
+		this.logger.Fatalf(err.Error())
 	}
 
 	entityTmp := this.cloumnsToEntityTmp(columns)
 	entityContent := this.executeTmpl("entity_tmp", entityTmp, entityTemplate)
 	this.writer.Write(this.withEntityTarget + this.dbConf.table + ".go", entityContent)
-
 
 	daoTmp := this.cloumnsToDaoTmp(columns)
 	daoContent := this.executeTmpl("dao_tmp", daoTmp, daoTemplate)
@@ -126,21 +202,7 @@ func (this *db2Entity) Run(v *viper.Viper) error {
 	repoContent := this.executeTmpl("repo_tmp", repoTmp, repoTemplate)
 	this.writer.Write(this.withRepoTarget + this.dbConf.table + ".go", repoContent)
 
-	//inject := v.GetBool("inject")
-	//if inject == true {
-	//	pwd, _ := os.Getwd()
-	//	goPath := os.Getenv("GOPATH") + "/src/"
-	//	//项目路径
-	//	proPath := strings.Replace(pwd, goPath, "", -1)
-	//
-	//	err = file_dir.EsimBackUpFile(goPath + "/" + proPath + "/internal/infra/infra.go")
-	//	if err != nil{
-	//		this.logger.Warnf("backup err %s:%s", proPath + "/internal/infra/infra.go", err.Error())
-	//	}
-	//
-	//	Inject("infra", st, pk,
-	//		st + "Repo", "DB" + st + "Repo", proPath+"/internal/infra/repo")
-	//}
+	this.injectToInfra()
 
 	return nil
 }
@@ -160,6 +222,7 @@ func (this *db2Entity) bindInput(v *viper.Viper) {
 		stuctName = this.dbConf.table
 	}
 	this.withStruct = stuctName
+	this.CamelStruct = templates.SnakeToCamel(stuctName)
 
 	boubctx := v.GetString("boubctx")
 	if boubctx != "" {
@@ -168,46 +231,13 @@ func (this *db2Entity) bindInput(v *viper.Viper) {
 
 	this.bindEntityDir(v)
 
-	this.withDisabledRepo = v.GetBool("disabled_repo")
-	if this.withDisabledRepo == false {
+	this.bindRepoDir(v)
 
-		this.withRepoTarget = v.GetString("repo_target")
-		if this.withRepoTarget == "" {
-			this.withRepoTarget = "." + string(filepath.Separator) + "internal" + string(filepath.Separator) + "infra" + string(filepath.Separator) + "repo"
-		}
+	this.bindDaoDir(v)
 
-		//repo 目录是否存在
-		existsRepo, err := file_dir.IsExistsDir(this.withRepoTarget)
-		if err != nil {
-			this.logger.Fatalf(err.Error())
-		}
-
-		if existsRepo == false {
-			this.logger.Fatalf("repo dir not exists")
-		}
-	}
-
-	this.withDisabledDao = v.GetBool("disabled_dao")
-	if this.withDisabledDao == false {
-
-		daoTarget := v.GetString("dao_target")
-		if daoTarget == "" {
-			daoTarget = "." + string(filepath.Separator) + "internal" + string(filepath.Separator) + "infra " + string(filepath.Separator) + "dao"
-		}
-
-		//dao 目录是否存在
-		existsdao, err := file_dir.IsExistsDir(daoTarget)
-		if err != nil {
-			this.logger.Fatalf(err.Error())
-		}
-
-		if existsdao == false {
-			this.logger.Fatalf("dao dir not exists")
-		}
-	}
+	this.bindInfra(v)
 }
 
-//写的时候才创建文件
 func (this *db2Entity) bindEntityDir(v *viper.Viper) {
 	if v.GetBool("disabled_entity") == false {
 
@@ -237,21 +267,53 @@ func (this *db2Entity) bindEntityDir(v *viper.Viper) {
 	}
 }
 
-func (this *db2Entity) CreateDomainFile(dir, file string)  {
-	ex, err := file_dir.IsExistsFile(dir + file + ".go")
-	if err != nil {
-		this.logger.Fatalf(err.Error())
+func (this *db2Entity) bindRepoDir(v *viper.Viper)  {
+	this.withDisabledRepo = v.GetBool("disabled_repo")
+	if this.withDisabledRepo == false {
+
+		this.withRepoTarget = v.GetString("repo_target")
+		if this.withRepoTarget == "" {
+			this.withRepoTarget = "internal" + string(filepath.Separator) + "infra" + string(filepath.Separator) + "repo"
+		} else {
+			this.withRepoTarget = strings.TrimLeft(this.withRepoTarget, ".") + string(filepath.Separator)
+			this.withRepoTarget = strings.Trim(this.withRepoTarget, "/") + string(filepath.Separator)
+		}
+
+		//repo 目录是否存在
+		existsRepo, err := file_dir.IsExistsDir(this.withRepoTarget)
+		if err != nil {
+			this.logger.Fatalf(err.Error())
+		}
+
+		if existsRepo == false {
+			this.logger.Fatalf("repo dir not exists")
+		}
+		this.withRepoTarget = this.withRepoTarget + string(filepath.Separator)
 	}
+}
 
-	if ex {
-		this.logger.Fatalf(dir + file + ".go" + " exists")
-	}
+func (this *db2Entity) bindDaoDir(v *viper.Viper)  {
+	this.withDisabledDao = v.GetBool("disabled_dao")
+	if this.withDisabledDao == false {
 
-	this.logger.Infof("creating dir ... %s", dir + file + ".go")
+		this.withDaoTarget = v.GetString("dao_target")
+		if this.withDaoTarget == "" {
+			this.withDaoTarget = "internal" + string(filepath.Separator) + "infra " + string(filepath.Separator) + "dao"
+		} else {
+			this.withDaoTarget = strings.TrimLeft(this.withDaoTarget, ".") + string(filepath.Separator)
+			this.withDaoTarget = strings.Trim(this.withDaoTarget, "/") + string(filepath.Separator)
+		}
 
-	err = file_dir.CreateDir(this.withEntityTarget)
-	if err != nil {
-		this.logger.Fatalf(err.Error())
+		//dao 目录是否存在
+		existsdao, err := file_dir.IsExistsDir(this.withDaoTarget)
+		if err != nil {
+			this.logger.Fatalf(err.Error())
+		}
+
+		if existsdao == false {
+			this.logger.Fatalf("dao dir not exists")
+		}
+		this.withDaoTarget = this.withDaoTarget + string(filepath.Separator)
 	}
 }
 
@@ -276,9 +338,6 @@ func (this *db2Entity) bindDbConfig(v *viper.Viper) {
 	dbConfig.user = user
 
 	password := v.GetString("password")
-	if password == "" {
-		this.logger.Fatalf("password is empty")
-	}
 	dbConfig.password = password
 
 	database := v.GetString("database")
@@ -296,20 +355,49 @@ func (this *db2Entity) bindDbConfig(v *viper.Viper) {
 	this.dbConf = dbConfig
 }
 
+func (this *db2Entity) bindInfra(v *viper.Viper)  {
+	this.withInject = v.GetBool("inject")
 
-func (this *db2Entity) cloumnsToEntityTmp(columns []columns) entityTmp {
-
-	entityTmp := entityTmp{}
-	if len(columns) < 1 {
-		return entityTmp
+	this.withInfraDir = v.GetString("infra_dir")
+	if this.withInfraDir == ""{
+		this.withInfraDir = "internal" + string(filepath.Separator) + "infra" + string(filepath.Separator)
+	} else {
+		this.withInfraDir = strings.TrimLeft(this.withInfraDir, ".") + string(filepath.Separator)
+		this.withInfraDir = strings.Trim(this.withInfraDir, "/") + string(filepath.Separator)
 	}
 
-	entityTmp.StructName = pkg.SnakeToCamel(this.withStruct)
+	if v.GetString("infra_file") == ""{
+		this.withInfraFile = "infra.go"
+	}
+
+	exists, err := file_dir.IsExistsFile(this.withInfraDir + this.withInfraFile)
+	if err != nil {
+		this.logger.Fatalf(err.Error())
+		return
+	}
+
+	if exists == false {
+		this.logger.Fatalf("%s not exists", this.withInfraDir + this.withInfraFile)
+	}
+}
+
+func (this *db2Entity) cloumnsToEntityTmp(columns []columns) entityTpl {
+
+	entityTpl := entityTpl{}
+	if len(columns) < 1 {
+		return entityTpl
+	}
+
+	entityTpl.Imports = append(entityTpl.Imports, pkg.Import{Path: "github.com/jinzhu/gorm"})
+
+	entityTpl.StructName = this.CamelStruct
+
+	structInfo := templates.StructInfo{}
 
 	for _, column := range columns {
 		field := pkg.Field{}
 
-		fieldName := fmtFieldName(stringifyFirstChar(column.ColumnName))
+		fieldName := templates.SnakeToCamel(column.ColumnName)
 		field.Name = fieldName
 
 		nullable := false
@@ -320,19 +408,19 @@ func (this *db2Entity) cloumnsToEntityTmp(columns []columns) entityTmp {
 		var valueType string
 		valueType = this.mysqlTypeToGoType(column.DataType, nullable)
 		if valueType == golangTime {
-			entityTmp.Imports = append(entityTmp.Imports, pkg.Import{Path: "time"})
+			entityTpl.Imports = append(entityTpl.Imports, pkg.Import{Path: "time"})
 		} else if strings.Index(valueType, "sql.") != -1 {
-			entityTmp.Imports = append(entityTmp.Imports, pkg.Import{Path: "database/sql"})
+			entityTpl.Imports = append(entityTpl.Imports, pkg.Import{Path: "database/sql"})
 		}
 		field.Type = valueType
 
 		if column.ColumnDefault == "CURRENT_TIMESTAMP" {
-			entityTmp.CurTimeStamp = append(entityTmp.CurTimeStamp, fieldName)
+			entityTpl.CurTimeStamp = append(entityTpl.CurTimeStamp, fieldName)
 		}
 
 		if column.Extra == "on update CURRENT_TIMESTAMP" {
-			entityTmp.OnUpdateTimeStamp = append(entityTmp.OnUpdateTimeStamp, fieldName)
-			entityTmp.OnUpdateTimeStampStr = append(entityTmp.OnUpdateTimeStampStr, column.ColumnName)
+			entityTpl.OnUpdateTimeStamp = append(entityTpl.OnUpdateTimeStamp, fieldName)
+			entityTpl.OnUpdateTimeStampStr = append(entityTpl.OnUpdateTimeStampStr, column.ColumnName)
 		}
 
 		if column.ColumnComment != "" {
@@ -355,32 +443,35 @@ func (this *db2Entity) cloumnsToEntityTmp(columns []columns) entityTmp {
 
 		field.Tag = fmt.Sprintf("`gorm:\"column:%s%s%s\"`", column.ColumnName, primary, col_default)
 
-		entityTmp.DelField = this.checkDelField(column)
+		entityTpl.DelField = this.checkDelField(column)
 
 		field.Field = field.Name + " " + field.Type
-		entityTmp.Fields = append(entityTmp.Fields, field)
+		structInfo.Fields = append(structInfo.Fields, field)
 	}
 
-	return entityTmp
+	structInfo.StructName = entityTpl.StructName
+
+	entityTpl.StructInfo = structInfo
+
+	return entityTpl
 }
 
-
-func (this *db2Entity) cloumnsToDaoTmp(columns []columns) daoTmp {
-	daoTmp := daoTmp{}
+func (this *db2Entity) cloumnsToDaoTmp(columns []columns) daoTpl {
+	daoTpl := daoTpl{}
 
 	if len(columns) < 1 {
-		return daoTmp
+		return daoTpl
 	}
 
-	daoTmp.StructName = pkg.SnakeToCamel(this.withStruct)
-	daoTmp.DataBaseName = this.dbConf.database
-	daoTmp.TableName = this.dbConf.table
+	daoTpl.StructName = this.CamelStruct
+	daoTpl.DataBaseName = this.dbConf.database
+	daoTpl.TableName = this.dbConf.table
 
-	daoTmp.Imports = append(daoTmp.Imports, pkg.Import{Path: "context"})
-	daoTmp.Imports = append(daoTmp.Imports, pkg.Import{Path: "github.com/jinzhu/gorm"})
-	daoTmp.Imports = append(daoTmp.Imports, pkg.Import{Path: "errors"})
-	daoTmp.Imports = append(daoTmp.Imports, pkg.Import{Path: "github.com/jukylin/esim/mysql"})
-	daoTmp.Imports = append(daoTmp.Imports, pkg.Import{Path: file_dir.GetCurrentDir() + "/internal/domain/" + this.withBoubctx + "entity"})
+	daoTpl.Imports = append(daoTpl.Imports, pkg.Import{Path: "context"})
+	daoTpl.Imports = append(daoTpl.Imports, pkg.Import{Path: "github.com/jinzhu/gorm"})
+	daoTpl.Imports = append(daoTpl.Imports, pkg.Import{Path: "errors"})
+	daoTpl.Imports = append(daoTpl.Imports, pkg.Import{Path: "github.com/jukylin/esim/mysql"})
+	daoTpl.Imports = append(daoTpl.Imports, pkg.Import{Path: file_dir.GetGoProPath() + this.dirPathToImportPath(this.withEntityTarget)})
 
 	for _, column := range columns {
 		nullable := false
@@ -389,39 +480,38 @@ func (this *db2Entity) cloumnsToDaoTmp(columns []columns) daoTmp {
 		}
 
 		if column.ColumnKey == "PRI" {
-			daoTmp.PriKeyType = this.mysqlTypeToGoType(column.DataType, nullable)
+			daoTpl.PriKeyType = this.mysqlTypeToGoType(column.DataType, nullable)
 			break;
 		}
 	}
 
-	return daoTmp
+	return daoTpl
 }
 
-func (this *db2Entity) cloumnsToRepoTmp(columns []columns) repoTmp {
-	repoTmp := repoTmp{}
+func (this *db2Entity) cloumnsToRepoTmp(columns []columns) repoTpl {
+	repoTpl := repoTpl{}
 
 	if len(columns) < 1 {
-		return repoTmp
+		return repoTpl
 	}
 
-	repoTmp.StructName = pkg.SnakeToCamel(this.withStruct)
-	repoTmp.TableName = this.dbConf.table
+	repoTpl.StructName = this.CamelStruct
+	repoTpl.TableName = this.dbConf.table
 
-	repoTmp.Imports = append(repoTmp.Imports, pkg.Import{Path: "context"})
-	repoTmp.Imports = append(repoTmp.Imports, pkg.Import{Path: "github.com/jinzhu/gorm"})
-	repoTmp.Imports = append(repoTmp.Imports, pkg.Import{Path: "github.com/jukylin/esim/log"})
-	repoTmp.Imports = append(repoTmp.Imports, pkg.Import{Path: file_dir.GetCurrentDir() + "/internal/domain/" + this.withBoubctx + "entity"})
-	repoTmp.Imports = append(repoTmp.Imports, pkg.Import{Path: file_dir.GetCurrentDir() + "/internal/infra/dao"})
+	repoTpl.Imports = append(repoTpl.Imports, pkg.Import{Path: "context"})
+	repoTpl.Imports = append(repoTpl.Imports, pkg.Import{Path: "github.com/jukylin/esim/log"})
+	repoTpl.Imports = append(repoTpl.Imports, pkg.Import{Path: file_dir.GetGoProPath() + this.dirPathToImportPath(this.withEntityTarget)})
+	repoTpl.Imports = append(repoTpl.Imports, pkg.Import{Path: file_dir.GetGoProPath() + this.dirPathToImportPath(this.withDaoTarget)})
 
 
 	for _, column := range columns {
-		repoTmp.DelField = this.checkDelField(column)
+		repoTpl.DelField = this.checkDelField(column)
 	}
 
-	return repoTmp
+	return repoTpl
 }
 
-
+//checkDelField check column.ColumnName contains "is" and "del" char
 func (this *db2Entity) checkDelField(column columns) string {
 	if strings.Index(column.ColumnName, "del") != -1 &&
 		strings.Index(column.ColumnName, "is") != -1 {
@@ -431,350 +521,91 @@ func (this *db2Entity) checkDelField(column columns) string {
 	return ""
 }
 
-
+//executeTmpl parse template
 func (this *db2Entity) executeTmpl(tmplName string, data interface{}, text string) string {
-	tmpl, err := template.New(tmplName).Funcs(pkg.EsimFuncMap()).
+	tmpl, err := template.New(tmplName).Funcs(templates.EsimFuncMap()).
 		Parse(text)
 	if err != nil {
-		this.logger.Panicf(err.Error())
+		this.logger.Fatalf(err.Error())
 	}
 
 	var buf bytes.Buffer
 	err = tmpl.Execute(&buf, data)
 	if err != nil {
-		this.logger.Panicf(err.Error())
+		this.logger.Fatalf(err.Error())
 	}
 
 	return buf.String()
 }
 
-func GenerateDao(tableName string, structName string, pkgName string,
-	v *viper.Viper, genMysqlInfo generateMysqlInfo, boubctx string) ([]byte, error) {
-
-	daoStr := `
-package dao
-
-import (
-	"errors"
-	"context"
-	"` + file_dir.GetCurrentDir() + `/internal/domain/` + boubctx + `entity"
-	"github.com/jinzhu/gorm"
-	"github.com/jukylin/esim/mysql"
-)
-
-
-type ` + structName + `Dao struct{
-	mysql *mysql.MysqlClient
+// ./a/b/c/ => a/b/c
+func (this *db2Entity) dirPathToImportPath(dirPath string) string {
+	path := strings.TrimLeft(dirPath, ".")
+	path = strings.TrimLeft(dirPath, "/")
+	path = strings.TrimRight(path, "/")
+	path = string(filepath.Separator) + path
+	return path
 }
 
-func New` + structName + `Dao() *` + structName + `Dao {
-	dao := &` + structName + `Dao{
-		mysql : mysql.NewMysqlClient(),
-	}
-
-	return dao
-}
-
-
-//主库
-func (this *` + structName + `Dao) GetDb(ctx context.Context) *gorm.DB  {
-	return this.mysql.GetCtxDb(ctx, "` + pkgName + `").Table("` + tableName + `")
-}
-
-//从库
-func (this *` + structName + `Dao) GetSlaveDb(ctx context.Context) *gorm.DB  {
-	return this.mysql.GetCtxDb(ctx, "` + pkgName + `_slave").Table("` + tableName + `")
-}
-
-
-//返回 自增id，错误
-func (this *` + structName + `Dao) Create(ctx context.Context, ` + GetFirstToLower(structName) +
-		` *entity.` + structName + `) (` + genMysqlInfo.priKeyType + `, error){
-	db := this.GetDb(ctx).Create(` + GetFirstToLower(structName) + `)
-	if db.Error != nil{
-		return ` + genMysqlInfo.priKeyType + `(0), db.Error
-	}else{
-		return ` + genMysqlInfo.priKeyType + `(` + GetFirstToLower(structName) + `.ID), nil
-	}
-}
-
-//ctx, "name = ?", "test"
-func (this *` + structName + `Dao) Count(ctx context.Context, query interface{}, args ...interface{}) (int64, error){
-	var count int64
-	db := this.GetSlaveDb(ctx).Where(query, args...).Count(&count)
-	if db.Error != nil{
-		return count, db.Error
-	}else{
-		return count, nil
-	}
-}
-
-// ctx, "id,name", "name = ?", "test"
-// 可通过 HasData() 判断是否有数据
-func (this *` + structName + `Dao) Find(ctx context.Context, squery , wquery interface{}, args ...interface{}) (entity.` + structName + `, error){
-	var ` + GetFirstToLower(structName) + ` entity.` + structName + `
-	db := this.GetSlaveDb(ctx).Select(squery).
-		Where(wquery, args...).First(&` + GetFirstToLower(structName) + `)
-	if db.Error != nil{
-		return ` + strings.ToLower(string(structName[0])) + `, db.Error
-	}else{
-		return ` + strings.ToLower(string(structName[0])) + `, nil
-	}
-}
-
-
-// ctx, "id,name", "name = ?", "test"
-//最多取10条
-func (this *` + structName + `Dao) List(ctx context.Context, squery , wquery interface{}, args ...interface{}) ([]entity.` + structName + `, error){
-	` + GetFirstToLower(structName) + `s := []entity.` + structName + `{}
-	db := this.GetSlaveDb(ctx).Select(squery).
-		Where(wquery, args...).Limit(10).Find(&` + GetFirstToLower(structName) + `s)
-	if db.Error != nil{
-		return ` + GetFirstToLower(structName) + `s, db.Error
-	}else{
-		return ` + GetFirstToLower(structName) + `s, nil
-	}
-}
-
-func (this *` + structName + `Dao) DelById(ctx context.Context, id ` + genMysqlInfo.priKeyType + `) (bool, error){
-	var del` + structName + ` entity.` + structName + `
-
-	if del` + structName + `.DelKey() == ""{
-		return false, errors.New("找不到 is_del / is_deleted / is_delete 字段")
-	}
-
-	del` + structName + `.ID = id
-	db := this.GetDb(ctx).Update(map[string]interface{}{del` + structName + `.DelKey(): 1})
-	if db.Error != nil{
-		return false, db.Error
-	}else{
-		return true, nil
-	}
-}
-
-//ctx, map[string]interface{}{"name": "hello"}, "name = ?", "test"
-//返回影响数
-func (this *` + structName + `Dao) Update(ctx context.Context, update map[string]interface{}, query interface{}, args ...interface{}) (int64, error) {
-	db := this.GetDb(ctx).Where(query, args).
-		Updates(update)
-	return db.RowsAffected, db.Error
-}
-
-`
-
-	return []byte(daoStr), nil
-}
-
-func GenerateRepo(tableName string, structName string, v *viper.Viper, boubctx string) string {
-	repoStr := `
-package repo
-
-
-import (
-	"context"
-	"` + file_dir.GetCurrentDir() + `/internal/domain/` + boubctx + `entity"
-	"` + file_dir.GetCurrentDir() + `/internal/infra/dao"
-	"github.com/jukylin/esim/log"
-)
-
-
-type ` + structName + `Repo interface {
-	FindById(context.Context, int64) entity.` + structName + `
-}
-
-type DB` + structName + `Repo struct{
-
-	logger log.Logger
-
-	` + GetFirstStringToLower(structName) + `Dao *dao.` + structName + `Dao
-}
-
-func NewDB` + structName + `Repo(logger log.Logger) ` + structName + `Repo {
-	repo := &DB` + structName + `Repo{
-		logger : logger,
-	}
-
-	if repo.` + GetFirstStringToLower(structName) + `Dao == nil{
-		repo.` + GetFirstStringToLower(structName) + `Dao = dao.New` + structName + `Dao()
-	}
-
-
-	return repo
-}
-
-func (this *DB` + structName + `Repo) FindById(ctx context.Context, id int64) entity.` + structName + ` {
-	var ` + tableName + ` entity.` + structName + `
-	var err error
-
-	` + tableName + `, err = this.` + GetFirstStringToLower(structName) + `Dao.Find(ctx, "*", "id = ? ", id)
-
-	if err != nil{
-		this.logger.Errorf(err.Error())
-		return ` + tableName + `
-	}
-
-	return ` + tableName + `
-}
-
-`
-
-	return repoStr
-}
-
-func GenInitFile(pkgName string, v *viper.Viper) string {
-	initStr := `
-package ` + pkgName + `
-
-	import (
-		"gopkg.in/go-playground/mold.v2/modifiers"
-	)
-
-	var (
-	conform  = modifiers.New()
-)
-`
-
-	return initStr
-}
-
-func camelString(s string) string {
-	data := make([]byte, 0, len(s))
-	j := false
-	k := false
-	num := len(s) - 1
-	for i := 0; i <= num; i++ {
-		d := s[i]
-		if k == false && d >= 'A' && d <= 'Z' {
-			k = true
-		}
-		if d >= 'a' && d <= 'z' && (j || k == false) {
-			d = d - 32
-			j = false
-			k = true
-		}
-		if k && d == '_' && num > i && s[i+1] >= 'a' && s[i+1] <= 'z' {
-			j = true
-			continue
-		}
-		data = append(data, d)
-	}
-	return string(data[:])
-}
-
-func GetFirstToLower(str string) string {
-	return strings.ToLower(string(str[0]))
-}
-
-func GetFirstStringToLower(str string) string {
-	return strings.ToLower(string(str[0])) + str[1:]
-}
-
-func Inject(structName string, fieldName, packageName, interfaceName string,
-	instanceName string, importStr string) {
-
-	infrDir := "./internal/infra/"
-
-	infrFile := "infra.go"
-
-	exists, err := file_dir.IsExistsFile(infrDir + infrFile)
+//injectToInfra inject repo to infra.go and execute wire command
+func (this *db2Entity) injectToInfra()  {
+	//back up infra.go
+	err := file_dir.EsimBackUpFile(file_dir.GetCurrentDir() + string(filepath.Separator) + this.withInfraDir + this.withInfraFile)
 	if err != nil {
-		//log.Errorf(err.Error())
+		this.logger.Fatalf(err.Error())
 		return
 	}
 
-	if exists {
-		src, err := ioutil.ReadFile(infrDir + infrFile)
-		if err != nil {
-			//log.Errorf(err.Error())
-			return
-		}
+	beautifulSource := this.sourceInfraFile()
 
-		//先整理下源文件
-		formatSrc, err := format.Source([]byte(src))
-		if err != nil {
-			//log.Errorf(err.Error())
-			return
-		}
+	this.parseInfra(beautifulSource)
 
-		ioutil.WriteFile(infrDir+infrFile, formatSrc, 0666)
+	if this.hasInfraStruct {
+		this.copyInfraInfo()
 
-		srcStr := string(formatSrc)
+		this.processNewInfra()
 
-		source := handleInject(srcStr, "Infra",
-			fieldName, packageName, interfaceName, instanceName, importStr)
+		this.toStringNewInfra()
 
-		//整理，写入
-		formatSrc, err = format.Source([]byte(source))
-		if err != nil {
-			//log.Errorf(err.Error())
-			return
-		}
+		this.buildNewInfraString()
 
-		formatSrc, err = imports.Process("", formatSrc, nil)
-		if err != nil {
-			//log.Errorf(err.Error())
-			return
-		}
-
-		ioutil.WriteFile(infrDir+infrFile, []byte(formatSrc), 0666)
-
-		//err = ExecGoFmt(infrFile, infrDir)
-		//if err != nil {
-		//	log.Fatalf(err.Error())
-		//}
-
-		err = ExecWire(infrDir)
-		if err != nil {
-			//log.Fatalf(err.Error())
-		}
-
-		//log.Infof("注入成功")
+		this.writeNewInfra()
 
 	} else {
-		//log.Errorf("不存在 %s", infrDir+infrFile)
+		this.logger.Fatalf("not found the %s", this.oldInfraInfo.specialStructName)
 	}
+
+	this.logger.Infof("inject success")
 }
 
-func handleInject(srcStr string, structName string, fieldName, packageName, interName string,
-	instName string, importStr string) string {
-
+//parseInfra parse infra.go 's content, find "import", "Infra" , "infraSet" and record origin syntax
+func (this *db2Entity) parseInfra(srcStr string) bool {
 	fset := token.NewFileSet() // positions are relative to fset
 	f, err := parser.ParseFile(fset, "", srcStr, parser.ParseComments)
 	if err != nil {
-		panic(err)
+		this.logger.Fatalf(err.Error())
 	}
 
-	var hasStruct bool
-	var oldStruct string
-	var newStruct string
-
-	var oldImportStr string
-	var newImportStr string
-
-	provideFunc := getProvideFunc(interName, instName)
-
-	var oldSet string
-	var newSet string
-
+	//provideFunc := getProvideFunc(interName, instName)
 	for _, decl := range f.Decls {
 
 		if GenDecl, ok := decl.(*ast.GenDecl); ok {
 			if GenDecl.Tok.String() == "import" {
-				oldImports := getOldImports(GenDecl)
-				newImports := append(oldImports, "\""+importStr+"\"")
-				oldImportStr = srcStr[GenDecl.Pos()-1 : GenDecl.End()]
-				newImportStr = getNewImportStr(newImports)
+				imports := pkg.Imports{}
+				imports.ParseFromAst(GenDecl)
+				this.oldInfraInfo.imports = imports
+				this.oldInfraInfo.importStr = srcStr[GenDecl.Pos()-1 : GenDecl.End()]
 			}
 
 			if GenDecl.Tok.String() == "type" {
 				for _, specs := range GenDecl.Specs {
 					if typeSpec, ok := specs.(*ast.TypeSpec); ok {
-						if typeSpec.Name.String() == structName {
-							hasStruct = true
-							oldStruct = srcStr[GenDecl.Pos()-1 : GenDecl.End()]
-							oldFields := GetOldFields(GenDecl, srcStr)
-							newFields := append(oldFields, pkg.Field{Field: interName + " repo." + interName})
-							newStruct = GetNewStruct(structName, newFields)
+						if typeSpec.Name.String() == this.oldInfraInfo.specialStructName {
+							this.hasInfraStruct = true
+							fields := pkg.Fields{}
+							fields.ParseFromAst(GenDecl, srcStr)
+							this.oldInfraInfo.structInfo.Fields = fields
+							this.oldInfraInfo.structStr = srcStr[GenDecl.Pos()-1 : GenDecl.End()]
 						}
 					}
 				}
@@ -784,14 +615,10 @@ func handleInject(srcStr string, structName string, fieldName, packageName, inte
 				for _, specs := range GenDecl.Specs {
 					if typeSpec, ok := specs.(*ast.ValueSpec); ok {
 						for _, name := range typeSpec.Names {
-							if name.String() == "infraSet" {
-								var oldArgs []string
-								oldSet = srcStr[GenDecl.TokPos-1 : GenDecl.End()]
-								oldArgs = append(oldArgs, "var infraSet = wire.NewSet(")
-								oldArgs = append(oldArgs, getSet(GenDecl, srcStr)...)
-								newArgs := append(oldArgs, "provide"+instName+",")
-								newArgs = append(newArgs, ")")
-								newSet = getNewSet(newArgs)
+							if name.String() == this.oldInfraInfo.specialVarName {
+								this.oldInfraInfo.infraSetStr = srcStr[GenDecl.TokPos-1 : GenDecl.End()]
+								this.oldInfraInfo.infraSetArgs.Args = append(this.oldInfraInfo.infraSetArgs.Args,
+									this.getInfraSetArgs(GenDecl, srcStr)...)
 							}
 						}
 					}
@@ -800,101 +627,120 @@ func handleInject(srcStr string, structName string, fieldName, packageName, inte
 		}
 	}
 
-	//println(srcStr)
-	if hasStruct == false {
-		//log.Errorf("不存在 %s", structName)
-		return ""
+	if this.hasInfraStruct  == false {
+		this.logger.Fatalf("not find %s", this.oldInfraInfo.specialStructName)
 	}
 
-	srcStr = strings.Replace(srcStr, oldImportStr, newImportStr, -1)
-	srcStr = strings.Replace(srcStr, oldStruct, newStruct, -1)
-	srcStr = strings.Replace(srcStr, oldSet, newSet, -1)
-	srcStr += provideFunc
+	this.oldInfraInfo.content = srcStr
 
-	return srcStr
+	//srcStr = strings.Replace(srcStr, oldImportStr, newImportStr, -1)
+	//srcStr = strings.Replace(srcStr, oldStruct, newStruct, -1)
+	//srcStr = strings.Replace(srcStr, oldSet, newSet, -1)
+	//srcStr += provideFunc
+
+	return true
 }
 
-func getNewSet(args []string) string {
-	var structStr string
-
-	for _, a := range args {
-		structStr += "	" + a + "\r\n"
-	}
-	return structStr
-}
-
-func getOldImports(GenDecl *ast.GenDecl) []string {
-	var imports []string
-	for _, specs := range GenDecl.Specs {
-		if spec, ok := specs.(*ast.ImportSpec); ok {
-			var name string
-			if spec.Name.String() != "<nil>" {
-				name = spec.Name.String()
-			}
-
-			imports = append(imports, name+" "+spec.Path.Value)
-		}
+//sourceInfraFile Beautify infra.go
+func (this *db2Entity) sourceInfraFile() string {
+	src, err := ioutil.ReadFile(this.withInfraDir + this.withInfraFile)
+	if err != nil {
+		this.logger.Fatalf(err.Error())
 	}
 
-	return imports
-}
-
-func GetOldFields(GenDecl *ast.GenDecl, strSrc string) []pkg.Field {
-	var fields pkg.Fields
-	for _, specs := range GenDecl.Specs {
-		if spec, ok := specs.(*ast.TypeSpec); ok {
-			if structType, ok := spec.Type.(*ast.StructType); ok {
-				for _, astField := range structType.Fields.List {
-					var field pkg.Field
-					if astField.Doc != nil {
-						for _, doc := range astField.Doc.List {
-							field.Doc = append(field.Doc, doc.Text)
-						}
-					}
-
-					if astField.Tag != nil {
-						field.Tag = astField.Tag.Value
-					}
-					var name string
-					if len(astField.Names) > 0 {
-						name = astField.Names[0].String()
-						field.Name = name
-						field.Field = name + " " + strSrc[astField.Type.Pos()-1:astField.Type.End()-1]
-					} else {
-						nameSplit := strings.Split(strSrc[astField.Type.Pos()-1:astField.Type.End()-1], ".")
-						field.Name = nameSplit[len(nameSplit)-1]
-						field.Field = strSrc[astField.Type.Pos()-1 : astField.Type.End()-1]
-					}
-
-					fields = append(fields, field)
-				}
-			}
-		}
+	formatSrc, err := format.Source([]byte(src))
+	if err != nil {
+		this.logger.Fatalf(err.Error())
 	}
 
-	return fields
+	ioutil.WriteFile(this.withInfraDir + this.withInfraFile, formatSrc, 0666)
+
+	return string(formatSrc)
 }
 
-func getSet(GenDecl *ast.GenDecl, srcStr string) []string {
+func (this *db2Entity) copyInfraInfo()  {
+	oldContent := *this.oldInfraInfo
+	this.newInfraInfo = &oldContent
+}
+
+//processInfraInfo process newInfraInfo, append import, repo field and wire's provider
+func (this *db2Entity) processNewInfra() bool {
+
+	field := pkg.Field{}
+	field.Name = this.CamelStruct + "Repo"
+	field.Type = " repo." + this.CamelStruct + "Repo"
+	field.Field = field.Name + " " + field.Type
+	this.newInfraInfo.structInfo.Fields = append(this.newInfraInfo.structInfo.Fields, field)
+
+	this.newInfraInfo.infraSetArgs.Args = append(this.newInfraInfo.infraSetArgs.Args,
+		"provide" + this.CamelStruct + "Repo" + ",")
+
+	imp := pkg.Import{Path: file_dir.GetGoProPath() + this.dirPathToImportPath(this.withRepoTarget)}
+	this.newInfraInfo.imports = append(this.newInfraInfo.imports, imp)
+
+	return true
+}
+
+func (this *db2Entity) toStringNewInfra() {
+
+	this.newInfraInfo.importStr = this.newInfraInfo.imports.String()
+
+	this.newInfraInfo.structStr = this.newInfraInfo.structInfo.String()
+
+	this.newInfraInfo.infraSetStr = this.newInfraInfo.infraSetArgs.String()
+
+}
+
+func (this *db2Entity) buildNewInfraString() {
+
+	oldContent := this.oldInfraInfo.content
+
+	oldContent = strings.Replace(oldContent,
+		this.oldInfraInfo.importStr, this.newInfraInfo.importStr, -1)
+
+	oldContent = strings.Replace(oldContent,
+		this.oldInfraInfo.structStr, this.newInfraInfo.structStr, -1)
+
+	this.newInfraInfo.content = strings.Replace(oldContent,
+		this.oldInfraInfo.infraSetStr, this.newInfraInfo.infraSetStr, -1)
+
+	this.newInfraInfo.content += this.appendProvideFunc()
+}
+
+func (this *db2Entity) appendProvideFunc() string {
+	return this.executeTmpl("provide_tmp", struct{StructName string}{this.CamelStruct}, provideTemplate)
+}
+
+func (this *db2Entity) writeNewInfra()  {
+
+	sourceSrc, err := format.Source([]byte(this.newInfraInfo.content))
+	if err != nil {
+		this.logger.Fatalf(err.Error())
+		return
+	}
+
+	processSrc, err := imports.Process("", sourceSrc, nil)
+	if err != nil {
+		this.logger.Fatalf(err.Error())
+		return
+	}
+
+	this.writer.Write(this.withInfraDir + this.withInfraFile, string(processSrc))
+
+	err = this.execer.ExecWire(this.withInfraDir)
+	if err != nil {
+		this.logger.Fatalf(err.Error())
+	}
+}
+
+func (this *db2Entity) getInfraSetArgs(GenDecl *ast.GenDecl, srcStr string) []string {
 	var args []string
 	for _, specs := range GenDecl.Specs {
 		if spec, ok := specs.(*ast.ValueSpec); ok {
 			for _, value := range spec.Values {
 				if callExpr, ok := value.(*ast.CallExpr); ok {
 					for _, callArg := range callExpr.Args {
-						if arg, ok := callArg.(*ast.CallExpr); ok {
-							var x string
-							var sel string
-							if fun, ok := arg.Fun.(*ast.SelectorExpr); ok {
-								x = fun.X.(*ast.Ident).String()
-								sel = fun.Sel.String()
-							}
-							args = append(args, x+"."+sel+srcStr[arg.Lparen-1:arg.Rparen]+",")
-						}
-
-						if arg, ok := callArg.(*ast.Ident); ok {
-							args = append(args, arg.String()+",")
-						}
+						args = append(args, pkg.ParseExpr(callArg, srcStr))
 					}
 				}
 			}
@@ -904,85 +750,5 @@ func getSet(GenDecl *ast.GenDecl, srcStr string) []string {
 	return args
 }
 
-func getNewImportStr(newImports []string) string {
 
-	var importStr = "import (\r\n"
 
-	for _, is := range newImports {
-		importStr += "	" + is + "\r\n"
-	}
-
-	importStr += ")\r\n"
-
-	return importStr
-}
-
-func getProvideFunc(interName, instName string) string {
-	funcStr := `
-func provide` + instName + `(esim *container.Esim) repo.` + interName + ` {
-	return repo.New` + instName + `(esim.Logger)
-}`
-
-	return funcStr
-}
-
-func GetNewStruct(name string, fields []pkg.Field) string {
-	var structStr string
-	structStr = " type " + name + " struct {\r\n"
-
-	for _, f := range fields {
-		if len(f.Doc) > 0 {
-			for _, d := range f.Doc {
-				structStr += "	" + d + "\r\n"
-			}
-		}
-		structStr += "	" + f.Field + "\r\n"
-		structStr += "\r\n"
-	}
-
-	structStr += "}\r\n"
-
-	return structStr
-}
-
-func GetFirstToUpper(str string) string {
-	return strings.ToUpper(string(str[0])) + str[1:]
-}
-
-func ExecGoFmt(file string, dir string) error {
-	cmd_line := fmt.Sprintf("go fmt %s", file)
-
-	//log.Infof(cmd_line)
-
-	args := strings.Split(cmd_line, " ")
-
-	cmd := exec.Command(args[0], args[1:]...)
-	cmd.Dir = dir
-
-	cmd.Env = os.Environ()
-
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err := cmd.Run()
-
-	return err
-}
-
-func ExecWire(dir string) error {
-	cmd_line := fmt.Sprintf("wire")
-
-	//log.Infof("dir %s, %s", dir, cmd_line)
-
-	args := strings.Split(cmd_line, " ")
-
-	cmd := exec.Command(args[0], args[1:]...)
-	cmd.Dir = dir
-
-	cmd.Env = os.Environ()
-
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err := cmd.Run()
-
-	return err
-}

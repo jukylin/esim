@@ -3,14 +3,14 @@ package pkg
 import (
 	"bytes"
 	"text/template"
-	"go/format"
+	"go/ast"
+	"strings"
 )
 
 var importTmp = `import (
 {{ range .Imports }}
 {{ range $doc := .Doc}}{{$doc}}
-{{end}}{{.Name}} "{{.Path}}"
-{{end}}
+{{end}}{{.Name}} "{{.Path}}"{{end}}
 )`
 
 type Import struct{
@@ -30,28 +30,42 @@ func (this Imports) Len() int {
 }
 
 
-func (this Imports) String() (string, error) {
+func (this Imports) String() string {
 
 	if this.Len() < 0 {
-		return "", nil
+		return ""
 	}
 
-	tmpl, err := template.New("import_template").Funcs(EsimFuncMap()).
-		Parse(importTmp)
+	tmpl, err := template.New("import_template").Parse(importTmp)
 	if err != nil{
-		return "", err
+		panic(err.Error())
 	}
 
 	var buf bytes.Buffer
 	err = tmpl.Execute(&buf, struct {Imports}{this})
 	if err != nil{
-		return "", err
+		panic(err.Error())
 	}
 
-	src, err := format.Source(buf.Bytes())
-	if err != nil{
-		return "", err
-	}
+	return buf.String()
+}
 
-	return string(src), nil
+func (this *Imports) ParseFromAst(GenDecl *ast.GenDecl) {
+	for _, specs := range GenDecl.Specs {
+		if spec, ok := specs.(*ast.ImportSpec); ok {
+			imp := Import{}
+			if spec.Name.String() != "<nil>" {
+				imp.Name = spec.Name.String()
+			}
+
+			if spec.Doc != nil {
+				for _, test := range spec.Doc.List {
+					imp.Doc = append(imp.Doc, test.Text)
+				}
+			}
+
+			imp.Path = strings.Trim(spec.Path.Value, "\"")
+			*this = append(*this, imp)
+		}
+	}
 }

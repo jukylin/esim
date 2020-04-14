@@ -6,10 +6,11 @@ import (
 	"text/template"
 	"github.com/stretchr/testify/assert"
 	"github.com/jukylin/esim/pkg"
+	"github.com/jukylin/esim/pkg/templates"
 )
 
 func TestRepoTemplate(t *testing.T)  {
-	tmpl, err := template.New("repo_template").Funcs(pkg.EsimFuncMap()).
+	tmpl, err := template.New("repo_template").Funcs(templates.EsimFuncMap()).
 		Parse(repoTemplate)
 	assert.Nil(t, err)
 
@@ -18,13 +19,13 @@ func TestRepoTemplate(t *testing.T)  {
 	imports = append(imports, pkg.Import{Name : "sync", Path: "sync"})
 
 	var buf bytes.Buffer
-	repoTmp := repoTmp{}
-	repoTmp.StructName = "User"
-	repoTmp.TableName = "user"
-	repoTmp.Imports = imports
-	repoTmp.DelField = "is_del"
+	repoTpl := repoTpl{}
+	repoTpl.StructName = "User"
+	repoTpl.TableName = "user"
+	repoTpl.Imports = imports
+	repoTpl.DelField = "is_del"
 
-	err = tmpl.Execute(&buf, repoTmp)
+	err = tmpl.Execute(&buf, repoTpl)
 	if err != nil{
 		println(err.Error())
 	}

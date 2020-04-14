@@ -1,0 +1,47 @@
+package infra
+
+import (
+	"github.com/google/wire"
+
+	"github.com/jukylin/esim/container"
+
+	"github.com/jukylin/esim/redis"
+
+	"sync"
+
+)
+
+var infraOnce sync.Once
+var onceInfra *Infra
+
+type Infra struct {
+
+	//Esim
+	*container.Esim
+
+	//redis
+	Redis *redis.RedisClient
+
+}
+
+var infraSet = wire.NewSet(
+	wire.Struct(new(Infra), "*"),
+)
+
+func NewInfra() *Infra {
+	infraOnce.Do(func() {
+	})
+
+	return onceInfra
+}
+
+// Close close the infra when app stop
+func (this *Infra) Close() {
+}
+
+func (this *Infra) HealthCheck() []error {
+	var errs []error
+	return errs
+}
+
+

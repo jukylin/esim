@@ -1,4 +1,4 @@
-package pkg
+package templates
 
 import (
 	"testing"
@@ -64,6 +64,26 @@ func TestFirstToLower(t *testing.T)  {
 	for _, test := range testCases{
 		t.Run(test.caseName, func(t *testing.T) {
 			assert.Equal(t, test.result, FirstToLower(test.s))
+
+		})
+	}
+}
+
+func TestCamelToSnake(t *testing.T)  {
+	testCases := []struct {
+		caseName string
+		s string
+		result string
+	}{
+		{caseName:  "case1" , s : "Abc", result: "abc"},
+		{caseName:  "case2" , s : "ABC", result: "a_b_c"},
+		{caseName:  "case3" , s : "AbcBcdCde", result: "abc_bcd_cde"},
+		{caseName:  "case4" , s : "", result: ""},
+	}
+
+	for _, test := range testCases{
+		t.Run(test.caseName, func(t *testing.T) {
+			assert.Equal(t, test.result, CamelToSnake(test.s))
 
 		})
 	}

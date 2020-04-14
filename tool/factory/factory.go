@@ -18,6 +18,7 @@ import (
 	"text/template"
 	"bytes"
 	"github.com/jukylin/esim/pkg"
+	"github.com/jukylin/esim/pkg/templates"
 )
 
 
@@ -141,6 +142,8 @@ type esimFactory struct {
 	SpecFieldInitStr string
 
 	ReturnStr string
+
+	StructTpl templates.StructTpl
 }
 
 func NewEsimFactory(logger logger.Logger) *esimFactory {
@@ -154,9 +157,9 @@ func NewEsimFactory(logger logger.Logger) *esimFactory {
 
 	factory.writer = file_dir.EsimWriter{}
 
-
 	factory.structFieldIface = NewRpcPluginStructField(factory.writer)
 
+	factory.StructTpl = templates.StructTpl{}
 
 	return factory
 }
@@ -198,7 +201,7 @@ func (this *esimFactory)  getPluralForm(word string) string {
 
 func (this *esimFactory) Run(v *viper.Viper) error {
 
-	err := this.inputBind(v)
+	err := this.bindInput(v)
 	if err != nil {
 		this.logger.Panicf(err.Error())
 	}
@@ -236,6 +239,8 @@ func (this *esimFactory) Run(v *viper.Viper) error {
 
 	this.genStr()
 
+	this.assignStructTpl()
+
 	this.executeNewTmpl()
 
 	this.organizePart()
@@ -269,9 +274,13 @@ func (this *esimFactory) Run(v *viper.Viper) error {
 	return nil
 }
 
+func (this *esimFactory) assignStructTpl()  {
+	this.StructTpl.StructName = this.StructName
+	this.StructTpl.Fields = this.NewStructInfo.Fields
+}
 
 func (this *esimFactory) executeNewTmpl() {
-	tmpl, err := template.New("factory").Funcs(pkg.EsimFuncMap()).
+	tmpl, err := template.New("factory").Funcs(templates.EsimFuncMap()).
 		Parse(newTemplate)
 	if err != nil{
 		this.logger.Panicf(err.Error())
@@ -288,23 +297,26 @@ func (this *esimFactory) executeNewTmpl() {
 
 //replaceOriginContent gen a new struct file content
 func (this *esimFactory) replaceOriginContent() string {
+	var newContent string
 	originContent := this.oldStructInfo.structFileContent
+	newContent = originContent
 	if this.oldStructInfo.importStr != ""{
-		originContent = strings.Replace(originContent, this.oldStructInfo.importStr, "", 1)
+		newContent = strings.Replace(newContent, this.oldStructInfo.importStr, "", 1)
 	}
 
-	originContent = strings.Replace(originContent, this.packStr, this.firstPart, 1)
+	newContent = strings.Replace(newContent, this.packStr, this.firstPart, 1)
 
 	if this.secondPart != ""{
-		originContent = strings.Replace(originContent, this.oldStructInfo.varStr, this.secondPart, 1)
+		newContent = strings.Replace(newContent, this.oldStructInfo.varStr, this.secondPart, 1)
 	}
 
-	originContent = strings.Replace(originContent, this.oldStructInfo.structStr, this.thirdPart, 1)
+	newContent = strings.Replace(newContent, this.oldStructInfo.structStr, this.thirdPart, 1)
+	this.NewStructInfo.structFileContent = newContent
 
-	return originContent
+	return newContent
 }
 
-
+//printResult println file content to terminal
 func (this *esimFactory) printResult()  {
 	src := this.firstPart + "\n"
 	src += this.secondPart + "\n"
@@ -317,7 +329,6 @@ func (this *esimFactory) printResult()  {
 		println(string(res))
 	}
 }
-
 
 //organizePart  organize pack, import, var, struct
 func (this *esimFactory) organizePart()  {
@@ -334,15 +345,13 @@ func (this *esimFactory) organizePart()  {
 	this.thirdPart = this.NewStructInfo.structStr
 }
 
-
 //copy oldStructInfo to NewStructInfo
 func (this *esimFactory) copyOldStructInfo()  {
 	copyStructInfo := *this.oldStructInfo
 	this.NewStructInfo = &copyStructInfo
 }
 
-
-func (this *esimFactory) inputBind(v *viper.Viper) error {
+func (this *esimFactory) bindInput(v *viper.Viper) error {
 	sname := v.GetString("sname")
 	if sname == "" {
 		return errors.New("请输入结构体名称")

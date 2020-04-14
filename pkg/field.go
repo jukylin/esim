@@ -3,6 +3,7 @@ package pkg
 import (
 	"bytes"
 	"text/template"
+	"go/ast"
 )
 
 var fieldTmp = `{{ range .Fields }}
@@ -46,8 +47,7 @@ func (this Fields) String() (string, error) {
 		return "", nil
 	}
 
-	tmpl, err := template.New("field_template").Funcs(EsimFuncMap()).
-		Parse(fieldTmp)
+	tmpl, err := template.New("field_template").Parse(fieldTmp)
 	if err != nil{
 		return "", err
 	}
@@ -59,4 +59,37 @@ func (this Fields) String() (string, error) {
 	}
 
 	return buf.String(), nil
+}
+
+
+
+func (this *Fields) ParseFromAst(GenDecl *ast.GenDecl, fileContent string) {
+	for _, specs := range GenDecl.Specs {
+		if spec, ok := specs.(*ast.TypeSpec); ok {
+			if structType, ok := spec.Type.(*ast.StructType); ok {
+				for _, astField := range structType.Fields.List {
+					var field Field
+					if astField.Doc != nil {
+						for _, doc := range astField.Doc.List {
+							field.Doc = append(field.Doc, doc.Text)
+						}
+					}
+
+					if astField.Tag != nil {
+						field.Tag = astField.Tag.Value
+					}
+
+					var name string
+					if len(astField.Names) > 0 {
+						name = astField.Names[0].String()
+						field.Name = name
+					}
+
+					field.Type = ParseExpr(astField.Type, fileContent)
+					field.Field = field.Name + " " + field.Type
+					*this = append(*this, field)
+				}
+			}
+		}
+	}
 }

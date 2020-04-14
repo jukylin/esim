@@ -18,6 +18,7 @@ import (
 	"text/template"
 	"github.com/jukylin/esim/pkg"
 	"golang.org/x/tools/imports"
+	"github.com/jukylin/esim/pkg/templates"
 )
 
 type StructFieldIface interface {
@@ -164,7 +165,7 @@ func (this *rpcPluginStructField) copyFile(dstName, srcName string, reg *regexp.
 // gen modelName_plugin.go
 func (this *rpcPluginStructField) genStructPlugin(dir string)  {
 
-	tmpl, err := template.New("rpc_plugin").Funcs(pkg.EsimFuncMap()).
+	tmpl, err := template.New("rpc_plugin").Funcs(templates.EsimFuncMap()).
 		Parse(rpcPluginTemplate)
 	if err != nil{
 		this.logger.Panicf(err.Error())

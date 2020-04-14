@@ -52,7 +52,7 @@ func Build(v *viper.Viper, log logger.Logger) error {
 
 	run_server, import_server := tmpInit(v)
 
-	currentDir := file_dir.GetCurrentDir()
+	currentDir := file_dir.GetGoProPath()
 	if currentDir != ""{
 		currentDir = currentDir + "/"
 	}

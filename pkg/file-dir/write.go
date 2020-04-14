@@ -7,10 +7,19 @@ type IfaceWriter interface {
 
 type NullWrite struct{}
 
-func (this NullWrite) Write(outFile, content string) error { return nil }
+func NewNullWrite() IfaceWriter {
+	return &NullWrite{}
+}
+
+func (this *NullWrite) Write(outFile, content string) error { return nil }
+
 
 type EsimWriter struct{}
 
-func (this EsimWriter) Write(outFile, content string) error {
+func NewEsimWriter() IfaceWriter {
+	return &EsimWriter{}
+}
+
+func (this *EsimWriter) Write(outFile, content string) error {
 	return EsimWrite(outFile, content)
 }

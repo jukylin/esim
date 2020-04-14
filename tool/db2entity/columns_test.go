@@ -4,7 +4,7 @@ import (
 	"testing"
 	"github.com/jukylin/esim/log"
 	"github.com/stretchr/testify/assert"
-	"github.com/davecgh/go-spew/spew"
+	//"github.com/davecgh/go-spew/spew"
 )
 
 func TestDBColumnsInter_GetColumns(t *testing.T) {
@@ -18,7 +18,7 @@ func TestDBColumnsInter_GetColumns(t *testing.T) {
 		database: "passport",
 		table: "user",
 	}
-	columns, err := dbcColumns.GetColumns(dbConf)
+	_, err := dbcColumns.GetColumns(dbConf)
 	assert.Nil(t, err)
-	spew.Dump(columns)
+	//spew.Dump(columns)
 }

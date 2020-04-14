@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"bytes"
 	"github.com/jukylin/esim/pkg"
+	"github.com/jukylin/esim/pkg/templates"
 )
 
 
@@ -28,8 +29,14 @@ func TestExecuteFactoryTemplate(t *testing.T)  {
 
 	factory.NewStructInfo = s
 
+	structTpl := templates.StructTpl{}
+	structTpl.StructName = factory.StructName
+	structTpl.Fields = factory.NewStructInfo.Fields
+
+	factory.StructTpl = structTpl
+
 	var buf bytes.Buffer
-	tmpl, err := template.New("factory").Funcs(pkg.EsimFuncMap()).
+	tmpl, err := template.New("factory").Funcs(templates.EsimFuncMap()).
 		Parse(newTemplate)
 	assert.Nil(t, err)
 
@@ -37,7 +44,7 @@ func TestExecuteFactoryTemplate(t *testing.T)  {
 	if err != nil{
 		println(err.Error())
 	}
-	//println(buf.String())
+	println(buf.String())
 	assert.Nil(t, err)
 }
 

@@ -1,9 +1,7 @@
 package factory
 
 var newTemplate = `
-type {{.StructName}} struct{
-{{.NewStructInfo.Fields.String}}
-}
+{{.StructTpl.String}}
 
 {{.TypePluralStr}}
 

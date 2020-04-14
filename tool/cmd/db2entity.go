@@ -23,23 +23,23 @@ var db2entityCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(db2entityCmd)
 
-	db2entityCmd.Flags().StringP("host", "H", os.Getenv("ESIM_DB_HOST"), "Host to check mariadb status of")
+	db2entityCmd.Flags().StringP("host", "H", os.Getenv("ESIM_DB_HOST"), "Specify a host to connect to")
 
 	db2entityCmd.Flags().StringP("port", "P", os.Getenv("ESIM_DB_PORT"), "Specify a port to connect to")
 
-	db2entityCmd.Flags().StringP("table", "t", "", "Table to build struct from")
+	db2entityCmd.Flags().StringP("table", "t", "", "Database's table")
 
 	db2entityCmd.Flags().StringP("database", "d", "", "Database to for connection")
 
-	db2entityCmd.Flags().StringP("user", "u", os.Getenv("ESIM_DB_USER"), "user to connect to database")
+	db2entityCmd.Flags().StringP("user", "u", os.Getenv("ESIM_DB_USER"), "User to connect to database")
 
-	db2entityCmd.Flags().StringP("password", "p", os.Getenv("ESIM_DB_PASSWORD"), "password to connect to database")
+	db2entityCmd.Flags().StringP("password", "p", os.Getenv("ESIM_DB_PASSWORD"), "Password to connect to database")
 
-	db2entityCmd.Flags().StringP("boubctx", "b", "", "name to set for bounded context")
+	db2entityCmd.Flags().StringP("boubctx", "b", "", "Name to set for bounded context")
 
-	db2entityCmd.Flags().StringP("package", "", "", "name to set for package")
+	db2entityCmd.Flags().StringP("package", "", "", "Name to set for package")
 
-	db2entityCmd.Flags().StringP("struct", "s", "", "name to set for struct")
+	db2entityCmd.Flags().StringP("struct", "s", "", "Name to set for struct")
 
 	db2entityCmd.Flags().BoolP("gorm", "g", true, "Add gorm annotations (tags)")
 
@@ -47,19 +47,21 @@ func init() {
 
 	db2entityCmd.Flags().StringP("entity_target", "", "", "Save entity file path")
 
-	db2entityCmd.Flags().BoolP("disabled_entity", "", false, "disabled Save model")
+	db2entityCmd.Flags().BoolP("disabled_entity", "", false, "Disabled Save model")
 
 	db2entityCmd.Flags().StringP("dao_target", "", "internal/infra/dao", "Save dao file path")
 
-	db2entityCmd.Flags().BoolP("disabled_dao", "", false, "disabled Save dao")
+	db2entityCmd.Flags().BoolP("disabled_dao", "", false, "Disabled Save dao")
 
 	db2entityCmd.Flags().StringP("repo_target", "", "internal/infra/repo", "Save dao file path")
 
-	db2entityCmd.Flags().BoolP("disabled_repo", "", false, "disabled Save repo")
+	db2entityCmd.Flags().BoolP("disabled_repo", "", false, "Disabled Save repo")
 
-	db2entityCmd.Flags().BoolP("inject", "i", true, "automatic inject")
+	db2entityCmd.Flags().BoolP("inject", "i", true, "Automatic inject")
 
-	db2entityCmd.Flags().StringP("injtar", "", "infra", "inject target, target must in wire dir")
+	db2entityCmd.Flags().StringP("infra_dir", "", "internal/infra/", "Infra dir")
+
+	db2entityCmd.Flags().StringP("infra_file", "", "infra.go", "Infra file name")
 
 	v.BindPFlags(db2entityCmd.Flags())
 }

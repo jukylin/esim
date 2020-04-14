@@ -6,10 +6,11 @@ import (
 	"text/template"
 	"github.com/stretchr/testify/assert"
 	"github.com/jukylin/esim/pkg"
+	"github.com/jukylin/esim/pkg/templates"
 )
 
 func TestDaoTemplate(t *testing.T)  {
-	tmpl, err := template.New("dao_template").Funcs(pkg.EsimFuncMap()).
+	tmpl, err := template.New("dao_template").Funcs(templates.EsimFuncMap()).
 		Parse(daoTemplate)
 	assert.Nil(t, err)
 
@@ -18,7 +19,7 @@ func TestDaoTemplate(t *testing.T)  {
 	imports = append(imports, pkg.Import{Name : "sync", Path: "sync"})
 
 	var buf bytes.Buffer
-	daoTmp := daoTmp{}
+	daoTmp := daoTpl{}
 	daoTmp.StructName = "User"
 	daoTmp.Imports = imports
 	daoTmp.DataBaseName = "test"
