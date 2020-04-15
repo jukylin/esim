@@ -30,4 +30,6 @@ type Test struct {
 	pkg.Fields
 
 	pkg.Field
+
+	n func(interface{})
 }

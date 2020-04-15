@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/go-plugin"
 	"github.com/jukylin/esim/tool/factory"
 	"github.com/jukylin/esim/pkg"
+	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg/file-dir"
 )
 
@@ -64,8 +65,8 @@ func (ModelImp) InitField() string {
 
 		getType := reflect.TypeOf({{.StructName | tolower}})
 
-		writer := file_dir.EsimWriter{}
-		rpcPlugin := factory.NewRpcPluginStructField(writer)
+		writer := file_dir.NewEsimWriter()
+		rpcPlugin := factory.NewRpcPluginStructField(writer, log.NewLogger())
 		structFields := rpcPlugin.GenInitFieldStr(getType, "this", string(strings.ToLower(getType.Name())[0]), fields)
 
 		initReturn.SpecFields = *fields

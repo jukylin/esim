@@ -1,13 +1,28 @@
 package db2entity
 
 import (
-	"fmt"
 	"github.com/jinzhu/gorm"
-	"github.com/spf13/viper"
 	"strconv"
-	"strings"
 	"github.com/jukylin/esim/log"
 	 _ "github.com/go-sql-driver/mysql"
+)
+
+// Constants for return types of golang
+const (
+	golangByteArray  = "[]byte"
+	gureguNullInt    = "null.Int"
+	sqlNullInt       = "sql.NullInt64"
+	golangInt        = "int"
+	golangInt64      = "int64"
+	gureguNullFloat  = "null.Float"
+	sqlNullFloat     = "sql.NullFloat64"
+	golangFloat      = "float"
+	golangFloat32    = "float32"
+	golangFloat64    = "float64"
+	gureguNullString = "null.String"
+	sqlNullString    = "sql.NullString"
+	gureguNullTime   = "null.Time"
+	golangTime       = "time.Time"
 )
 
 type ColumnsRepo interface {
@@ -75,109 +90,6 @@ func (this *DBColumnsInter) GetColumns(dbConf dbConfig) ([]columns, error) {
 	}
 
 	return cs, nil
-}
-
-// Generate go struct entries for a map[string]interface{} structure
-func generateMysqlTypes(columns []columns, depth int,
-	jsonAnnotation bool, gormAnnotation bool, gureguTypes bool, v *viper.Viper) generateMysqlInfo {
-
-	genMysqlInfo := generateMysqlInfo{}
-
-	imports := make([]string, 0)
-
-	var structure string
-
-	structure += "struct {"
-
-	var comment string
-	var delKey string
-
-	autoTime := AutoTime{}
-
-	for _, column := range columns {
-		nullable := false
-		if column.IsNullAble == "YES" {
-			nullable = true
-		}
-
-		primary := ""
-		if column.ColumnKey == "PRI" {
-			primary = ";primary_key"
-		}
-
-		col_default := ""
-		if nullable == false {
-			if column.ColumnDefault != "CURRENT_TIMESTAMP" && column.ColumnDefault != "" {
-				col_default = ";default:'" + column.ColumnDefault + "'"
-			}
-		}
-
-		// Get the corresponding go value type for this mysql type
-		var valueType string
-		// If the guregu (https://github.com/guregu/null) CLI option is passed use its types, otherwise use go's sql.NullX
-
-		//valueType = mysqlTypeToGoType(column.DataType, nullable, gureguTypes)
-		if valueType == golangTime {
-			imports = append(imports, "time")
-		} else if strings.Index(valueType, "sql.") != -1 {
-			imports = append(imports, "database/sql")
-		} else if strings.Index(valueType, "null.") != -1 {
-			imports = append(imports, "github.com/guregu/null")
-		}
-
-		if primary != "" {
-			genMysqlInfo.priKeyType = valueType
-		}
-
-		fieldName := fmtFieldName(stringifyFirstChar(column.ColumnName))
-
-		if column.ColumnDefault == "CURRENT_TIMESTAMP" {
-			autoTime.CurTimeStamp = append(autoTime.CurTimeStamp, fieldName)
-		}
-
-		if column.Extra == "on update CURRENT_TIMESTAMP" {
-			autoTime.OnUpdateTimeStamp = append(autoTime.OnUpdateTimeStamp, column.ColumnName)
-		}
-
-		structure += "\n\n"
-
-		if column.ColumnComment != "" {
-			structure += "//" + column.ColumnComment
-		}
-
-		var annotations []string
-		if gormAnnotation == true {
-			annotations = append(annotations, fmt.Sprintf("gorm:\"column:%s%s%s\"", column.ColumnName, primary, col_default))
-		}
-
-		if jsonAnnotation == true {
-			annotations = append(annotations, fmt.Sprintf("json:\"%s%s,omitempty\"", column.ColumnName, primary))
-		}
-
-		if strings.Index(column.ColumnName, "del") != -1 &&
-			strings.Index(column.ColumnName, "is") != -1 {
-			delKey = column.ColumnName
-		}
-
-		if len(annotations) > 0 {
-			structure += fmt.Sprintf("\n%s %s `%s`",
-				fieldName,
-				valueType,
-				strings.Join(annotations, " "))
-		} else {
-			structure += fmt.Sprintf("\n%s %s",
-				fieldName,
-				valueType)
-		}
-	}
-
-	genMysqlInfo.dbTypes = structure
-	genMysqlInfo.imports = imports
-	genMysqlInfo.comment = comment
-	genMysqlInfo.autoTime = autoTime
-	genMysqlInfo.del_key = delKey
-
-	return genMysqlInfo
 }
 
 func (this *db2Entity) mysqlTypeToGoType(mysqlType string, nullable bool) string {

@@ -6,7 +6,7 @@ import (
 	"go/ast"
 )
 
-var fieldTmp = `{{ range .Fields }}
+var fieldTpl = `{{ range .Fields }}
 {{ range $doc := .Doc}}{{$doc}}
 {{end}}{{.Field}} {{.Tag}}
 {{end}}`
@@ -47,7 +47,7 @@ func (this Fields) String() (string, error) {
 		return "", nil
 	}
 
-	tmpl, err := template.New("field_template").Parse(fieldTmp)
+	tmpl, err := template.New("field_template").Parse(fieldTpl)
 	if err != nil{
 		return "", err
 	}

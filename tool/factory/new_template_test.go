@@ -29,7 +29,7 @@ func TestExecuteFactoryTemplate(t *testing.T)  {
 
 	factory.NewStructInfo = s
 
-	structTpl := templates.StructTpl{}
+	structTpl := templates.StructInfo{}
 	structTpl.StructName = factory.StructName
 	structTpl.Fields = factory.NewStructInfo.Fields
 
@@ -44,7 +44,7 @@ func TestExecuteFactoryTemplate(t *testing.T)  {
 	if err != nil{
 		println(err.Error())
 	}
-	println(buf.String())
+	//println(buf.String())
 	assert.Nil(t, err)
 }
 

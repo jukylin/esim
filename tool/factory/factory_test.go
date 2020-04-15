@@ -64,13 +64,13 @@ func TestEsimFactory_InputBind(t *testing.T) {
 	v.Set("print", true)
 
 	v.Set("sdir", "./example")
-	err := esimfactory.inputBind(v)
+	err := esimfactory.bindInput(v)
 	assert.Nil(t, err)
 }
 
 
 func TestCopyOldStructInfo(t *testing.T)  {
-	esimfactory.oldStructInfo.imports = append(esimfactory.oldStructInfo.imports, "fmt")
+	esimfactory.oldStructInfo.imports = append(esimfactory.oldStructInfo.imports, pkg.Import{Path:"fmt"})
 	esimfactory.oldStructInfo.structFileContent = "package main"
 	esimfactory.copyOldStructInfo()
 	assert.Equal(t, "fmt", esimfactory.NewStructInfo.imports[0])
@@ -110,7 +110,7 @@ func TestExtendFieldAndReplaceStructContent(t *testing.T)  {
 	assert.Equal(t, 2, len(esimfactory.NewStructInfo.Fields))
 	assert.Equal(t, 2, len(esimfactory.NewStructInfo.imports))
 
-	esimfactory.writer = file_dir.NullWrite{}
+	esimfactory.writer = file_dir.NewNullWrite()
 
 	afield := pkg.Field{}
 	afield.Field = "a int"

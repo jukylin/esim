@@ -2,6 +2,8 @@ package pkg
 
 import (
 	"go/ast"
+	"fmt"
+	"strings"
 )
 
 func ParseExpr(expr ast.Expr, fileContent string) string {
@@ -23,8 +25,25 @@ func ParseExpr(expr ast.Expr, fileContent string) string {
 	case *ast.Ident:
 		argsType += typ.String()
 
+	case *ast.ArrayType:
+		if typ.Len == nil{
+			argsType += "[]"
+		} else {
+			argsType += fmt.Sprintf("[%s]", ParseExpr(typ.Len, fileContent))
+		}
+		argsType += ParseExpr(typ.Elt, fileContent)
+	case *ast.MapType:
+		key := ParseExpr(typ.Key, fileContent)
+		val := ParseExpr(typ.Value, fileContent)
+		argsType += fmt.Sprintf("map[%s]%s", key, val)
+	case *ast.BasicLit:
+		argsType += typ.Value
+	case *ast.InterfaceType:
+		argsType += "interface{}"
+	case *ast.FuncType:
+		argsType += strings.Trim(fileContent[typ.Pos() - 1 : typ.End() - 1], "\n")
 	default:
-		panic("unsupport expr type")
+		panic(fmt.Sprintf("unsupport expr type %T", typ))
 	}
 
 	return argsType

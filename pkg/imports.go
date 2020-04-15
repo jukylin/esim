@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-var importTmp = `import (
+var importTpl = `import (
 {{ range .Imports }}
 {{ range $doc := .Doc}}{{$doc}}
 {{end}}{{.Name}} "{{.Path}}"{{end}}
@@ -36,7 +36,7 @@ func (this Imports) String() string {
 		return ""
 	}
 
-	tmpl, err := template.New("import_template").Parse(importTmp)
+	tmpl, err := template.New("import_template").Parse(importTpl)
 	if err != nil{
 		panic(err.Error())
 	}

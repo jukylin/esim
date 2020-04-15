@@ -13,6 +13,9 @@ type StructInfo struct {
 	Fields pkg.Fields
 }
 
+func NewStructInfo() StructInfo {
+	return StructInfo{}
+}
 
 var StructTemplate = `
 type {{.StructName}} struct{

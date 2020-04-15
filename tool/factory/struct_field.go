@@ -81,10 +81,12 @@ var HandshakeConfig = go_plugin.HandshakeConfig{
 	MagicCookieValue: "hello",
 }
 
-func NewRpcPluginStructField(writer file_dir.IfaceWriter) *rpcPluginStructField {
+func NewRpcPluginStructField(writer file_dir.IfaceWriter, logger log2.Logger) *rpcPluginStructField {
 	rpcPlugin := &rpcPluginStructField{}
 
 	rpcPlugin.writer = writer
+
+	rpcPlugin.logger = logger
 
 	return rpcPlugin
 }
@@ -179,7 +181,7 @@ func (this *rpcPluginStructField) genStructPlugin(dir string)  {
 
 	src ,err := imports.Process("", buf.Bytes(), nil)
 	if err != nil{
-		this.logger.Panicf(err.Error())
+		this.logger.Panicf("%s : %s", err.Error(), buf.String())
 	}
 
 	file := dir + string(filepath.Separator) + this.StructName + "_plugin.go"

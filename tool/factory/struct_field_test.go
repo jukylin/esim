@@ -6,13 +6,14 @@ import (
 	"path/filepath"
 	"github.com/stretchr/testify/assert"
 	"github.com/jukylin/esim/pkg"
+	"github.com/jukylin/esim/log"
 )
 
 func TestRpcPluginStructField_SortField(t *testing.T) {
 
-	writer := file_dir.EsimWriter{}
+	writer := file_dir.NewEsimWriter()
 
-	rpcPlugin := NewRpcPluginStructField(writer)
+	rpcPlugin := NewRpcPluginStructField(writer, log.NewLogger())
 	dir, err := filepath.Abs(".")
 	assert.Nil(t, err)
 	rpcPlugin.structDir =  dir + "/example"

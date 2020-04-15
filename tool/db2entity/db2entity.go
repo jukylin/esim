@@ -67,7 +67,6 @@ type db2Entity struct {
 	execer pkg.Exec
 }
 
-
 type dbConfig struct {
 	host string
 
@@ -81,7 +80,6 @@ type dbConfig struct {
 
 	table string
 }
-
 
 type Db2EntityOption func(*db2Entity)
 
@@ -191,15 +189,15 @@ func (this *db2Entity) Run(v *viper.Viper) error {
 	}
 
 	entityTmp := this.cloumnsToEntityTmp(columns)
-	entityContent := this.executeTmpl("entity_tmp", entityTmp, entityTemplate)
+	entityContent := this.executeTmpl("entity_tpl", entityTmp, entityTemplate)
 	this.writer.Write(this.withEntityTarget + this.dbConf.table + ".go", entityContent)
 
 	daoTmp := this.cloumnsToDaoTmp(columns)
-	daoContent := this.executeTmpl("dao_tmp", daoTmp, daoTemplate)
+	daoContent := this.executeTmpl("entity_tpl", daoTmp, daoTemplate)
 	this.writer.Write(this.withDaoTarget + this.dbConf.table + ".go", daoContent)
 
 	repoTmp := this.cloumnsToRepoTmp(columns)
-	repoContent := this.executeTmpl("repo_tmp", repoTmp, repoTemplate)
+	repoContent := this.executeTmpl("entity_tpl", repoTmp, repoTemplate)
 	this.writer.Write(this.withRepoTarget + this.dbConf.table + ".go", repoContent)
 
 	this.injectToInfra()
@@ -591,9 +589,9 @@ func (this *db2Entity) parseInfra(srcStr string) bool {
 
 		if GenDecl, ok := decl.(*ast.GenDecl); ok {
 			if GenDecl.Tok.String() == "import" {
-				imports := pkg.Imports{}
-				imports.ParseFromAst(GenDecl)
-				this.oldInfraInfo.imports = imports
+				imps := pkg.Imports{}
+				imps.ParseFromAst(GenDecl)
+				this.oldInfraInfo.imports = imps
 				this.oldInfraInfo.importStr = srcStr[GenDecl.Pos()-1 : GenDecl.End()]
 			}
 
@@ -708,7 +706,7 @@ func (this *db2Entity) buildNewInfraString() {
 }
 
 func (this *db2Entity) appendProvideFunc() string {
-	return this.executeTmpl("provide_tmp", struct{StructName string}{this.CamelStruct}, provideTemplate)
+	return this.executeTmpl("provide_tpl", struct{StructName string}{this.CamelStruct}, provideTemplate)
 }
 
 func (this *db2Entity) writeNewInfra()  {
