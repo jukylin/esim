@@ -2,21 +2,21 @@ package db2entity
 
 import (
 	"bytes"
-	"testing"
-	"text/template"
-	"github.com/stretchr/testify/assert"
 	"github.com/jukylin/esim/pkg"
 	"github.com/jukylin/esim/pkg/templates"
+	"github.com/stretchr/testify/assert"
+	"testing"
+	"text/template"
 )
 
-func TestEntityTemplate(t *testing.T)  {
+func TestEntityTemplate(t *testing.T) {
 	tmpl, err := template.New("entity_template").Funcs(templates.EsimFuncMap()).
 		Parse(entityTemplate)
 	assert.Nil(t, err)
 
 	var imports pkg.Imports
-	imports = append(imports, pkg.Import{Name : "time", Path: "time"})
-	imports = append(imports, pkg.Import{Name : "sync", Path: "sync"})
+	imports = append(imports, pkg.Import{Name: "time", Path: "time"})
+	imports = append(imports, pkg.Import{Name: "sync", Path: "sync"})
 
 	Field1 := pkg.Field{}
 	Field1.Name = "id"
@@ -53,8 +53,3 @@ func TestEntityTemplate(t *testing.T)  {
 	assert.Nil(t, err)
 	println(buf.String())
 }
-
-
-
-
-

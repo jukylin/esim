@@ -1,16 +1,15 @@
 package db2entity
 
 import (
-	"testing"
-	"github.com/stretchr/testify/assert"
 	"github.com/jukylin/esim/log"
+	"github.com/jukylin/esim/pkg"
 	"github.com/jukylin/esim/pkg/file-dir"
 	"github.com/spf13/viper"
-	"github.com/jukylin/esim/pkg"
+	"github.com/stretchr/testify/assert"
 	"os"
 	"path/filepath"
+	"testing"
 )
-
 
 func TestDb2Entity_Run(t *testing.T) {
 
@@ -48,7 +47,7 @@ func TestDb2Entity_Run(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestDb2Entity_CloumnsToEntityTmp(t *testing.T)  {
+func TestDb2Entity_CloumnsToEntityTmp(t *testing.T) {
 
 	db2Entity := &db2Entity{}
 
@@ -56,19 +55,18 @@ func TestDb2Entity_CloumnsToEntityTmp(t *testing.T)  {
 	assert.Equal(t, 3, len(entityTmp.StructInfo.Fields))
 }
 
-
-func TestDb2Entity_DirPathToImportPath(t *testing.T)  {
+func TestDb2Entity_DirPathToImportPath(t *testing.T) {
 	db2Entity := &db2Entity{}
 	importPaht := db2Entity.dirPathToImportPath("./a/b/c/")
 	assert.Equal(t, "a/b/c", importPaht)
 }
 
-func TestDb2Entity_ParseInfra(t *testing.T)  {
+func TestDb2Entity_ParseInfra(t *testing.T) {
 	db2Entity := &db2Entity{}
 	assert.True(t, db2Entity.parseInfra(infraContent))
 }
 
-func TestDb2Entity_ProcessInfraInfo(t *testing.T)  {
+func TestDb2Entity_ProcessInfraInfo(t *testing.T) {
 	db2EntityOptions := Db2EntityOptions{}
 	db2Entity := NewDb2Entity(
 		db2EntityOptions.WithInfraInfo(NewInfraInfo()))

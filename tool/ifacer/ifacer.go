@@ -13,8 +13,9 @@ import (
 	"strings"
 	"text/template"
 	"github.com/jukylin/esim/pkg/file-dir"
-	//"github.com/davecgh/go-spew/spew"
 	"fmt"
+	"go/format"
+	"github.com/jukylin/esim/pkg"
 )
 
 type Ifacer struct {
@@ -40,7 +41,7 @@ type Ifacer struct {
 	OutFile string
 
 	//import from interface file
-	PkgNoConflictImport map[string]string
+	PkgNoConflictImport map[string]pkg.Import
 
 	//import in the interface
 	IfaceUsingIngImport map[string]string
@@ -56,7 +57,7 @@ func NewIface(writer file_dir.IfaceWriter) *Ifacer {
 	ifacer := &Ifacer{}
 	ifacer.Parser = mockery.NewParser([]string{})
 
-	ifacer.PkgNoConflictImport = make(map[string]string)
+	ifacer.PkgNoConflictImport = make(map[string]pkg.Import)
 
 	ifacer.IfaceUsingIngImport = make(map[string]string)
 
@@ -83,42 +84,42 @@ type Method struct {
 }
 
 
-func (this *Ifacer) Run(v *viper.Viper) error {
+func (f *Ifacer) Run(v *viper.Viper) error {
 
-	err := this.inputBind(v)
+	err := f.inputBind(v)
 	if err != nil {
 		return err
 	}
 
-	err = this.Parser.Parse(this.IfacePath)
+	err = f.Parser.Parse(f.IfacePath)
 	if err != nil {
 		return err
 	}
 
-	err = this.Parser.Load()
+	err = f.Parser.Load()
 	if err != nil {
 		return err
 	}
 
-	iface, err := this.Parser.Find(this.IfaceName)
+	iface, err := f.Parser.Find(f.IfaceName)
 	if err != nil {
 		return err
 	}
-	this.PackageName = iface.Pkg.Name()
+	f.PackageName = iface.Pkg.Name()
 
-	this.setNoConflictImport(iface.Pkg.Name(), iface.Pkg.Path())
-	this.ManageNoConflictImport(iface.Pkg.Imports())
+	f.setNoConflictImport(iface.Pkg.Name(), iface.Pkg.Path())
+	f.ManageNoConflictImport(iface.Pkg.Imports())
 
-	this.GenMethods(iface.Type)
+	f.GenMethods(iface.Type)
 
-	this.getUsingImportStr()
+	f.getUsingImportStr()
 
-	err = this.Process()
+	err = f.Process()
 	if err != nil {
 		return err
 	}
 
-	err = this.writer.Write(this.OutFile, this.Content)
+	err = f.writer.Write(f.OutFile, f.Content)
 	if err != nil {
 		return err
 	}
@@ -127,38 +128,38 @@ func (this *Ifacer) Run(v *viper.Viper) error {
 }
 
 
-func (this *Ifacer) inputBind(v *viper.Viper) error {
+func (f *Ifacer) inputBind(v *viper.Viper) error {
 
 	name := v.GetString("iname")
 	if name == "" {
-		return errors.New("必须指定 iname")
+		return errors.New("iname is empty")
 	}
-	this.IfaceName = name
+	f.IfaceName = name
 
-	out_path := v.GetString("out")
-	if out_path == "" {
-		out_path = "./dummy_" + strings.ToLower(this.IfaceName) + ".go"
+	outPath := v.GetString("out")
+	if outPath == "" {
+		outPath = "./dummy_" + strings.ToLower(f.IfaceName) + ".go"
 	}
-	this.OutFile = out_path
+	f.OutFile = outPath
 
-	struct_name := v.GetString("stname")
-	if struct_name == "" {
-		struct_name = "Dummy" + this.IfaceName
+	structName := v.GetString("stname")
+	if structName == "" {
+		structName = "Dummy" + f.IfaceName
 	}
-	this.StructName = struct_name
+	f.StructName = structName
 
 	star := v.GetBool("istar")
 	if star == true {
-		this.Star = "*"
+		f.Star = "*"
 	}
 
-	this.IfacePath = v.GetString("ipath")
+	f.IfacePath = v.GetString("ipath")
 
 	return nil
 }
 
 
-func (this *Ifacer) GenMethods(interacer *types.Interface) {
+func (f *Ifacer) GenMethods(interacer *types.Interface) {
 	for i := 0; i < interacer.NumMethods(); i++ {
 		fn := interacer.Method(i)
 		ftype := fn.Type().(*types.Signature)
@@ -166,35 +167,35 @@ func (this *Ifacer) GenMethods(interacer *types.Interface) {
 		m.ReturnStr = "return "
 
 		m.FuncName = fn.Name()
-		this.getArgStr(ftype.Params(), m)
-		this.getReturnStr(ftype.Results(), m)
-		this.Methods = append(this.Methods, *m)
+		f.getArgStr(ftype.Params(), m)
+		f.getReturnStr(ftype.Results(), m)
+		f.Methods = append(f.Methods, *m)
 	}
 }
 
 
-func (this *Ifacer) getUsingImportStr() {
-	this.UsingImportStr = "import ( \r\n"
-	for impName, impPkg := range this.PkgNoConflictImport {
-		this.UsingImportStr += "	" + impName + " \"" + impPkg + "\" \r\n"
+func (f *Ifacer) getUsingImportStr() {
+	imps := pkg.Imports{}
+	for _, imp := range f.PkgNoConflictImport {
+		imps = append(imps, imp)
 	}
 
-	this.UsingImportStr += ")"
+	f.UsingImportStr = imps.String() 
 }
 
 
-func (this *Ifacer) ManageNoConflictImport(imports []*types.Package) bool {
+func (f *Ifacer) ManageNoConflictImport(imports []*types.Package) bool {
 	for _, imp := range imports {
-		this.setNoConflictImport(imp.Name(), imp.Path())
+		f.setNoConflictImport(imp.Name(), imp.Path())
 	}
 
 	return true
 }
 
 
-func (this *Ifacer) setNoConflictImport(importName string, importPath string) bool {
-	if impPath, ok := this.PkgNoConflictImport[importName]; ok {
-		if impPath == importPath {
+func (f *Ifacer) setNoConflictImport(importName string, importPath string) bool {
+	if impPath, ok := f.PkgNoConflictImport[importName]; ok {
+		if impPath.Path == importPath {
 			return true
 		}
 
@@ -202,17 +203,23 @@ func (this *Ifacer) setNoConflictImport(importName string, importPath string) bo
 		level := 1
 		flag := true
 		for flag {
-			importName := this.getUniqueImportName(importPath, level)
+			importName := f.getUniqueImportName(importPath, level)
 
-			if _, ok := this.PkgNoConflictImport[importName]; !ok {
+			if _, ok := f.PkgNoConflictImport[importName]; !ok {
+				imp := pkg.Import{}
+				imp.Name = importName
+				imp.Path = importPath
 
-				this.PkgNoConflictImport[importName] = importPath
+				f.PkgNoConflictImport[importName] = imp
 				flag = false
 			}
 			level++
 		}
 	} else {
-		this.PkgNoConflictImport[importName] = importPath
+		imp := pkg.Import{}
+		imp.Name = importName
+		imp.Path = importPath
+		f.PkgNoConflictImport[importName] = imp
 	}
 
 	return true
@@ -224,13 +231,13 @@ func (this *Ifacer) setNoConflictImport(importName string, importPath string) bo
 //		1 esimredis
 //		2 jukylinesimredis
 //		3 githubcomjukylinesimredis
-func (this *Ifacer) getUniqueImportName(pkgName string, level int) string {
+func (f *Ifacer) getUniqueImportName(pkgName string, level int) string {
 	strs := strings.Split(pkgName, string(filepath.Separator))
 
 	lenStr := len(strs)
 
-	if lenStr-1 < level {
-		this.logger.Panicf("%d out of range", level)
+	if lenStr - 1 < level {
+		f.logger.Panicf("%d out of range", level)
 	}
 
 	var importName string
@@ -245,7 +252,7 @@ func (this *Ifacer) getUniqueImportName(pkgName string, level int) string {
 }
 
 
-func (this *Ifacer) getArgStr(tuple *types.Tuple, m *Method) {
+func (f *Ifacer) getArgStr(tuple *types.Tuple, m *Method) {
 	if tuple.Len() > 0 {
 		for i := 0; i < tuple.Len(); i++ {
 			ArgVar := tuple.At(i)
@@ -255,7 +262,7 @@ func (this *Ifacer) getArgStr(tuple *types.Tuple, m *Method) {
 				m.ArgStr += "arg" + strconv.Itoa(i) + " "
 			}
 
-			m.ArgStr += this.parseVar(ArgVar)
+			m.ArgStr += f.parseVar(ArgVar)
 
 			if i < tuple.Len()-1 {
 				m.ArgStr += ", "
@@ -265,32 +272,32 @@ func (this *Ifacer) getArgStr(tuple *types.Tuple, m *Method) {
 }
 
 
-func (this *Ifacer) parseVar(varObj *types.Var) string {
-	return this.parseVarType(varObj.Type())
+func (f *Ifacer) parseVar(varObj *types.Var) string {
+	return f.parseVarType(varObj.Type())
 }
 
-func (this *Ifacer) parseVarType(typ types.Type) string {
+func (f *Ifacer) parseVarType(typ types.Type) string {
 
 	var varType string
 
 	switch t := typ.(type) {
 	case *types.Named:
 		if t.Obj().Pkg() != nil{
-			if t.Obj().Pkg().Name() != this.PackageName{
+			if t.Obj().Pkg().Name() != f.PackageName{
 				varType += t.Obj().Pkg().Name() + "."
-				this.IfaceUsingIngImport[t.Obj().Pkg().Name()] = t.Obj().Pkg().Path()
+				f.IfaceUsingIngImport[t.Obj().Pkg().Name()] = t.Obj().Pkg().Path()
 			}
 		}
 		varType += t.Obj().Name()
 	case *types.Pointer:
 		varType = "*"
-		varType += this.parseVarType(t.Elem())
+		varType += f.parseVarType(t.Elem())
 	case *types.Slice:
 		varType = "[]"
-		varType += this.parseVarType(t.Elem())
+		varType += f.parseVarType(t.Elem())
 	case *types.Array:
 		varType = fmt.Sprintf("[%d]", t.Len())
-		varType += this.parseVarType(t.Elem())
+		varType += f.parseVarType(t.Elem())
 	case *types.Chan:
 		switch t.Dir() {
 		case types.SendRecv:
@@ -300,16 +307,16 @@ func (this *Ifacer) parseVarType(typ types.Type) string {
 		default:
 			varType += "chan<- "
 		}
-		varType += this.parseVarType(t.Elem())
+		varType += f.parseVarType(t.Elem())
 	case *types.Map:
-		key := this.parseVarType(t.Key())
-		val := this.parseVarType(t.Elem())
+		key := f.parseVarType(t.Key())
+		val := f.parseVarType(t.Elem())
 		varType = fmt.Sprintf("map[%s]%s", key, val)
 	case *types.Signature:
 		varType = fmt.Sprintf(
 			"func (%s) (%s)",
-			this.parseTypeTuple(t.Params()),
-			this.parseTypeTuple(t.Results()),
+			f.parseTypeTuple(t.Params()),
+			f.parseTypeTuple(t.Results()),
 		)
 	default:
 		varType = t.String()
@@ -319,30 +326,30 @@ func (this *Ifacer) parseVarType(typ types.Type) string {
 }
 
 
-func (this *Ifacer) parseTypeTuple(tup *types.Tuple) string {
+func (f *Ifacer) parseTypeTuple(tup *types.Tuple) string {
 	var parts []string
 
 	for i := 0; i < tup.Len(); i++ {
 		v := tup.At(i)
 
-		parts = append(parts, this.parseVar(v))
+		parts = append(parts, f.parseVar(v))
 	}
 
 	return strings.Join(parts, " , ")
 }
 
 
-func (this *Ifacer) getReturnStr(tuple *types.Tuple, m *Method) {
+func (f *Ifacer) getReturnStr(tuple *types.Tuple, m *Method) {
 	if tuple.Len() > 0 {
 		m.ReturnTypeStr += "("
 		for i := 0; i < tuple.Len(); i++ {
 			ArgVar := tuple.At(i)
-			m.ReturnTypeStr += ArgVar.Name() + " " + this.parseVar(ArgVar)
+			m.ReturnTypeStr += ArgVar.Name() + " " + f.parseVar(ArgVar)
 			var returnVarName string
 			if ArgVar.Name() == "" {
 				returnVarName = "r" + strconv.Itoa(i)
 				m.InitReturnVarStr += "	var " + returnVarName + " "
-				m.InitReturnVarStr += this.parseVar(ArgVar) + " \r\n"
+				m.InitReturnVarStr += f.parseVar(ArgVar) + " \r\n"
 			}
 
 			m.ReturnStr += returnVarName + ","
@@ -355,24 +362,29 @@ func (this *Ifacer) getReturnStr(tuple *types.Tuple, m *Method) {
 	}
 }
 
-func (this *Ifacer) Process() error {
+func (f *Ifacer) Process() error {
 	tmpl, err := template.New("ifacer").Parse(ifacerTemplate)
 	if err != nil {
 		return err
 	}
 
 	var buf bytes.Buffer
-	err = tmpl.Execute(&buf, this)
+	err = tmpl.Execute(&buf, f)
 	if err != nil {
 		return err
 	}
 
-	src, err := imports.Process("", buf.Bytes(), nil)
+	sourceSrc, err := format.Source(buf.Bytes())
+	if err != nil {
+		return err
+	}
+	
+	src, err := imports.Process("", sourceSrc, nil)
 	if err != nil {
 		return err
 	}
 
-	this.Content = string(src)
+	f.Content = string(src)
 
 	return nil
 }

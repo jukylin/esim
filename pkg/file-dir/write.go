@@ -11,7 +11,7 @@ func NewNullWrite() IfaceWriter {
 	return &NullWrite{}
 }
 
-func (this *NullWrite) Write(outFile, content string) error { return nil }
+func (nw *NullWrite) Write(outFile, content string) error { return nil }
 
 
 type EsimWriter struct{}
@@ -20,6 +20,6 @@ func NewEsimWriter() IfaceWriter {
 	return &EsimWriter{}
 }
 
-func (this *EsimWriter) Write(outFile, content string) error {
+func (ew *EsimWriter) Write(outFile, content string) error {
 	return EsimWrite(outFile, content)
 }

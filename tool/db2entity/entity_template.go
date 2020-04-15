@@ -5,7 +5,6 @@ import (
 	"github.com/jukylin/esim/pkg/templates"
 )
 
-
 type entityTpl struct {
 	Imports pkg.Imports
 
@@ -80,8 +79,3 @@ func (this *{{.StructName}}) BeforeSave(scope *gorm.Scope) (err error) {
 }
 {{end}}
 `
-
-
-
-
-

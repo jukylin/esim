@@ -7,13 +7,11 @@ import (
 	"strings"
 )
 
-
 type Exec interface {
 	ExecWire(string) error
 
 	ExecFmt(string) error
 }
-
 
 type CmdExec struct{}
 
@@ -27,10 +25,10 @@ func NewNullExec() Exec {
 	return &NullExec{}
 }
 
-func (this *CmdExec) ExecWire(dir string) error {
-	cmd_line := fmt.Sprintf("wire")
+func (ce *CmdExec) ExecWire(dir string) error {
+	cmdLine := fmt.Sprintf("wire")
 
-	args := strings.Split(cmd_line, " ")
+	args := strings.Split(cmdLine, " ")
 
 	cmd := exec.Command(args[0], args[1:]...)
 	cmd.Dir = dir
@@ -44,18 +42,14 @@ func (this *CmdExec) ExecWire(dir string) error {
 	return err
 }
 
-
-func (this *CmdExec) ExecFmt(dir string) error {
+func (ce *CmdExec) ExecFmt(dir string) error {
 	return nil
 }
 
-
-
-func (this *NullExec) ExecWire(dir string) error {
+func (ce *NullExec) ExecWire(dir string) error {
 	return nil
 }
 
-
-func (this *NullExec) ExecFmt(dir string) error {
+func (ce *NullExec) ExecFmt(dir string) error {
 	return nil
 }

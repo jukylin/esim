@@ -25,7 +25,7 @@ func TestMain(m *testing.M) {
 func TestMulLevelRoundTrip(t *testing.T) {
 
 	clientOptions := ClientOptions{}
-	httpClient := NewHttpClient(
+	httpClient := NewClient(
 		clientOptions.WithLogger(logger),
 		clientOptions.WithProxy(
 			func() interface{} {
@@ -88,7 +88,7 @@ func TestMonitorProxy(t *testing.T) {
 	monitorProxyOptions := MonitorProxyOptions{}
 
 	clientOptions := ClientOptions{}
-	httpClient := NewHttpClient(
+	httpClient := NewClient(
 		clientOptions.WithLogger(logger),
 		clientOptions.WithProxy(
 			func() interface{} {
@@ -149,7 +149,7 @@ func TestTimeoutProxy(t *testing.T) {
 	monitorProxyOptions := MonitorProxyOptions{}
 
 	clientOptions := ClientOptions{}
-	httpClient := NewHttpClient(
+	httpClient := NewClient(
 		clientOptions.WithLogger(logger),
 		clientOptions.WithProxy(
 			func() interface{} {

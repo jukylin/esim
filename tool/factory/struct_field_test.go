@@ -75,7 +75,7 @@ type empty struct {}`
 	Field9 := pkg.Field{}
 	Field9.Field = "g byte"
 
-	fields := []pkg.Field{}
+	fields := make([]pkg.Field, 0)
 	fields = append(fields, Field1, Field2, Field3, Field4,
 		Field5, Field6, Field7, Field8, Field9)
 	rpcPlugin.Fields = fields

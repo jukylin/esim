@@ -24,38 +24,38 @@ func newDummyProxy(logger log.Logger, name string) *dummyProxy {
 }
 
 //implement Proxy interface
-func (this *dummyProxy) NextProxy(db interface{}) {
-	this.nextProxy = db.(SqlCommon)
+func (dp *dummyProxy) NextProxy(db interface{}) {
+	dp.nextProxy = db.(SqlCommon)
 }
 
 //implement Proxy interface
-func (this *dummyProxy) ProxyName() string {
-	return this.name
+func (dp *dummyProxy) ProxyName() string {
+	return dp.name
 }
 
-func (this *dummyProxy) Exec(query string, args ...interface{}) (sql.Result, error) {
+func (dp *dummyProxy) Exec(query string, args ...interface{}) (sql.Result, error) {
 	result := &dummySqlResult{}
 	return result, nil
 }
 
-func (this *dummyProxy) Prepare(query string) (*sql.Stmt, error) {
+func (dp *dummyProxy) Prepare(query string) (*sql.Stmt, error) {
 	stmt := &sql.Stmt{}
 
 	return stmt, nil
 }
 
-func (this *dummyProxy) Query(query string, args ...interface{}) (*sql.Rows, error) {
+func (dp *dummyProxy) Query(query string, args ...interface{}) (*sql.Rows, error) {
 	rows := &sql.Rows{}
 	return rows, nil
 }
 
-func (this *dummyProxy) QueryRow(query string, args ...interface{}) *sql.Row {
+func (dp *dummyProxy) QueryRow(query string, args ...interface{}) *sql.Row {
 	row := &sql.Row{}
 	return row
 }
 
-func (this *dummyProxy) Close() error {
-	return this.nextProxy.Close()
+func (dp *dummyProxy) Close() error {
+	return dp.nextProxy.Close()
 }
 
 // implement sql.Result interface
@@ -63,11 +63,11 @@ type dummySqlResult struct {
 }
 
 // implement sql.Result interface
-func (this *dummySqlResult) LastInsertId() (int64, error) {
+func (dp *dummySqlResult) LastInsertId() (int64, error) {
 	return 0, nil
 }
 
 // implement sql.Result interface
-func (this *dummySqlResult) RowsAffected() (int64, error) {
+func (dp *dummySqlResult) RowsAffected() (int64, error) {
 	return 0, nil
 }

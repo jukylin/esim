@@ -189,7 +189,7 @@ type structInfo struct{
 
 //getPluralWord Struct plural form
 //If plural is not obtained, add "s" at the end of the word
-func (this *esimFactory)  getPluralForm(word string) string {
+func (ef *esimFactory)  getPluralForm(word string) string {
 	newWord := inflect.Pluralize(word)
 	if newWord == word || newWord == "" {
 		newWord = word + "s"
@@ -198,164 +198,164 @@ func (this *esimFactory)  getPluralForm(word string) string {
 	return newWord
 }
 
-func (this *esimFactory) Run(v *viper.Viper) error {
+func (ef *esimFactory) Run(v *viper.Viper) error {
 
-	err := this.bindInput(v)
+	err := ef.bindInput(v)
 	if err != nil {
-		this.logger.Panicf(err.Error())
+		ef.logger.Panicf(err.Error())
 	}
 
-	if this.FindStruct() == false{
-		this.logger.Panicf("not found this struct %s", this.StructName)
+	if ef.parseStruct() == false{
+		ef.logger.Panicf("not found ef struct %s", ef.StructName)
 	}
-	this.copyOldStructInfo()
+	ef.copyOldStructInfo()
 
-	if this.ExtendField() {
-		err = this.buildNewStructFileContent()
+	if ef.extendField() {
+		err = ef.buildNewStructFileContent()
 		if err != nil {
-			this.logger.Panicf(err.Error())
+			ef.logger.Panicf(err.Error())
 		}
 	}
 
-	this.logger.Debugf("fields len %d", this.oldStructInfo.Fields.Len())
+	ef.logger.Debugf("fields len %d", ef.oldStructInfo.Fields.Len())
 
-	if this.oldStructInfo.Fields.Len() > 0 {
-		this.structFieldIface.SetStructInfo(this.NewStructInfo)
-		this.structFieldIface.SetStructName(this.StructName)
-		this.structFieldIface.SetStructDir(this.structDir)
-		this.structFieldIface.SetStructFileName(this.structFileName)
-		this.structFieldIface.SetFilesName(this.filesName)
-		this.structFieldIface.SetPackName(this.packName)
+	if ef.oldStructInfo.Fields.Len() > 0 {
+		ef.structFieldIface.SetStructInfo(ef.NewStructInfo)
+		ef.structFieldIface.SetStructName(ef.StructName)
+		ef.structFieldIface.SetStructDir(ef.structDir)
+		ef.structFieldIface.SetStructFileName(ef.structFileName)
+		ef.structFieldIface.SetFilesName(ef.filesName)
+		ef.structFieldIface.SetPackName(ef.packName)
 
-		if this.withSort == true{
-			sortedField := this.structFieldIface.SortField(this.NewStructInfo.Fields)
-			this.logger.Debugf("sorted fields %+v", sortedField.Fields)
-			this.NewStructInfo.Fields = sortedField.Fields
+		if ef.withSort == true{
+			sortedField := ef.structFieldIface.SortField(ef.NewStructInfo.Fields)
+			ef.logger.Debugf("sorted fields %+v", sortedField.Fields)
+			ef.NewStructInfo.Fields = sortedField.Fields
 		}
 
-		this.InitField = this.structFieldIface.InitField(this.NewStructInfo.Fields)
+		ef.InitField = ef.structFieldIface.InitField(ef.NewStructInfo.Fields)
 	}
 
-	this.genStr()
+	ef.genStr()
 
-	this.assignStructTpl()
+	ef.assignStructTpl()
 
-	this.executeNewTmpl()
+	ef.executeNewTmpl()
 
-	this.organizePart()
+	ef.organizePart()
 
-	if this.withPrint {
-		this.printResult()
+	if ef.withPrint {
+		ef.printResult()
 	}else{
-		err = file_dir.EsimBackUpFile(this.structDir +
-			string(filepath.Separator) + this.structFileName)
+		err = file_dir.EsimBackUpFile(ef.structDir +
+			string(filepath.Separator) + ef.structFileName)
 		if err != nil{
-			this.logger.Warnf("backup err %s:%s", this.structDir +
-				string(filepath.Separator) + this.structFileName,
+			ef.logger.Warnf("backup err %s:%s", ef.structDir +
+				string(filepath.Separator) + ef.structFileName,
 				err.Error())
 		}
 
-		originContent := this.replaceOriginContent()
+		originContent := ef.replaceOriginContent()
 
 		res, err := imports.Process("", []byte(originContent), nil)
 		if err != nil {
-			this.logger.Panicf("%s:%s", err.Error(), originContent)
+			ef.logger.Panicf("%s:%s", err.Error(), originContent)
 		}
 
-		err = file_dir.EsimWrite(this.structDir +
-			string(filepath.Separator) + this.structFileName,
+		err = file_dir.EsimWrite(ef.structDir +
+			string(filepath.Separator) + ef.structFileName,
 				string(res))
 		if err != nil {
-			this.logger.Panicf(err.Error())
+			ef.logger.Panicf(err.Error())
 		}
 	}
 
 	return nil
 }
 
-func (this *esimFactory) assignStructTpl()  {
-	this.StructTpl.StructName = this.StructName
-	this.StructTpl.Fields = this.NewStructInfo.Fields
+func (ef *esimFactory) assignStructTpl()  {
+	ef.StructTpl.StructName = ef.StructName
+	ef.StructTpl.Fields = ef.NewStructInfo.Fields
 }
 
-func (this *esimFactory) executeNewTmpl() {
+func (ef *esimFactory) executeNewTmpl() {
 	tmpl, err := template.New("factory").Funcs(templates.EsimFuncMap()).
 		Parse(newTemplate)
 	if err != nil{
-		this.logger.Panicf(err.Error())
+		ef.logger.Panicf(err.Error())
 	}
 
 	var buf bytes.Buffer
-	err = tmpl.Execute(&buf, this)
+	err = tmpl.Execute(&buf, ef)
 	if err != nil{
-		this.logger.Panicf(err.Error())
+		ef.logger.Panicf(err.Error())
 	}
 
-	this.NewStructInfo.structStr = buf.String()
+	ef.NewStructInfo.structStr = buf.String()
 }
 
 //replaceOriginContent gen a new struct file content
-func (this *esimFactory) replaceOriginContent() string {
+func (ef *esimFactory) replaceOriginContent() string {
 	var newContent string
-	originContent := this.oldStructInfo.structFileContent
+	originContent := ef.oldStructInfo.structFileContent
 	newContent = originContent
-	if this.oldStructInfo.importStr != ""{
-		newContent = strings.Replace(newContent, this.oldStructInfo.importStr, "", 1)
+	if ef.oldStructInfo.importStr != ""{
+		newContent = strings.Replace(newContent, ef.oldStructInfo.importStr, "", 1)
 	}
 
-	newContent = strings.Replace(newContent, this.packStr, this.firstPart, 1)
+	newContent = strings.Replace(newContent, ef.packStr, ef.firstPart, 1)
 
-	if this.secondPart != ""{
-		newContent = strings.Replace(newContent, this.oldStructInfo.varStr, this.secondPart, 1)
+	if ef.secondPart != ""{
+		newContent = strings.Replace(newContent, ef.oldStructInfo.varStr, ef.secondPart, 1)
 	}
 
-	newContent = strings.Replace(newContent, this.oldStructInfo.structStr, this.thirdPart, 1)
-	this.NewStructInfo.structFileContent = newContent
+	newContent = strings.Replace(newContent, ef.oldStructInfo.structStr, ef.thirdPart, 1)
+	ef.NewStructInfo.structFileContent = newContent
 
 	return newContent
 }
 
 //printResult println file content to terminal
-func (this *esimFactory) printResult()  {
-	src := this.firstPart + "\n"
-	src += this.secondPart + "\n"
-	src += this.thirdPart + "\n"
+func (ef *esimFactory) printResult()  {
+	src := ef.firstPart + "\n"
+	src += ef.secondPart + "\n"
+	src += ef.thirdPart + "\n"
 
 	res, err := imports.Process("", []byte(src), nil)
 	if err != nil{
-		this.logger.Panicf(err.Error())
+		ef.logger.Panicf(err.Error())
 	}else{
 		println(string(res))
 	}
 }
 
 //organizePart  organize pack, import, var, struct
-func (this *esimFactory) organizePart()  {
-	this.firstPart = this.packStr + "\n"
-	this.firstPart += this.NewStructInfo.importStr + "\n"
+func (ef *esimFactory) organizePart()  {
+	ef.firstPart = ef.packStr + "\n"
+	ef.firstPart += ef.NewStructInfo.importStr + "\n"
 
-	if this.oldStructInfo.varStr != ""{
-		this.secondPart = this.NewStructInfo.varStr
+	if ef.oldStructInfo.varStr != ""{
+		ef.secondPart = ef.NewStructInfo.varStr
 	}else{
 		//merge firstPart and secondPart
-		this.firstPart += this.NewStructInfo.varStr
+		ef.firstPart += ef.NewStructInfo.varStr
 	}
 
-	this.thirdPart = this.NewStructInfo.structStr
+	ef.thirdPart = ef.NewStructInfo.structStr
 }
 
 //copy oldStructInfo to NewStructInfo
-func (this *esimFactory) copyOldStructInfo()  {
-	copyStructInfo := *this.oldStructInfo
-	this.NewStructInfo = &copyStructInfo
+func (ef *esimFactory) copyOldStructInfo()  {
+	copyStructInfo := *ef.oldStructInfo
+	ef.NewStructInfo = &copyStructInfo
 }
 
-func (this *esimFactory) bindInput(v *viper.Viper) error {
+func (ef *esimFactory) bindInput(v *viper.Viper) error {
 	sname := v.GetString("sname")
 	if sname == "" {
-		return errors.New("请输入结构体名称")
+		return errors.New("sname is empty")
 	}
-	this.StructName = sname
+	ef.StructName = sname
 
 	sdir := v.GetString("sdir")
 	if sdir == ""{
@@ -366,76 +366,76 @@ func (this *esimFactory) bindInput(v *viper.Viper) error {
 	if err != nil{
 		return err
 	}
-	this.structDir = strings.TrimRight(dir, "/")
+	ef.structDir = strings.TrimRight(dir, "/")
 
 	plural := v.GetBool("plural")
 	if plural == true {
-		this.withPlural = true
-		this.pluralName = this.getPluralForm(sname)
+		ef.withPlural = true
+		ef.pluralName = ef.getPluralForm(sname)
 	}
 
-	this.withOption = v.GetBool("option")
+	ef.withOption = v.GetBool("option")
 
-	this.withGenConfOption = v.GetBool("gen_conf_option")
+	ef.withGenConfOption = v.GetBool("gen_conf_option")
 
-	this.withGenLoggerOption = v.GetBool("gen_logger_option")
+	ef.withGenLoggerOption = v.GetBool("gen_logger_option")
 
-	this.withSort = v.GetBool("sort")
+	ef.withSort = v.GetBool("sort")
 
-	this.withImpIface = v.GetString("imp_iface")
+	ef.withImpIface = v.GetString("imp_iface")
 
-	this.withPool = v.GetBool("pool")
+	ef.withPool = v.GetBool("pool")
 
-	this.withStar = v.GetBool("star")
+	ef.withStar = v.GetBool("star")
 
-	this.withPrint = v.GetBool("print")
+	ef.withPrint = v.GetBool("print")
 
-	this.WithNew = v.GetBool("new")
+	ef.WithNew = v.GetBool("new")
 
 	return nil
 }
 
 
-func (this *esimFactory) genStr()  {
+func (ef *esimFactory) genStr()  {
 
-	this.genReturnVarStr()
-	this.genStructInitStr()
-	this.genSpecFieldInitStr()
-	this.genReturnStr()
+	ef.genReturnVarStr()
+	ef.genStructInitStr()
+	ef.genSpecFieldInitStr()
+	ef.genReturnStr()
 
-	if this.withOption == true{
-		this.genOptionParam()
-		this.genOptions()
+	if ef.withOption == true{
+		ef.genOptionParam()
+		ef.genOptions()
 	}
 
-	if this.withPool == true && len(this.InitField.Fields) > 0{
-		this.genPool()
+	if ef.withPool == true && len(ef.InitField.Fields) > 0{
+		ef.genPool()
 	}
 
-	if this.withPlural {
-		this.genPlural()
+	if ef.withPlural {
+		ef.genPlural()
 	}
 
-	this.NewStructInfo.varStr = this.NewStructInfo.vars.String()
+	ef.NewStructInfo.varStr = ef.NewStructInfo.vars.String()
 }
 
 
 //@ find struct
 //@ parse struct
-func (this *esimFactory) FindStruct() bool {
+func (ef *esimFactory) parseStruct() bool {
 
-	exists, err := file_dir.IsExistsDir(this.structDir)
+	exists, err := file_dir.IsExistsDir(ef.structDir)
 	if err != nil {
-		this.logger.Panicf(err.Error())
+		ef.logger.Panicf(err.Error())
 	}
 
 	if exists == false {
-		this.logger.Panicf("%s dir not exists", this.structDir)
+		ef.logger.Panicf("%s dir not exists", ef.structDir)
 	}
 
-	files, err := ioutil.ReadDir(this.structDir)
+	files, err := ioutil.ReadDir(ef.structDir)
 	if err != nil {
-		this.logger.Panicf(err.Error())
+		ef.logger.Panicf(err.Error())
 	}
 
 	for _, fileInfo := range files {
@@ -450,19 +450,19 @@ func (this *esimFactory) FindStruct() bool {
 			continue
 		}
 
-		this.filesName = append(this.filesName, fileInfo.Name())
+		ef.filesName = append(ef.filesName, fileInfo.Name())
 
 		if !fileInfo.IsDir() {
-			src, err := ioutil.ReadFile(this.structDir + "/" + fileInfo.Name())
+			src, err := ioutil.ReadFile(ef.structDir + "/" + fileInfo.Name())
 			if err != nil {
-				this.logger.Panicf(err.Error())
+				ef.logger.Panicf(err.Error())
 			}
 
 			strSrc := string(src)
 			fset := token.NewFileSet() // positions are relative to fset
 			f, err := parser.ParseFile(fset, "", strSrc, parser.ParseComments)
 			if err != nil {
-				this.logger.Panicf(err.Error())
+				ef.logger.Panicf(err.Error())
 			}
 
 			for _, decl := range f.Decls {
@@ -471,16 +471,16 @@ func (this *esimFactory) FindStruct() bool {
 						for _, specs := range GenDecl.Specs {
 							if typeSpec, ok := specs.(*ast.TypeSpec); ok {
 
-								if typeSpec.Name.String() == this.StructName {
-									this.oldStructInfo.structFileContent = strSrc
-									this.structFileName = fileInfo.Name()
-									this.found = true
-									this.packName = f.Name.String()
-									this.packStr = "package " + strSrc[f.Name.Pos()-1 : f.Name.End()]
+								if typeSpec.Name.String() == ef.StructName {
+									ef.oldStructInfo.structFileContent = strSrc
+									ef.structFileName = fileInfo.Name()
+									ef.found = true
+									ef.packName = f.Name.String()
+									ef.packStr = "package " + strSrc[f.Name.Pos()-1 : f.Name.End()]
 									fields := pkg.Fields{}
 									fields.ParseFromAst(GenDecl, strSrc)
-									this.oldStructInfo.Fields = fields
-									this.oldStructInfo.structStr = string(src[GenDecl.TokPos-1 : typeSpec.Type.(*ast.StructType).Fields.Closing])
+									ef.oldStructInfo.Fields = fields
+									ef.oldStructInfo.structStr = string(src[GenDecl.TokPos-1 : typeSpec.Type.(*ast.StructType).Fields.Closing])
 								}
 							}
 						}
@@ -490,84 +490,84 @@ func (this *esimFactory) FindStruct() bool {
 
 			for _, decl := range f.Decls {
 				if GenDecl, ok := decl.(*ast.GenDecl); ok {
-					if GenDecl.Tok.String() == "var" && this.found == true {
-						this.oldStructInfo.vars.ParseFromAst(GenDecl, strSrc)
+					if GenDecl.Tok.String() == "var" && ef.found == true {
+						ef.oldStructInfo.vars.ParseFromAst(GenDecl, strSrc)
 					}
 
-					if GenDecl.Tok.String() == "import" && this.found == true {
+					if GenDecl.Tok.String() == "import" && ef.found == true {
 						imps := pkg.Imports{}
 						imps.ParseFromAst(GenDecl)
-						this.oldStructInfo.imports = imps
-						this.oldStructInfo.importStr = strSrc[GenDecl.Pos()-1 : GenDecl.End()]
+						ef.oldStructInfo.imports = imps
+						ef.oldStructInfo.importStr = strSrc[GenDecl.Pos()-1 : GenDecl.End()]
 					}
 				}
 			}
 		}
 	}
 
-	return this.found
+	return ef.found
 }
 
 //extend logger and conf for new struct field
-func (this *esimFactory) ExtendField() bool {
+func (ef *esimFactory) extendField() bool {
 
 	var HasExtend bool
-	if this.withOption == true {
-		if this.withGenLoggerOption == true{
+	if ef.withOption == true {
+		if ef.withGenLoggerOption == true{
 			HasExtend = true
 			var foundLogField bool
-			for _, field := range this.NewStructInfo.Fields {
+			for _, field := range ef.NewStructInfo.Fields {
 				if strings.Contains(field.Field, "log.Logger") == true && foundLogField == false{
 					foundLogField = true
 				}
 			}
 
-			if foundLogField == false || len(this.NewStructInfo.Fields) == 0{
+			if foundLogField == false || len(ef.NewStructInfo.Fields) == 0{
 				fld := pkg.Field{}
 				fld.Field = "logger log.Logger"
 				fld.Name = "logger"
-				this.NewStructInfo.Fields = append(this.NewStructInfo.Fields, fld)
+				ef.NewStructInfo.Fields = append(ef.NewStructInfo.Fields, fld)
 			}
 
 			var foundLogImport bool
-			for _, oim := range this.NewStructInfo.imports{
+			for _, oim := range ef.NewStructInfo.imports{
 				if oim.Path == "github.com/jukylin/esim/log"{
 					foundLogImport = true
 				}
 			}
 
 			if foundLogImport == false {
-				this.appendNewImport("github.com/jukylin/esim/log")
+				ef.appendNewImport("github.com/jukylin/esim/log")
 			}
 		}
 
-		if this.withGenConfOption == true{
+		if ef.withGenConfOption == true{
 			HasExtend = true
 
 			var foundConfField bool
-			for _, field := range this.NewStructInfo.Fields {
+			for _, field := range ef.NewStructInfo.Fields {
 				if strings.Contains(field.Field, "config.Config") ==
 					true && foundConfField == false{
 					foundConfField = true
 				}
 			}
 
-			if foundConfField == false || len(this.NewStructInfo.Fields) == 0{
+			if foundConfField == false || len(ef.NewStructInfo.Fields) == 0{
 				fld := pkg.Field{}
 				fld.Field = "conf config.Config"
 				fld.Name = "conf"
-				this.NewStructInfo.Fields = append(this.NewStructInfo.Fields, fld)
+				ef.NewStructInfo.Fields = append(ef.NewStructInfo.Fields, fld)
 			}
 
 			var foundConfImport bool
-			for _, oim := range this.NewStructInfo.imports{
+			for _, oim := range ef.NewStructInfo.imports{
 				if oim.Path == "github.com/jukylin/esim/config"{
 					foundConfImport = true
 				}
 			}
 			
 			if foundConfImport == false {
-				this.appendNewImport("github.com/jukylin/esim/config")
+				ef.appendNewImport("github.com/jukylin/esim/config")
 			}
 		}
 	}
@@ -577,36 +577,36 @@ func (this *esimFactory) ExtendField() bool {
 
 //if struct field had extend logger or conf
 // so build a new struct
-func (this *esimFactory) buildNewStructFileContent() error {
+func (ef *esimFactory) buildNewStructFileContent() error {
 
-	this.NewStructInfo.importStr = this.NewStructInfo.imports.String()
+	ef.NewStructInfo.importStr = ef.NewStructInfo.imports.String()
 
-	if this.oldStructInfo.importStr != "" {
-		this.NewStructInfo.structFileContent = strings.Replace(this.oldStructInfo.structFileContent,
-			this.oldStructInfo.importStr, this.NewStructInfo.importStr, -1)
-	} else if this.packStr != "" {
+	if ef.oldStructInfo.importStr != "" {
+		ef.NewStructInfo.structFileContent = strings.Replace(ef.oldStructInfo.structFileContent,
+			ef.oldStructInfo.importStr, ef.NewStructInfo.importStr, -1)
+	} else if ef.packStr != "" {
 		//not find import
-		this.getFirstPart()
-		this.NewStructInfo.structFileContent = strings.Replace(this.oldStructInfo.structFileContent,
-			this.packStr, this.firstPart, -1)
+		ef.getFirstPart()
+		ef.NewStructInfo.structFileContent = strings.Replace(ef.oldStructInfo.structFileContent,
+			ef.packStr, ef.firstPart, -1)
 	}else{
-		this.logger.Panicf("can't build the first part")
+		ef.logger.Panicf("can't build the first part")
 	}
 
 	structInfo := templates.NewStructInfo()
-	structInfo.StructName = this.StructName
-	structInfo.Fields = this.NewStructInfo.Fields
-	this.NewStructInfo.structStr = structInfo.String()
+	structInfo.StructName = ef.StructName
+	structInfo.Fields = ef.NewStructInfo.Fields
+	ef.NewStructInfo.structStr = structInfo.String()
 
-	this.NewStructInfo.structFileContent = strings.Replace(this.NewStructInfo.structFileContent,
-		this.oldStructInfo.structStr, this.NewStructInfo.structStr, -1)
+	ef.NewStructInfo.structFileContent = strings.Replace(ef.NewStructInfo.structFileContent,
+		ef.oldStructInfo.structStr, ef.NewStructInfo.structStr, -1)
 
-	src, err := imports.Process("", []byte(this.NewStructInfo.structFileContent), nil)
+	src, err := imports.Process("", []byte(ef.NewStructInfo.structFileContent), nil)
 	if err != nil{
-		this.logger.Panicf("%s : %s", err.Error(), this.NewStructInfo.structFileContent)
+		ef.logger.Panicf("%s : %s", err.Error(), ef.NewStructInfo.structFileContent)
 	}
 
-	this.NewStructInfo.structFileContent = string(src)
+	ef.NewStructInfo.structFileContent = string(src)
 
 	return nil
 }
@@ -615,137 +615,133 @@ func (this *esimFactory) buildNewStructFileContent() error {
 // func NewStruct() {{.ReturnvarStr}} {
 // }
 //
-func (this *esimFactory) genReturnVarStr()  {
-	if this.withImpIface != ""{
-		this.NewStructInfo.ReturnVarStr = this.withImpIface
-	}else if this.withPool == true || this.withStar == true{
-		this.NewStructInfo.ReturnVarStr = "*" + this.StructName
+func (ef *esimFactory) genReturnVarStr()  {
+	if ef.withImpIface != ""{
+		ef.NewStructInfo.ReturnVarStr = ef.withImpIface
+	}else if ef.withPool == true || ef.withStar == true{
+		ef.NewStructInfo.ReturnVarStr = "*" + ef.StructName
 	}else{
-		this.NewStructInfo.ReturnVarStr = this.StructName
+		ef.NewStructInfo.ReturnVarStr = ef.StructName
 	}
 }
 
 //type Option func(c *{{.OptionParam}})
-func (this *esimFactory) genOptionParam()  {
-	if this.withPool == true || this.withStar == true{
-		this.OptionParam = "*" + this.StructName
+func (ef *esimFactory) genOptionParam()  {
+	if ef.withPool == true || ef.withStar == true{
+		ef.OptionParam = "*" + ef.StructName
 	}else{
-		this.OptionParam = this.StructName
+		ef.OptionParam = ef.StructName
 	}
 }
 
 // StructObj := Struct{} => {{.StructInitStr}}
-func (this *esimFactory) genStructInitStr() {
+func (ef *esimFactory) genStructInitStr() {
 	var structInitStr string
-	if this.withStar == true{
-		structInitStr = strings.ToLower(string(this.StructName[0]))  +
-			" := &" + this.StructName + "{}"
-	}else if this.withPool == true{
-		structInitStr = strings.ToLower(string(this.StructName[0])) + ` := ` +
-			strings.ToLower(this.StructName) + `Pool.Get().(*` +
-				this.StructName + `)`
+	if ef.withStar == true{
+		structInitStr = strings.ToLower(string(ef.StructName[0]))  +
+			" := &" + ef.StructName + "{}"
+	}else if ef.withPool == true{
+		structInitStr = strings.ToLower(string(ef.StructName[0])) + ` := ` +
+			strings.ToLower(ef.StructName) + `Pool.Get().(*` +
+				ef.StructName + `)`
 	}else{
-		structInitStr = strings.ToLower(string(this.StructName[0]))  +
-			" := " + this.StructName + "{}"
+		structInitStr = strings.ToLower(string(ef.StructName[0]))  +
+			" := " + ef.StructName + "{}"
 	}
 
-	this.NewStructInfo.StructInitStr = structInitStr
+	ef.NewStructInfo.StructInitStr = structInitStr
 }
 
 
 //return {{.ReturnStr}}
-func (this *esimFactory) genReturnStr() {
-	this.ReturnStr = strings.ToLower(string(this.StructName[0]))
+func (ef *esimFactory) genReturnStr() {
+	ef.ReturnStr = strings.ToLower(string(ef.StructName[0]))
 }
 
 
-func (this *esimFactory) genOptions()  {
+func (ef *esimFactory) genOptions()  {
 
-	this.Option1 = `type ` + this.StructName + `Option func(` + this.OptionParam + `)`
+	ef.Option1 = `type ` + ef.StructName + `Option func(` + ef.OptionParam + `)`
 
-	this.Option2 = `type ` + this.StructName + `Options struct{}`
+	ef.Option2 = `type ` + ef.StructName + `Options struct{}`
 
-	this.Option3 = `options ...` + this.StructName +`Option`
+	ef.Option3 = `options ...` + ef.StructName +`Option`
 
-	this.Option4 = `
+	ef.Option4 = `
 	for _, option := range options {
-		option(` + strings.ToLower(string(this.StructName[0])) + `)
+		option(` + strings.ToLower(string(ef.StructName[0])) + `)
 	}`
 
-	if this.withGenConfOption == true{
+	if ef.withGenConfOption == true{
 
-		this.Option5 += `
-func (` + this.StructName + `Options) WithConf(conf config.Config) ` + this.StructName + `Option {
-	return func(` + string(this.StructName[0]) + ` `+ this.NewStructInfo.ReturnVarStr +`) {
-	` + string(this.StructName[0]) + `.conf = conf
+		ef.Option5 += `
+func (` + ef.StructName + `Options) WithConf(conf config.Config) ` + ef.StructName + `Option {
+	return func(` + string(ef.StructName[0]) + ` `+ ef.NewStructInfo.ReturnVarStr +`) {
+	` + string(ef.StructName[0]) + `.conf = conf
 	}
 }
 `
 
 	}
 
-	if this.withGenLoggerOption == true {
-		this.Option6 += `
-func (` + this.StructName + `Options) WithLogger(logger log.Logger) ` + this.StructName + `Option {
-	return func(` + string(this.StructName[0]) + ` ` + this.NewStructInfo.ReturnVarStr + `) {
-		` + string(this.StructName[0]) + `.logger = logger
+	if ef.withGenLoggerOption == true {
+		ef.Option6 += `
+func (` + ef.StructName + `Options) WithLogger(logger log.Logger) ` + ef.StructName + `Option {
+	return func(` + string(ef.StructName[0]) + ` ` + ef.NewStructInfo.ReturnVarStr + `) {
+		` + string(ef.StructName[0]) + `.logger = logger
 	}
 }
 `
 	}
 }
 
+func (ef *esimFactory) genPool() bool {
 
-func (this *esimFactory) genPool() bool {
+	ef.incrPoolVar(ef.StructName)
 
-	this.incrPoolVar(this.StructName)
-
-	this.ReleaseStr = this.genReleaseStructStr(this.InitField.Fields)
+	ef.ReleaseStr = ef.genReleaseStructStr(ef.InitField.Fields)
 
 	return true
 }
 
+func (ef *esimFactory) genPlural() bool {
 
-func (this *esimFactory) genPlural() bool {
-
-	this.incrPoolVar(this.pluralName)
+	ef.incrPoolVar(ef.pluralName)
 
 	plural := NewPlural()
-	plural.StructName = this.StructName
-	plural.PluralName = this.pluralName
-	if this.withStar {
+	plural.StructName = ef.StructName
+	plural.PluralName = ef.pluralName
+	if ef.withStar {
 		plural.Star = "*"
 	}
 
-	this.TypePluralStr = plural.TypeString()
+	ef.TypePluralStr = plural.TypeString()
 
-	this.NewPluralStr = plural.NewString()
+	ef.NewPluralStr = plural.NewString()
 
-	this.ReleasePluralStr = plural.ReleaseString()
+	ef.ReleasePluralStr = plural.ReleaseString()
 
 	return true
 }
 
-
-func (this *esimFactory) incrPoolVar(StructName string) bool {
+func (ef *esimFactory) incrPoolVar(StructName string) bool {
 	poolName := strings.ToLower(StructName) + "Pool"
-	if this.varNameExists(this.NewStructInfo.vars, poolName) == true {
-		this.logger.Debugf("var is exists : %s", poolName)
+	if ef.varNameExists(ef.NewStructInfo.vars, poolName) == true {
+		ef.logger.Debugf("var is exists : %s", poolName)
 	} else {
 
-		this.NewStructInfo.vars = append(this.NewStructInfo.vars,
-			this.appendPoolVar(poolName, StructName))
-		this.appendNewImport("sync")
+		ef.NewStructInfo.vars = append(ef.NewStructInfo.vars,
+			ef.appendPoolVar(poolName, StructName))
+		ef.appendNewImport("sync")
 	}
 
 	return true
 }
 
-
-func (this *esimFactory) genSpecFieldInitStr()  {
+func (ef *esimFactory) genSpecFieldInitStr()  {
 	var str string
 
-	for _, f := range this.InitField.SpecFields {
+	for _, f := range ef.InitField.SpecFields {
 		if f.Type == "slice" {
 			str += `if ` + f.Name + ` == nil {
 `
@@ -767,77 +763,43 @@ func (this *esimFactory) genSpecFieldInitStr()  {
 		}
 	}
 
-	this.SpecFieldInitStr = str
+	ef.SpecFieldInitStr = str
 	return
 }
 
+func (ef *esimFactory) genReleaseStructStr(initFields []string) string {
+	str := "func (ef " + ef.NewStructInfo.ReturnVarStr + ") Release() {\n"
 
-func (this *esimFactory) genReleaseStructStr(initFields []string) string {
-	str := "func (this " + this.NewStructInfo.ReturnVarStr + ") Release() {\n"
-
-	for _, field := range this.InitField.Fields {
+	for _, field := range ef.InitField.Fields {
 		if strings.Contains(field, "time.Time") {
-			this.appendNewImport("time")
+			ef.appendNewImport("time")
 		}
 		str += "		" + field + "\n"
 	}
 
-	str += "		" + strings.ToLower(this.StructName) +
-		"Pool.Put(this)\n"
+	str += "		" + strings.ToLower(ef.StructName) +
+		"Pool.Put(ef)\n"
 	str += "}"
 
 	return str
 }
 
-
-func (this *esimFactory) genNewPluralStr() string {
-	str := `func New` + this.pluralName + `() *` + this.pluralName + ` {
-	` + strings.ToLower(this.pluralName) + ` := ` +
-		strings.ToLower(this.pluralName) + `Pool.Get().(*` + this.pluralName + `)
-`
-
-	str += `return ` + strings.ToLower(this.pluralName) + `
-}
-`
-
-	return str
-}
-
-func (this *esimFactory) genTypePluralStr() string {
-	return "type " + this.pluralName + " []" + this.StructName
-}
-
-
-func (this *esimFactory) genReleasePluralStr() string {
-	str := "func (this *" +
-		this.pluralName + ") Release() {\n"
-
-	str += "*this = (*this)[:0]\n"
-	str += "		" + strings.ToLower(this.pluralName) +
-		"Pool.Put(this)\n"
-	str += "}"
-
-	return str
-}
-
-
-func (this *esimFactory) appendNewImport(importName string) bool {
+func (ef *esimFactory) appendNewImport(importName string) bool {
 	var found bool
-	for _, imp := range this.NewStructInfo.imports {
+	for _, imp := range ef.NewStructInfo.imports {
 		if imp.Path == importName {
 			found = true
 		}
 	}
 
 	if found == false {
-		this.NewStructInfo.imports = append(this.NewStructInfo.imports, pkg.Import{Path: importName})
+		ef.NewStructInfo.imports = append(ef.NewStructInfo.imports, pkg.Import{Path: importName})
 	}
 
 	return true
 }
 
-
-func (this *esimFactory) appendPoolVar(pollVarName, StructName string) pkg.Var {
+func (ef *esimFactory) appendPoolVar(pollVarName, StructName string) pkg.Var {
 	var poolVar pkg.Var
 
 	pooltpl := NewPoolTpl()
@@ -850,9 +812,8 @@ func (this *esimFactory) appendPoolVar(pollVarName, StructName string) pkg.Var {
 	return poolVar
 }
 
-
 //变量是否存在
-func (this *esimFactory) varNameExists(vars pkg.Vars, poolVarName string) bool {
+func (ef *esimFactory) varNameExists(vars pkg.Vars, poolVarName string) bool {
 	for _, varInfo := range vars {
 		for _, varName := range varInfo.Name{
 			if varName == poolVarName {
@@ -864,27 +825,24 @@ func (this *esimFactory) varNameExists(vars pkg.Vars, poolVarName string) bool {
 	return false
 }
 
-
 //package + import
-func (this *esimFactory) getFirstPart() {
+func (ef *esimFactory) getFirstPart() {
 
-	if this.oldStructInfo.importStr == "" {
-		this.firstPart += this.packStr + "\n\n"
+	if ef.oldStructInfo.importStr == "" {
+		ef.firstPart += ef.packStr + "\n\n"
 	}
 
-	this.firstPart += this.NewStructInfo.importStr
+	ef.firstPart += ef.NewStructInfo.importStr
 
 }
-
 
 //var
-func (this *esimFactory) getSecondPart() {
-	this.secondPart = this.oldStructInfo.varStr
+func (ef *esimFactory) getSecondPart() {
+	ef.secondPart = ef.oldStructInfo.varStr
 }
 
-
-func (this *esimFactory) Close() {
-	this.structFieldIface.Close()
+func (ef *esimFactory) Close() {
+	ef.structFieldIface.Close()
 }
 
 

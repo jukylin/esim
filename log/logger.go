@@ -3,7 +3,7 @@ package log
 import (
 	"context"
 	"github.com/opentracing/opentracing-go"
-	jaeger "github.com/uber/jaeger-client-go"
+	"github.com/uber/jaeger-client-go"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"runtime"

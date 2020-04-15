@@ -18,7 +18,7 @@ func TestExecuteRpcPluginTemplate(t *testing.T)  {
 	Field2 := pkg.Field{}
 	Field2.Field = "b string"
 
-	fields := []pkg.Field{}
+	fields := make([]pkg.Field, 0)
 	fields = append(fields, Field1, Field2)
 
 	data := struct {

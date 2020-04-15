@@ -192,7 +192,7 @@ func TestGetStringMapString(t *testing.T) {
 
 func TestGetStringMapStringSlice(t *testing.T) {
 	memConfig := NewMemConfig()
-	memConfig.Set("test", map[string][]string{"config": []string{"test1", "test2"}})
+	memConfig.Set("test", map[string][]string{"config": {"test1", "test2"}})
 
 	res := memConfig.GetStringMapStringSlice("test")
 

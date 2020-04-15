@@ -2,8 +2,8 @@ package pkg
 
 import (
 	"bytes"
-	"text/template"
 	"go/ast"
+	"text/template"
 )
 
 var fieldTpl = `{{ range .Fields }}
@@ -31,39 +31,35 @@ type Field struct {
 
 type Fields []Field
 
-
 func (f Fields) Len() int { return len(f) }
 
 func (f Fields) Less(i, j int) bool {
-	return f[i].Size <  f[j].Size
+	return f[i].Size < f[j].Size
 }
 
 func (f Fields) Swap(i, j int) { f[i], f[j] = f[j], f[i] }
 
+func (fs Fields) String() (string, error) {
 
-func (this Fields) String() (string, error) {
-
-	if this.Len() < 0 {
+	if fs.Len() < 0 {
 		return "", nil
 	}
 
 	tmpl, err := template.New("field_template").Parse(fieldTpl)
-	if err != nil{
+	if err != nil {
 		return "", err
 	}
 
 	var buf bytes.Buffer
-	err = tmpl.Execute(&buf, struct {Fields}{this})
-	if err != nil{
+	err = tmpl.Execute(&buf, struct{ Fields }{fs})
+	if err != nil {
 		return "", err
 	}
 
 	return buf.String(), nil
 }
 
-
-
-func (this *Fields) ParseFromAst(GenDecl *ast.GenDecl, fileContent string) {
+func (fs *Fields) ParseFromAst(GenDecl *ast.GenDecl, fileContent string) {
 	for _, specs := range GenDecl.Specs {
 		if spec, ok := specs.(*ast.TypeSpec); ok {
 			if structType, ok := spec.Type.(*ast.StructType); ok {
@@ -87,7 +83,7 @@ func (this *Fields) ParseFromAst(GenDecl *ast.GenDecl, fileContent string) {
 
 					field.Type = ParseExpr(astField.Type, fileContent)
 					field.Field = field.Name + " " + field.Type
-					*this = append(*this, field)
+					*fs = append(*fs, field)
 				}
 			}
 		}

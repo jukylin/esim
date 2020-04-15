@@ -24,16 +24,16 @@ var pluralNewTemplate = `func New{{.PluralName}}() *{{.PluralName}} {
 }
 `
 
-var pluralreleaseTemplate = `func (this *{{.PluralName}}) Release() {
-	*this = (*this)[:0]
-	{{.PluralName | tolower}}Pool.Put(this)
+var pluralreleaseTemplate = `func (pl *{{.PluralName}}) Release() {
+	*pl = (*pl)[:0]
+	{{.PluralName | tolower}}Pool.Put(pl)
 }
 `
 
 var pluralTypeTemplate = `type {{.PluralName}} []{{.Star}}{{.StructName}}`
 
 
-func (this Plural) NewString() string {
+func (pl Plural) NewString() string {
 	tmpl, err := template.New("plural_new_template").Funcs(templates.EsimFuncMap()).
 		Parse(pluralNewTemplate)
 	if err != nil{
@@ -41,7 +41,7 @@ func (this Plural) NewString() string {
 	}
 
 	var buf bytes.Buffer
-	err = tmpl.Execute(&buf, this)
+	err = tmpl.Execute(&buf, pl)
 	if err != nil{
 		panic(err.Error())
 	}
@@ -50,7 +50,7 @@ func (this Plural) NewString() string {
 }
 
 
-func (this Plural) ReleaseString() string {
+func (pl Plural) ReleaseString() string {
 	tmpl, err := template.New("plural_release_template").Funcs(templates.EsimFuncMap()).
 		Parse(pluralreleaseTemplate)
 	if err != nil{
@@ -58,7 +58,7 @@ func (this Plural) ReleaseString() string {
 	}
 
 	var buf bytes.Buffer
-	err = tmpl.Execute(&buf, this)
+	err = tmpl.Execute(&buf, pl)
 	if err != nil{
 		panic(err.Error())
 	}
@@ -67,7 +67,7 @@ func (this Plural) ReleaseString() string {
 }
 
 
-func (this Plural) TypeString() string {
+func (pl Plural) TypeString() string {
 	tmpl, err := template.New("plural_type_template").Funcs(templates.EsimFuncMap()).
 		Parse(pluralTypeTemplate)
 	if err != nil{
@@ -75,7 +75,7 @@ func (this Plural) TypeString() string {
 	}
 
 	var buf bytes.Buffer
-	err = tmpl.Execute(&buf, this)
+	err = tmpl.Execute(&buf, pl)
 	if err != nil{
 		panic(err.Error())
 	}

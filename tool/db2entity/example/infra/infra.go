@@ -36,10 +36,10 @@ func NewInfra() *Infra {
 }
 
 // Close close the infra when app stop
-func (this *Infra) Close() {
+func (inf *Infra) Close() {
 }
 
-func (this *Infra) HealthCheck() []error {
+func (inf *Infra) HealthCheck() []error {
 	var errs []error
 	return errs
 }

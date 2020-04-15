@@ -22,7 +22,7 @@ var poolTemplate = `{{.VarPoolName}} = sync.Pool{
 }
 `
 
-func (this PoolTpl) String() string {
+func (pt PoolTpl) String() string {
 
 	tmpl, err := template.New("pool_template").Parse(poolTemplate)
 	if err != nil{
@@ -30,7 +30,7 @@ func (this PoolTpl) String() string {
 	}
 
 	var buf bytes.Buffer
-	err = tmpl.Execute(&buf, struct {PoolTpl}{this})
+	err = tmpl.Execute(&buf, struct {PoolTpl}{pt})
 	if err != nil{
 		panic(err.Error())
 	}

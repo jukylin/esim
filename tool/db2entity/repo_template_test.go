@@ -2,21 +2,21 @@ package db2entity
 
 import (
 	"bytes"
-	"testing"
-	"text/template"
-	"github.com/stretchr/testify/assert"
 	"github.com/jukylin/esim/pkg"
 	"github.com/jukylin/esim/pkg/templates"
+	"github.com/stretchr/testify/assert"
+	"testing"
+	"text/template"
 )
 
-func TestRepoTemplate(t *testing.T)  {
+func TestRepoTemplate(t *testing.T) {
 	tmpl, err := template.New("repo_template").Funcs(templates.EsimFuncMap()).
 		Parse(repoTemplate)
 	assert.Nil(t, err)
 
 	var imports pkg.Imports
-	imports = append(imports, pkg.Import{Name : "time", Path: "time"})
-	imports = append(imports, pkg.Import{Name : "sync", Path: "sync"})
+	imports = append(imports, pkg.Import{Name: "time", Path: "time"})
+	imports = append(imports, pkg.Import{Name: "sync", Path: "sync"})
 
 	var buf bytes.Buffer
 	repoTpl := repoTpl{}
@@ -26,13 +26,8 @@ func TestRepoTemplate(t *testing.T)  {
 	repoTpl.DelField = "is_del"
 
 	err = tmpl.Execute(&buf, repoTpl)
-	if err != nil{
+	if err != nil {
 		println(err.Error())
 	}
 	assert.Nil(t, err)
 }
-
-
-
-
-

@@ -31,44 +31,44 @@ func newSpyProxy(logger log.Logger, name string) *spyProxy {
 }
 
 //implement Proxy interface
-func (this *spyProxy) NextProxy(db interface{}) {
-	this.nextProxy = db.(SqlCommon)
+func (sp *spyProxy) NextProxy(db interface{}) {
+	sp.nextProxy = db.(SqlCommon)
 }
 
 //implement Proxy interface
-func (this *spyProxy) ProxyName() string {
-	return this.name
+func (sp *spyProxy) ProxyName() string {
+	return sp.name
 }
 
-func (this *spyProxy) Exec(query string, args ...interface{}) (sql.Result, error) {
-	this.ExecWasCalled = true
-	this.logger.Infof("%s ExecWasCalled %s", this.name, query)
-	result, err := this.nextProxy.Exec(query, args...)
+func (sp *spyProxy) Exec(query string, args ...interface{}) (sql.Result, error) {
+	sp.ExecWasCalled = true
+	sp.logger.Infof("%s ExecWasCalled %s", sp.name, query)
+	result, err := sp.nextProxy.Exec(query, args...)
 	return result, err
 }
 
-func (this *spyProxy) Prepare(query string) (*sql.Stmt, error) {
-	this.PrepareWasCalled = true
-	this.logger.Infof("%s PrepareWasCalled %s", this.name, query)
-	stmt, err := this.nextProxy.Prepare(query)
+func (sp *spyProxy) Prepare(query string) (*sql.Stmt, error) {
+	sp.PrepareWasCalled = true
+	sp.logger.Infof("%s PrepareWasCalled %s", sp.name, query)
+	stmt, err := sp.nextProxy.Prepare(query)
 
 	return stmt, err
 }
 
-func (this *spyProxy) Query(query string, args ...interface{}) (*sql.Rows, error) {
-	this.QueryWasCalled = true
-	this.logger.Infof("%s QueryWasCalled %s", this.name, query)
-	rows, err := this.nextProxy.Query(query, args...)
+func (sp *spyProxy) Query(query string, args ...interface{}) (*sql.Rows, error) {
+	sp.QueryWasCalled = true
+	sp.logger.Infof("%s QueryWasCalled %s", sp.name, query)
+	rows, err := sp.nextProxy.Query(query, args...)
 	return rows, err
 }
 
-func (this *spyProxy) QueryRow(query string, args ...interface{}) *sql.Row {
-	this.QueryRowWasCalled = true
-	this.logger.Infof("%s QueryRowWasCalled %s", this.name, query)
-	row := this.nextProxy.QueryRow(query, args...)
+func (sp *spyProxy) QueryRow(query string, args ...interface{}) *sql.Row {
+	sp.QueryRowWasCalled = true
+	sp.logger.Infof("%s QueryRowWasCalled %s", sp.name, query)
+	row := sp.nextProxy.QueryRow(query, args...)
 	return row
 }
 
-func (this *spyProxy) Close() error {
-	return this.nextProxy.Close()
+func (sp *spyProxy) Close() error {
+	return sp.nextProxy.Close()
 }

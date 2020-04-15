@@ -11,7 +11,6 @@ package db2entity
 //	writePath string
 //}
 
-
 type domainFile interface {
 	cloumnsToTplData(columns []columns) interface{}
 }

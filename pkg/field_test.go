@@ -1,12 +1,9 @@
 package pkg
 
 import (
-	"testing"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
-
-
-
 
 func TestFields_EmptyString(t *testing.T) {
 	fields := Fields{}
@@ -14,7 +11,6 @@ func TestFields_EmptyString(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Empty(t, str)
 }
-
 
 func TestFields_String(t *testing.T) {
 

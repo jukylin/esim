@@ -1,11 +1,11 @@
 package pkg
 
 import (
-	"go/ast"
-	"testing"
-	"go/token"
-	"go/parser"
 	"github.com/stretchr/testify/assert"
+	"go/ast"
+	"go/parser"
+	"go/token"
+	"testing"
 )
 
 func TestVars_String(t *testing.T) {

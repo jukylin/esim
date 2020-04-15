@@ -49,8 +49,6 @@ func (this *DB{{.StructName}}Repo) FindById(ctx context.Context, id int64) entit
 	return {{.TableName}}
 }`
 
-
-
 var provideTemplate = `
 func provide{{.StructName}}Repo(esim *container.Esim) repo.{{.StructName}}Repo {
 	return repo.NewDB{{.StructName}}Repo(esim.Logger)

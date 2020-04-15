@@ -15,10 +15,6 @@ type spyProxy struct {
 	nextTransport http.RoundTripper
 }
 
-type spyProxyOption func(c *spyProxy)
-
-type spyProxyOptions struct{}
-
 func NewSpyProxy(logger log.Logger, name string) *spyProxy {
 	spyProxy := &spyProxy{}
 
@@ -33,23 +29,23 @@ func NewSpyProxy(logger log.Logger, name string) *spyProxy {
 	return spyProxy
 }
 
-func (this *spyProxy) NextProxy(tripper interface{}) {
-	this.nextTransport = tripper.(http.RoundTripper)
+func (sp *spyProxy) NextProxy(tripper interface{}) {
+	sp.nextTransport = tripper.(http.RoundTripper)
 }
 
-func (this *spyProxy) ProxyName() string {
-	return this.name
+func (sp *spyProxy) ProxyName() string {
+	return sp.name
 }
 
 // RoundTrip implements the RoundTripper interface.
-func (this *spyProxy) RoundTrip(req *http.Request) (*http.Response, error) {
-	if this.nextTransport == nil {
-		this.nextTransport = http.DefaultTransport
+func (sp *spyProxy) RoundTrip(req *http.Request) (*http.Response, error) {
+	if sp.nextTransport == nil {
+		sp.nextTransport = http.DefaultTransport
 	}
 
-	this.RoundTripWasCalled = true
-	this.log.Infof("%s was called", this.name)
-	resp, err := this.nextTransport.RoundTrip(req)
+	sp.RoundTripWasCalled = true
+	sp.log.Infof("%s was called", sp.name)
+	resp, err := sp.nextTransport.RoundTrip(req)
 
 	return resp, err
 }
