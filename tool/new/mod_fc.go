@@ -1,12 +1,15 @@
 package new
 
-func ModInit() {
-	fc := &FileContent{
+func init()  {
+	Files = append(Files, modfc)
+}
+
+var(
+	modfc = &FileContent{
 		FileName: "go.mod",
 		Dir:      ".",
 		Content: `module {{PROPATH}}{{service_name}}
 `,
 	}
 
-	Files = append(Files, fc)
-}
+)

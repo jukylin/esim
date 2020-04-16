@@ -1,10 +1,14 @@
 package new
 
-func BeegoInit() {
-	fc1 := &FileContent{
-		FileName: "user_controller.go",
-		Dir:      "internal/transports/http/controllers",
-		Content: `package controllers
+func init()  {
+	Files = append(Files, beegofc1, beegofc2, beegofc3, beegofc4, beegofc5, beegofc6, beegofc7)
+}
+
+var (
+	beegofc1 = &FileContent{
+FileName: "user_controller.go",
+Dir:      "internal/transports/http/controllers",
+Content: `package controllers
 
 import (
 	"{{PROPATH}}{{service_name}}/internal/application"
@@ -30,12 +34,12 @@ func (this *UserController) GetUserInfo() {
 	this.ServeJSON()
 }
 `,
-	}
+}
 
-	fc2 := &FileContent{
-		FileName: "routers.go",
-		Dir:      "internal/transports/http/routers",
-		Content: `package routers
+	beegofc2 = &FileContent{
+FileName: "routers.go",
+Dir:      "internal/transports/http/routers",
+Content: `package routers
 
 import (
 	"{{PROPATH}}{{service_name}}/internal/transports/http/controllers"
@@ -53,12 +57,12 @@ func init() {
 	beego.AddNamespace(ns)
 }
 `,
-	}
+}
 
-	fc4 := &FileContent{
-		FileName: "beego.go",
-		Dir:      "internal/transports/http",
-		Content: `package http
+	beegofc3 = &FileContent{
+FileName: "beego.go",
+Dir:      "internal/transports/http",
+Content: `package http
 
 import (
 	"net/http"
@@ -126,12 +130,12 @@ func getMwd(esim *container.Esim) []beego.MiddleWare {
 	return mws
 }
 `,
-	}
+}
 
-	fc5 := &FileContent{
-		FileName: "index_controller.go",
-		Dir:      "internal/transports/http/controllers",
-		Content: `package controllers
+	beegofc4 = &FileContent{
+FileName: "index_controller.go",
+Dir:      "internal/transports/http/controllers",
+Content: `package controllers
 
 import (
 	"github.com/astaxie/beego"
@@ -167,12 +171,12 @@ func (this *PingController) Get() {
 	}
 }
 `,
-	}
+}
 
-	fc6 := &FileContent{
-		FileName: "component_test.go",
-		Dir:      "internal/transports/http/component-test",
-		Content: `package component_test
+	beegofc5 = &FileContent{
+FileName: "component_test.go",
+Dir:      "internal/transports/http/component-test",
+Content: `package component_test
 
 import (
 	"context"
@@ -205,12 +209,12 @@ func TestControllers_Esim(t *testing.T) {
 	logger.Debugf(string(body))
 	assert.Equal(t, 200, resp.StatusCode)
 }`,
-	}
+}
 
-	fc7 := &FileContent{
-		FileName: "user_dto.go",
-		Dir:      "internal/transports/http/dto",
-		Content: `package dto
+	beegofc6 = &FileContent{
+FileName: "user_dto.go",
+Dir:      "internal/transports/http/dto",
+Content: `package dto
 
 import "{{PROPATH}}{{service_name}}/internal/domain/user/entity"
 
@@ -230,12 +234,12 @@ func NewUser(user entity.User) User {
 	dto.PassWord = user.PassWord
 	return dto
 }`,
-	}
+}
 
-	fc8 := &FileContent{
-		FileName: "main_test.go",
-		Dir:      "internal/transports/http/component-test",
-		Content: `package component_test
+	beegofc7 = &FileContent{
+FileName: "main_test.go",
+Dir:      "internal/transports/http/component-test",
+Content: `package component_test
 
 import (
 	"os"
@@ -300,7 +304,5 @@ func setUp(app *{{package_name}}.App) {
 func tearDown(app *{{package_name}}.App) {
 	app.Infra.Close()
 }`,
-	}
-
-	Files = append(Files, fc1, fc2, fc4, fc5, fc6, fc7, fc8)
 }
+)

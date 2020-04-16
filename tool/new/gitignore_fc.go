@@ -1,7 +1,11 @@
 package new
 
-func GitIgnoreInit() {
-	fc := &FileContent{
+func init()  {
+	Files = append(Files, gitIgnorefc)
+}
+
+var(
+	gitIgnorefc = &FileContent{
 		FileName: ".gitignore",
 		Dir:      ".",
 		Content: `/{{service_name}}
@@ -14,5 +18,4 @@ lastupdate.tmp
 `,
 	}
 
-	Files = append(Files, fc)
-}
+)

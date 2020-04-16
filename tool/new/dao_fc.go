@@ -1,7 +1,11 @@
 package new
 
-func DaoInit() {
-	fc1 := &FileContent{
+func init()  {
+	Files = append(Files, daofc1)
+}
+
+var (
+	daofc1 = &FileContent{
 		FileName: "user_dao.go",
 		Dir:      "internal/infra/dao",
 		Content: `package dao
@@ -48,6 +52,4 @@ args ...interface{}) (entity.User, error) {
 }
 `,
 	}
-
-	Files = append(Files, fc1)
-}
+)

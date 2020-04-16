@@ -14,10 +14,7 @@ var newCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		loggerOptions := log.LoggerOptions{}
 		log := log.NewLogger(loggerOptions.WithDebug(true))
-		err := new.Build(v, log)
-		if err != nil {
-			log.Fatalf(err.Error())
-		}
+		new.NewProject(log).Run(v)
 	},
 }
 
@@ -32,7 +29,7 @@ func init() {
 
 	newCmd.Flags().BoolP("monitoring", "m", true, "enable monitoring")
 
-	newCmd.Flags().StringP("service_name", "s", "", "service name")
+	newCmd.Flags().StringP("server_name", "s", "", "server name")
 
 	v.BindPFlags(newCmd.Flags())
 }

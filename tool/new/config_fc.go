@@ -1,7 +1,11 @@
 package new
 
-func ConfigInit() {
-	fc1 := &FileContent{
+func init()  {
+	Files = append(Files, configfc1, configfc2)
+}
+
+var (
+	configfc1 = &FileContent{
 		FileName: "conf.yaml",
 		Dir:      "conf",
 		Content: `
@@ -71,7 +75,7 @@ prometheus_http_addr : 9002
 `,
 	}
 
-	fc2 := &FileContent{
+	configfc2 = &FileContent{
 		FileName: "monitoring.yaml",
 		Dir:      "conf",
 		Content: `
@@ -148,5 +152,4 @@ redis_metrics : {{bool}}
 `,
 	}
 
-	Files = append(Files, fc1, fc2,)
-}
+)

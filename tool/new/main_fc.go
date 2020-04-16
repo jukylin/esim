@@ -1,7 +1,11 @@
 package new
 
-func MainInit() {
-	fc := &FileContent{
+func init()  {
+	Files = append(Files, mainfc)
+}
+
+var (
+	mainfc = &FileContent{
 		FileName: "main.go",
 		Dir:      ".",
 		Content: `package main
@@ -14,5 +18,4 @@ func main() {
 `,
 	}
 
-	Files = append(Files, fc)
-}
+)

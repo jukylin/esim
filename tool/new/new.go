@@ -9,10 +9,12 @@ import (
 	"os"
 	"strings"
 	"golang.org/x/tools/imports"
+	"path/filepath"
+	"regexp"
 )
 
 var (
-	Files []*FileContent
+	Files = make([]*FileContent, 0)
 )
 
 type FileContent struct {
@@ -21,7 +23,39 @@ type FileContent struct {
 	Content  string `json:"context"`
 }
 
-func Build(v *viper.Viper, log logger.Logger) error {
+type Project struct {
+	ServerName string
+
+	PackageName string
+
+	RunServer string
+
+	ProPath string
+
+	ImportServer string
+
+	//true or false string type
+	Monitoring string
+
+	logger logger.Logger
+
+	withGin bool
+
+	withBeego bool
+
+	withGrpc bool
+}
+
+func NewProject(logger logger.Logger) *Project {
+
+	project := &Project{}
+
+	project.logger = logger
+
+	return project
+}
+
+func Build(v *viper.Viper) error {
 
 	var err error
 	serviceName := v.GetString("service_name")
@@ -47,6 +81,8 @@ func Build(v *viper.Viper, log logger.Logger) error {
 		return errors.New("创建目录 " + serviceName + " 失败：" + err.Error())
 	}
 
+
+
 	// "-" => "_"
 	packageName := strings.Replace(serviceName, "-", "_", -1)
 
@@ -54,10 +90,10 @@ func Build(v *viper.Viper, log logger.Logger) error {
 
 	currentDir := file_dir.GetGoProPath()
 	if currentDir != ""{
-		currentDir = currentDir + "/"
+		currentDir = currentDir + string(filepath.Separator)
 	}
 	for _, file := range Files {
-		dir := serviceName + "/" + file.Dir
+		dir := serviceName + string(filepath.Separator) + file.Dir
 
 		exists, err := file_dir.IsExistsDir(dir)
 		if err != nil {
@@ -74,7 +110,7 @@ func Build(v *viper.Viper, log logger.Logger) error {
 				return err
 			}
 		}
-		fileName := dir + "/" + file.FileName
+		fileName := dir + string(filepath.Separator) + file.FileName
 		//before all replace
 		file.Content = strings.ReplaceAll(file.Content, "{{IMPORT_SERVER}}", import_server)
 
@@ -89,10 +125,10 @@ func Build(v *viper.Viper, log logger.Logger) error {
 
 		if file.FileName == "monitoring.yaml" {
 			if v.GetBool("monitoring") == false {
-				log.Infof("关闭监控")
+				//log.Infof("关闭监控")
 				file.Content = strings.ReplaceAll(file.Content, "{{bool}}", "false")
 			} else {
-				log.Infof("开启监控")
+				//log.Infof("开启监控")
 				file.Content = strings.ReplaceAll(file.Content, "{{bool}}", "true")
 			}
 		}
@@ -115,46 +151,104 @@ func Build(v *viper.Viper, log logger.Logger) error {
 			os.Remove(serviceName)
 			return err
 		}
-		log.Infof(fileName + " 写入完成")
+		//log.Infof(fileName + " 写入完成")
 	}
 
 	return nil
 }
 
+func (this *Project) Run(v *viper.Viper) {
+	this.bindInput(v)
+
+	this.createServer()
+
+	this.getPackName()
+}
+
+func (this *Project) bindInput(v *viper.Viper) bool {
+	var err error
+	serverName := v.GetString("server_name")
+	if serverName == "" {
+		this.logger.Fatalf("The server_name is empty")
+	}
+	this.ServerName = serverName
+
+	if this.checkServerName() == false {
+		this.logger.Fatalf("The server_name only supports【a-z_-】")
+	}
+
+	exists, err := file_dir.IsExistsDir(serverName)
+	if err != nil {
+		this.logger.Fatalf(err.Error())
+	}
+
+	if exists {
+		this.logger.Fatalf("The %s is exists can't be create", serverName)
+	}
+
+	err = file_dir.CreateDir(serverName)
+	if err != nil {
+		this.logger.Fatalf(err.Error())
+	}
+
+	this.withGin = v.GetBool("gin")
+
+	this.withBeego = v.GetBool("beego")
+
+	if this.withGin == true && this.withBeego == true {
+		this.logger.Fatalf("either gin or beego")
+	}
+
+	this.withGrpc = v.GetBool("grpc")
+
+	return true
+}
+
+func (this *Project) checkServerName() bool {
+	match, err := regexp.MatchString("^[a-z_-]+$", this.ServerName)
+	if err != nil {
+		this.logger.Fatalf(err.Error())
+	}
+
+	return match
+}
+
+func (this *Project) createServer() bool {
+	match, err := regexp.MatchString("^[a-z_-]+$", this.ServerName)
+	if err != nil {
+		this.logger.Fatalf(err.Error())
+	}
+
+	return match
+}
+
+//PackName In most cases,  ServerName eq PackageName
+func (this *Project) getPackName() {
+	this.PackageName = strings.Replace(this.ServerName, "-", "_", -1)
+}
+
 func tmpInit(v *viper.Viper) (string, string) {
-	CmdInit()
-	ConfigInit()
-	DaoInit()
-	GitIgnoreInit()
-	MainInit()
-	ModInit()
-	ModelInit()
-	ProtoBufInit()
-	ServiceInit()
-	ThirdPartyInit()
-	InfraInit()
-	RepoInit()
-	InternalInit()
-	var run_server string
-	var import_server string
+
+	var runServer string
+	var importServer string
 
 	if v.GetBool("gin") == true {
-		GinInit()
-		run_server = "		app.Trans = append(app.Trans, http.NewGinServer(app))\n"
-		import_server += "	\"{{PROPATH}}{{service_name}}/internal/transports/http\"\n"
+		//GinInit()
+		runServer = "		app.Trans = append(app.Trans, http.NewGinServer(app))\n"
+		importServer += "	\"{{PROPATH}}{{service_name}}/internal/transports/http\"\n"
 	}
 
 	if v.GetBool("beego") == true {
-		BeegoInit()
-		run_server += "		app.Trans = append(app.Trans, http.NewBeegoServer(app.Esim))\n"
-		import_server += "	\"{{PROPATH}}{{service_name}}/internal/transports/http\"\n"
+		//BeegoInit()
+		runServer += "		app.Trans = append(app.Trans, http.NewBeegoServer(app.Esim))\n"
+		importServer += "	\"{{PROPATH}}{{service_name}}/internal/transports/http\"\n"
 	}
 
 	if v.GetBool("grpc") == true {
-		GrpcInit()
-		run_server += "		app.Trans = append(app.Trans, grpc.NewGrpcServer(app))\n"
-		import_server += "	\"{{PROPATH}}{{service_name}}/internal/transports/grpc\"\n"
+		//GrpcInit()
+		runServer += "		app.Trans = append(app.Trans, grpc.NewGrpcServer(app))\n"
+		importServer += "	\"{{PROPATH}}{{service_name}}/internal/transports/grpc\"\n"
 	}
 
-	return run_server, import_server
+	return runServer, importServer
 }

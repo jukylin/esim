@@ -1,7 +1,11 @@
 package new
 
-func InternalInit() {
-	fc1 := &FileContent{
+func init()  {
+	Files = append(Files, internalfc1)
+}
+
+var (
+	internalfc1 = &FileContent{
 		FileName: "app.go",
 		Dir:      "internal",
 		Content: `package {{package_name}}
@@ -106,5 +110,4 @@ func (this *App) stop()  {
 	}
 
 
-	Files = append(Files, fc1)
-}
+)
