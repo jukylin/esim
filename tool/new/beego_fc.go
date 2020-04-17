@@ -1,8 +1,6 @@
 package new
 
-func init()  {
-	Files = append(Files, beegofc1, beegofc2, beegofc3, beegofc4, beegofc5, beegofc6, beegofc7)
-}
+
 
 var (
 	beegofc1 = &FileContent{
@@ -11,10 +9,10 @@ Dir:      "internal/transports/http/controllers",
 Content: `package controllers
 
 import (
-	"{{PROPATH}}{{service_name}}/internal/application"
+	"{{.ProPath}}{{.ServerName}}/internal/application"
 	"github.com/astaxie/beego"
-	"{{PROPATH}}{{service_name}}/internal/infra"
-	"{{PROPATH}}{{service_name}}/internal/transports/http/dto"
+	"{{.ProPath}}{{.ServerName}}/internal/infra"
+	"{{.ProPath}}{{.ServerName}}/internal/transports/http/dto"
 )
 
 // Operations about Users
@@ -42,7 +40,7 @@ Dir:      "internal/transports/http/routers",
 Content: `package routers
 
 import (
-	"{{PROPATH}}{{service_name}}/internal/transports/http/controllers"
+	"{{.ProPath}}{{.ServerName}}/internal/transports/http/controllers"
 	"github.com/astaxie/beego"
 )
 
@@ -72,7 +70,7 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/opentracing-contrib/go-stdlib/nethttp"
 	"github.com/jukylin/esim/container"
-	_ "{{PROPATH}}{{service_name}}/internal/transports/http/routers"
+	_ "{{.ProPath}}{{.ServerName}}/internal/transports/http/routers"
 )
 
 type BeegoServer struct{
@@ -139,7 +137,7 @@ Content: `package controllers
 
 import (
 	"github.com/astaxie/beego"
-	"{{PROPATH}}{{service_name}}/internal/infra"
+	"{{.ProPath}}{{.ServerName}}/internal/infra"
 )
 
 // Operations about Index
@@ -192,7 +190,7 @@ import (
 func TestControllers_Esim(t *testing.T) {
 	logger := log.NewLogger()
 
-	client := http_client.NewHttpClient()
+	client := http_client.NewClient()
 	ctx := context.Background()
 	resp, err := client.Get(ctx, "http://localhost:8080")
 
@@ -216,15 +214,15 @@ FileName: "user_dto.go",
 Dir:      "internal/transports/http/dto",
 Content: `package dto
 
-import "{{PROPATH}}{{service_name}}/internal/domain/user/entity"
+import "{{.ProPath}}{{.ServerName}}/internal/domain/user/entity"
 
 type User struct {
 
 	//用户名称
-	UserName string {{!}}json:"user_name"{{!}}
+	UserName string {{.SingleMark}}json:"user_name"{{.SingleMark}}
 
 	//密码
-	PassWord string {{!}}json:"pass_word"{{!}}
+	PassWord string {{.SingleMark}}json:"pass_word"{{.SingleMark}}
 }
 
 func NewUser(user entity.User) User {
@@ -248,14 +246,14 @@ import (
 	"github.com/jukylin/esim/grpc"
 	_grpc "google.golang.org/grpc"
 	"github.com/jukylin/esim/container"
-	"{{PROPATH}}{{service_name}}/internal"
-	"{{PROPATH}}{{service_name}}/internal/infra"
-	"{{PROPATH}}{{service_name}}/internal/transports/http"
+	"{{.ProPath}}{{.ServerName}}/internal"
+	"{{.ProPath}}{{.ServerName}}/internal/infra"
+	"{{.ProPath}}{{.ServerName}}/internal/transports/http"
 )
 
 func TestMain(m *testing.M) {
-	appOptions := {{package_name}}.AppOptions{}
-	app := {{package_name}}.NewApp(appOptions.WithConfPath("../../../../conf/"))
+	appOptions := {{.PackageName}}.AppOptions{}
+	app := {{.PackageName}}.NewApp(appOptions.WithConfPath("../../../../conf/"))
 
 	setUp(app)
 
@@ -285,7 +283,7 @@ func provideStubsGrpcClient(esim *container.Esim) *grpc.GrpcClient {
 	return grpcClient
 }
 
-func setUp(app *{{package_name}}.App) {
+func setUp(app *{{.PackageName}}.App) {
 
 	app.Infra = infra.NewStubsInfra(provideStubsGrpcClient(app.Esim))
 
@@ -301,8 +299,13 @@ func setUp(app *{{package_name}}.App) {
 	}
 }
 
-func tearDown(app *{{package_name}}.App) {
+func tearDown(app *{{.PackageName}}.App) {
 	app.Infra.Close()
 }`,
 }
 )
+
+
+func BeegoInit()  {
+	Files = append(Files, beegofc1, beegofc2, beegofc3, beegofc4, beegofc5, beegofc6, beegofc7)
+}

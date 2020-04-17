@@ -12,8 +12,8 @@ var (
 
 import (
 	"context"
-	"{{.ProPath}}{{.ServiceName}}/internal/infra"
-	"{{.ProPath}}{{.ServiceName}}/internal/domain/user/entity"
+	"{{.ProPath}}{{.ServerName}}/internal/infra"
+	"{{.ProPath}}{{.ServerName}}/internal/domain/user/entity"
 )
 
 type UserService struct {

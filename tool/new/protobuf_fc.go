@@ -36,10 +36,10 @@ const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 // The request message containing the user's name.
 type GetUserByUserNameRequest struct {
-	Username             string   {{!}}protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"{{!}}
-	XXX_NoUnkeyedLiteral struct{} {{!}}json:"-"{{!}}
-	XXX_unrecognized     []byte   {{!}}json:"-"{{!}}
-	XXX_sizecache        int32    {{!}}json:"-"{{!}}
+	Username             string   {{.SingleMark}}protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"{{.SingleMark}}
+	XXX_NoUnkeyedLiteral struct{} {{.SingleMark}}json:"-"{{.SingleMark}}
+	XXX_unrecognized     []byte   {{.SingleMark}}json:"-"{{.SingleMark}}
+	XXX_sizecache        int32    {{.SingleMark}}json:"-"{{.SingleMark}}
 }
 
 func (m *GetUserByUserNameRequest) Reset()         { *m = GetUserByUserNameRequest{} }
@@ -76,12 +76,12 @@ func (m *GetUserByUserNameRequest) GetUsername() string {
 
 // The response message containing the greetings
 type GrpcUserReply struct {
-	Code                 int32    {{!}}protobuf:"varint,1,opt,name=code,proto3" json:"code,omitempty"{{!}}
-	Data                 *Info    {{!}}protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"{{!}}
-	Msg                  string   {{!}}protobuf:"bytes,3,opt,name=msg,proto3" json:"msg,omitempty"{{!}}
-	XXX_NoUnkeyedLiteral struct{} {{!}}json:"-"{{!}}
-	XXX_unrecognized     []byte   {{!}}json:"-"{{!}}
-	XXX_sizecache        int32    {{!}}json:"-"{{!}}
+	Code                 int32    {{.SingleMark}}protobuf:"varint,1,opt,name=code,proto3" json:"code,omitempty"{{.SingleMark}}
+	Data                 *Info    {{.SingleMark}}protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"{{.SingleMark}}
+	Msg                  string   {{.SingleMark}}protobuf:"bytes,3,opt,name=msg,proto3" json:"msg,omitempty"{{.SingleMark}}
+	XXX_NoUnkeyedLiteral struct{} {{.SingleMark}}json:"-"{{.SingleMark}}
+	XXX_unrecognized     []byte   {{.SingleMark}}json:"-"{{.SingleMark}}
+	XXX_sizecache        int32    {{.SingleMark}}json:"-"{{.SingleMark}}
 }
 
 func (m *GrpcUserReply) Reset()         { *m = GrpcUserReply{} }
@@ -131,11 +131,11 @@ func (m *GrpcUserReply) GetMsg() string {
 }
 
 type Info struct {
-	UserName             string   {{!}}protobuf:"bytes,1,opt,name=user_name,json=userName,proto3" json:"user_name,omitempty"{{!}}
-	PassWord             string   {{!}}protobuf:"bytes,2,opt,name=pass_word,json=passWord,proto3" json:"pass_word,omitempty"{{!}}
-	XXX_NoUnkeyedLiteral struct{} {{!}}json:"-"{{!}}
-	XXX_unrecognized     []byte   {{!}}json:"-"{{!}}
-	XXX_sizecache        int32    {{!}}json:"-"{{!}}
+	UserName             string   {{.SingleMark}}protobuf:"bytes,1,opt,name=user_name,json=userName,proto3" json:"user_name,omitempty"{{.SingleMark}}
+	PassWord             string   {{.SingleMark}}protobuf:"bytes,2,opt,name=pass_word,json=passWord,proto3" json:"pass_word,omitempty"{{.SingleMark}}
+	XXX_NoUnkeyedLiteral struct{} {{.SingleMark}}json:"-"{{.SingleMark}}
+	XXX_unrecognized     []byte   {{.SingleMark}}json:"-"{{.SingleMark}}
+	XXX_sizecache        int32    {{.SingleMark}}json:"-"{{.SingleMark}}
 }
 
 func (m *Info) Reset()         { *m = Info{} }

@@ -8,7 +8,7 @@ var(
 	modfc = &FileContent{
 		FileName: "go.mod",
 		Dir:      ".",
-		Content: `module {{PROPATH}}{{service_name}}
+		Content: `module {{.ProPath}}{{.ServerName}}
 `,
 	}
 

@@ -13,8 +13,8 @@ var(
 import (
 	"context"
 	"github.com/jukylin/esim/log"
-	"{{PROPATH}}{{service_name}}/internal/domain/user/entity"
-	"{{PROPATH}}{{service_name}}/internal/infra/dao"
+	"{{.ProPath}}{{.ServerName}}/internal/domain/user/entity"
+	"{{.ProPath}}{{.ServerName}}/internal/infra/dao"
 )
 
 type UserRepo interface {

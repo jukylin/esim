@@ -7,6 +7,18 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+
+func TestProject_Run(t *testing.T) {
+	project := NewProject(log.NewLogger())
+
+	v := viper.New()
+
+	v.Set("server_name", "example-a")
+	v.Set("gin", true)
+
+	project.Run(v)
+}
+
 func TestProject_GetPackName(t *testing.T) {
 	project := NewProject(log.NewNullLogger())
 

@@ -8,7 +8,7 @@ var(
 	gitIgnorefc = &FileContent{
 		FileName: ".gitignore",
 		Dir:      ".",
-		Content: `/{{service_name}}
+		Content: `/{{.ServerName}}
 lastupdate.tmp
 *.tar.gz
 .com.apple*

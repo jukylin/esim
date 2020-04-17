@@ -5,7 +5,7 @@ type Transports interface {
 	Start()
 
 	//register server or router
-	Register()
+	//Register()
 
 	//graceful shutdown server
 	GracefulShutDown()

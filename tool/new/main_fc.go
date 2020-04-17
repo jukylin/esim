@@ -10,7 +10,7 @@ var (
 		Dir:      ".",
 		Content: `package main
 
-import "{{PROPATH}}{{service_name}}/cmd"
+import "{{.ProPath}}{{.ServerName}}/cmd"
 
 func main() {
   cmd.Execute()

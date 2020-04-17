@@ -16,7 +16,7 @@ import (
 	"github.com/jukylin/esim/container"
 	"github.com/jukylin/esim/mysql"
 	"github.com/jukylin/esim/grpc"
-	"{{PROPATH}}{{service_name}}/internal/infra/repo"
+	"{{.ProPath}}{{.ServerName}}/internal/infra/repo"
 )
 
 //Do not change the function name and var name

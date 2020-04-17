@@ -13,13 +13,13 @@ var(
 type User struct {
 
 	//ID
-	ID int {{!}}gorm:"column:id;primary_key"{{!}}
+	ID int {{.SingleMark}}gorm:"column:id;primary_key"{{.SingleMark}}
 
 	//优惠券号码
-	UserName string {{!}}gorm:"column:user_name"{{!}}
+	UserName string {{.SingleMark}}gorm:"column:user_name"{{.SingleMark}}
 
 	//密码
-	PassWord string {{!}}gorm:"column:pass_word"{{!}}
+	PassWord string {{.SingleMark}}gorm:"column:pass_word"{{.SingleMark}}
 }
 `,
 	}

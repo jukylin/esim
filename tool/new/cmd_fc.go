@@ -30,9 +30,10 @@ package cmd
 import (
 	"os"
 	"github.com/spf13/cobra"
-{{.ImportServer}}
-	{{.ServiceName}} "{{.ProPath}}{{.ServiceName}}/internal"
-	"{{.ProPath}}{{.ServiceName}}/internal/infra"
+{{ range $Import := .ImportServer}}"{{$Import}}"
+{{end}}
+	{{.ServerName}} "{{.ProPath}}{{.ServerName}}/internal"
+	"{{.ProPath}}{{.ServerName}}/internal/infra"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -42,12 +43,12 @@ var rootCmd = &cobra.Command{
 	Long: "",
 	Run: func(cmd *cobra.Command, args []string) {
 
-		app := {{.ServiceName}}.NewApp()
+		app := {{.ServerName}}.NewApp()
 
 		app.Infra = infra.NewInfra()
 
-{{.RunServer}}
-
+{{ range $Server := .RunServer}}{{$Server}}
+{{end}}
 		app.Start()
 		app.AwaitSignal()
 

@@ -1,9 +1,5 @@
 package new
 
-func init()  {
-	Files = append(Files, grpcfc1, grpcfc2, grpcfc3, grpcfc4, grpcfc5, grpcfc6, grpcfc7, grpcfc8, grpcfc9)
-}
-
 var (
 	grpcfc1 = &FileContent{
 		FileName: "demo_controller.go",
@@ -12,10 +8,10 @@ var (
 
 import (
 	"context"
-	gp "{{PROPATH}}{{service_name}}/internal/infra/third_party/protobuf/passport"
-	"{{PROPATH}}{{service_name}}/internal/application"
-	"{{PROPATH}}{{service_name}}/internal/infra"
-	"{{PROPATH}}{{service_name}}/internal/transports/grpc/dto"
+	gp "{{.ProPath}}{{.ServerName}}/internal/infra/third_party/protobuf/passport"
+	"{{.ProPath}}{{.ServerName}}/internal/application"
+	"{{.ProPath}}{{.ServerName}}/internal/infra"
+	"{{.ProPath}}{{.ServerName}}/internal/transports/grpc/dto"
 )
 
 type DemoController struct {
@@ -47,8 +43,8 @@ func (this *DemoController) GetUserByUserName(ctx context.Context,
 		Content: `package routers
 
 import (
-	"{{PROPATH}}{{service_name}}/internal/transports/grpc/controllers"
-	"{{PROPATH}}{{service_name}}/internal/infra/third_party/protobuf/passport"
+	"{{.ProPath}}{{.ServerName}}/internal/transports/grpc/controllers"
+	"{{.ProPath}}{{.ServerName}}/internal/infra/third_party/protobuf/passport"
 	"google.golang.org/grpc"
 )
 
@@ -68,12 +64,12 @@ import (
 	"strings"
 
 	"github.com/jukylin/esim/grpc"
-	{{service_name}} "{{PROPATH}}{{service_name}}/internal"
-	"{{PROPATH}}{{service_name}}/internal/transports/grpc/routers"
-	"{{PROPATH}}{{service_name}}/internal/transports/grpc/controllers"
+	{{.ServerName}} "{{.ProPath}}{{.ServerName}}/internal"
+	"{{.ProPath}}{{.ServerName}}/internal/transports/grpc/routers"
+	"{{.ProPath}}{{.ServerName}}/internal/transports/grpc/controllers"
 )
 
-func NewGrpcServer(app *{{package_name}}.App) *grpc.GrpcServer {
+func NewGrpcServer(app *{{.PackageName}}.App) *grpc.GrpcServer {
 
 	target = app.Conf.GetString("grpc_server_tcp")
 
@@ -113,7 +109,7 @@ import (
 	egrpc "github.com/jukylin/esim/grpc"
 	"github.com/jukylin/esim/log"
 	"github.com/stretchr/testify/assert"
-	gp "{{PROPATH}}{{service_name}}/internal/infra/third_party/protobuf/passport"
+	gp "{{.ProPath}}{{.ServerName}}/internal/infra/third_party/protobuf/passport"
 )
 
 //go test
@@ -147,15 +143,15 @@ func TestUserService_GetUserByUserName(t *testing.T) {
 		Content: `package controllers
 
 import (
-	{{service_name}} "{{PROPATH}}{{service_name}}/internal"
+	{{.ServerName}} "{{.ProPath}}{{.ServerName}}/internal"
 	"github.com/google/wire"
-	"{{PROPATH}}{{service_name}}/internal/application"
+	"{{.ProPath}}{{.ServerName}}/internal/application"
 )
 
 
 type Controllers struct {
 
-	App *{{package_name}}.App
+	App *{{.PackageName}}.App
 
 	Demo *DemoController
 }
@@ -167,13 +163,13 @@ var controllersSet = wire.NewSet(
 )
 
 
-func NewControllers(app *{{package_name}}.App) *Controllers {
+func NewControllers(app *{{.PackageName}}.App) *Controllers {
 	controllers = initControllers(app)
 	return controllers
 }
 
 
-func provideDemoController(app *{{package_name}}.App) *DemoController {
+func provideDemoController(app *{{.PackageName}}.App) *DemoController {
 
 	userSvc = application.NewUserSvc(app.Infra)
 
@@ -196,12 +192,12 @@ package controllers
 
 import (
 	"github.com/google/wire"
-	{{service_name}} "{{PROPATH}}{{service_name}}/internal"
+	{{.ServerName}} "{{.ProPath}}{{.ServerName}}/internal"
 )
 
 
 
-func initControllers(app *{{package_name}}.App) *Controllers {
+func initControllers(app *{{.PackageName}}.App) *Controllers {
 	wire.Build(controllersSet)
 	return nil
 }
@@ -220,12 +216,12 @@ func initControllers(app *{{package_name}}.App) *Controllers {
 package controllers
 
 import (
-	{{service_name}} "{{PROPATH}}{{service_name}}/internal"
+	{{.ServerName}} "{{.ProPath}}{{.ServerName}}/internal"
 )
 
 // Injectors from wire.go:
 
-func initControllers(app *{{package_name}}.App) *Controllers {
+func initControllers(app *{{.PackageName}}.App) *Controllers {
 	demoController = provideDemoController(app)
 	controllers = &Controllers{
 		App:  app,
@@ -242,17 +238,17 @@ func initControllers(app *{{package_name}}.App) *Controllers {
 		Content: `package dto
 
 import (
-	"{{PROPATH}}{{service_name}}/internal/domain/user/entity"
-	"{{PROPATH}}{{service_name}}/internal/infra/third_party/protobuf/passport"
+	"{{.ProPath}}{{.ServerName}}/internal/domain/user/entity"
+	"{{.ProPath}}{{.ServerName}}/internal/infra/third_party/protobuf/passport"
 )
 
 type User struct {
 
 	//用户名称
-	UserName string {{!}}json:"user_name"{{!}}
+	UserName string {{.SingleMark}}json:"user_name"{{.SingleMark}}
 
 	//密码
-	PassWord string {{!}}json:"pass_word"{{!}}
+	PassWord string {{.SingleMark}}json:"pass_word"{{.SingleMark}}
 }
 
 func NewUserInfo(user entity.User) *passport.Info {
@@ -273,17 +269,17 @@ import (
 	"testing"
 	"context"
 
-	"{{PROPATH}}{{service_name}}/internal/transports/grpc"
-	"{{PROPATH}}{{service_name}}/internal/infra"
+	"{{.ProPath}}{{.ServerName}}/internal/transports/grpc"
+	"{{.ProPath}}{{.ServerName}}/internal/infra"
 	_grpc "google.golang.org/grpc"
 	egrpc "github.com/jukylin/esim/grpc"
 	"github.com/jukylin/esim/container"
-	"{{PROPATH}}{{service_name}}/internal"
+	"{{.ProPath}}{{.ServerName}}/internal"
 )
 
 func TestMain(m *testing.M) {
-	appOptions = {{package_name}}.AppOptions{}
-	app = {{package_name}}.NewApp(appOptions.WithConfPath("../../../../conf/"))
+	appOptions = {{.PackageName}}.AppOptions{}
+	app = {{.PackageName}}.NewApp(appOptions.WithConfPath("../../../../conf/"))
 
 	setUp(app)
 
@@ -313,7 +309,7 @@ func provideStubsGrpcClient(esim *container.Esim) *egrpc.GrpcClient {
 	return grpcClient
 }
 
-func setUp(app *{{package_name}}.App) {
+func setUp(app *{{.PackageName}}.App) {
 
 	app.Infra = infra.NewStubsInfra(provideStubsGrpcClient(app.Esim))
 
@@ -329,9 +325,13 @@ func setUp(app *{{package_name}}.App) {
 	}
 }
 
-func tearDown(app *{{package_name}}.App) {
+func tearDown(app *{{.PackageName}}.App) {
 	app.Infra.Close()
 }`,
 	}
 
 )
+
+func GrpcInit()  {
+	Files = append(Files, grpcfc1, grpcfc2, grpcfc3, grpcfc4, grpcfc5, grpcfc6, grpcfc7, grpcfc8, grpcfc9)
+}
