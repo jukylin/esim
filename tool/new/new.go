@@ -1,11 +1,9 @@
 package new
 
 import (
-	"errors"
 	"github.com/spf13/viper"
 	"github.com/jukylin/esim/pkg/file-dir"
 	logger "github.com/jukylin/esim/log"
-	"io/ioutil"
 	"os"
 	"strings"
 	"golang.org/x/tools/imports"
@@ -14,6 +12,8 @@ import (
 	"text/template"
 	"bytes"
 	"github.com/jukylin/esim/pkg/templates"
+	"io/ioutil"
+	"sync"
 )
 
 var (
@@ -66,90 +66,6 @@ func NewProject(logger logger.Logger) *Project {
 	project.SingleMark = "`"
 
 	return project
-}
-
-func Build(v *viper.Viper) error {
-
-	var err error
-	serviceName := v.GetString("service_name")
-	if serviceName == "" {
-		return errors.New("请输入 service_name")
-	}
-
-	if strings.Contains(serviceName, ".") == true{
-		return errors.New("服务名称不能包含【.】")
-	}
-
-	exists, err := file_dir.IsExistsDir("./" + serviceName)
-	if exists {
-		return errors.New("创建目录 " + serviceName + " 失败：目录已存在")
-	}
-
-	if err != nil {
-		return errors.New("检查目录失败：" + err.Error())
-	}
-
-	err = file_dir.CreateDir(serviceName)
-	if err != nil {
-		return errors.New("创建目录 " + serviceName + " 失败：" + err.Error())
-	}
-
-	currentDir := file_dir.GetGoProPath()
-	if currentDir != ""{
-		currentDir = currentDir + string(filepath.Separator)
-	}
-	for _, file := range Files {
-		dir := serviceName + string(filepath.Separator) + file.Dir
-
-		exists, err := file_dir.IsExistsDir(dir)
-		if err != nil {
-			//半路创建失败，全删除
-			os.Remove(serviceName)
-			return err
-		}
-
-		if exists == false {
-			err = file_dir.CreateDir(dir)
-			if err != nil {
-				//半路创建失败，全删除
-				os.Remove(serviceName)
-				return err
-			}
-		}
-		fileName := dir + string(filepath.Separator) + file.FileName
-
-		if file.FileName == "monitoring.yaml" {
-			if v.GetBool("monitoring") == false {
-				//log.Infof("关闭监控")
-				file.Content = strings.ReplaceAll(file.Content, "{{.Monitoring}}", "false")
-			} else {
-				//log.Infof("开启监控")
-				file.Content = strings.ReplaceAll(file.Content, "{{.Monitoring}}", "true")
-			}
-		}
-
-		var src []byte
-		if strings.HasSuffix(fileName, ".go") {
-			src, err = imports.Process("", []byte(file.Content), nil)
-			if err != nil {
-				os.Remove(serviceName)
-				return err
-			}
-		}else{
-			src = []byte(file.Content)
-		}
-
-		//写内容
-		err = ioutil.WriteFile(fileName, src, 0666)
-		if err != nil {
-			//半路创建失败，全删除
-			os.Remove(serviceName)
-			return err
-		}
-		//log.Infof(fileName + " 写入完成")
-	}
-
-	return nil
 }
 
 func (pj *Project) Run(v *viper.Viper) {
@@ -265,71 +181,77 @@ func (pj *Project) build() bool {
 
 	pj.logger.Infof("starting create %s, package name %s", pj.ServerName, pj.PackageName)
 
-	for _, file := range Files {
-		dir := pj.ServerName + string(filepath.Separator) + file.Dir
+	wg := sync.WaitGroup{}
+	wg.Add(len(Files))
 
-		exists, err := file_dir.IsExistsDir(dir)
-		if err != nil {
-			pj.logger.Errorf("%s : %s", file.FileName, err.Error())
-			reMoveErr := os.Remove(pj.ServerName)
-			if reMoveErr != nil {
-				pj.logger.Fatalf(reMoveErr.Error())
-			}
-			return false
-		}
+	for _, f := range Files {
+		go func(file *FileContent) {
+			dir := pj.ServerName + string(filepath.Separator) + file.Dir
 
-		if exists == false {
-			err = file_dir.CreateDir(dir)
+			exists, err := file_dir.IsExistsDir(dir)
 			if err != nil {
 				pj.logger.Errorf("%s : %s", file.FileName, err.Error())
 				err = os.Remove(pj.ServerName)
 				if err != nil {
-					pj.logger.Fatalf(err.Error())
+					pj.logger.Fatalf("remove err : %s", err.Error())
 				}
-				return false
+
 			}
-		}
 
-		fileName := dir + string(filepath.Separator) + file.FileName
-
-		content, err := pj.executeTmpl(file.FileName, file.Content)
-		if err != nil {
-			pj.logger.Errorf("%s : %s", file.FileName, err.Error())
-			err = os.Remove(pj.ServerName)
-			if err != nil {
-				pj.logger.Fatalf(err.Error())
+			if exists == false {
+				err = file_dir.CreateDir(dir)
+				if err != nil {
+					pj.logger.Errorf("%s : %s", file.FileName, err.Error())
+					err = os.Remove(pj.ServerName)
+					if err != nil {
+						pj.logger.Fatalf("remove err : %s", err.Error())
+					}
+				}
 			}
-			return false
-		}
 
-		var src []byte
-		if strings.HasSuffix(fileName, ".go") {
-			src, err = imports.Process("", content, nil)
+			fileName := dir + string(filepath.Separator) + file.FileName
+
+			content, err := pj.executeTmpl(file.FileName, file.Content)
 			if err != nil {
-				println(string(content))
 				pj.logger.Errorf("%s : %s", file.FileName, err.Error())
 				err = os.Remove(pj.ServerName)
 				if err != nil {
-					pj.logger.Fatalf(err.Error())
+					pj.logger.Fatalf("remove err : %s", err.Error())
 				}
-				return false
 			}
-		}else{
-			src = []byte(file.Content)
-		}
 
-		err = ioutil.WriteFile(fileName, src, 0666)
-		if err != nil {
-			pj.logger.Errorf("%s : %s", file.FileName, err.Error())
-			err = os.Remove(pj.ServerName)
-			if err != nil {
-				pj.logger.Fatalf(err.Error())
+			var src []byte
+
+			if filepath.Ext(fileName) == ".go" {
+				src, err = imports.Process("", []byte(content), nil)
+				if err != nil {
+					pj.logger.Errorf("%s : %s", file.FileName, err.Error())
+					err = os.Remove(pj.ServerName)
+					if err != nil {
+						pj.logger.Fatalf("remove err : %s", err.Error())
+					}
+
+				}
+			}else{
+				src = []byte(content)
 			}
-			return false
-		}
-		//log.Infof(fileName + " 写入完成")
+
+			err = ioutil.WriteFile(fileName, src, 0666)
+			if err != nil {
+				pj.logger.Errorf("%s : %s", file.FileName, err.Error())
+				err = os.Remove(pj.ServerName)
+				if err != nil {
+					pj.logger.Fatalf("remove err : %s", err.Error())
+				}
+			}
+
+			pj.logger.Infof("wrote success : %s", fileName)
+			wg.Done()
+		}(f)
 	}
 
+	wg.Wait()
+	pj.logger.Infof("creation complete : %s ", pj.ServerName)
 	return true
 }
 

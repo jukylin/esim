@@ -97,7 +97,7 @@ import (
 	middle_ware "github.com/jukylin/esim/middle-ware"
 	"github.com/jukylin/esim/log"
 	"{{.ProPath}}{{.ServerName}}/internal/transports/http/controllers"
-	{{.ServerName}} "{{.ProPath}}{{.ServerName}}/internal"
+	"{{.ProPath}}{{.ServerName}}/internal"
 )
 
 type GinServer struct{
@@ -109,7 +109,7 @@ type GinServer struct{
 
 	server *http.Server
 
-	app *{{.ServerName}}.App
+	app *{{.PackageName}}.App
 }
 
 func NewGinServer(app *{{.PackageName}}.App) *GinServer {
@@ -218,7 +218,7 @@ func TestControllers_Esim(t *testing.T) {
 		Content: `package controllers
 
 import (
-	{{.ServerName}} "{{.ProPath}}{{.ServerName}}/internal"
+	"{{.ProPath}}{{.ServerName}}/internal"
 	"github.com/google/wire"
 	"{{.ProPath}}{{.ServerName}}/internal/application"
 )
@@ -288,7 +288,7 @@ package controllers
 
 import (
 	"github.com/google/wire"
-	{{.ServerName}} "{{.ProPath}}{{.ServerName}}/internal"
+	"{{.ProPath}}{{.ServerName}}/internal"
 )
 
 
@@ -312,7 +312,7 @@ func initControllers(app *{{.PackageName}}.App) *Controllers {
 package controllers
 
 import (
-	{{.ServerName}} "{{.ProPath}}{{.ServerName}}/internal"
+	"{{.ProPath}}{{.ServerName}}/internal"
 )
 
 // Injectors from wire.go:

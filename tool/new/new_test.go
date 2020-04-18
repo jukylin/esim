@@ -72,3 +72,14 @@ func TestProject_BindInput(t *testing.T) {
 
 	project.bindInput(v)
 }
+
+func TestProject_ExecuteTmpl(t *testing.T) {
+	project := NewProject(log.NewNullLogger())
+	project.ServerName = "test"
+
+	text := `/{{.ServerName}}`
+
+	result, err := project.executeTmpl("test", text)
+	assert.Nil(t, err)
+	assert.Equal(t, "/test", string(result))
+}

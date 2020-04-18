@@ -14,8 +14,7 @@ lastupdate.tmp
 .com.apple*
 .idea
 *.svg
-*.proto
-`,
+*.proto`,
 	}
 
 )

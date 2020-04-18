@@ -31,7 +31,6 @@ func (svc *UserService) GetUserInfo(ctx context.Context, username string) (user 
 	user = svc.UserRepo.FindByUserName(ctx, username)
 
 	return
-}
-`,
+}`,
 }
 )

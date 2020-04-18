@@ -23,7 +23,7 @@ type UserDao struct {
 
 func NewUserDao() *UserDao {
 	dao := &UserDao{
-		mysql: mysql.NewMysqlClient(),
+		mysql: mysql.NewClient(),
 	}
 
 	return dao

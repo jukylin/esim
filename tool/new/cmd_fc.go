@@ -32,7 +32,7 @@ import (
 	"github.com/spf13/cobra"
 {{ range $Import := .ImportServer}}"{{$Import}}"
 {{end}}
-	{{.ServerName}} "{{.ProPath}}{{.ServerName}}/internal"
+	"{{.ProPath}}{{.ServerName}}/internal"
 	"{{.ProPath}}{{.ServerName}}/internal/infra"
 )
 
