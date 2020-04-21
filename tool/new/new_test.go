@@ -1,10 +1,12 @@
 package new
 
 import (
+	"os"
 	"testing"
 	"github.com/jukylin/esim/log"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	"github.com/jukylin/esim/pkg/file-dir"
 )
 
 
@@ -17,6 +19,12 @@ func TestProject_Run(t *testing.T) {
 	v.Set("gin", true)
 
 	project.Run(v)
+
+	exists, err := file_dir.IsExistsDir("example-a")
+	assert.Nil(t, err)
+	if exists {
+		os.RemoveAll("example-a")
+	}
 }
 
 func TestProject_GetPackName(t *testing.T) {

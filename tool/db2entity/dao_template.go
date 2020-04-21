@@ -19,12 +19,12 @@ var daoTemplate = `package dao
 {{.Imports.String}}
 
 type {{.StructName}}Dao struct{
-	mysql *mysql.MysqlClient
+	mysql *mysql.Client
 }
 
 func New{{.StructName}}Dao() *{{.StructName}}Dao {
 	dao := &{{.StructName}}Dao{
-		mysql : mysql.NewMysqlClient(),
+		mysql : mysql.NewClient(),
 	}
 
 	return dao
@@ -48,7 +48,7 @@ func (this *{{.StructName}}Dao) Create(ctx context.Context, {{.StructName| first
 	if db.Error != nil{
 		return {{.PriKeyType}}(0), db.Error
 	}else{
-		return {{.PriKeyType}}({{.StructName| firstToLower}}.ID), nil
+		return {{.PriKeyType}}({{.StructName| firstToLower}}.Id), nil
 	}
 }
 
@@ -96,7 +96,7 @@ func (this *{{.StructName}}Dao) DelById(ctx context.Context, id {{.PriKeyType}})
 		return false, errors.New("找不到 is_del / is_deleted / is_delete 字段")
 	}
 
-	del{{.StructName}}.ID = id
+	del{{.StructName}}.Id = id
 	db := this.GetDb(ctx).Update(map[string]interface{}{del{{.StructName}}.DelKey(): 1})
 	if db.Error != nil{
 		return false, db.Error

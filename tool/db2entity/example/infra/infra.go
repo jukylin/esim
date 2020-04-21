@@ -20,7 +20,7 @@ type Infra struct {
 	*container.Esim
 
 	//redis
-	Redis *redis.RedisClient
+	Redis *redis.Client
 
 }
 

@@ -37,7 +37,7 @@ type Project struct {
 
 	ImportServer []string
 
-	//true or false string type
+	//"true" or "false"
 	Monitoring string
 
 	SingleMark string
