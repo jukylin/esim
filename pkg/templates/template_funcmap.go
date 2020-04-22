@@ -3,6 +3,8 @@ package templates
 import (
 	"text/template"
 	"strings"
+	"unicode"
+	"github.com/serenize/snaker"
 )
 
 func EsimFuncMap() template.FuncMap {
@@ -10,7 +12,9 @@ func EsimFuncMap() template.FuncMap {
 		"tolower" : strings.ToLower,
 		"cutFirstToLower" : CutFirstToLower,
 		"firstToLower" : FirstToLower,
-		"snakeToCamel" : SnakeToCamel,
+		"snakeToCamel" : snaker.SnakeToCamel,
+		"snakeToCamelLower" : snaker.SnakeToCamelLower,
+		"shorten" : Shorten,
 	}
 }
 
@@ -24,54 +28,36 @@ func FirstToLower(s string) string {
 	return strings.ToLower(string([]rune(s)[0])) + string([]rune(s)[1:])
 }
 
-//abc_bcd_cde => AbcBcdCde
-func SnakeToCamel(s string) string {
-	data := make([]byte, 0, len(s))
-	j := false
-	k := false
-	num := len(s) - 1
 
-	for i := 0; i <= num; i++ {
-		d := s[i]
-		if k == false && d >= 'A' && d <= 'Z' {
-			k = true
+//Shorten shorten the string
+func Shorten(s string) string {
+	var result string
+	var words []rune
+	var max = 3
+
+	rs := []rune(s)
+	for i := 0; i < len(rs); i++ {
+		if unicode.IsUpper(rs[i]) {
+			words = append(words, rs[i])
+		} else if i == 0 && unicode.IsLower(rs[i]) {
+			words = append(words, rs[i])
+		} else if (string(rs[i]) == "_" || string(rs[i]) == "-"){
+			if unicode.IsUpper(rs[i + 1]) || unicode.IsLower(rs[i + 1]) {
+				words = append(words, rs[i + 1])
+			}
 		}
-
-		if d >= 'a' && d <= 'z' && (j || k == false) {
-			d = d - 32
-			j = false
-			k = true
-		}
-
-		if k && d == '_' && num > i && s[i+1] >= 'a' && s[i+1] <= 'z' {
-			j = true
-			continue
-		}
-
-		data = append(data, d)
 	}
 
-	return string(data[:])
-}
-
-//AbcBcdCde => abc_bcd_cde
-func CamelToSnake(s string) string {
-	data := make([]byte, 0, len(s) * 2)
-	j := false
-	num := len(s)
-
-	for i := 0; i < num; i++ {
-		d := s[i]
-		if i > 0 && d >= 'A' && d <= 'Z' && j {
-			data = append(data, '_')
+	if len(words) > 0 {
+		for k, word := range words {
+			if k >= max {
+				continue
+			}
+			result += string(word)
 		}
-
-		if d != '_' {
-			j = true
-		}
-
-		data = append(data, d)
+	} else {
+		result = s[0:max]
 	}
 
-	return strings.ToLower(string(data[:]))
+	return strings.ToLower(result)
 }

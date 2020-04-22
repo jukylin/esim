@@ -6,14 +6,14 @@ import (
 	"github.com/jukylin/esim/pkg/file-dir"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	"testing"
 	"os"
 	"path/filepath"
-	"testing"
 )
 
 func TestDb2Entity_Run(t *testing.T) {
 
-	db2EntityOptions := Db2EntityOptions{}
+	db2EntityOptions := Db2EnOptions{}
 	StubsColumnsRepo := StubsColumnsRepo{}
 
 	db2Entity := NewDb2Entity(db2EntityOptions.WithLogger(log.NewLogger()),
@@ -34,7 +34,7 @@ func TestDb2Entity_Run(t *testing.T) {
 	v.Set("user", "root")
 	v.Set("passport", "")
 	v.Set("database", "user")
-	v.Set("table", "test")
+	v.Set("table", "test_history")
 
 	err := db2Entity.Run(v)
 	assert.Nil(t, err)
@@ -51,7 +51,7 @@ func TestDb2Entity_CloumnsToEntityTmp(t *testing.T) {
 
 	db2Entity := &db2Entity{}
 
-	entityTmp := db2Entity.cloumnsToEntityTmp(cols)
+	entityTmp := db2Entity.cloumnsToEntityTpl(cols)
 	assert.Equal(t, 3, len(entityTmp.StructInfo.Fields))
 }
 
@@ -67,7 +67,7 @@ func TestDb2Entity_ParseInfra(t *testing.T) {
 }
 
 func TestDb2Entity_ProcessInfraInfo(t *testing.T) {
-	db2EntityOptions := Db2EntityOptions{}
+	db2EntityOptions := Db2EnOptions{}
 	db2Entity := NewDb2Entity(
 		db2EntityOptions.WithInfraInfo(NewInfraInfo()))
 

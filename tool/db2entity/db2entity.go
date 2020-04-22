@@ -5,7 +5,7 @@ import (
 	"fmt"
 	logger "github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
-	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	"github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
 	"github.com/spf13/viper"
 	"go/ast"
@@ -17,6 +17,7 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
+	"github.com/serenize/snaker"
 )
 
 type db2Entity struct {
@@ -81,15 +82,15 @@ type dbConfig struct {
 	table string
 }
 
-type Db2EntityOption func(*db2Entity)
+type Db2EnOption func(*db2Entity)
 
-type Db2EntityOptions struct{}
+type Db2EnOptions struct{}
 
-func NewDb2EntityOptions() Db2EntityOptions {
-	return Db2EntityOptions{}
+func NewDb2EntityOptions() Db2EnOptions {
+	return Db2EnOptions{}
 }
 
-func NewDb2Entity(options ...Db2EntityOption) *db2Entity {
+func NewDb2Entity(options ...Db2EnOption) *db2Entity {
 
 	d := &db2Entity{}
 
@@ -108,38 +109,38 @@ func NewDb2Entity(options ...Db2EntityOption) *db2Entity {
 	return d
 }
 
-func (Db2EntityOptions) WithLogger(logger logger.Logger) Db2EntityOption {
+func (Db2EnOptions) WithLogger(logger logger.Logger) Db2EnOption {
 	return func(d *db2Entity) {
 		d.logger = logger
 	}
 }
 
-func (Db2EntityOptions) WithColumnsInter(ColumnsRepo ColumnsRepo) Db2EntityOption {
+func (Db2EnOptions) WithColumnsInter(ColumnsRepo ColumnsRepo) Db2EnOption {
 	return func(d *db2Entity) {
 		d.ColumnsRepo = ColumnsRepo
 	}
 }
 
-func (Db2EntityOptions) WithIfaceWrite(writer file_dir.IfaceWriter) Db2EntityOption {
+func (Db2EnOptions) WithIfaceWrite(writer file_dir.IfaceWriter) Db2EnOption {
 	return func(d *db2Entity) {
 		d.writer = writer
 	}
 }
 
-func (Db2EntityOptions) WithInfraInfo(infra *infraInfo) Db2EntityOption {
+func (Db2EnOptions) WithInfraInfo(infra *infraInfo) Db2EnOption {
 	return func(d *db2Entity) {
 		d.oldInfraInfo = infra
 		d.newInfraInfo = infra
 	}
 }
 
-func (Db2EntityOptions) WithWriter(writer file_dir.IfaceWriter) Db2EntityOption {
+func (Db2EnOptions) WithWriter(writer file_dir.IfaceWriter) Db2EnOption {
 	return func(d *db2Entity) {
 		d.writer = writer
 	}
 }
 
-func (Db2EntityOptions) WithExecer(execer pkg.Exec) Db2EntityOption {
+func (Db2EnOptions) WithExecer(execer pkg.Exec) Db2EnOption {
 	return func(d *db2Entity) {
 		d.execer = execer
 	}
@@ -183,6 +184,7 @@ func NewInfraInfo() *infraInfo {
 	return ifaInfo
 }
 
+//
 func (de *db2Entity) Run(v *viper.Viper) error {
 
 	de.bindInput(v)
@@ -192,17 +194,17 @@ func (de *db2Entity) Run(v *viper.Viper) error {
 		de.logger.Fatalf(err.Error())
 	}
 
-	entityTmp := de.cloumnsToEntityTmp(columns)
-	entityContent := de.executeTmpl("entity_tpl", entityTmp, entityTemplate)
-	de.writer.Write(de.withEntityTarget+de.dbConf.table+".go", entityContent)
+	entityTpl := de.cloumnsToEntityTpl(columns)
+	entityContent := de.executeTmpl("entity_tpl", entityTpl, entityTemplate)
+	de.writer.Write(de.withEntityTarget + de.dbConf.table + ".go", entityContent)
 
-	daoTmp := de.cloumnsToDaoTmp(columns)
-	daoContent := de.executeTmpl("entity_tpl", daoTmp, daoTemplate)
-	de.writer.Write(de.withDaoTarget+de.dbConf.table+".go", daoContent)
+	daoTpl := de.cloumnsToDaoTpl(columns)
+	daoContent := de.executeTmpl("entity_tpl", daoTpl, daoTemplate)
+	de.writer.Write(de.withDaoTarget + de.dbConf.table + ".go", daoContent)
 
-	repoTmp := de.cloumnsToRepoTmp(columns)
-	repoContent := de.executeTmpl("entity_tpl", repoTmp, repoTemplate)
-	de.writer.Write(de.withRepoTarget+de.dbConf.table+".go", repoContent)
+	repoTpl := de.cloumnsToRepoTpl(columns)
+	repoContent := de.executeTmpl("entity_tpl", repoTpl, repoTemplate)
+	de.writer.Write(de.withRepoTarget + de.dbConf.table + ".go", repoContent)
 
 	de.injectToInfra()
 
@@ -224,7 +226,7 @@ func (de *db2Entity) bindInput(v *viper.Viper) {
 		stuctName = de.dbConf.table
 	}
 	de.withStruct = stuctName
-	de.CamelStruct = templates.SnakeToCamel(stuctName)
+	de.CamelStruct = snaker.SnakeToCamel(stuctName)
 
 	boubctx := v.GetString("boubctx")
 	if boubctx != "" {
@@ -383,7 +385,7 @@ func (de *db2Entity) bindInfra(v *viper.Viper) {
 	}
 }
 
-func (de *db2Entity) cloumnsToEntityTmp(columns []columns) entityTpl {
+func (de *db2Entity) cloumnsToEntityTpl(columns []columns) entityTpl {
 
 	entityTpl := entityTpl{}
 	if len(columns) < 1 {
@@ -402,7 +404,7 @@ func (de *db2Entity) cloumnsToEntityTmp(columns []columns) entityTpl {
 
 		field := pkg.Field{}
 
-		fieldName := templates.SnakeToCamel(column.ColumnName)
+		fieldName := snaker.SnakeToCamel(column.ColumnName)
 		field.Name = fieldName
 
 		nullable := false
@@ -459,14 +461,13 @@ func (de *db2Entity) cloumnsToEntityTmp(columns []columns) entityTpl {
 	return entityTpl
 }
 
-func (de *db2Entity) cloumnsToDaoTmp(columns []columns) daoTpl {
-	daoTpl := daoTpl{}
+func (de *db2Entity) cloumnsToDaoTpl(columns []columns) *daoTpl {
+	daoTpl := NewDaoTpl(de.CamelStruct)
 
 	if len(columns) < 1 {
 		return daoTpl
 	}
 
-	daoTpl.StructName = de.CamelStruct
 	daoTpl.DataBaseName = de.dbConf.database
 	daoTpl.TableName = de.dbConf.table
 
@@ -491,14 +492,13 @@ func (de *db2Entity) cloumnsToDaoTmp(columns []columns) daoTpl {
 	return daoTpl
 }
 
-func (de *db2Entity) cloumnsToRepoTmp(columns []columns) repoTpl {
-	repoTpl := repoTpl{}
+func (de *db2Entity) cloumnsToRepoTpl(columns []columns) *repoTpl {
+	repoTpl := NewRepoTpl(de.CamelStruct)
 
 	if len(columns) < 1 {
 		return repoTpl
 	}
 
-	repoTpl.StructName = de.CamelStruct
 	repoTpl.TableName = de.dbConf.table
 
 	repoTpl.Imports = append(repoTpl.Imports, pkg.Import{Path: "context"})
@@ -551,6 +551,11 @@ func (de *db2Entity) dirPathToImportPath(dirPath string) string {
 
 //injectToInfra inject repo to infra.go and execute wire command
 func (de *db2Entity) injectToInfra() {
+
+	if de.withInject == false {
+		return
+	}
+
 	//back up infra.go
 	err := file_dir.EsimBackUpFile(file_dir.GetCurrentDir() + string(filepath.Separator) + de.withInfraDir + de.withInfraFile)
 	if err != nil {
@@ -635,11 +640,6 @@ func (de *db2Entity) parseInfra(srcStr string) bool {
 
 	de.oldInfraInfo.content = srcStr
 
-	//srcStr = strings.Replace(srcStr, oldImportStr, newImportStr, -1)
-	//srcStr = strings.Replace(srcStr, oldStruct, newStruct, -1)
-	//srcStr = strings.Replace(srcStr, oldSet, newSet, -1)
-	//srcStr += provideFunc
-
 	return true
 }
 
@@ -675,7 +675,7 @@ func (de *db2Entity) processNewInfra() bool {
 	de.newInfraInfo.structInfo.Fields = append(de.newInfraInfo.structInfo.Fields, field)
 
 	de.newInfraInfo.infraSetArgs.Args = append(de.newInfraInfo.infraSetArgs.Args,
-		"provide"+de.CamelStruct+"Repo"+",")
+		"provide"+de.CamelStruct+"Repo")
 
 	imp := pkg.Import{Path: file_dir.GetGoProPath() + de.dirPathToImportPath(de.withRepoTarget)}
 	de.newInfraInfo.imports = append(de.newInfraInfo.imports, imp)
@@ -710,9 +710,10 @@ func (de *db2Entity) buildNewInfraString() {
 }
 
 func (de *db2Entity) appendProvideFunc() string {
-	return de.executeTmpl("provide_tpl", struct{ StructName string }{de.CamelStruct}, provideTemplate)
+	return de.executeTmpl("provide_tpl", NewRepoTpl(de.CamelStruct), provideTemplate)
 }
 
+//
 func (de *db2Entity) writeNewInfra() {
 
 	sourceSrc, err := format.Source([]byte(de.newInfraInfo.content))
@@ -742,7 +743,7 @@ func (de *db2Entity) getInfraSetArgs(GenDecl *ast.GenDecl, srcStr string) []stri
 			for _, value := range spec.Values {
 				if callExpr, ok := value.(*ast.CallExpr); ok {
 					for _, callArg := range callExpr.Args {
-						args = append(args, pkg.ParseExpr(callArg, srcStr))
+						args = append(args, strings.Trim(pkg.ParseExpr(callArg, srcStr), ","))
 					}
 				}
 			}
