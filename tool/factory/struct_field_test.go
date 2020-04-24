@@ -86,6 +86,6 @@ type empty struct {}`
 	assert.Equal(t, 9, len(sortResult.Fields))
 
 	initResult := rpcPlugin.InitField(fields)
-	assert.Equal(t, 15, len(initResult.Fields))
+	assert.Equal(t, 24, len(initResult.Fields))
 	rpcPlugin.clear()
 }

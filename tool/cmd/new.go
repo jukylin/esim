@@ -9,7 +9,7 @@ import (
 // grpcCmd represents the grpc command
 var newCmd = &cobra.Command{
 	Use:   "new",
-	Short: "",
+	Short: "create a new project",
 	Long: ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		loggerOptions := log.LoggerOptions{}

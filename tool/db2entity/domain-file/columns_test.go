@@ -1,4 +1,4 @@
-package db2entity
+package domain_file
 
 import (
 	"testing"
@@ -10,13 +10,13 @@ import (
 func TestDBColumnsInter_GetColumns(t *testing.T) {
 	logger := log.NewLogger()
 	dbcColumns := NewDBColumnsInter(logger)
-	dbConf := dbConfig{
-		host: "172.16.1.71",
-		port: 3306,
-		user: "root",
-		password: "KeDev32109!ot5",
-		database: "passport",
-		table: "user",
+	dbConf := DbConfig{
+		Host:     "127.0.0.1",
+		Port:     3306,
+		User:     "root",
+		Password: "",
+		Database: "passport",
+		Table:    "user",
 	}
 	_, err := dbcColumns.GetColumns(dbConf)
 	assert.Nil(t, err)

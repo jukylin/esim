@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func EsimFuncMap() template.FuncMap {
+func EsimFuncMap() map[string]interface{} {
 	return template.FuncMap{
 		"tolower" : strings.ToLower,
 		"cutFirstToLower" : CutFirstToLower,

@@ -9,13 +9,14 @@ import (
 	"github.com/jukylin/esim/pkg"
 	"os"
 	"path/filepath"
+	"github.com/jukylin/esim/tool/db2entity/domain-file"
 )
 
 
 func TestDb2Entity_Run(t *testing.T) {
 
-	db2EntityOptions := Db2EntityOptions{}
-	StubsColumnsRepo := StubsColumnsRepo{}
+	db2EntityOptions := Db2EnOptions{}
+	StubsColumnsRepo := domain_file.StubsColumnsRepo{}
 
 	db2Entity := NewDb2Entity(db2EntityOptions.WithLogger(log.NewLogger()),
 		db2EntityOptions.WithColumnsInter(StubsColumnsRepo),
@@ -48,28 +49,19 @@ func TestDb2Entity_Run(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestDb2Entity_CloumnsToEntityTmp(t *testing.T)  {
-
-	db2Entity := &db2Entity{}
-
-	entityTmp := db2Entity.cloumnsToEntityTmp(cols)
-	assert.Equal(t, 3, len(entityTmp.StructInfo.Fields))
-}
-
-
-func TestDb2Entity_DirPathToImportPath(t *testing.T)  {
-	db2Entity := &db2Entity{}
-	importPaht := db2Entity.dirPathToImportPath("./a/b/c/")
+func TestDb2Entity_DirPathToImportPath(t *testing.T) {
+	db2Entity := &Db2Entity{}
+	importPaht := db2Entity.DirPathToImportPath("./a/b/c/")
 	assert.Equal(t, "a/b/c", importPaht)
 }
 
-func TestDb2Entity_ParseInfra(t *testing.T)  {
-	db2Entity := &db2Entity{}
+func TestDb2Entity_ParseInfra(t *testing.T) {
+	db2Entity := &Db2Entity{}
 	assert.True(t, db2Entity.parseInfra(infraContent))
 }
 
 func TestDb2Entity_ProcessInfraInfo(t *testing.T)  {
-	db2EntityOptions := Db2EntityOptions{}
+	db2EntityOptions := Db2EnOptions{}
 	db2Entity := NewDb2Entity(
 		db2EntityOptions.WithInfraInfo(NewInfraInfo()))
 

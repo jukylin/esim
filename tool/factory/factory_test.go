@@ -10,17 +10,15 @@ import (
 	"github.com/spf13/viper"
 	"github.com/jukylin/esim/pkg"
 	"github.com/jukylin/esim/log"
+	"path/filepath"
 )
 
 
 func TestMain(m *testing.M) {
 
-
 	setUp()
 
-
 	code := m.Run()
-
 
 	os.Exit(code)
 }
@@ -47,10 +45,12 @@ func TestEsimFactory_Run(t *testing.T) {
 	v.Set("pool", true)
 	v.Set("plural", true)
 	v.Set("new", true)
-	v.Set("print", true)
+	//v.Set("print", true)
 
 	esimfactory.Run(v)
 	esimfactory.Close()
+	file_dir.EsimRecoverFile(esimfactory.structDir +
+		string(filepath.Separator) + esimfactory.structFileName)
 }
 
 
@@ -70,10 +70,11 @@ func TestEsimFactory_InputBind(t *testing.T) {
 
 
 func TestCopyOldStructInfo(t *testing.T)  {
+	esimfactory.oldStructInfo.imports = esimfactory.oldStructInfo.imports[:0]
 	esimfactory.oldStructInfo.imports = append(esimfactory.oldStructInfo.imports, pkg.Import{Path:"fmt"})
 	esimfactory.oldStructInfo.structFileContent = "package main"
 	esimfactory.copyOldStructInfo()
-	assert.Equal(t, "fmt", esimfactory.NewStructInfo.imports[0])
+	assert.Equal(t, "fmt", esimfactory.NewStructInfo.imports[0].Path)
 
 	esimfactory.NewStructInfo.varStr = "var ()"
 	assert.NotEqual(t, esimfactory.oldStructInfo.varStr, esimfactory.NewStructInfo.varStr)
@@ -99,6 +100,9 @@ type test struct {
 `
 
 func TestExtendFieldAndReplaceStructContent(t *testing.T)  {
+	loggerOptions := log.LoggerOptions{}
+	logger := log.NewLogger(loggerOptions.WithDebug(true))
+	esimfactory = NewEsimFactory(logger)
 
 	esimfactory.withOption = true
 	esimfactory.withGenLoggerOption = true

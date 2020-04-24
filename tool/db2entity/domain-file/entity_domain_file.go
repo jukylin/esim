@@ -1,0 +1,224 @@
+package domain_file
+
+import (
+	"fmt"
+	"path/filepath"
+	"strings"
+
+	"github.com/jukylin/esim/log"
+	"github.com/jukylin/esim/pkg"
+	"github.com/jukylin/esim/pkg/file-dir"
+	"github.com/jukylin/esim/pkg/templates"
+	"github.com/serenize/snaker"
+	"github.com/spf13/viper"
+	"github.com/jukylin/esim/tool/db2entity"
+	"errors"
+)
+
+type entityDomainFile struct {
+	writeTarget string
+
+	withBoubctx string
+
+	withEntityTarget string
+
+	withDisbleEntity bool
+
+	tplName string
+
+	template string
+
+	// data object of parsed template
+	data entityTpl
+
+	logger log.Logger
+
+	tpl templates.Tpl
+
+	tableName string
+}
+
+type EntityDomainFileOption func(*entityDomainFile)
+
+func NewEntityDomainFile(options ...EntityDomainFileOption) DomainFile {
+
+	e := &entityDomainFile{}
+
+	for _, option := range options {
+		option(e)
+	}
+
+	e.tplName = "entity"
+
+	e.template = entityTemplate
+
+	return e
+}
+
+func WithEntityDomainFileLogger(logger log.Logger) EntityDomainFileOption {
+	return func(e *entityDomainFile) {
+		e.logger = logger
+	}
+}
+
+func WithEntityDomainFileTpl(tpl templates.Tpl) EntityDomainFileOption {
+	return func(e *entityDomainFile) {
+		e.tpl = tpl
+	}
+}
+
+//Disabled implements DomainFile.
+//EntityDomainFile never disable
+func (edf *entityDomainFile) Disabled() bool {
+	return edf.withDisbleEntity
+}
+
+//bindInput implements DomainFile.
+func (edf *entityDomainFile) BindInput(v *viper.Viper) error {
+
+	edf.tableName = v.GetString("table")
+	if edf.tableName == "" {
+		return errors.New("table is empty")
+	}
+
+	boubctx := v.GetString("boubctx")
+	if boubctx != "" {
+		edf.withBoubctx = boubctx + string(filepath.Separator)
+	}
+
+	edf.withDisbleEntity = v.GetBool("disable_entity")
+	if edf.withDisbleEntity == false {
+
+		edf.withEntityTarget = v.GetString("entity_target")
+
+		if edf.withEntityTarget == "" {
+			if edf.withBoubctx != "" {
+				edf.withEntityTarget = "internal" + string(filepath.Separator) + "domain" +
+					string(filepath.Separator) + edf.withBoubctx + "entity"
+			} else {
+				edf.withEntityTarget = "internal" + string(filepath.Separator) + "domain" +
+					string(filepath.Separator) + "entity"
+			}
+		} else {
+			edf.withEntityTarget = strings.TrimLeft(edf.withEntityTarget, "/")
+			edf.withEntityTarget = edf.withBoubctx + edf.withEntityTarget
+		}
+
+		entityTargetExists, err := file_dir.IsExistsDir(edf.withEntityTarget)
+		if err != nil {
+			return err
+		}
+
+		if entityTargetExists == false {
+			err = file_dir.CreateDir(edf.withEntityTarget)
+			if err != nil {
+				return err
+			}
+		}
+
+		edf.withEntityTarget = edf.withEntityTarget + string(filepath.Separator)
+	}
+
+	edf.logger.Debugf("withEntityTarget %s", edf.withEntityTarget)
+
+	return nil
+}
+
+//parseCloumns implements DomainFile.
+func (edf *entityDomainFile) ParseCloumns(cs []Column, d2e *db2entity.Db2Entity) {
+
+	entityTpl := entityTpl{}
+
+	if len(cs) < 1 {
+		return
+	}
+
+	entityTpl.Imports = append(entityTpl.Imports, pkg.Import{Path: "github.com/jinzhu/gorm"})
+
+	entityTpl.StructName = d2e.CamelStruct
+
+	structInfo := templates.StructInfo{}
+
+	var colDefault string
+	var valueType string
+	var doc string
+	var nullable bool
+	var fieldName string
+
+	for _, column := range cs {
+
+		field := pkg.Field{}
+
+		fieldName = snaker.SnakeToCamel(column.ColumnName)
+		field.Name = fieldName
+
+		if column.IsNullAble == "YES" {
+			nullable = true
+		}
+
+		valueType = column.GetGoType(nullable)
+		if column.IsTime(valueType) {
+			entityTpl.Imports = append(entityTpl.Imports, pkg.Import{Path: "time"})
+		} else if strings.Index(valueType, "sql.") != -1 {
+			entityTpl.Imports = append(entityTpl.Imports, pkg.Import{Path: "database/sql"})
+		}
+		field.Type = valueType
+
+		if column.IsCurrentTimeStamp() {
+			entityTpl.CurTimeStamp = append(entityTpl.CurTimeStamp, fieldName)
+		}
+
+		if column.IsOnUpdate() {
+			entityTpl.OnUpdateTimeStamp = append(entityTpl.OnUpdateTimeStamp, fieldName)
+			entityTpl.OnUpdateTimeStampStr = append(entityTpl.OnUpdateTimeStampStr, column.ColumnName)
+		}
+
+		doc = column.FilterComment()
+		if doc != "" {
+			field.Doc = append(field.Doc, "//" + doc)
+		}
+
+		primary := ""
+		if column.IsPri() {
+			primary = ";primary_key"
+		}
+
+		if nullable == false {
+			colDefault = column.GetDefCol()
+		}
+
+		field.Tag = fmt.Sprintf("`gorm:\"column:%s%s%s\"`", column.ColumnName, primary, colDefault)
+
+		entityTpl.DelField = column.CheckDelField()
+
+		field.Field = field.Name + " " + field.Type
+		structInfo.Fields = append(structInfo.Fields, field)
+
+		colDefault = ""
+		valueType = ""
+		doc = ""
+		nullable = false
+		fieldName = ""
+	}
+
+	structInfo.StructName = entityTpl.StructName
+
+	entityTpl.StructInfo = structInfo
+
+	edf.data = entityTpl
+}
+
+//execute implements DomainFile.
+func (edf *entityDomainFile) Execute() string {
+	content, err := edf.tpl.Execute(edf.tplName, edf.template, edf.data)
+	if err != nil {
+		edf.logger.Panicf(err.Error())
+	}
+
+	return content
+}
+
+//getSavePath implements DomainFile.
+func (edf *entityDomainFile) GetSavePath() string  {
+	return edf.withEntityTarget + edf.tableName + DOMAIN_File_EXT
+}

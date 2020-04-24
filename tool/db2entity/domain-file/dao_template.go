@@ -1,4 +1,4 @@
-package db2entity
+package domain_file
 
 import "github.com/jukylin/esim/pkg"
 

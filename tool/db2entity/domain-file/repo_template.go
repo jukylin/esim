@@ -1,4 +1,4 @@
-package db2entity
+package domain_file
 
 import "github.com/jukylin/esim/pkg"
 
@@ -49,9 +49,8 @@ func (this *DB{{.StructName}}Repo) FindById(ctx context.Context, id int64) entit
 	return {{.TableName}}
 }`
 
-
-
-var provideTemplate = `
-func provide{{.StructName}}Repo(esim *container.Esim) repo.{{.StructName}}Repo {
-	return repo.NewDB{{.StructName}}Repo(esim.Logger)
+var ProvideTemplate = `
+func provide{{.EntityName}}Repo(esim *container.Esim) repo.{{.EntityName}}Repo {
+	return repo.New{{.StructName}}(esim.Logger)
 }`
+

@@ -10,7 +10,7 @@ var newTemplate = `
 {{.Option2}}
 
 {{if .WithNew}}
-func New{{.StructName}}({{.Option3}}) {{.NewStructInfo.ReturnVarStr}}{
+func New{{.StructName | snakeToCamel}}({{.Option3}}) {{.NewStructInfo.ReturnVarStr}}{
 
 {{.NewStructInfo.StructInitStr}}
 

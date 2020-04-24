@@ -14,41 +14,41 @@ var factoryCmd = &cobra.Command{
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		logger := log.NewLogger()
-		err := factory.NewEsimFactory(logger).Run(v)
+		esimFactory := factory.NewEsimFactory(logger)
+		err := esimFactory.Run(v)
 		if err != nil {
 			log.Log.Error(err.Error())
 		}
+		esimFactory.Close()
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(factoryCmd)
 
-	factoryCmd.Flags().BoolP("sort", "s", true, "按照内存对齐排序")
+	factoryCmd.Flags().BoolP("sort", "s", true, "sort the field")
 
-	factoryCmd.Flags().BoolP("new", "n", false, "生成New方法")
+	factoryCmd.Flags().BoolP("new", "n", false, "with new")
 
 	factoryCmd.Flags().BoolP("option", "o", false, "New with option")
 
-	factoryCmd.Flags().BoolP("pool", "p", false, "生成临时对象池")
+	factoryCmd.Flags().BoolP("pool", "p", false, "with pool")
 
-	factoryCmd.Flags().BoolP("gen_logger_option", "", false, "generate logger option")
+	factoryCmd.Flags().BoolP("ol", "", false, "generate logger option")
 
-	factoryCmd.Flags().BoolP("gen_conf_option", "", false, "generate conf option")
+	factoryCmd.Flags().BoolP("oc", "", false, "generate conf option")
 
-	factoryCmd.Flags().BoolP("star", "", false, "返回指针变量")
+	factoryCmd.Flags().BoolP("star", "", false, "with star")
 
-	factoryCmd.Flags().BoolP("print", "", false, "print the result")
+	factoryCmd.Flags().BoolP("print", "", false, "print to terminal")
 
-	//modelCmd.Flags().BoolP("Print", "", false, "打印到终端")
+	factoryCmd.Flags().StringP("sname", "", "", "struct name")
 
-	factoryCmd.Flags().StringP("sname", "", "", "结构体名称")
+	factoryCmd.Flags().StringP("sdir", "", "", "struct path")
 
-	factoryCmd.Flags().StringP("sdir", "", "", "结构体路径")
+	factoryCmd.Flags().BoolP("plural", "", false, "with plural")
 
-	factoryCmd.Flags().BoolP("plural", "", false, "支持复数")
-
-	factoryCmd.Flags().StringP("imp_iface", "", "", "实现了接口")
+	factoryCmd.Flags().StringP("imp_iface", "", "", "implement the interface")
 
 	v.BindPFlags(factoryCmd.Flags())
 }

@@ -1,4 +1,4 @@
-package db2entity
+package domain_file
 
 import (
 	"bytes"
@@ -9,9 +9,9 @@ import (
 	"github.com/jukylin/esim/pkg/templates"
 )
 
-func TestRepoTemplate(t *testing.T)  {
-	tmpl, err := template.New("repo_template").Funcs(templates.EsimFuncMap()).
-		Parse(repoTemplate)
+func TestDaoTemplate(t *testing.T)  {
+	tmpl, err := template.New("dao_template").Funcs(templates.EsimFuncMap()).
+		Parse(daoTemplate)
 	assert.Nil(t, err)
 
 	var imports pkg.Imports
@@ -19,17 +19,16 @@ func TestRepoTemplate(t *testing.T)  {
 	imports = append(imports, pkg.Import{Name : "sync", Path: "sync"})
 
 	var buf bytes.Buffer
-	repoTpl := repoTpl{}
-	repoTpl.StructName = "User"
-	repoTpl.TableName = "user"
-	repoTpl.Imports = imports
-	repoTpl.DelField = "is_del"
+	daoTmp := daoTpl{}
+	daoTmp.StructName = "User"
+	daoTmp.Imports = imports
+	daoTmp.DataBaseName = "test"
+	daoTmp.TableName = "user"
+	daoTmp.PriKeyType = "int"
 
-	err = tmpl.Execute(&buf, repoTpl)
-	if err != nil{
-		println(err.Error())
-	}
+	err = tmpl.Execute(&buf, daoTmp)
 	assert.Nil(t, err)
+	//println(buf.String())
 }
 
 
