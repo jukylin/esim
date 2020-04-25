@@ -30,13 +30,13 @@ var entityTemplate = `package entity
 {{.StructInfo.String}}
 
 // delete field
-func (c *{{.StructName}}) DelKey() string {
+func ({{.StructName | shorten}} *{{.StructName}}) DelKey() string {
 	return "{{.DelField}}"
 }
 
 {{if or (.CurTimeStamp) (.OnUpdateTimeStamp)}}
 //自动增加时间
-func (this *{{.StructName}}) BeforeCreate(scope *gorm.Scope) (err error) {
+func ({{.StructName | shorten}} *{{.StructName}}) BeforeCreate(scope *gorm.Scope) (err error) {
 
 	switch scope.Value.(type) {
 	case *{{.StructName}}:
@@ -61,8 +61,8 @@ func (this *{{.StructName}}) BeforeCreate(scope *gorm.Scope) (err error) {
 {{end}}
 
 {{if .OnUpdateTimeStampStr }}
-//自动添加更新时间  没有trim
-func (this *{{.StructName}}) BeforeSave(scope *gorm.Scope) (err error) {
+//自动添加更新时间
+func ({{.StructName | shorten}} *{{.StructName}}) BeforeSave(scope *gorm.Scope) (err error) {
 	val, ok := scope.InstanceGet("gorm:update_attrs")
 	if ok {
 		switch val.(type) {

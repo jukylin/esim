@@ -11,7 +11,7 @@ type infraSetArgs struct {
 }
 
 var infraSetTemplate = `var infraSet = wire.NewSet(
-{{ range $arg := .Args}}	{{$arg}}
+{{ range $arg := .Args}}	{{$arg}},
 {{end}}
 )
 `

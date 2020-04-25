@@ -19,8 +19,7 @@ func TestRepoTemplate(t *testing.T) {
 	imports = append(imports, pkg.Import{Name: "sync", Path: "sync"})
 
 	var buf bytes.Buffer
-	repoTpl := repoTpl{}
-	repoTpl.StructName = "User"
+	repoTpl := NewRepoTpl("User")
 	repoTpl.TableName = "user"
 	repoTpl.Imports = imports
 	repoTpl.DelField = "is_del"
@@ -30,4 +29,5 @@ func TestRepoTemplate(t *testing.T) {
 		println(err.Error())
 	}
 	assert.Nil(t, err)
+	//println(buf.String())
 }

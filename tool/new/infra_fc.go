@@ -31,7 +31,7 @@ var onceInfra *Infra
 type Infra struct {
 	*container.Esim
 
-	DB *mysql.MysqlClient
+	DB *mysql.Client
 
 	GrpcClient *grpc.GrpcClient
 
