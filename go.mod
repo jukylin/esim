@@ -6,7 +6,6 @@ require (
 	github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd // indirect
 	github.com/containerd/continuity v0.0.0-20200107194136-26c1120b8d41 // indirect
 	github.com/davecgh/go-spew v1.1.1
-	github.com/dnnrly/abbreviate v1.2.2
 	github.com/gin-gonic/gin v1.5.0
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/golang/protobuf v1.3.3 // indirect
@@ -19,7 +18,6 @@ require (
 	github.com/hashicorp/go-hclog v0.12.0
 	github.com/hashicorp/go-plugin v1.0.1
 	github.com/jinzhu/gorm v1.9.10
-	github.com/magiconair/properties v1.8.0
 	github.com/martinusso/inflect v0.0.0-20161215184957-e234d1ee70de
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/opentracing-contrib/go-stdlib v0.0.0-20190519235532-cf7a6c988dc9
