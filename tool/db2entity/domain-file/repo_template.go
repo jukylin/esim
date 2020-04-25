@@ -7,6 +7,8 @@ type repoTpl struct {
 
 	StructName string
 
+	EntityName string
+
 	TableName string
 
 	DelField string
@@ -17,36 +19,40 @@ package repo
 
 {{.Imports.String}}
 
-type {{.StructName}}Repo interface {
-	FindById(context.Context, int64) entity.{{.StructName}}
+type {{.EntityName}}Repo interface {
+	FindById(context.Context, int64) entity.{{.EntityName}}
 }
 
-type DB{{.StructName}}Repo struct{
+type {{.StructName}} struct{
 
 	logger log.Logger
 
-	{{.StructName| tolower}}Dao *dao.{{.StructName}}Dao
+	{{.EntityName | snakeToCamelLower | firstToLower}}Dao *dao.{{.EntityName}}Dao
 }
 
-func NewDB{{.StructName}}Repo(logger log.Logger) {{.StructName}}Repo {
-	repo := &DB{{.StructName}}Repo{
+func New{{.StructName}}(logger log.Logger) {{.EntityName}}Repo {
+	{{.StructName | shorten}} := &{{.StructName}}{
 		logger : logger,
 	}
 
-	if repo.{{.StructName| tolower}}Dao == nil{
-		repo.{{.StructName| tolower}}Dao = dao.New{{.StructName}}Dao()
+	if {{.StructName | shorten}}.{{.EntityName| snakeToCamelLower | firstToLower}}Dao == nil{
+		{{.StructName | shorten}}.{{.EntityName| snakeToCamelLower | firstToLower}}Dao = dao.New{{.EntityName}}Dao()
 	}
 
 
-	return repo
+	return {{.StructName | shorten}}
 }
 
-func (this *DB{{.StructName}}Repo) FindById(ctx context.Context, id int64) entity.{{.StructName}} {
-	var {{.TableName}} entity.{{.StructName}}
+func ({{.StructName | shorten}} *{{.StructName}}) FindById(ctx context.Context, id int64) entity.{{.EntityName}} {
+	var {{.TableName | snakeToCamelLower}} entity.{{.EntityName}}
+	var err error
 
-	{{.TableName}}, err = this.{{.StructName| tolower}}Dao.Find(ctx, "*", "id = ? and {{.DelField}} = ?", id, 0)
+	{{.TableName | snakeToCamelLower}}, err = {{.StructName | shorten}}.{{.EntityName| snakeToCamelLower | firstToLower}}Dao.Find(ctx, "*", "id = ? and {{.DelField}} = ?", id, 0)
+	if err != nil {
+		{{.StructName | shorten}}.logger.Errorc(ctx, err.Error())
+	}
 
-	return {{.TableName}}
+	return {{.TableName | snakeToCamelLower}}
 }`
 
 var ProvideTemplate = `
@@ -54,11 +60,11 @@ func provide{{.EntityName}}Repo(esim *container.Esim) repo.{{.EntityName}}Repo {
 	return repo.New{{.StructName}}(esim.Logger)
 }`
 
-func NewRepoTpl(structName string) *repoTpl {
-	repoTpl := &repoTpl{}
+func NewRepoTpl(entityName string) *repoTpl {
+	rt := &repoTpl{}
 
-	repoTpl.StructName = structName
+	rt.EntityName = entityName
+	rt.StructName = "Db" + entityName + "Repo"
 
-	return repoTpl
+	return rt
 }
-

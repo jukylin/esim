@@ -91,7 +91,6 @@ func NewRpcPluginStructField(writer file_dir.IfaceWriter, logger log2.Logger) *r
 	return rpcPlugin
 }
 
-
 func (rps *rpcPluginStructField) buildPluginEnv() error {
 	rps.structDir = strings.TrimRight(rps.structDir, string(filepath.Separator))
 
@@ -163,7 +162,6 @@ func (rps *rpcPluginStructField) copyFile(dstName, srcName string, reg *regexp.R
 	dst.Write(contents)
 }
 
-
 // gen modelName_plugin.go
 func (rps *rpcPluginStructField) genStructPlugin(dir string)  {
 
@@ -193,7 +191,6 @@ func (rps *rpcPluginStructField) genStructPlugin(dir string)  {
 	return
 }
 
-
 func (rps *rpcPluginStructField) buildPlugin(dir string) error {
 	cmdLine := fmt.Sprintf("go build -o %s/plugin %s", dir, dir)
 
@@ -217,7 +214,6 @@ func (rps *rpcPluginStructField) buildPlugin(dir string) error {
 	return nil
 }
 
-
 func (rps *rpcPluginStructField) dispense()  {
 	rpcClient, err := rps.pluginClient.Client()
 	if err != nil {
@@ -232,7 +228,6 @@ func (rps *rpcPluginStructField) dispense()  {
 
 	rps.model = raw.(Model)
 }
-
 
 func (rps *rpcPluginStructField) run()  {
 
@@ -260,7 +255,6 @@ func (rps *rpcPluginStructField) run()  {
 	rps.dispense()
 }
 
-
 func (rps *rpcPluginStructField) SortField(fields []pkg.Field) *SortReturn {
 
 	rps.Fields = fields
@@ -277,7 +271,6 @@ func (rps *rpcPluginStructField) SortField(fields []pkg.Field) *SortReturn {
 
 	return sortReturn
 }
-
 
 func (rps *rpcPluginStructField) InitField(fields []pkg.Field) *InitFieldsReturn {
 	rps.Fields = fields

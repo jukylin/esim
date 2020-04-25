@@ -11,7 +11,6 @@ import (
 	"github.com/jukylin/esim/pkg/templates"
 	"github.com/serenize/snaker"
 	"github.com/spf13/viper"
-	"github.com/jukylin/esim/tool/db2entity"
 	"errors"
 )
 
@@ -125,7 +124,7 @@ func (edf *entityDomainFile) BindInput(v *viper.Viper) error {
 }
 
 //parseCloumns implements DomainFile.
-func (edf *entityDomainFile) ParseCloumns(cs []Column, d2e *db2entity.Db2Entity) {
+func (edf *entityDomainFile) ParseCloumns(cs []Column, info *ShareInfo) {
 
 	entityTpl := entityTpl{}
 
@@ -135,7 +134,7 @@ func (edf *entityDomainFile) ParseCloumns(cs []Column, d2e *db2entity.Db2Entity)
 
 	entityTpl.Imports = append(entityTpl.Imports, pkg.Import{Path: "github.com/jinzhu/gorm"})
 
-	entityTpl.StructName = d2e.CamelStruct
+	entityTpl.StructName = info.CamelStruct
 
 	structInfo := templates.StructInfo{}
 

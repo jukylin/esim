@@ -5,7 +5,6 @@ import (
 	"testing"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
-	"github.com/jukylin/esim/tool/db2entity"
 	"github.com/jukylin/esim/pkg/file-dir"
 )
 
@@ -25,10 +24,10 @@ func TestDaoDomainFile(t *testing.T) {
 	err := testDaoDomainFile.BindInput(v)
 	assert.Nil(t, err)
 
-	d2e := db2entity.NewDb2Entity()
-	d2e.CamelStruct = "Test"
+	shareInfo := NewShareInfo()
+	shareInfo.CamelStruct = "Test"
 
-	testDaoDomainFile.ParseCloumns(db2entity.Cols, d2e)
+	testDaoDomainFile.ParseCloumns(Cols, shareInfo)
 	content := testDaoDomainFile.Execute()
 	assert.NotEmpty(t, content)
 

@@ -1,7 +1,6 @@
 package db2entity
 
 import (
-
 	"strings"
 	logger "github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
@@ -16,6 +15,8 @@ import (
 	"go/ast"
 	"io/ioutil"
 	"go/format"
+	"text/template"
+	"bytes"
 	"golang.org/x/tools/imports"
 )
 
@@ -235,15 +236,6 @@ func (de *Db2Entity) bindInfra(v *viper.Viper) {
 	}
 }
 
-
-// ./a/b/c/ => a/b/c
-func (de *Db2Entity) DirPathToImportPath(dirPath string) string {
-	path := strings.TrimLeft(dirPath, ".")
-	path = strings.Trim(dirPath, "/")
-	path = string(filepath.Separator) + path
-	return path
-}
-
 //injectToInfra inject repo to infra.go and execute wire command
 func (de *Db2Entity) injectToInfra() {
 
@@ -377,7 +369,7 @@ func (de *Db2Entity) processNewInfra() bool {
 	de.newInfraInfo.infraSetArgs.Args = append(de.newInfraInfo.infraSetArgs.Args,
 		"provide" + de.CamelStruct + "Repo" + ",")
 	
-	imp := pkg.Import{Path: file_dir.GetGoProPath() + de.DirPathToImportPath(de.WithRepoTarget)}
+	imp := pkg.Import{Path: file_dir.GetGoProPath() + pkg.DirPathToImportPath(de.WithRepoTarget)}
 
 	de.newInfraInfo.imports = append(de.newInfraInfo.imports, imp)
 
@@ -412,6 +404,23 @@ func (de *Db2Entity) buildNewInfraString() {
 
 func (de *Db2Entity) appendProvideFunc() string {
 	return de.executeTmpl("provide_tpl", domain_file.NewRepoTpl(de.CamelStruct), domain_file.ProvideTemplate)
+}
+
+//executeTmpl parse template
+func (de *Db2Entity) executeTmpl(tmplName string, data interface{}, text string) string {
+	tmpl, err := template.New(tmplName).Funcs(templates.EsimFuncMap()).
+		Parse(text)
+	if err != nil {
+		de.logger.Fatalf(err.Error())
+	}
+
+	var buf bytes.Buffer
+	err = tmpl.Execute(&buf, data)
+	if err != nil {
+		de.logger.Fatalf(err.Error())
+	}
+
+	return buf.String()
 }
 
 func (de *Db2Entity) writeNewInfra() {

@@ -15,7 +15,7 @@ var db2entityCmd = &cobra.Command{
 	Long: ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		logger := log.NewLogger()
-		db2EntityOptions := db2entity.NewDb2EntityOptions()
+		db2EntityOptions := db2entity.Db2EnOptions{}
 		db2entity.NewDb2Entity(db2EntityOptions.WithLogger(logger)).Run(v)
 	},
 }

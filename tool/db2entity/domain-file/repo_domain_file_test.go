@@ -6,9 +6,7 @@ import (
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
-	"github.com/jukylin/esim/tool/db2entity"
 )
-
 
 func TestRepoDomainFile(t *testing.T) {
 	v := viper.New()
@@ -18,10 +16,10 @@ func TestRepoDomainFile(t *testing.T) {
 	err := testRepoDomainFile.BindInput(v)
 	assert.Nil(t, err)
 
-	d2e := db2entity.NewDb2Entity()
-	d2e.CamelStruct = "Test"
+	shareInfo := NewShareInfo()
+	shareInfo.CamelStruct = "Test"
 
-	testRepoDomainFile.ParseCloumns(db2entity.Cols, d2e)
+	testRepoDomainFile.ParseCloumns(Cols, shareInfo)
 	content := testRepoDomainFile.Execute()
 	println(content)
 	assert.NotEmpty(t, content)

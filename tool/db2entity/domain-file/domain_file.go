@@ -2,7 +2,6 @@ package domain_file
 
 import (
 	"github.com/spf13/viper"
-	"github.com/jukylin/esim/tool/db2entity"
 	"github.com/jukylin/esim/log"
 )
 
@@ -20,7 +19,7 @@ type DomainFile interface {
 	BindInput(*viper.Viper) error
 
 	//parse columns Information for domain file object
-	ParseCloumns([]Column, *db2entity.Db2Entity)
+	ParseCloumns([]Column, *ShareInfo)
 
 	//applies a parsed template to the domain file object
 	//return Parsed content
@@ -81,4 +80,24 @@ func (dc *DbConfig) ParseConfig(v *viper.Viper, logger log.Logger) {
 		logger.Fatalf("table is empty")
 	}
 	dc.Table = table
+}
+
+//Share information for all domain files
+//avoid import cycle not allowed
+type ShareInfo struct {
+	//Camel Form
+	CamelStruct string
+
+	DbConf *DbConfig
+
+	WithEntityTarget string
+
+	WithDaoTarget string
+
+	WithRepoTarget string
+
+}
+
+func NewShareInfo() *ShareInfo {
+	return &ShareInfo{}
 }

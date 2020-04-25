@@ -9,7 +9,6 @@ import (
 	"github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
 	"github.com/spf13/viper"
-	"github.com/jukylin/esim/tool/db2entity"
 	"errors"
 )
 
@@ -108,22 +107,22 @@ func (ddf *daoDomainFile) BindInput(v *viper.Viper) error {
 }
 
 //ParseCloumns implements DomainFile.
-func (ddf *daoDomainFile) ParseCloumns(cs []Column, d2e *db2entity.Db2Entity) {
+func (ddf *daoDomainFile) ParseCloumns(cs []Column, shareInfo *ShareInfo) {
 
-	daoTpl := NewDaoTpl(d2e.CamelStruct)
+	daoTpl := NewDaoTpl(shareInfo.CamelStruct)
 
 	if len(cs) < 1 {
 		return
 	}
 
-	daoTpl.DataBaseName = d2e.DbConf.Database
-	daoTpl.TableName = d2e.DbConf.Table
+	daoTpl.DataBaseName = shareInfo.DbConf.Database
+	daoTpl.TableName = shareInfo.DbConf.Table
 
 	daoTpl.Imports = append(daoTpl.Imports, pkg.Import{Path: "context"})
 	daoTpl.Imports = append(daoTpl.Imports, pkg.Import{Path: "github.com/jinzhu/gorm"})
 	daoTpl.Imports = append(daoTpl.Imports, pkg.Import{Path: "errors"})
 	daoTpl.Imports = append(daoTpl.Imports, pkg.Import{Path: "github.com/jukylin/esim/mysql"})
-	daoTpl.Imports = append(daoTpl.Imports, pkg.Import{Path: file_dir.GetGoProPath() + d2e.DirPathToImportPath(d2e.WithEntityTarget)})
+	daoTpl.Imports = append(daoTpl.Imports, pkg.Import{Path: file_dir.GetGoProPath() + pkg.DirPathToImportPath(shareInfo.WithEntityTarget)})
 
 	for _, column := range cs {
 		nullable := false

@@ -22,6 +22,7 @@ func TestDb2Entity_Run(t *testing.T) {
 		db2EntityOptions.WithIfaceWrite(file_dir.NewEsimWriter()),
 		db2EntityOptions.WithInfraInfo(NewInfraInfo()),
 		db2EntityOptions.WithExecer(pkg.NewNullExec()),
+		db2EntityOptions.WithDbConf(domain_file.NewDbConfig()),
 	)
 
 	v := viper.New()
@@ -46,12 +47,6 @@ func TestDb2Entity_Run(t *testing.T) {
 	err = file_dir.EsimRecoverFile(file_dir.GetCurrentDir() +
 		string(filepath.Separator) + "example" + string(filepath.Separator) + "infra" + string(filepath.Separator) + "infra.go")
 	assert.Nil(t, err)
-}
-
-func TestDb2Entity_DirPathToImportPath(t *testing.T) {
-	db2Entity := &Db2Entity{}
-	importPaht := db2Entity.DirPathToImportPath("./a/b/c/")
-	assert.Equal(t, "a/b/c", importPaht)
 }
 
 func TestDb2Entity_ParseInfra(t *testing.T) {

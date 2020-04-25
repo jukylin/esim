@@ -8,15 +8,11 @@ import (
 	"github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
 	"github.com/spf13/viper"
-	"github.com/jukylin/esim/tool/db2entity"
 	"github.com/jukylin/esim/pkg"
 	"errors"
 )
 
 type repoDomainFile struct {
-	writeTarget string
-
-	withBoubctx string
 
 	withRepoTarget string
 
@@ -103,20 +99,20 @@ func (rdf *repoDomainFile) BindInput(v *viper.Viper) error {
 }
 
 //ParseCloumns implements DomainFile.
-func (rdf *repoDomainFile) ParseCloumns(cs []Column, d2e *db2entity.Db2Entity) {
+func (rdf *repoDomainFile) ParseCloumns(cs []Column, info *ShareInfo) {
 
-	repoTpl := NewRepoTpl(d2e.CamelStruct)
+	repoTpl := NewRepoTpl(info.CamelStruct)
 
 	if len(cs) < 1 {
 		return
 	}
 
-	repoTpl.TableName = d2e.DbConf.Table
+	repoTpl.TableName = info.DbConf.Table
 
 	repoTpl.Imports = append(repoTpl.Imports, pkg.Import{Path: "context"})
 	repoTpl.Imports = append(repoTpl.Imports, pkg.Import{Path: "github.com/jukylin/esim/log"})
-	repoTpl.Imports = append(repoTpl.Imports, pkg.Import{Path: file_dir.GetGoProPath() + d2e.DirPathToImportPath(d2e.WithEntityTarget)})
-	repoTpl.Imports = append(repoTpl.Imports, pkg.Import{Path: file_dir.GetGoProPath() + d2e.DirPathToImportPath(d2e.WithDaoTarget)})
+	repoTpl.Imports = append(repoTpl.Imports, pkg.Import{Path: file_dir.GetGoProPath() + pkg.DirPathToImportPath(info.WithEntityTarget)})
+	repoTpl.Imports = append(repoTpl.Imports, pkg.Import{Path: file_dir.GetGoProPath() + pkg.DirPathToImportPath(info.WithDaoTarget)})
 
 	for _, column := range cs {
 		repoTpl.DelField = column.CheckDelField()
