@@ -7,16 +7,17 @@ import (
 	//"github.com/davecgh/go-spew/spew"
 )
 
+
 func TestDBColumnsInter_GetColumns(t *testing.T) {
 	logger := log.NewLogger()
 	dbcColumns := NewDBColumnsInter(logger)
 	dbConf := DbConfig{
-		Host:     "127.0.0.1",
+		Host:     "localhost",
 		Port:     3306,
 		User:     "root",
-		Password: "",
-		Database: "passport",
-		Table:    "user",
+		Password: "123456",
+		Database: "test_1",
+		Table:    "test",
 	}
 	_, err := dbcColumns.GetColumns(dbConf)
 	assert.Nil(t, err)

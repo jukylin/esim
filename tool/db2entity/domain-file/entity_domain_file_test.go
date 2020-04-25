@@ -6,21 +6,8 @@ import (
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	"github.com/jukylin/esim/log"
 )
-
-
-
-func TestEntityDomainFile_ErrBindInput(t *testing.T) {
-	v := viper.New()
-	v.Set("boubctx", "a")
-	v.Set("disabled_entity", false)
-	v.Set("entity_target", "example")
-	//v.Set("table", "test")
-
-	err := testEntityDomainFile.BindInput(v)
-	assert.Error(t, err)
-}
-
 
 func TestEntityDomainFile_BindInput(t *testing.T) {
 	v := viper.New()
@@ -40,12 +27,17 @@ func TestEntityDomainFile(t *testing.T) {
 	v.Set("disabled_entity", false)
 	v.Set("entity_target", "example")
 	v.Set("table", "test")
+	v.Set("database", "test")
 
 	err := testEntityDomainFile.BindInput(v)
 	assert.Nil(t, err)
 
+	dbConf := NewDbConfig()
+	dbConf.ParseConfig(v, log.NewNullLogger())
+
 	shareInfo := NewShareInfo()
 	shareInfo.CamelStruct = "Test"
+	shareInfo.DbConf = dbConf
 
 	testEntityDomainFile.ParseCloumns(Cols, shareInfo)
 	content := testEntityDomainFile.Execute()

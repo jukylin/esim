@@ -108,6 +108,7 @@ func (rdf *repoDomainFile) ParseCloumns(cs []Column, info *ShareInfo) {
 	}
 
 	repoTpl.TableName = info.DbConf.Table
+	rdf.tableName = info.DbConf.Table
 
 	repoTpl.Imports = append(repoTpl.Imports, pkg.Import{Path: "context"})
 	repoTpl.Imports = append(repoTpl.Imports, pkg.Import{Path: "github.com/jukylin/esim/log"})

@@ -24,8 +24,13 @@ func TestDaoDomainFile(t *testing.T) {
 	err := testDaoDomainFile.BindInput(v)
 	assert.Nil(t, err)
 
+	dbConf := NewDbConfig()
+	dbConf.Database = "test"
+	dbConf.Table = "test"
+
 	shareInfo := NewShareInfo()
 	shareInfo.CamelStruct = "Test"
+	shareInfo.DbConf = dbConf
 
 	testDaoDomainFile.ParseCloumns(Cols, shareInfo)
 	content := testDaoDomainFile.Execute()

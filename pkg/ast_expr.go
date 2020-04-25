@@ -40,7 +40,7 @@ func ParseExpr(expr ast.Expr, fileContent string) string {
 	case *ast.InterfaceType:
 		argsType += "interface{}"
 	case *ast.FuncType:
-		argsType += strings.Trim(fileContent[typ.Pos() - 1 : typ.End() + 1], "\n")
+		argsType += strings.Trim(fileContent[typ.Pos() - 1 : typ.End()], "\n")
 	default:
 		panic(fmt.Sprintf("unsupport expr type %T", typ))
 	}

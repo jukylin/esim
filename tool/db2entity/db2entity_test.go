@@ -9,21 +9,13 @@ import (
 	"testing"
 	"os"
 	"path/filepath"
-<<<<<<< HEAD
 	"github.com/jukylin/esim/tool/db2entity/domain-file"
-	"testing"
-=======
->>>>>>> new_tool
 )
 
 func TestDb2Entity_Run(t *testing.T) {
 
 	db2EntityOptions := Db2EnOptions{}
-<<<<<<< HEAD
 	StubsColumnsRepo := domain_file.StubsColumnsRepo{}
-=======
-	StubsColumnsRepo := StubsColumnsRepo{}
->>>>>>> new_tool
 
 	db2Entity := NewDb2Entity(db2EntityOptions.WithLogger(log.NewLogger()),
 		db2EntityOptions.WithColumnsInter(StubsColumnsRepo),
@@ -57,36 +49,24 @@ func TestDb2Entity_Run(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-<<<<<<< HEAD
-=======
-func TestDb2Entity_CloumnsToEntityTmp(t *testing.T) {
-
-	db2Entity := &db2Entity{}
-
-	entityTmp := db2Entity.cloumnsToEntityTpl(cols)
-	assert.Equal(t, 3, len(entityTmp.StructInfo.Fields))
-}
-
-func TestDb2Entity_DirPathToImportPath(t *testing.T) {
-	db2Entity := &db2Entity{}
-	importPaht := db2Entity.dirPathToImportPath("./a/b/c/")
-	assert.Equal(t, "a/b/c", importPaht)
-}
-
->>>>>>> new_tool
 func TestDb2Entity_ParseInfra(t *testing.T) {
-	db2Entity := &Db2Entity{}
+	db2EntityOptions := Db2EnOptions{}
+	StubsColumnsRepo := domain_file.StubsColumnsRepo{}
+
+	db2Entity := NewDb2Entity(db2EntityOptions.WithLogger(log.NewLogger()),
+		db2EntityOptions.WithColumnsInter(StubsColumnsRepo),
+		db2EntityOptions.WithIfaceWrite(file_dir.NewEsimWriter()),
+		db2EntityOptions.WithInfraInfo(NewInfraInfo()),
+		db2EntityOptions.WithExecer(pkg.NewNullExec()),
+		db2EntityOptions.WithDbConf(domain_file.NewDbConfig()),
+	)
+
 	assert.True(t, db2Entity.parseInfra(infraContent))
 }
 
-<<<<<<< HEAD
 func TestDb2Entity_ProcessInfraInfo(t *testing.T)  {
 	db2EntityOptions := Db2EnOptions{}
 
-=======
-func TestDb2Entity_ProcessInfraInfo(t *testing.T) {
-	db2EntityOptions := Db2EnOptions{}
->>>>>>> new_tool
 	db2Entity := NewDb2Entity(
 		db2EntityOptions.WithInfraInfo(NewInfraInfo()))
 

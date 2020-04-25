@@ -86,7 +86,7 @@ type Method struct {
 
 func (f *Ifacer) Run(v *viper.Viper) error {
 
-	err := f.inputBind(v)
+	err := f.bindInput(v)
 	if err != nil {
 		return err
 	}
@@ -128,7 +128,7 @@ func (f *Ifacer) Run(v *viper.Viper) error {
 }
 
 
-func (f *Ifacer) inputBind(v *viper.Viper) error {
+func (f *Ifacer) bindInput(v *viper.Viper) error {
 
 	name := v.GetString("iname")
 	if name == "" {

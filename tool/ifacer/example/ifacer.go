@@ -29,13 +29,13 @@ type Test interface {
 
 	Iface3() (f func(repo.Repo) string)
 
-	Iface4(map[string]*aa.RedisClient) map[string]string
+	Iface4(map[string]*aa.Client) map[string]string
 
-	Iface5(redisClient *aa.RedisClient) (*aa.RedisClient)
+	Iface5(redisClient *aa.Client) (*aa.Client)
 
-	Iface6(redisClient aa.RedisClient) (aa.RedisClient)
+	Iface6(redisClient aa.Client) (aa.Client)
 
-	Iface7(chan<- bool, chan<- aa.RedisClient) <-chan bool
+	Iface7(chan<- bool, chan<- aa.Client) <-chan bool
 
 	Iface8(rp repo.Repo) repo.Repo
 

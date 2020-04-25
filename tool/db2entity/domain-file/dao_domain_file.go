@@ -72,11 +72,6 @@ func (ddf *daoDomainFile) Disabled() bool {
 //BindInput implements DomainFile.
 func (ddf *daoDomainFile) BindInput(v *viper.Viper) error {
 
-	ddf.tableName = v.GetString("table")
-	if ddf.tableName == "" {
-		return errors.New("table is empty")
-	}
-
 	ddf.withDisableDao = v.GetBool("disable_dao")
 	if ddf.withDisableDao == false {
 
@@ -117,6 +112,7 @@ func (ddf *daoDomainFile) ParseCloumns(cs []Column, shareInfo *ShareInfo) {
 
 	daoTpl.DataBaseName = shareInfo.DbConf.Database
 	daoTpl.TableName = shareInfo.DbConf.Table
+	ddf.tableName = shareInfo.DbConf.Table
 
 	daoTpl.Imports = append(daoTpl.Imports, pkg.Import{Path: "context"})
 	daoTpl.Imports = append(daoTpl.Imports, pkg.Import{Path: "github.com/jinzhu/gorm"})

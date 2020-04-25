@@ -11,7 +11,6 @@ import (
 	"github.com/jukylin/esim/pkg/templates"
 	"github.com/serenize/snaker"
 	"github.com/spf13/viper"
-	"errors"
 )
 
 type entityDomainFile struct {
@@ -75,11 +74,6 @@ func (edf *entityDomainFile) Disabled() bool {
 //bindInput implements DomainFile.
 func (edf *entityDomainFile) BindInput(v *viper.Viper) error {
 
-	edf.tableName = v.GetString("table")
-	if edf.tableName == "" {
-		return errors.New("table is empty")
-	}
-
 	boubctx := v.GetString("boubctx")
 	if boubctx != "" {
 		edf.withBoubctx = boubctx + string(filepath.Separator)
@@ -131,6 +125,8 @@ func (edf *entityDomainFile) ParseCloumns(cs []Column, info *ShareInfo) {
 	if len(cs) < 1 {
 		return
 	}
+
+	edf.tableName = info.DbConf.Table
 
 	entityTpl.Imports = append(entityTpl.Imports, pkg.Import{Path: "github.com/jinzhu/gorm"})
 
