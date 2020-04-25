@@ -79,54 +79,54 @@ func (ViperConfOptions) WithConfFile(configFile []string) Option {
 	}
 }
 
-func (this *viperConf) Get(key string) interface{} { return this.Viper.Get(key) }
+func (vc *viperConf) Get(key string) interface{} { return vc.Viper.Get(key) }
 
-func (this *viperConf) GetString(key string) string { return this.Viper.GetString(key) }
+func (vc *viperConf) GetString(key string) string { return vc.Viper.GetString(key) }
 
-func (this *viperConf) GetBool(key string) bool { return this.Viper.GetBool(key) }
+func (vc *viperConf) GetBool(key string) bool { return vc.Viper.GetBool(key) }
 
-func (this *viperConf) GetInt(key string) int { return this.Viper.GetInt(key) }
+func (vc *viperConf) GetInt(key string) int { return vc.Viper.GetInt(key) }
 
-func (this *viperConf) GetInt32(key string) int32 { return this.Viper.GetInt32(key) }
+func (vc *viperConf) GetInt32(key string) int32 { return vc.Viper.GetInt32(key) }
 
-func (this *viperConf) GetInt64(key string) int64 { return this.Viper.GetInt64(key) }
+func (vc *viperConf) GetInt64(key string) int64 { return vc.Viper.GetInt64(key) }
 
-func (this *viperConf) GetUint(key string) uint { return this.Viper.GetUint(key) }
+func (vc *viperConf) GetUint(key string) uint { return vc.Viper.GetUint(key) }
 
-func (this *viperConf) GetUint32(key string) uint32 { return this.Viper.GetUint32(key) }
+func (vc *viperConf) GetUint32(key string) uint32 { return vc.Viper.GetUint32(key) }
 
-func (this *viperConf) GetUint64(key string) uint64 { return this.Viper.GetUint64(key) }
+func (vc *viperConf) GetUint64(key string) uint64 { return vc.Viper.GetUint64(key) }
 
-func (this *viperConf) GetFloat64(key string) float64 { return this.Viper.GetFloat64(key) }
+func (vc *viperConf) GetFloat64(key string) float64 { return vc.Viper.GetFloat64(key) }
 
-func (this *viperConf) GetTime(key string) time.Time { return this.Viper.GetTime(key) }
+func (vc *viperConf) GetTime(key string) time.Time { return vc.Viper.GetTime(key) }
 
-func (this *viperConf) GetDuration(key string) time.Duration { return this.Viper.GetDuration(key) }
+func (vc *viperConf) GetDuration(key string) time.Duration { return vc.Viper.GetDuration(key) }
 
 //func GetIntSlice(key string) []int { return config.GetIntSlice(key) }
 
-func (this *viperConf) GetStringSlice(key string) []string { return this.Viper.GetStringSlice(key) }
+func (vc *viperConf) GetStringSlice(key string) []string { return vc.Viper.GetStringSlice(key) }
 
-func (this *viperConf) GetStringMap(key string) map[string]interface{} {
-	return this.Viper.GetStringMap(key)
+func (vc *viperConf) GetStringMap(key string) map[string]interface{} {
+	return vc.Viper.GetStringMap(key)
 }
 
-func (this *viperConf) GetStringMapString(key string) map[string]string {
-	return this.Viper.GetStringMapString(key)
+func (vc *viperConf) GetStringMapString(key string) map[string]string {
+	return vc.Viper.GetStringMapString(key)
 }
 
-func (this *viperConf) GetStringMapStringSlice(key string) map[string][]string {
-	return this.Viper.GetStringMapStringSlice(key)
+func (vc *viperConf) GetStringMapStringSlice(key string) map[string][]string {
+	return vc.Viper.GetStringMapStringSlice(key)
 }
 
-func (this *viperConf) GetSizeInBytes(key string) uint { return this.Viper.GetSizeInBytes(key) }
+func (vc *viperConf) GetSizeInBytes(key string) uint { return vc.Viper.GetSizeInBytes(key) }
 
-func (this *viperConf) UnmarshalKey(key string, rawVal interface{}, opts ...viper.DecoderConfigOption) error {
-	return this.Viper.UnmarshalKey(key, rawVal, opts...)
+func (vc *viperConf) UnmarshalKey(key string, rawVal interface{}, opts ...viper.DecoderConfigOption) error {
+	return vc.Viper.UnmarshalKey(key, rawVal, opts...)
 }
 
-func (this *viperConf) Unmarshal(rawVal interface{}, opts ...viper.DecoderConfigOption) error {
-	return this.Viper.Unmarshal(rawVal, opts...)
+func (vc *viperConf) Unmarshal(rawVal interface{}, opts ...viper.DecoderConfigOption) error {
+	return vc.Viper.Unmarshal(rawVal, opts...)
 }
 
-func (this *viperConf) Set(key string, value interface{}) { this.Viper.Set(key, value) }
+func (vc *viperConf) Set(key string, value interface{}) { vc.Viper.Set(key, value) }

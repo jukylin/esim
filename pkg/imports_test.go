@@ -1,18 +1,15 @@
 package pkg
 
-
 import (
-	"testing"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
-
 
 func TestImports_EmptyString(t *testing.T) {
 	imports := Imports{}
 	str := imports.String()
 	assert.Empty(t, str)
 }
-
 
 func TestImports_String(t *testing.T) {
 	var result = `import (

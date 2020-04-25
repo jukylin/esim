@@ -2,7 +2,7 @@ package domain_file
 
 import "github.com/jukylin/esim/pkg"
 
-type daoTpl struct{
+type daoTpl struct {
 	Imports pkg.Imports
 
 	StructName string

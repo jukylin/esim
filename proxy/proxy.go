@@ -13,23 +13,23 @@ type Proxy interface {
 	ProxyName() string
 }
 
-var proxyFactoryOnce sync.Once
+var factoryOnce sync.Once
 
-var proxyFactory *ProxyFactory
+var proxyFactory *Factory
 
-type ProxyFactory struct {
+type Factory struct {
 	logger log.Logger
 }
 
-type ProxyFactoryOption func(c *ProxyFactory)
+type FactoryOption func(c *Factory)
 
-type ProxyFactoryOptions struct{}
+type FactoryOptions struct{}
 
-func NewProxyFactory(options ...ProxyFactoryOption) *ProxyFactory {
+func NewProxyFactory(options ...FactoryOption) *Factory {
 
-	proxyFactoryOnce.Do(func() {
+	factoryOnce.Do(func() {
 
-		proxyFactory = &ProxyFactory{}
+		proxyFactory = &Factory{}
 
 		for _, option := range options {
 			option(proxyFactory)
@@ -43,8 +43,8 @@ func NewProxyFactory(options ...ProxyFactoryOption) *ProxyFactory {
 	return proxyFactory
 }
 
-func (ProxyFactoryOptions) WithLogger(log log.Logger) ProxyFactoryOption {
-	return func(p *ProxyFactory) {
+func (FactoryOptions) WithLogger(log log.Logger) FactoryOption {
+	return func(p *Factory) {
 		p.logger = log
 	}
 }
@@ -52,12 +52,12 @@ func (ProxyFactoryOptions) WithLogger(log log.Logger) ProxyFactoryOption {
 // GetFirstInstance implement init mul level proxy,
 // RealInstance and proxys make sure both implement the same interface
 // return firstProxy | realInstance
-func (this *ProxyFactory) GetFirstInstance(realName string, realInstance interface{}, proxys ...func() interface{}) interface{} {
+func (pf *Factory) GetFirstInstance(realName string, realInstance interface{}, proxys ...func() interface{}) interface{} {
 
 	var firstProxy interface{}
 	var proxyInses []interface{}
 
-	proxyInses = this.GetInstances(realName, proxys...)
+	proxyInses = pf.GetInstances(realName, proxys...)
 
 	proxyNum := len(proxyInses)
 	if proxyNum > 0 {
@@ -73,7 +73,7 @@ func (this *ProxyFactory) GetFirstInstance(realName string, realInstance interfa
 	return firstProxy
 }
 
-func (this *ProxyFactory) GetInstances(realName string, proxys ...func() interface{}) []interface{} {
+func (pf *Factory) GetInstances(realName string, proxys ...func() interface{}) []interface{} {
 
 	proxyNum := len(proxys)
 	var proxyInses []interface{}
@@ -81,7 +81,7 @@ func (this *ProxyFactory) GetInstances(realName string, proxys ...func() interfa
 		proxyInses = make([]interface{}, proxyNum)
 		for k, proxyFunc := range proxys {
 			if _, ok := proxyFunc().(Proxy); ok == false {
-				this.logger.Panicf("[%s] not implement the Proxy interface", realName)
+				pf.logger.Panicf("[%s] not implement the Proxy interface", realName)
 			} else {
 				proxyInses[k] = proxyFunc()
 			}
@@ -90,10 +90,10 @@ func (this *ProxyFactory) GetInstances(realName string, proxys ...func() interfa
 		for k, proxyIns := range proxyInses {
 			if proxyNum == 1 {
 				proxyIns.(Proxy).NextProxy(proxyInses[k])
-				this.logger.Infof("[%s] %s init [%p]", realName, proxyIns.(Proxy).ProxyName(), proxyIns)
+				pf.logger.Infof("[%s] %s init [%p]", realName, proxyIns.(Proxy).ProxyName(), proxyIns)
 			} else if k+1 < proxyNum {
 				proxyIns.(Proxy).NextProxy(proxyInses[k+1])
-				this.logger.Infof("[%s] %s init [%p]", realName, proxyIns.(Proxy).ProxyName(), proxyIns)
+				pf.logger.Infof("[%s] %s init [%p]", realName, proxyIns.(Proxy).ProxyName(), proxyIns)
 			} else {
 				continue
 			}

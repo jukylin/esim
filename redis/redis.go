@@ -14,9 +14,9 @@ import (
 )
 
 var poolRedisOnce sync.Once
-var onceRedisClient *RedisClient
+var onceRedisClient *Client
 
-type RedisClient struct {
+type Client struct {
 	client *redis.Pool
 
 	proxyConn []func() interface{}
@@ -34,18 +34,18 @@ type RedisClient struct {
 	closeChan chan bool
 }
 
-type Option func(c *RedisClient)
+type Option func(c *Client)
 
-type RedisClientOptions struct{}
+type ClientOptions struct{}
 
-func NewRedisClient(options ...Option) *RedisClient {
+func NewClient(options ...Option) *Client {
 	return newPoolRedis(options...)
 }
 
-func newPoolRedis(options ...Option) *RedisClient {
+func newPoolRedis(options ...Option) *Client {
 	poolRedisOnce.Do(func() {
 
-		onceRedisClient = &RedisClient{
+		onceRedisClient = &Client{
 			proxyConn:   make([]func() interface{}, 0),
 			stateTicker: 10 * time.Second,
 			closeChan:   make(chan bool, 1),
@@ -84,30 +84,31 @@ func newPoolRedis(options ...Option) *RedisClient {
 			redisIdleTimeout = 600
 		}
 
-		redis_etc1_host := onceRedisClient.conf.GetString("redis_host")
-		if redis_etc1_host == "" {
-			redis_etc1_host = "0.0.0.0"
-		}
-		redis_etc1_port := onceRedisClient.conf.GetString("redis_post")
-		if redis_etc1_port == "" {
-			redis_etc1_port = "6379"
+		redisEtc1Host := onceRedisClient.conf.GetString("redis_host")
+		if redisEtc1Host == "" {
+			redisEtc1Host = "0.0.0.0"
 		}
 
-		redis_etc1_password := onceRedisClient.conf.GetString("redis_password")
-
-		redis_read_time_out := onceRedisClient.conf.GetInt64("redis_read_time_out")
-		if redis_read_time_out == 0 {
-			redis_read_time_out = 300
+		redisEtc1Port := onceRedisClient.conf.GetString("redis_post")
+		if redisEtc1Port == "" {
+			redisEtc1Port = "6379"
 		}
 
-		redis_write_time_out := onceRedisClient.conf.GetInt64("redis_write_time_out")
-		if redis_write_time_out == 0 {
-			redis_write_time_out = 300
+		redisEtc1Password := onceRedisClient.conf.GetString("redis_password")
+
+		redisReadTimeOut := onceRedisClient.conf.GetInt64("redis_read_time_out")
+		if redisReadTimeOut == 0 {
+			redisReadTimeOut = 300
 		}
 
-		redis_conn_time_out := onceRedisClient.conf.GetInt64("redis_conn_time_out")
-		if redis_conn_time_out == 0 {
-			redis_conn_time_out = 300
+		redisWriteTimeOut := onceRedisClient.conf.GetInt64("redis_write_time_out")
+		if redisWriteTimeOut == 0 {
+			redisWriteTimeOut = 300
+		}
+
+		redisConnTimeOut := onceRedisClient.conf.GetInt64("redis_conn_time_out")
+		if redisConnTimeOut == 0 {
+			redisConnTimeOut = 300
 		}
 
 		onceRedisClient.client = &redis.Pool{
@@ -115,17 +116,17 @@ func newPoolRedis(options ...Option) *RedisClient {
 			MaxActive:   redisMaxActive,
 			IdleTimeout: time.Duration(redisIdleTimeout) * time.Second,
 			Dial: func() (redis.Conn, error) {
-				c, err := redis.Dial("tcp", redis_etc1_host+":"+redis_etc1_port,
-					redis.DialReadTimeout(time.Duration(redis_read_time_out)*time.Millisecond),
-					redis.DialWriteTimeout(time.Duration(redis_write_time_out)*time.Millisecond),
-					redis.DialConnectTimeout(time.Duration(redis_conn_time_out)*time.Millisecond))
+				c, err := redis.Dial("tcp", redisEtc1Host+":"+redisEtc1Port,
+					redis.DialReadTimeout(time.Duration(redisReadTimeOut)*time.Millisecond),
+					redis.DialWriteTimeout(time.Duration(redisWriteTimeOut)*time.Millisecond),
+					redis.DialConnectTimeout(time.Duration(redisConnTimeOut)*time.Millisecond))
 
 				if err != nil {
 					onceRedisClient.logger.Panicf("redis.Dial err: %s", err.Error())
 					return nil, err
 				}
-				if redis_etc1_password != "" {
-					if _, err := c.Do("AUTH", redis_etc1_password); err != nil {
+				if redisEtc1Password != "" {
+					if _, err := c.Do("AUTH", redisEtc1Password); err != nil {
 						c.Close()
 						onceRedisClient.logger.Panicf("redis.AUTH err: %s", err.Error())
 						return nil, err
@@ -154,55 +155,55 @@ func newPoolRedis(options ...Option) *RedisClient {
 
 		go onceRedisClient.Stats()
 
-		onceRedisClient.logger.Infof("[redis] init success %s : %s", redis_etc1_host, redis_etc1_port)
+		onceRedisClient.logger.Infof("[redis] init success %s : %s", redisEtc1Host, redisEtc1Port)
 	})
 
 	return onceRedisClient
 }
 
-func (RedisClientOptions) WithConf(conf config.Config) Option {
-	return func(r *RedisClient) {
+func (ClientOptions) WithConf(conf config.Config) Option {
+	return func(r *Client) {
 		r.conf = conf
 	}
 }
 
-func (RedisClientOptions) WithLogger(logger elog.Logger) Option {
-	return func(r *RedisClient) {
+func (ClientOptions) WithLogger(logger elog.Logger) Option {
+	return func(r *Client) {
 		r.logger = logger
 	}
 }
 
-func (RedisClientOptions) WithProxy(proxyConn ...func() interface{}) Option {
-	return func(r *RedisClient) {
+func (ClientOptions) WithProxy(proxyConn ...func() interface{}) Option {
+	return func(r *Client) {
 		r.proxyConn = append(r.proxyConn, proxyConn...)
 	}
 }
 
-func (RedisClientOptions) WithStateTicker(stateTicker time.Duration) Option {
-	return func(r *RedisClient) {
+func (ClientOptions) WithStateTicker(stateTicker time.Duration) Option {
+	return func(r *Client) {
 		r.stateTicker = stateTicker
 	}
 }
 
 //使用原生redisgo
-func (this *RedisClient) GetRedisConn() redis.Conn {
+func (c *Client) GetRedisConn() redis.Conn {
 
-	rc := this.client.Get()
+	rc := c.client.Get()
 
 	return rc
 }
 
 //Recommended
-func (this *RedisClient) GetCtxRedisConn() ContextConn {
+func (c *Client) GetCtxRedisConn() ContextConn {
 
-	rc := this.client.Get()
+	rc := c.client.Get()
 
 	facadeProxy := NewFacadeProxy()
 	facadeProxy.NextProxy(rc)
 
 	var firstProxy ContextConn
-	if this.proxyNum > 0 && rc.Err() == nil {
-		firstProxy = this.proxyInses[len(this.proxyInses)-1].(ContextConn)
+	if c.proxyNum > 0 && rc.Err() == nil {
+		firstProxy = c.proxyInses[len(c.proxyInses)-1].(ContextConn)
 		firstProxy.(proxy.Proxy).NextProxy(facadeProxy)
 	} else {
 		firstProxy = facadeProxy
@@ -211,25 +212,25 @@ func (this *RedisClient) GetCtxRedisConn() ContextConn {
 	return firstProxy
 }
 
-func (this *RedisClient) Close() {
-	this.client.Close()
-	this.closeChan <- true
+func (c *Client) Close() {
+	c.client.Close()
+	c.closeChan <- true
 }
 
-func (this *RedisClient) Ping() error {
-	conn := this.client.Get()
+func (c *Client) Ping() error {
+	conn := c.client.Get()
 	return conn.Err()
 }
 
-func (this *RedisClient) Stats() {
-	ticker := time.NewTicker(this.stateTicker)
+func (c *Client) Stats() {
+	ticker := time.NewTicker(c.stateTicker)
 	var stats redis.PoolStats
 
 	for {
 		select {
 		case <-ticker.C:
 
-			stats = this.client.Stats()
+			stats = c.client.Stats()
 
 			activeCountLab := prometheus.Labels{"stats": "active_count"}
 			redisStats.With(activeCountLab).Set(float64(stats.ActiveCount))
@@ -237,8 +238,8 @@ func (this *RedisClient) Stats() {
 			idleCountLab := prometheus.Labels{"stats": "idle_count"}
 			redisStats.With(idleCountLab).Set(float64(stats.IdleCount))
 
-		case <-this.closeChan:
-			this.logger.Infof("stop stats")
+		case <-c.closeChan:
+			c.logger.Infof("stop stats")
 			goto Stop
 		}
 	}

@@ -47,13 +47,13 @@ func provideConf() config.Config {
 }
 
 var prometheusFunc = func(conf config.Config, logger log.Logger) *prometheus.Prometheus {
-	var http_addr string
+	var httpAddr string
 	if conf.GetString("prometheus_http_addr") != "" {
-		http_addr = conf.GetString("prometheus_http_addr")
+		httpAddr = conf.GetString("prometheus_http_addr")
 	} else {
-		http_addr = DEFAULT_PROMETHEUS_HTTP_ADDR
+		httpAddr = DEFAULT_PROMETHEUS_HTTP_ADDR
 	}
-	return prometheus.NewPrometheus(http_addr, logger)
+	return prometheus.NewPrometheus(httpAddr, logger)
 }
 
 func SetPrometheusFunc(prometheus func(config.Config, log.Logger) *prometheus.Prometheus) {
@@ -107,6 +107,6 @@ func NewEsim() *Esim {
 	return onceEsim
 }
 
-func (this *Esim) String() string {
+func (e *Esim) String() string {
 	return "相信，相信自己！！！"
 }

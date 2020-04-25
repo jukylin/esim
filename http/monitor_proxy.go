@@ -81,91 +81,91 @@ func (MonitorProxyOptions) WithTracer(tracer opentracing2.Tracer) MonitorProxyOp
 	}
 }
 
-func (this *monitorProxy) NextProxy(tripper interface{}) {
-	this.nextTransport = tripper.(http.RoundTripper)
+func (mp *monitorProxy) NextProxy(tripper interface{}) {
+	mp.nextTransport = tripper.(http.RoundTripper)
 }
 
-func (this *monitorProxy) ProxyName() string {
-	return this.name
+func (mp *monitorProxy) ProxyName() string {
+	return mp.name
 }
 
 // RoundTrip implements the RoundTripper interface.
-func (this *monitorProxy) RoundTrip(req *http.Request) (*http.Response, error) {
-	if this.nextTransport == nil {
-		this.nextTransport = http.DefaultTransport
+func (mp *monitorProxy) RoundTrip(req *http.Request) (*http.Response, error) {
+	if mp.nextTransport == nil {
+		mp.nextTransport = http.DefaultTransport
 	}
 
-	this.logger.Debugc(req.Context(), "Url : %s", req.URL)
+	mp.logger.Debugc(req.Context(), "Url : %s", req.URL)
 
 	beginTime := time.Now()
 
 	var resp *http.Response
 	var err error
 
-	if this.conf.GetBool("http_client_tracer") == true {
-		req, ht := nethttp.TraceRequest(this.tracer, req)
+	if mp.conf.GetBool("http_client_tracer") == true {
+		req, ht := nethttp.TraceRequest(mp.tracer, req)
 
 		transport := nethttp.Transport{}
-		transport.RoundTripper = this.nextTransport
+		transport.RoundTripper = mp.nextTransport
 		resp, err = transport.RoundTrip(req)
 
 		ht.Finish()
 	} else {
-		resp, err = this.nextTransport.RoundTrip(req)
+		resp, err = mp.nextTransport.RoundTrip(req)
 	}
 
 	if err != nil {
 		return resp, err
 	}
 
-	this.after(beginTime, req, resp)
+	mp.after(beginTime, req, resp)
 
 	return resp, nil
 }
 
-func (this *monitorProxy) registerAfterEvent() {
+func (mp *monitorProxy) registerAfterEvent() {
 
-	if this.conf.GetBool("http_client_check_slow") == true {
-		this.afterEvents = append(this.afterEvents, this.slowHttpRequest)
+	if mp.conf.GetBool("http_client_check_slow") == true {
+		mp.afterEvents = append(mp.afterEvents, mp.slowHttpRequest)
 	}
 
-	if this.conf.GetBool("http_client_metrics") == true {
-		this.afterEvents = append(this.afterEvents, this.httpClientMetrice)
+	if mp.conf.GetBool("http_client_metrics") == true {
+		mp.afterEvents = append(mp.afterEvents, mp.httpClientMetrice)
 	}
 
-	if this.conf.GetBool("debug") == true {
-		this.afterEvents = append(this.afterEvents, this.debugHttp)
+	if mp.conf.GetBool("debug") == true {
+		mp.afterEvents = append(mp.afterEvents, mp.debugHttp)
 	}
 }
 
-func (this *monitorProxy) after(beginTime time.Time, res *http.Request, resp *http.Response) {
+func (mp *monitorProxy) after(beginTime time.Time, res *http.Request, resp *http.Response) {
 	endTime := time.Now()
-	for _, event := range this.afterEvents {
+	for _, event := range mp.afterEvents {
 		event(beginTime, endTime, res, resp)
 	}
 }
 
-func (this *monitorProxy) slowHttpRequest(beginTime time.Time, endTime time.Time,
+func (mp *monitorProxy) slowHttpRequest(beginTime time.Time, endTime time.Time,
 	res *http.Request, resp *http.Response) {
-	http_client_slow_time := this.conf.GetInt64("http_client_slow_time")
+	httpClientSlowTime := mp.conf.GetInt64("http_client_slow_time")
 
-	if http_client_slow_time != 0 {
-		if endTime.Sub(beginTime) > time.Duration(http_client_slow_time)*time.Millisecond {
-			this.logger.Warnf("slow http request [%s] ：%s", endTime.Sub(beginTime).String(),
+	if httpClientSlowTime != 0 {
+		if endTime.Sub(beginTime) > time.Duration(httpClientSlowTime)*time.Millisecond {
+			mp.logger.Warnf("slow http request [%s] ：%s", endTime.Sub(beginTime).String(),
 				res.RequestURI)
 		}
 	}
 }
 
-func (this *monitorProxy) httpClientMetrice(beginTime time.Time, endTime time.Time,
+func (mp *monitorProxy) httpClientMetrice(beginTime time.Time, endTime time.Time,
 	res *http.Request, resp *http.Response) {
 	lab := prometheus.Labels{"url": res.URL.String(), "method": res.Method}
 	httpTotal.With(lab).Inc()
 	httpDuration.With(lab).Observe(endTime.Sub(beginTime).Seconds())
 }
 
-func (this *monitorProxy) debugHttp(beginTime time.Time, endTime time.Time,
+func (mp *monitorProxy) debugHttp(beginTime time.Time, endTime time.Time,
 	req *http.Request, resp *http.Response) {
-	this.logger.Debugf("http [%d] [%s] %s ： %s", resp.StatusCode, endTime.Sub(beginTime).String(),
+	mp.logger.Debugf("http [%d] [%s] %s ： %s", resp.StatusCode, endTime.Sub(beginTime).String(),
 		req.Method, req.URL.String())
 }

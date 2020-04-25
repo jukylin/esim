@@ -37,31 +37,31 @@ func Gen(v *viper.Viper) {
 		return
 	}
 
-	from_proto := v.GetString("from_proto")
-	if from_proto == "" {
+	fromProto := v.GetString("from_proto")
+	if fromProto == "" {
 		log.Errorf("没有指定proto文件")
 		return
 	}
 
-	pkg_name := v.GetString("package")
-	if pkg_name == "" {
-		pkg_name = getPkgName(from_proto)
+	pkgName := v.GetString("package")
+	if pkgName == "" {
+		pkgName = getPkgName(fromProto)
 	}
 
-	err = file_dir.CreateDir(target + "/" + pkg_name)
+	err = file_dir.CreateDir(target + "/" + pkgName)
 	if err != nil {
-		log.Errorf("创建 "+target+"/"+pkg_name+" 失败", err.Error())
+		log.Errorf("创建 "+target+"/"+pkgName+" 失败", err.Error())
 		return
 	}
 
 	log.Infof("请确认已安装protoc")
 	pwd, _ := os.Getwd()
 
-	cmd_line := fmt.Sprintf("protoc --go_out=plugins=grpc:%s %s", target+"/"+pkg_name, from_proto)
+	cmdLine := fmt.Sprintf("protoc --go_out=plugins=grpc:%s %s", target+"/"+pkgName, fromProto)
 
-	log.Infof(cmd_line)
+	log.Infof(cmdLine)
 
-	args := strings.Split(cmd_line, " ")
+	args := strings.Split(cmdLine, " ")
 
 	cmd := exec.Command(args[0], args[1:]...)
 	cmd.Dir = pwd
@@ -78,19 +78,19 @@ func Gen(v *viper.Viper) {
 	if v.GetBool("mock") == true {
 		log.Infof("请确认已安装 mockery")
 
-		_, fileName := filepath.Split(from_proto)
+		_, fileName := filepath.Split(fromProto)
 		fileStrs := strings.Split(fileName, ".")
-		file_name := fileStrs[0]
+		fileName = fileStrs[0]
 
-		destination := target + "/" + pkg_name + "/mock_" + file_name + ".go"
-		source := target + "/" + pkg_name + "/" + file_name + ".pb.go"
+		destination := target + "/" + pkgName + "/mock_" + fileName + ".go"
+		source := target + "/" + pkgName + "/" + fileName + ".pb.go"
 
-		mockgen_cmd_line := fmt.Sprintf("mockgen -destination %s -package %s -source %s",
-			destination, pkg_name, source)
+		mockgenCmdLine := fmt.Sprintf("mockgen -destination %s -package %s -source %s",
+			destination, pkgName, source)
 
-		log.Infof(mockgen_cmd_line)
+		log.Infof(mockgenCmdLine)
 
-		args := strings.Split(mockgen_cmd_line, " ")
+		args := strings.Split(mockgenCmdLine, " ")
 		cmdMock := exec.Command(args[0], args[1:]...)
 		cmdMock.Dir = pwd
 
@@ -108,8 +108,8 @@ func Gen(v *viper.Viper) {
 	return
 }
 
-func getPkgName(proto_file string) string {
-	f, err := os.Open(proto_file)
+func getPkgName(protoFile string) string {
+	f, err := os.Open(protoFile)
 	if err != nil {
 		panic(err)
 	}

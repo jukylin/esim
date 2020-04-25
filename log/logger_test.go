@@ -2,9 +2,9 @@ package log
 
 import (
 	"context"
-	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go"
 	"github.com/stretchr/testify/assert"
-	jaeger "github.com/uber/jaeger-client-go"
+	"github.com/uber/jaeger-client-go"
 	jaegerConfig "github.com/uber/jaeger-client-go/config"
 	"testing"
 )

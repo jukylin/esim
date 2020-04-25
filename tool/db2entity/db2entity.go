@@ -1,20 +1,22 @@
 package db2entity
 
 import (
-	"go/ast"
-	"go/format"
-	"go/parser"
-	"go/token"
-	"io/ioutil"
+
 	"strings"
-	"path/filepath"
 	logger "github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
-	file_dir "github.com/jukylin/esim/pkg/file-dir"
-	"github.com/spf13/viper"
-	"github.com/jukylin/esim/pkg/templates"
-	"golang.org/x/tools/imports"
+	"github.com/jukylin/esim/pkg/file-dir"
+
 	"github.com/jukylin/esim/tool/db2entity/domain-file"
+	"github.com/jukylin/esim/pkg/templates"
+	"github.com/spf13/viper"
+	"path/filepath"
+	"go/token"
+	"go/parser"
+	"go/ast"
+	"io/ioutil"
+	"go/format"
+	"golang.org/x/tools/imports"
 )
 
 type Db2Entity struct {
@@ -65,9 +67,6 @@ type Db2Entity struct {
 	execer pkg.Exec
 }
 
-
-type Db2EntityOption func(*Db2Entity)
-
 type Db2EnOption func(*Db2Entity)
 
 type Db2EnOptions struct{}
@@ -80,11 +79,11 @@ func NewDb2Entity(options ...Db2EnOption) *Db2Entity {
 		option(d)
 	}
 
-	if d.writer == nil{
+	if d.writer == nil {
 		d.writer = file_dir.NewNullWrite()
 	}
 
-	if d.execer == nil{
+	if d.execer == nil {
 		d.execer = &pkg.NullExec{}
 	}
 
@@ -181,25 +180,7 @@ func NewInfraInfo() *infraInfo {
 }
 
 func (de *Db2Entity) Run(v *viper.Viper) error {
-
 	de.bindInput(v)
-
-	//columns, err := de.ColumnsRepo.GetColumns(de.DbConf)
-	//if err != nil {
-	//	de.logger.Fatalf(err.Error())
-	//}
-
-	//entityTpl := de.cloumnsToEntityTpl(columns)
-	//entityContent := de.executeTmpl("entity_tpl", entityTpl, entityTemplate)
-	//de.writer.Write(de.withEntityTarget + de.dbConf.table + ".go", entityContent)
-
-	//daoTpl := de.cloumnsToDaoTpl(columns)
-	//daoContent := de.executeTmpl("dao_tpl", daoTpl, daoTemplate)
-	//de.writer.Write(de.withDaoTarget + de.DbConf.table + ".go", daoContent)
-
-	//repoTpl := de.cloumnsToRepoTpl(columns)
-	//repoContent := de.executeTmpl("repo_tpl", repoTpl, repoTemplate)
-	//de.writer.Write(de.withRepoTarget + de.DbConf.table + ".go", repoContent)
 
 	de.injectToInfra()
 
@@ -218,12 +199,10 @@ func (de *Db2Entity) bindInput(v *viper.Viper) {
 
 	stuctName := v.GetString("struct")
 	if stuctName == "" {
-
 		stuctName = de.DbConf.Table
 	}
 	de.withStruct = stuctName
 	de.CamelStruct = templates.SnakeToCamel(stuctName)
-	
 
 	de.bindInfra(v)
 }
@@ -241,7 +220,7 @@ func (de *Db2Entity) bindInfra(v *viper.Viper) {
 		de.withInfraDir = strings.Trim(de.withInfraDir, "/") + string(filepath.Separator)
 	}
 
-	if v.GetString("infra_file") == ""{
+	if v.GetString("infra_file") == "" {
 		de.withInfraFile = "infra.go"
 	}
 
@@ -303,15 +282,14 @@ func (de *Db2Entity) injectToInfra() {
 
 //parseInfra parse infra.go 's content, find "import", "Infra" , "infraSet" and record origin syntax
 func (de *Db2Entity) parseInfra(srcStr string) bool {
+
 	fset := token.NewFileSet() // positions are relative to fset
 	f, err := parser.ParseFile(fset, "", srcStr, parser.ParseComments)
 	if err != nil {
 		de.logger.Fatalf(err.Error())
 	}
 
-	//provideFunc := getProvideFunc(interName, instName)
 	for _, decl := range f.Decls {
-
 		if GenDecl, ok := decl.(*ast.GenDecl); ok {
 			if GenDecl.Tok.String() == "import" {
 				imps := pkg.Imports{}
@@ -350,7 +328,7 @@ func (de *Db2Entity) parseInfra(srcStr string) bool {
 		}
 	}
 
-	if de.hasInfraStruct  == false {
+	if de.hasInfraStruct == false {
 		de.logger.Fatalf("not find %s", de.oldInfraInfo.specialStructName)
 	}
 
@@ -366,6 +344,7 @@ func (de *Db2Entity) parseInfra(srcStr string) bool {
 
 //sourceInfraFile Beautify infra.go
 func (de *Db2Entity) sourceInfraFile() string {
+
 	src, err := ioutil.ReadFile(de.withInfraDir + de.withInfraFile)
 	if err != nil {
 		de.logger.Fatalf(err.Error())
@@ -399,6 +378,7 @@ func (de *Db2Entity) processNewInfra() bool {
 		"provide" + de.CamelStruct + "Repo" + ",")
 	
 	imp := pkg.Import{Path: file_dir.GetGoProPath() + de.DirPathToImportPath(de.WithRepoTarget)}
+
 	de.newInfraInfo.imports = append(de.newInfraInfo.imports, imp)
 
 	return true
@@ -431,8 +411,7 @@ func (de *Db2Entity) buildNewInfraString() {
 }
 
 func (de *Db2Entity) appendProvideFunc() string {
-	return ""
-	//return de.executeTmpl("provide_tpl", domain_file.NewRepoTpl(de.CamelStruct), domain_file.ProvideTemplate)
+	return de.executeTmpl("provide_tpl", domain_file.NewRepoTpl(de.CamelStruct), domain_file.ProvideTemplate)
 }
 
 func (de *Db2Entity) writeNewInfra() {
@@ -473,3 +452,5 @@ func (de *Db2Entity) getInfraSetArgs(GenDecl *ast.GenDecl, srcStr string) []stri
 
 	return args
 }
+
+

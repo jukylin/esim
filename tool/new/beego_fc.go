@@ -1,16 +1,18 @@
 package new
 
-func BeegoInit() {
-	fc1 := &FileContent{
-		FileName: "user_controller.go",
-		Dir:      "internal/transports/http/controllers",
-		Content: `package controllers
+
+
+var (
+	beegofc1 = &FileContent{
+FileName: "user_controller.go",
+Dir:      "internal/transports/http/controllers",
+Content: `package controllers
 
 import (
-	"{{PROPATH}}{{service_name}}/internal/application"
+	"{{.ProPath}}{{.ServerName}}/internal/application"
 	"github.com/astaxie/beego"
-	"{{PROPATH}}{{service_name}}/internal/infra"
-	"{{PROPATH}}{{service_name}}/internal/transports/http/dto"
+	"{{.ProPath}}{{.ServerName}}/internal/infra"
+	"{{.ProPath}}{{.ServerName}}/internal/transports/http/dto"
 )
 
 // Operations about Users
@@ -30,15 +32,15 @@ func (this *UserController) GetUserInfo() {
 	this.ServeJSON()
 }
 `,
-	}
+}
 
-	fc2 := &FileContent{
-		FileName: "routers.go",
-		Dir:      "internal/transports/http/routers",
-		Content: `package routers
+	beegofc2 = &FileContent{
+FileName: "routers.go",
+Dir:      "internal/transports/http/routers",
+Content: `package routers
 
 import (
-	"{{PROPATH}}{{service_name}}/internal/transports/http/controllers"
+	"{{.ProPath}}{{.ServerName}}/internal/transports/http/controllers"
 	"github.com/astaxie/beego"
 )
 
@@ -53,12 +55,12 @@ func init() {
 	beego.AddNamespace(ns)
 }
 `,
-	}
+}
 
-	fc4 := &FileContent{
-		FileName: "beego.go",
-		Dir:      "internal/transports/http",
-		Content: `package http
+	beegofc3 = &FileContent{
+FileName: "beego.go",
+Dir:      "internal/transports/http",
+Content: `package http
 
 import (
 	"net/http"
@@ -68,7 +70,7 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/opentracing-contrib/go-stdlib/nethttp"
 	"github.com/jukylin/esim/container"
-	_ "{{PROPATH}}{{service_name}}/internal/transports/http/routers"
+	_ "{{.ProPath}}{{.ServerName}}/internal/transports/http/routers"
 )
 
 type BeegoServer struct{
@@ -126,16 +128,16 @@ func getMwd(esim *container.Esim) []beego.MiddleWare {
 	return mws
 }
 `,
-	}
+}
 
-	fc5 := &FileContent{
-		FileName: "index_controller.go",
-		Dir:      "internal/transports/http/controllers",
-		Content: `package controllers
+	beegofc4 = &FileContent{
+FileName: "index_controller.go",
+Dir:      "internal/transports/http/controllers",
+Content: `package controllers
 
 import (
 	"github.com/astaxie/beego"
-	"{{PROPATH}}{{service_name}}/internal/infra"
+	"{{.ProPath}}{{.ServerName}}/internal/infra"
 )
 
 // Operations about Index
@@ -167,12 +169,12 @@ func (this *PingController) Get() {
 	}
 }
 `,
-	}
+}
 
-	fc6 := &FileContent{
-		FileName: "component_test.go",
-		Dir:      "internal/transports/http/component-test",
-		Content: `package component_test
+	beegofc5 = &FileContent{
+FileName: "component_test.go",
+Dir:      "internal/transports/http/component-test",
+Content: `package component_test
 
 import (
 	"context"
@@ -188,7 +190,7 @@ import (
 func TestControllers_Esim(t *testing.T) {
 	logger := log.NewLogger()
 
-	client := http_client.NewHttpClient()
+	client := http_client.NewClient()
 	ctx := context.Background()
 	resp, err := client.Get(ctx, "http://localhost:8080")
 
@@ -205,22 +207,22 @@ func TestControllers_Esim(t *testing.T) {
 	logger.Debugf(string(body))
 	assert.Equal(t, 200, resp.StatusCode)
 }`,
-	}
+}
 
-	fc7 := &FileContent{
-		FileName: "user_dto.go",
-		Dir:      "internal/transports/http/dto",
-		Content: `package dto
+	beegofc6 = &FileContent{
+FileName: "user_dto.go",
+Dir:      "internal/transports/http/dto",
+Content: `package dto
 
-import "{{PROPATH}}{{service_name}}/internal/domain/user/entity"
+import "{{.ProPath}}{{.ServerName}}/internal/domain/user/entity"
 
 type User struct {
 
 	//用户名称
-	UserName string {{!}}json:"user_name"{{!}}
+	UserName string {{.SingleMark}}json:"user_name"{{.SingleMark}}
 
 	//密码
-	PassWord string {{!}}json:"pass_word"{{!}}
+	PassWord string {{.SingleMark}}json:"pass_word"{{.SingleMark}}
 }
 
 func NewUser(user entity.User) User {
@@ -230,12 +232,12 @@ func NewUser(user entity.User) User {
 	dto.PassWord = user.PassWord
 	return dto
 }`,
-	}
+}
 
-	fc8 := &FileContent{
-		FileName: "main_test.go",
-		Dir:      "internal/transports/http/component-test",
-		Content: `package component_test
+	beegofc7 = &FileContent{
+FileName: "main_test.go",
+Dir:      "internal/transports/http/component-test",
+Content: `package component_test
 
 import (
 	"os"
@@ -244,14 +246,14 @@ import (
 	"github.com/jukylin/esim/grpc"
 	_grpc "google.golang.org/grpc"
 	"github.com/jukylin/esim/container"
-	"{{PROPATH}}{{service_name}}/internal"
-	"{{PROPATH}}{{service_name}}/internal/infra"
-	"{{PROPATH}}{{service_name}}/internal/transports/http"
+	"{{.ProPath}}{{.ServerName}}/internal"
+	"{{.ProPath}}{{.ServerName}}/internal/infra"
+	"{{.ProPath}}{{.ServerName}}/internal/transports/http"
 )
 
 func TestMain(m *testing.M) {
-	appOptions := {{package_name}}.AppOptions{}
-	app := {{package_name}}.NewApp(appOptions.WithConfPath("../../../../conf/"))
+	appOptions := {{.PackageName}}.AppOptions{}
+	app := {{.PackageName}}.NewApp(appOptions.WithConfPath("../../../../conf/"))
 
 	setUp(app)
 
@@ -281,7 +283,7 @@ func provideStubsGrpcClient(esim *container.Esim) *grpc.GrpcClient {
 	return grpcClient
 }
 
-func setUp(app *{{package_name}}.App) {
+func setUp(app *{{.PackageName}}.App) {
 
 	app.Infra = infra.NewStubsInfra(provideStubsGrpcClient(app.Esim))
 
@@ -297,10 +299,13 @@ func setUp(app *{{package_name}}.App) {
 	}
 }
 
-func tearDown(app *{{package_name}}.App) {
+func tearDown(app *{{.PackageName}}.App) {
 	app.Infra.Close()
 }`,
-	}
+}
+)
 
-	Files = append(Files, fc1, fc2, fc4, fc5, fc6, fc7, fc8)
+
+func BeegoInit()  {
+	Files = append(Files, beegofc1, beegofc2, beegofc3, beegofc4, beegofc5, beegofc6, beegofc7)
 }

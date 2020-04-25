@@ -1,11 +1,11 @@
 package db2entity
 
 import (
-	"testing"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
-func TestInfraSetTemplate(t *testing.T)  {
+func TestInfraSetTemplate(t *testing.T) {
 	infraSetArgs := infraSetArgs{}
 	infraSetArgs.Args = append(infraSetArgs.Args, "provideRedis")
 	infraSetArgs.Args = append(infraSetArgs.Args, "provideDb")
@@ -13,8 +13,3 @@ func TestInfraSetTemplate(t *testing.T)  {
 	result := infraSetArgs.String()
 	assert.NotEmpty(t, result)
 }
-
-
-
-
-

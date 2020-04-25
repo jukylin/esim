@@ -1,9 +1,12 @@
 package transports
 
 type Transports interface {
-	//启动服务
+	//start server
 	Start()
 
-	//优雅关闭服务
+	//register server or router
+	//Register()
+
+	//graceful shutdown server
 	GracefulShutDown()
 }

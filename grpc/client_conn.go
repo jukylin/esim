@@ -30,25 +30,25 @@ func NewClientConn(logger log.Logger) *ClientConn {
 //
 // 		clientConn := NewClientConn()
 // 		clientConn.CollectConn(conn)
-func (this *ClientConn) CollectConn(conn *grpc.ClientConn) {
-	this.conns = append(this.conns, conn)
+func (cc *ClientConn) CollectConn(conn *grpc.ClientConn) {
+	cc.conns = append(cc.conns, conn)
 }
 
 //Close unity closes the grpc.ClientConn instances
-func (this *ClientConn) Close() {
+func (cc *ClientConn) Close() {
 	var err error
-	for _, conn := range this.conns {
+	for _, conn := range cc.conns {
 		err = conn.Close()
 		if err != nil {
-			this.logger.Errorf("%s colse err : %s", conn.Target(), err.Error())
+			cc.logger.Errorf("%s colse err : %s", conn.Target(), err.Error())
 		}
 	}
 }
 
 //State unity show the grpc.ClientConn state
-func (this *ClientConn) State() []string {
+func (cc *ClientConn) State() []string {
 	var state []string
-	for _, conn := range this.conns {
+	for _, conn := range cc.conns {
 		state = append(state, conn.Target()+":"+conn.GetState().String())
 	}
 

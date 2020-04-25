@@ -1,8 +1,8 @@
 package pkg
 
 import (
-	"go/ast"
 	"bytes"
+	"go/ast"
 	"text/template"
 )
 
@@ -23,35 +23,32 @@ type Var struct {
 	Val []string
 }
 
-
 type Vars []Var
 
-
-func (this Vars) Len() int {
-	return len(this)
+func (vs Vars) Len() int {
+	return len(vs)
 }
 
-
-func (this Vars) String() string {
-	if this.Len() < 0 {
+func (vs Vars) String() string {
+	if vs.Len() < 0 {
 		return ""
 	}
 
 	tmpl, err := template.New("var_template").Parse(varTpl)
-	if err != nil{
+	if err != nil {
 		panic(err.Error())
 	}
 
 	var buf bytes.Buffer
-	err = tmpl.Execute(&buf, struct {Vars}{this})
-	if err != nil{
+	err = tmpl.Execute(&buf, struct{ Vars }{vs})
+	if err != nil {
 		panic(err.Error())
 	}
 
 	return buf.String()
 }
 
-func (this *Vars) ParseFromAst(GenDecl *ast.GenDecl, src string) {
+func (vs *Vars) ParseFromAst(GenDecl *ast.GenDecl, src string) {
 	if GenDecl.Tok.String() == "var" {
 		for _, specs := range GenDecl.Specs {
 			if typeSpec, ok := specs.(*ast.ValueSpec); ok {
@@ -70,7 +67,7 @@ func (this *Vars) ParseFromAst(GenDecl *ast.GenDecl, src string) {
 					}
 				}
 
-				*this = append(*this, varObj)
+				*vs = append(*vs, varObj)
 			}
 		}
 	}

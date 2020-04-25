@@ -71,20 +71,20 @@ func NewClientOptions(options ...ClientOptional) *ClientOptions {
 	}
 
 	keepAliveClient := keepalive.ClientParameters{}
-	grpc_client_kp_time := clientOptions.conf.GetInt("grpc_client_kp_time")
-	if grpc_client_kp_time == 0 {
-		grpc_client_kp_time = 60
+	grpcClientKpTime := clientOptions.conf.GetInt("grpc_client_kp_time")
+	if grpcClientKpTime == 0 {
+		grpcClientKpTime = 60
 	}
-	keepAliveClient.Time = time.Duration(grpc_client_kp_time) * time.Second
+	keepAliveClient.Time = time.Duration(grpcClientKpTime) * time.Second
 
-	grpc_client_kp_time_out := clientOptions.conf.GetInt("grpc_client_kp_time_out")
-	if grpc_client_kp_time_out == 0 {
-		grpc_client_kp_time_out = 5
+	grpcClientKpTimeOut := clientOptions.conf.GetInt("grpc_client_kp_time_out")
+	if grpcClientKpTimeOut == 0 {
+		grpcClientKpTimeOut = 5
 	}
-	keepAliveClient.Timeout = time.Duration(grpc_client_kp_time_out) * time.Second
+	keepAliveClient.Timeout = time.Duration(grpcClientKpTimeOut) * time.Second
 
-	grpc_client_permit_without_stream := clientOptions.conf.GetBool("grpc_client_permit_without_stream")
-	keepAliveClient.PermitWithoutStream = grpc_client_permit_without_stream
+	grpcClientPermitWithoutStream := clientOptions.conf.GetBool("grpc_client_permit_without_stream")
+	keepAliveClient.PermitWithoutStream = grpcClientPermitWithoutStream
 
 	opts := []grpc.DialOption{
 		grpc.WithInsecure(),
@@ -154,46 +154,46 @@ func NewClient(clientOptions *ClientOptions) *GrpcClient {
 	return grpcClient
 }
 
-func (this *GrpcClient) DialContext(ctx context.Context, target string) *grpc.ClientConn {
+func (gc *GrpcClient) DialContext(ctx context.Context, target string) *grpc.ClientConn {
 
 	var cancel context.CancelFunc
 
-	grpc_client_conn_time_out := this.clientOpts.conf.GetInt("grpc_client_conn_time_out")
-	if grpc_client_conn_time_out == 0 {
-		grpc_client_conn_time_out = 3
-		ctx, cancel = context.WithTimeout(ctx, time.Duration(grpc_client_conn_time_out)*time.Second)
-		this.cancel = cancel
+	grpcClientConnTimeOut := gc.clientOpts.conf.GetInt("grpc_client_conn_time_out")
+	if grpcClientConnTimeOut == 0 {
+		grpcClientConnTimeOut = 3
+		ctx, cancel = context.WithTimeout(ctx, time.Duration(grpcClientConnTimeOut)*time.Second)
+		gc.cancel = cancel
 	}
 
-	conn, err := grpc.DialContext(ctx, target, this.clientOpts.opts...)
+	conn, err := grpc.DialContext(ctx, target, gc.clientOpts.opts...)
 	if err != nil {
-		this.logger.Errorf(err.Error())
+		gc.logger.Errorf(err.Error())
 		return nil
 	}
-	this.conn = conn
+	gc.conn = conn
 
 	return conn
 }
 
-func (this *GrpcClient) Close() {
-	this.conn.Close()
-	this.cancel()
+func (gc *GrpcClient) Close() {
+	gc.conn.Close()
+	gc.cancel()
 }
 
-func (this *ClientOptions) checkClientSlow() func(ctx context.Context,
+func (gc *ClientOptions) checkClientSlow() func(ctx context.Context,
 	method string, req, reply interface{}, cc *grpc.ClientConn,
 	invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 	return func(ctx context.Context, method string, req, reply interface{},
 		cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-		grpc_client_slow_time := this.conf.GetInt64("grpc_client_slow_time")
+		grpcClientSlowTime := gc.conf.GetInt64("grpc_client_slow_time")
 
-		begin_time := time.Now()
+		beginTime := time.Now()
 		err := invoker(ctx, method, req, reply, cc, opts...)
-		end_time := time.Now()
+		endTime := time.Now()
 
-		if grpc_client_slow_time != 0 {
-			if end_time.Sub(begin_time) > time.Duration(grpc_client_slow_time)*time.Millisecond {
-				this.logger.Warnc(ctx, "slow client grpc_handle %s", method)
+		if grpcClientSlowTime != 0 {
+			if endTime.Sub(beginTime) > time.Duration(grpcClientSlowTime)*time.Millisecond {
+				gc.logger.Warnc(ctx, "slow client grpc_handle %s", method)
 			}
 		}
 
@@ -201,21 +201,21 @@ func (this *ClientOptions) checkClientSlow() func(ctx context.Context,
 	}
 }
 
-func (this *ClientOptions) clientDebug() func(ctx context.Context,
+func (gc *ClientOptions) clientDebug() func(ctx context.Context,
 	method string, req, reply interface{}, cc *grpc.ClientConn,
 	invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 	return func(ctx context.Context, method string, req, reply interface{},
 		cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 
-		begin_time := time.Now()
-		this.logger.Debugc(ctx, "grpc client start %s : %s, req : %s",
+		beginTime := time.Now()
+		gc.logger.Debugc(ctx, "grpc client start %s : %s, req : %s",
 			cc.Target(), method, spew.Sdump(req))
 
 		err := invoker(ctx, method, req, reply, cc, opts...)
 
-		end_time := time.Now()
-		this.logger.Debugc(ctx, "grpc client end [%v] %s : %s, reply : %s",
-			end_time.Sub(begin_time).String(), cc.Target(), method, spew.Sdump(reply))
+		endTime := time.Now()
+		gc.logger.Debugc(ctx, "grpc client end [%v] %s : %s, reply : %s",
+			endTime.Sub(beginTime).String(), cc.Target(), method, spew.Sdump(reply))
 
 		return err
 	}

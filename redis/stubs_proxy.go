@@ -13,10 +13,6 @@ type stubsProxy struct {
 	log log.Logger
 }
 
-type stubsProxyOption func(c *stubsProxy)
-
-type stubsProxyOptions struct{}
-
 func NewStubsProxy(logger log.Logger, name string) *stubsProxy {
 	stubsProxy := &stubsProxy{}
 
@@ -30,27 +26,27 @@ func NewStubsProxy(logger log.Logger, name string) *stubsProxy {
 }
 
 //implement Proxy interface
-func (this *stubsProxy) NextProxy(conn interface{}) {
-	this.nextConn = conn.(ContextConn)
+func (sp *stubsProxy) NextProxy(conn interface{}) {
+	sp.nextConn = conn.(ContextConn)
 }
 
 //implement Proxy interface
-func (this *stubsProxy) ProxyName() string {
-	return this.name
+func (sp *stubsProxy) ProxyName() string {
+	return sp.name
 }
 
-func (this *stubsProxy) Close() error {
-	err := this.nextConn.Close()
+func (sp *stubsProxy) Close() error {
+	err := sp.nextConn.Close()
 
 	return err
 }
 
-func (this *stubsProxy) Err() (err error) {
-	err = this.nextConn.Err()
+func (sp *stubsProxy) Err() (err error) {
+	err = sp.nextConn.Err()
 	return
 }
 
-func (this *stubsProxy) Do(ctx context.Context, commandName string, args ...interface{}) (reply interface{}, err error) {
+func (sp *stubsProxy) Do(ctx context.Context, commandName string, args ...interface{}) (reply interface{}, err error) {
 	if args[0] == "name" {
 		return "test", nil
 	}
@@ -62,20 +58,20 @@ func (this *stubsProxy) Do(ctx context.Context, commandName string, args ...inte
 	return
 }
 
-func (this *stubsProxy) Send(ctx context.Context, commandName string, args ...interface{}) (err error) {
-	err = this.nextConn.Send(ctx, commandName, args...)
+func (sp *stubsProxy) Send(ctx context.Context, commandName string, args ...interface{}) (err error) {
+	err = sp.nextConn.Send(ctx, commandName, args...)
 
 	return
 }
 
-func (this *stubsProxy) Flush(ctx context.Context) (err error) {
-	err = this.nextConn.Flush(ctx)
+func (sp *stubsProxy) Flush(ctx context.Context) (err error) {
+	err = sp.nextConn.Flush(ctx)
 
 	return
 }
 
-func (this *stubsProxy) Receive(ctx context.Context) (reply interface{}, err error) {
-	reply, err = this.nextConn.Receive(ctx)
+func (sp *stubsProxy) Receive(ctx context.Context) (reply interface{}, err error) {
+	reply, err = sp.nextConn.Receive(ctx)
 
 	return
 }

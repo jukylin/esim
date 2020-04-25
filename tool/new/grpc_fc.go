@@ -1,17 +1,17 @@
 package new
 
-func GrpcInit() {
-	fc1 := &FileContent{
+var (
+	grpcfc1 = &FileContent{
 		FileName: "demo_controller.go",
 		Dir:      "internal/transports/grpc/controllers",
 		Content: `package controllers
 
 import (
 	"context"
-	gp "{{PROPATH}}{{service_name}}/internal/infra/third_party/protobuf/passport"
-	"{{PROPATH}}{{service_name}}/internal/application"
-	"{{PROPATH}}{{service_name}}/internal/infra"
-	"{{PROPATH}}{{service_name}}/internal/transports/grpc/dto"
+	gp "{{.ProPath}}{{.ServerName}}/internal/infra/third_party/protobuf/passport"
+	"{{.ProPath}}{{.ServerName}}/internal/application"
+	"{{.ProPath}}{{.ServerName}}/internal/infra"
+	"{{.ProPath}}{{.ServerName}}/internal/transports/grpc/dto"
 )
 
 type DemoController struct {
@@ -23,10 +23,10 @@ type DemoController struct {
 
 func (this *DemoController) GetUserByUserName(ctx context.Context,
 	request *gp.GetUserByUserNameRequest) (*gp.GrpcUserReply, error) {
-	grpcReply := &gp.GrpcUserReply{}
-	userName := request.GetUsername()
+	grpcReply = &gp.GrpcUserReply{}
+	userName = request.GetUsername()
 
-	userInfo := this.userSvc.GetUserInfo(ctx, userName)
+	userInfo = this.userSvc.GetUserInfo(ctx, userName)
 
 	grpcReply.Code = 0;
 
@@ -37,14 +37,14 @@ func (this *DemoController) GetUserByUserName(ctx context.Context,
 `,
 	}
 
-	fc2 := &FileContent{
+	grpcfc2 = &FileContent{
 		FileName: "routers.go",
 		Dir:      "internal/transports/grpc/routers",
 		Content: `package routers
 
 import (
-	"{{PROPATH}}{{service_name}}/internal/transports/grpc/controllers"
-	"{{PROPATH}}{{service_name}}/internal/infra/third_party/protobuf/passport"
+	"{{.ProPath}}{{.ServerName}}/internal/transports/grpc/controllers"
+	"{{.ProPath}}{{.ServerName}}/internal/infra/third_party/protobuf/passport"
 	"google.golang.org/grpc"
 )
 
@@ -55,7 +55,7 @@ func RegisterGrpcServer(s *grpc.Server, controllers *controllers.Controllers)  {
 `,
 	}
 
-	fc3 := &FileContent{
+	grpcfc3 = &FileContent{
 		FileName: "grpc.go",
 		Dir:      "internal/transports/grpc",
 		Content: `package grpc
@@ -64,24 +64,24 @@ import (
 	"strings"
 
 	"github.com/jukylin/esim/grpc"
-	{{service_name}} "{{PROPATH}}{{service_name}}/internal"
-	"{{PROPATH}}{{service_name}}/internal/transports/grpc/routers"
-	"{{PROPATH}}{{service_name}}/internal/transports/grpc/controllers"
+	"{{.ProPath}}{{.ServerName}}/internal"
+	"{{.ProPath}}{{.ServerName}}/internal/transports/grpc/routers"
+	"{{.ProPath}}{{.ServerName}}/internal/transports/grpc/controllers"
 )
 
-func NewGrpcServer(app *{{package_name}}.App) *grpc.GrpcServer {
+func NewGrpcServer(app *{{.PackageName}}.App) *grpc.GrpcServer {
 
-	target := app.Conf.GetString("grpc_server_tcp")
+	target = app.Conf.GetString("grpc_server_tcp")
 
-	in := strings.Index(target, ":")
+	in = strings.Index(target, ":")
 	if in < 0 {
 		target = ":"+target
 	}
 
-	serverOptions := grpc.ServerOptions{}
+	serverOptions = grpc.ServerOptions{}
 
 	//grpc服务初始化
-	grpcServer :=  grpc.NewGrpcServer(target,
+	grpcServer =  grpc.NewGrpcServer(target,
 		serverOptions.WithServerConf(app.Conf),
 		serverOptions.WithServerLogger(app.Logger),
 		serverOptions.WithUnarySrvItcp(),
@@ -97,7 +97,7 @@ func NewGrpcServer(app *{{package_name}}.App) *grpc.GrpcServer {
 `,
 	}
 
-	fc4 := &FileContent{
+	grpcfc4 = &FileContent{
 		FileName: "component_test.go",
 		Dir:      "internal/transports/grpc/component-test",
 		Content: `package component_test
@@ -109,24 +109,24 @@ import (
 	egrpc "github.com/jukylin/esim/grpc"
 	"github.com/jukylin/esim/log"
 	"github.com/stretchr/testify/assert"
-	gp "{{PROPATH}}{{service_name}}/internal/infra/third_party/protobuf/passport"
+	gp "{{.ProPath}}{{.ServerName}}/internal/infra/third_party/protobuf/passport"
 )
 
 //go test
 func TestUserService_GetUserByUserName(t *testing.T) {
-	logger := log.NewLogger()
+	logger = log.NewLogger()
 
-	ctx := context.Background()
+	ctx = context.Background()
 
-	grpcClient := egrpc.NewClient(egrpc.NewClientOptions())
-	conn := grpcClient.DialContext(ctx, ":50055")
+	grpcClient = egrpc.NewClient(egrpc.NewClientOptions())
+	conn = grpcClient.DialContext(ctx, ":50055")
 	defer conn.Close()
 
-	client := gp.NewUserInfoClient(conn)
+	client = gp.NewUserInfoClient(conn)
 
-	req := &gp.GetUserByUserNameRequest{}
+	req = &gp.GetUserByUserNameRequest{}
 	req.Username = "demo"
-	reply, err := client.GetUserByUserName(ctx, req)
+	reply, err = client.GetUserByUserName(ctx, req)
 	if err != nil {
 		logger.Errorf(err.Error())
 	} else {
@@ -137,21 +137,21 @@ func TestUserService_GetUserByUserName(t *testing.T) {
 	}
 
 
-	fc5 := &FileContent{
+	grpcfc5 = &FileContent{
 		FileName: "controllers.go",
 		Dir:      "internal/transports/grpc/controllers",
 		Content: `package controllers
 
 import (
-	{{service_name}} "{{PROPATH}}{{service_name}}/internal"
+	"{{.ProPath}}{{.ServerName}}/internal"
 	"github.com/google/wire"
-	"{{PROPATH}}{{service_name}}/internal/application"
+	"{{.ProPath}}{{.ServerName}}/internal/application"
 )
 
 
 type Controllers struct {
 
-	App *{{package_name}}.App
+	App *{{.PackageName}}.App
 
 	Demo *DemoController
 }
@@ -163,17 +163,17 @@ var controllersSet = wire.NewSet(
 )
 
 
-func NewControllers(app *{{package_name}}.App) *Controllers {
-	controllers := initControllers(app)
+func NewControllers(app *{{.PackageName}}.App) *Controllers {
+	controllers = initControllers(app)
 	return controllers
 }
 
 
-func provideDemoController(app *{{package_name}}.App) *DemoController {
+func provideDemoController(app *{{.PackageName}}.App) *DemoController {
 
-	userSvc := application.NewUserSvc(app.Infra)
+	userSvc = application.NewUserSvc(app.Infra)
 
-	demoController := &DemoController{}
+	demoController = &DemoController{}
 	demoController.infra = app.Infra
 	demoController.userSvc = userSvc
 
@@ -183,7 +183,7 @@ func provideDemoController(app *{{package_name}}.App) *DemoController {
 	}
 
 
-	fc6 := &FileContent{
+	grpcfc6 = &FileContent{
 		FileName: "wire.go",
 		Dir:      "internal/transports/grpc/controllers",
 		Content: `//+build wireinject
@@ -192,12 +192,12 @@ package controllers
 
 import (
 	"github.com/google/wire"
-	{{service_name}} "{{PROPATH}}{{service_name}}/internal"
+	"{{.ProPath}}{{.ServerName}}/internal"
 )
 
 
 
-func initControllers(app *{{package_name}}.App) *Controllers {
+func initControllers(app *{{.PackageName}}.App) *Controllers {
 	wire.Build(controllersSet)
 	return nil
 }
@@ -205,7 +205,7 @@ func initControllers(app *{{package_name}}.App) *Controllers {
 	}
 
 
-	fc7 := &FileContent{
+	grpcfc7 = &FileContent{
 		FileName: "wire_gen.go",
 		Dir:      "internal/transports/grpc/controllers",
 		Content: `// Code generated by Wire. DO NOT EDIT.
@@ -216,14 +216,14 @@ func initControllers(app *{{package_name}}.App) *Controllers {
 package controllers
 
 import (
-	{{service_name}} "{{PROPATH}}{{service_name}}/internal"
+	"{{.ProPath}}{{.ServerName}}/internal"
 )
 
 // Injectors from wire.go:
 
-func initControllers(app *{{package_name}}.App) *Controllers {
-	demoController := provideDemoController(app)
-	controllers := &Controllers{
+func initControllers(app *{{.PackageName}}.App) *Controllers {
+	demoController = provideDemoController(app)
+	controllers = &Controllers{
 		App:  app,
 		Demo: demoController,
 	}
@@ -232,34 +232,34 @@ func initControllers(app *{{package_name}}.App) *Controllers {
 `,
 	}
 
-	fc8 := &FileContent{
+	grpcfc8 = &FileContent{
 		FileName: "user_dto.go",
 		Dir:      "internal/transports/grpc/dto",
 		Content: `package dto
 
 import (
-	"{{PROPATH}}{{service_name}}/internal/domain/user/entity"
-	"{{PROPATH}}{{service_name}}/internal/infra/third_party/protobuf/passport"
+	"{{.ProPath}}{{.ServerName}}/internal/domain/user/entity"
+	"{{.ProPath}}{{.ServerName}}/internal/infra/third_party/protobuf/passport"
 )
 
 type User struct {
 
 	//用户名称
-	UserName string {{!}}json:"user_name"{{!}}
+	UserName string {{.SingleMark}}json:"user_name"{{.SingleMark}}
 
 	//密码
-	PassWord string {{!}}json:"pass_word"{{!}}
+	PassWord string {{.SingleMark}}json:"pass_word"{{.SingleMark}}
 }
 
 func NewUserInfo(user entity.User) *passport.Info {
-	info := &passport.Info{}
+	info = &passport.Info{}
 	info.UserName = user.UserName
 	info.PassWord = user.PassWord
 	return info
 }`,
 	}
 
-	fc9 := &FileContent{
+	grpcfc9 = &FileContent{
 		FileName: "main_test.go",
 		Dir:      "internal/transports/grpc/component-test",
 		Content: `package component_test
@@ -269,21 +269,21 @@ import (
 	"testing"
 	"context"
 
-	"{{PROPATH}}{{service_name}}/internal/transports/grpc"
-	"{{PROPATH}}{{service_name}}/internal/infra"
+	"{{.ProPath}}{{.ServerName}}/internal/transports/grpc"
+	"{{.ProPath}}{{.ServerName}}/internal/infra"
 	_grpc "google.golang.org/grpc"
 	egrpc "github.com/jukylin/esim/grpc"
 	"github.com/jukylin/esim/container"
-	"{{PROPATH}}{{service_name}}/internal"
+	"{{.ProPath}}{{.ServerName}}/internal"
 )
 
 func TestMain(m *testing.M) {
-	appOptions := {{package_name}}.AppOptions{}
-	app := {{package_name}}.NewApp(appOptions.WithConfPath("../../../../conf/"))
+	appOptions = {{.PackageName}}.AppOptions{}
+	app = {{.PackageName}}.NewApp(appOptions.WithConfPath("../../../../conf/"))
 
 	setUp(app)
 
-	code := m.Run()
+	code = m.Run()
 
 	tearDown(app)
 
@@ -291,25 +291,25 @@ func TestMain(m *testing.M) {
 }
 
 func provideStubsGrpcClient(esim *container.Esim) *egrpc.GrpcClient {
-	clientOptional := egrpc.ClientOptionals{}
-	clientOptions := egrpc.NewClientOptions(
+	clientOptional = egrpc.ClientOptionals{}
+	clientOptions = egrpc.NewClientOptions(
 		clientOptional.WithLogger(esim.Logger),
 		clientOptional.WithConf(esim.Conf),
 		clientOptional.WithDialOptions(_grpc.WithUnaryInterceptor(
 			egrpc.ClientStubs(func(ctx context.Context, method string, req, reply interface{}, cc *_grpc.ClientConn, invoker _grpc.UnaryInvoker, opts ..._grpc.CallOption) error {
 				esim.Logger.Infof(method)
-				err := invoker(ctx, method, req, reply, cc, opts...)
+				err = invoker(ctx, method, req, reply, cc, opts...)
 				return err
 			}),
 		)),
 	)
 
-	grpcClient := egrpc.NewClient(clientOptions)
+	grpcClient = egrpc.NewClient(clientOptions)
 
 	return grpcClient
 }
 
-func setUp(app *{{package_name}}.App) {
+func setUp(app *{{.PackageName}}.App) {
 
 	app.Infra = infra.NewStubsInfra(provideStubsGrpcClient(app.Esim))
 
@@ -317,18 +317,21 @@ func setUp(app *{{package_name}}.App) {
 
 	app.Start()
 
-	errs := app.Infra.HealthCheck()
+	errs = app.Infra.HealthCheck()
 	if len(errs) > 0 {
-		for _, err := range errs {
+		for _, err = range errs {
 			app.Logger.Errorf(err.Error())
 		}
 	}
 }
 
-func tearDown(app *{{package_name}}.App) {
+func tearDown(app *{{.PackageName}}.App) {
 	app.Infra.Close()
 }`,
 	}
 
-	Files = append(Files, fc1, fc2, fc3, fc4, fc5, fc6, fc7, fc8, fc9)
+)
+
+func GrpcInit()  {
+	Files = append(Files, grpcfc1, grpcfc2, grpcfc3, grpcfc4, grpcfc5, grpcfc6, grpcfc7, grpcfc8, grpcfc9)
 }

@@ -1,7 +1,11 @@
 package new
 
-func DaoInit() {
-	fc1 := &FileContent{
+func init()  {
+	Files = append(Files, daofc1)
+}
+
+var (
+	daofc1 = &FileContent{
 		FileName: "user_dao.go",
 		Dir:      "internal/infra/dao",
 		Content: `package dao
@@ -10,7 +14,7 @@ import (
 	"context"
 	"github.com/jinzhu/gorm"
 	"github.com/jukylin/esim/mysql"
-	"{{PROPATH}}{{service_name}}/internal/domain/user/entity"
+	"{{.ProPath}}{{.ServerName}}/internal/domain/user/entity"
 )
 
 type UserDao struct {
@@ -19,7 +23,7 @@ type UserDao struct {
 
 func NewUserDao() *UserDao {
 	dao := &UserDao{
-		mysql: mysql.NewMysqlClient(),
+		mysql: mysql.NewClient(),
 	}
 
 	return dao
@@ -48,6 +52,4 @@ args ...interface{}) (entity.User, error) {
 }
 `,
 	}
-
-	Files = append(Files, fc1)
-}
+)

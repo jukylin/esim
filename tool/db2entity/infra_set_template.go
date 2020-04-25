@@ -2,8 +2,8 @@ package db2entity
 
 import (
 	"bytes"
-	"text/template"
 	"github.com/jukylin/esim/pkg/templates"
+	"text/template"
 )
 
 type infraSetArgs struct {
@@ -16,21 +16,18 @@ var infraSetTemplate = `var infraSet = wire.NewSet(
 )
 `
 
-func (this infraSetArgs) String() string {
+func (sa infraSetArgs) String() string {
 	tmpl, err := template.New("infra_set_template").Funcs(templates.EsimFuncMap()).
 		Parse(infraSetTemplate)
-	if err != nil{
+	if err != nil {
 		panic(err.Error())
 	}
 
 	var buf bytes.Buffer
-	err = tmpl.Execute(&buf, this)
-	if err != nil{
+	err = tmpl.Execute(&buf, sa)
+	if err != nil {
 		panic(err.Error())
 	}
 
 	return buf.String()
 }
-
-
-

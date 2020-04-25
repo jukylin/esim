@@ -423,8 +423,6 @@ func provideRedis(esim *container.Esim) *redis.RedisClient {
 
 ```golang
 
-"gitlab.etcchebao.cn/go_service/esim/pkg/redis"
-
 conn := infra.NewInfra().Redis.GetCtxRedisConn()
 defer conn.Close()
 key := "username:"+username

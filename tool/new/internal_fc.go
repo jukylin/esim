@@ -1,17 +1,21 @@
 package new
 
-func InternalInit() {
-	fc1 := &FileContent{
+func init()  {
+	Files = append(Files, internalfc1)
+}
+
+var (
+	internalfc1 = &FileContent{
 		FileName: "app.go",
 		Dir:      "internal",
-		Content: `package {{package_name}}
+		Content: `package {{.PackageName}}
 
 import (
 	"os"
 	"os/signal"
 	"syscall"
 	"github.com/jukylin/esim/transports"
-	"{{PROPATH}}{{service_name}}/internal/infra"
+	"{{.ProPath}}{{.ServerName}}/internal/infra"
 	"github.com/jukylin/esim/container"
 	"github.com/jukylin/esim/config"
 )
@@ -106,5 +110,4 @@ func (this *App) stop()  {
 	}
 
 
-	Files = append(Files, fc1)
-}
+)

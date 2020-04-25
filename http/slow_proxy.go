@@ -16,10 +16,6 @@ type slowProxy struct {
 	nextTransport http.RoundTripper
 }
 
-type slowProxyOption func(c *slowProxy)
-
-type slowProxyOptions struct{}
-
 func NewSlowProxy(logger log.Logger, name string) *slowProxy {
 	slowProxy := &slowProxy{}
 
@@ -34,21 +30,21 @@ func NewSlowProxy(logger log.Logger, name string) *slowProxy {
 	return slowProxy
 }
 
-func (this *slowProxy) NextProxy(tripper interface{}) {
-	this.nextTransport = tripper.(http.RoundTripper)
+func (sp *slowProxy) NextProxy(tripper interface{}) {
+	sp.nextTransport = tripper.(http.RoundTripper)
 }
 
-func (this *slowProxy) ProxyName() string {
-	return this.name
+func (sp *slowProxy) ProxyName() string {
+	return sp.name
 }
 
 // RoundTrip implements the RoundTripper interface.
-func (this *slowProxy) RoundTrip(req *http.Request) (*http.Response, error) {
-	if this.nextTransport == nil {
-		this.nextTransport = http.DefaultTransport
+func (sp *slowProxy) RoundTrip(req *http.Request) (*http.Response, error) {
+	if sp.nextTransport == nil {
+		sp.nextTransport = http.DefaultTransport
 	}
 	time.Sleep(10 * time.Millisecond)
-	resp, err := this.nextTransport.RoundTrip(req)
+	resp, err := sp.nextTransport.RoundTrip(req)
 
 	return resp, err
 }

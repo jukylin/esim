@@ -54,3 +54,11 @@ func provide{{.EntityName}}Repo(esim *container.Esim) repo.{{.EntityName}}Repo {
 	return repo.New{{.StructName}}(esim.Logger)
 }`
 
+func NewRepoTpl(structName string) *repoTpl {
+	repoTpl := &repoTpl{}
+
+	repoTpl.StructName = structName
+
+	return repoTpl
+}
+

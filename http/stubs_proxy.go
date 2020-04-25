@@ -47,15 +47,15 @@ func (StubsProxyOptions) WithLogger(logger log.Logger) StubsProxyOption {
 	}
 }
 
-func (this *stubsProxy) NextProxy(tripper interface{}) {
-	this.nextTransport = tripper.(http.RoundTripper)
+func (sp *stubsProxy) NextProxy(tripper interface{}) {
+	sp.nextTransport = tripper.(http.RoundTripper)
 }
 
-func (this *stubsProxy) ProxyName() string {
-	return this.name
+func (sp *stubsProxy) ProxyName() string {
+	return sp.name
 }
 
 // RoundTrip implements the RoundTripper interface.
-func (this *stubsProxy) RoundTrip(req *http.Request) (*http.Response, error) {
-	return this.respFunc(req), nil
+func (sp *stubsProxy) RoundTrip(req *http.Request) (*http.Response, error) {
+	return sp.respFunc(req), nil
 }

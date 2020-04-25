@@ -1,15 +1,19 @@
 package new
 
-func ServiceInit() {
-	fc1 := &FileContent{
-		FileName: "user_service.go",
-		Dir:      "internal/application",
-		Content: `package application
+func init()  {
+	Files = append(Files, appfc)
+}
+
+var (
+	appfc = &FileContent{
+	FileName: "user_service.go",
+	Dir:      "internal/application",
+	Content: `package application
 
 import (
 	"context"
-	"{{PROPATH}}{{service_name}}/internal/infra"
-	"{{PROPATH}}{{service_name}}/internal/domain/user/entity"
+	"{{.ProPath}}{{.ServerName}}/internal/infra"
+	"{{.ProPath}}{{.ServerName}}/internal/domain/user/entity"
 )
 
 type UserService struct {
@@ -27,11 +31,6 @@ func (svc *UserService) GetUserInfo(ctx context.Context, username string) (user 
 	user = svc.UserRepo.FindByUserName(ctx, username)
 
 	return
+}`,
 }
-`,
-	}
-
-
-
-	Files = append(Files, fc1)
-}
+)

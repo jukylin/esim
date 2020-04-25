@@ -1,11 +1,16 @@
 package new
 
-func CmdInit() {
+func init()  {
+	Files = append(Files, cmdfc)
+}
 
-	fc1 := &FileContent{
-		FileName: "root.go",
-		Dir:      "cmd",
-		Content: `/*
+
+
+var (
+	cmdfc = &FileContent{
+	FileName: "root.go",
+	Dir:      "cmd",
+	Content: `/*
 Copyright © 2019 NAME HERE <EMAIL ADDRESS>
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,12 +28,12 @@ limitations under the License.
 package cmd
 
 import (
-	"fmt"
 	"os"
 	"github.com/spf13/cobra"
-{{IMPORT_SERVER}}
-	{{service_name}} "{{PROPATH}}{{service_name}}/internal"
-	"{{PROPATH}}{{service_name}}/internal/infra"
+{{ range $Import := .ImportServer}}"{{$Import}}"
+{{end}}
+	"{{.ProPath}}{{.ServerName}}/internal"
+	"{{.ProPath}}{{.ServerName}}/internal/infra"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -38,12 +43,12 @@ var rootCmd = &cobra.Command{
 	Long: "",
 	Run: func(cmd *cobra.Command, args []string) {
 
-		app := {{service_name}}.NewApp()
+		app := {{.ServerName}}.NewApp()
 
 		app.Infra = infra.NewInfra()
 
-{{RUN_SERVER}}
-
+{{ range $Server := .RunServer}}{{$Server}}
+{{end}}
 		app.Start()
 		app.AwaitSignal()
 
@@ -54,7 +59,6 @@ var rootCmd = &cobra.Command{
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
   if err := rootCmd.Execute(); err != nil {
-    fmt.Println(err)
     os.Exit(1)
   }
 }
@@ -62,7 +66,5 @@ func Execute() {
 func init() {
 }
 `,
-	}
-
-	Files = append(Files, fc1)
 }
+)

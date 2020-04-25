@@ -204,13 +204,13 @@ func (ef *esimFactory) Run(v *viper.Viper) error {
 	if err != nil {
 		ef.logger.Panicf(err.Error())
 	}
-	
+
 	if ef.parseStruct() == false{
 		ef.logger.Panicf("not found struct %s", ef.StructName)
 	}
 	ef.copyOldStructInfo()
 
-	if ef.ExtendField() {
+	if ef.extendField() {
 		err = ef.buildNewStructFileContent()
 		if err != nil {
 			ef.logger.Panicf(err.Error())
@@ -375,7 +375,7 @@ func (ef *esimFactory) bindInput(v *viper.Viper) error {
 	}
 
 	ef.withOption = v.GetBool("option")
-	
+
 	ef.withGenConfOption = v.GetBool("oc")
 
 	ef.withGenLoggerOption = v.GetBool("ol")
@@ -451,8 +451,9 @@ func (ef *esimFactory) parseStruct() bool {
 		}
 
 		ef.filesName = append(ef.filesName, fileInfo.Name())
-		
+
 		if !fileInfo.IsDir() && !ef.found {
+
 			src, err := ioutil.ReadFile(ef.structDir + "/" + fileInfo.Name())
 			if err != nil {
 				ef.logger.Panicf(err.Error())
@@ -511,7 +512,7 @@ func (ef *esimFactory) parseStruct() bool {
 }
 
 //extend logger and conf for new struct field
-func (ef *esimFactory) ExtendField() bool {
+func (ef *esimFactory) extendField() bool {
 
 	var HasExtend bool
 	if ef.withOption == true {
@@ -603,7 +604,6 @@ func (ef *esimFactory) buildNewStructFileContent() error {
 
 	ef.NewStructInfo.structFileContent = strings.Replace(ef.NewStructInfo.structFileContent,
 		ef.oldStructInfo.structStr, ef.NewStructInfo.structStr, -1)
-	println(ef.NewStructInfo.structFileContent)
 
 	src, err := imports.Process("", []byte(ef.NewStructInfo.structFileContent), nil)
 	if err != nil{
@@ -699,7 +699,6 @@ func (` + ef.StructName + `Options) WithLogger(logger log.Logger) ` + ef.StructN
 	}
 }
 
-
 func (ef *esimFactory) genPool() bool {
 
 	ef.incrPoolVar(ef.StructName)
@@ -708,7 +707,6 @@ func (ef *esimFactory) genPool() bool {
 
 	return true
 }
-
 
 func (ef *esimFactory) genPlural() bool {
 
@@ -730,7 +728,6 @@ func (ef *esimFactory) genPlural() bool {
 	return true
 }
 
-
 func (ef *esimFactory) incrPoolVar(StructName string) bool {
 	poolName := strings.ToLower(StructName) + "Pool"
 	if ef.varNameExists(ef.NewStructInfo.vars, poolName) == true {
@@ -744,7 +741,6 @@ func (ef *esimFactory) incrPoolVar(StructName string) bool {
 
 	return true
 }
-
 
 func (ef *esimFactory) genSpecFieldInitStr()  {
 	var str string
@@ -775,7 +771,6 @@ func (ef *esimFactory) genSpecFieldInitStr()  {
 	return
 }
 
-
 func (ef *esimFactory) genReleaseStructStr(initFields []string) string {
 	str := "func (ef " + ef.NewStructInfo.ReturnVarStr + ") Release() {\n"
 
@@ -792,7 +787,6 @@ func (ef *esimFactory) genReleaseStructStr(initFields []string) string {
 
 	return str
 }
-
 
 func (ef *esimFactory) genNewPluralStr() string {
 	str := `func New` + ef.pluralName + `() *` + ef.pluralName + ` {
@@ -824,7 +818,6 @@ func (ef *esimFactory) genReleasePluralStr() string {
 	return str
 }
 
-
 func (ef *esimFactory) appendNewImport(importName string) bool {
 	var found bool
 	for _, imp := range ef.NewStructInfo.imports {
@@ -840,7 +833,6 @@ func (ef *esimFactory) appendNewImport(importName string) bool {
 	return true
 }
 
-
 func (ef *esimFactory) appendPoolVar(pollVarName, StructName string) pkg.Var {
 	var poolVar pkg.Var
 
@@ -853,7 +845,6 @@ func (ef *esimFactory) appendPoolVar(pollVarName, StructName string) pkg.Var {
 	poolVar.Name = append(poolVar.Name, pollVarName)
 	return poolVar
 }
-
 
 //变量是否存在
 func (ef *esimFactory) varNameExists(vars pkg.Vars, poolVarName string) bool {
@@ -868,7 +859,6 @@ func (ef *esimFactory) varNameExists(vars pkg.Vars, poolVarName string) bool {
 	return false
 }
 
-
 //package + import
 func (ef *esimFactory) getFirstPart() {
 
@@ -880,12 +870,10 @@ func (ef *esimFactory) getFirstPart() {
 
 }
 
-
 //var
 func (ef *esimFactory) getSecondPart() {
 	ef.secondPart = ef.oldStructInfo.varStr
 }
-
 
 func (ef *esimFactory) Close() {
 	ef.structFieldIface.Close()

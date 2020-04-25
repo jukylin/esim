@@ -108,7 +108,7 @@ func TestExtendFieldAndReplaceStructContent(t *testing.T)  {
 	esimfactory.withGenLoggerOption = true
 	esimfactory.withGenConfOption = true
 
-	result := esimfactory.ExtendField()
+	result := esimfactory.extendField()
 	assert.True(t, result)
 
 	assert.Equal(t, 2, len(esimfactory.NewStructInfo.Fields))

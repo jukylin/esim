@@ -27,46 +27,46 @@ func NewFacadeProxy(options ...FacadeProxyOption) *FacadeProxy {
 }
 
 //implement Proxy interface
-func (this *FacadeProxy) NextProxy(conn interface{}) {
-	this.nextConn = conn.(redis.Conn)
+func (fp *FacadeProxy) NextProxy(conn interface{}) {
+	fp.nextConn = conn.(redis.Conn)
 }
 
 //implement Proxy interface
-func (this *FacadeProxy) ProxyName() string {
-	return this.name
+func (fp *FacadeProxy) ProxyName() string {
+	return fp.name
 }
 
-func (this *FacadeProxy) Close() error {
-	err := this.nextConn.Close()
+func (fp *FacadeProxy) Close() error {
+	err := fp.nextConn.Close()
 	if err == redis.ErrNil {
 		err = nil
 	}
 	return err
 }
 
-func (this *FacadeProxy) Err() (err error) {
-	err = this.nextConn.Err()
+func (fp *FacadeProxy) Err() (err error) {
+	err = fp.nextConn.Err()
 	return
 }
 
-func (this *FacadeProxy) Do(ctx context.Context, commandName string, args ...interface{}) (reply interface{}, err error) {
-	reply, err = this.nextConn.Do(commandName, args...)
+func (fp *FacadeProxy) Do(ctx context.Context, commandName string, args ...interface{}) (reply interface{}, err error) {
+	reply, err = fp.nextConn.Do(commandName, args...)
 	return
 }
 
-func (this *FacadeProxy) Send(ctx context.Context, commandName string, args ...interface{}) (err error) {
-	err = this.nextConn.Send(commandName, args...)
+func (fp *FacadeProxy) Send(ctx context.Context, commandName string, args ...interface{}) (err error) {
+	err = fp.nextConn.Send(commandName, args...)
 	return
 }
 
-func (this *FacadeProxy) Flush(ctx context.Context) (err error) {
-	err = this.nextConn.Flush()
+func (fp *FacadeProxy) Flush(ctx context.Context) (err error) {
+	err = fp.nextConn.Flush()
 	return
 }
 
-func (this *FacadeProxy) Receive(ctx context.Context) (reply interface{}, err error) {
+func (fp *FacadeProxy) Receive(ctx context.Context) (reply interface{}, err error) {
 
-	reply, err = this.nextConn.Receive()
+	reply, err = fp.nextConn.Receive()
 
 	return
 }

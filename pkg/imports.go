@@ -2,9 +2,9 @@ package pkg
 
 import (
 	"bytes"
-	"text/template"
 	"go/ast"
 	"strings"
+	"text/template"
 )
 
 var importTpl = `import (
@@ -13,7 +13,7 @@ var importTpl = `import (
 {{end}}{{.Name}} "{{.Path}}"{{end}}
 )`
 
-type Import struct{
+type Import struct {
 	Name string
 
 	Path string
@@ -21,36 +21,33 @@ type Import struct{
 	Doc []string
 }
 
-
 type Imports []Import
 
-
-func (this Imports) Len() int {
-	return len(this)
+func (is Imports) Len() int {
+	return len(is)
 }
 
+func (is Imports) String() string {
 
-func (this Imports) String() string {
-
-	if this.Len() < 0 {
+	if is.Len() < 0 {
 		return ""
 	}
 
 	tmpl, err := template.New("import_template").Parse(importTpl)
-	if err != nil{
+	if err != nil {
 		panic(err.Error())
 	}
 
 	var buf bytes.Buffer
-	err = tmpl.Execute(&buf, struct {Imports}{this})
-	if err != nil{
+	err = tmpl.Execute(&buf, struct{ Imports }{is})
+	if err != nil {
 		panic(err.Error())
 	}
 
 	return buf.String()
 }
 
-func (this *Imports) ParseFromAst(GenDecl *ast.GenDecl) {
+func (is *Imports) ParseFromAst(GenDecl *ast.GenDecl) {
 	for _, specs := range GenDecl.Specs {
 		if spec, ok := specs.(*ast.ImportSpec); ok {
 			imp := Import{}
@@ -65,7 +62,7 @@ func (this *Imports) ParseFromAst(GenDecl *ast.GenDecl) {
 			}
 
 			imp.Path = strings.Trim(spec.Path.Value, "\"")
-			*this = append(*this, imp)
+			*is = append(*is, imp)
 		}
 	}
 }

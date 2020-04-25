@@ -24,17 +24,17 @@ func NewFilterProxy() *filterProxy {
 	return filterProxy
 }
 
-func (this *filterProxy) Get(str string) string {
-	this.logger.Infof("filterProxy")
-	result := this.nextProxy.Get(str)
+func (fp *filterProxy) Get(str string) string {
+	fp.logger.Infof("filterProxy")
+	result := fp.nextProxy.Get(str)
 	return result
 }
 
-func (this *filterProxy) NextProxy(proxy interface{}) {
-	this.nextProxy = proxy.(DbRepo)
+func (fp *filterProxy) NextProxy(proxy interface{}) {
+	fp.nextProxy = proxy.(DbRepo)
 }
 
-func (this *filterProxy) ProxyName() string {
+func (fp *filterProxy) ProxyName() string {
 	return "filter_proxy"
 }
 
@@ -52,17 +52,17 @@ func NewCacheProxy() *cacheProxy {
 	return cacheProxy
 }
 
-func (this *cacheProxy) Get(str string) string {
-	this.logger.Infof("cacheProxy")
-	result := this.nextProxy.Get(str)
+func (fp *cacheProxy) Get(str string) string {
+	fp.logger.Infof("cacheProxy")
+	result := fp.nextProxy.Get(str)
 	return result
 }
 
-func (this *cacheProxy) NextProxy(proxy interface{}) {
-	this.nextProxy = proxy.(DbRepo)
+func (fp *cacheProxy) NextProxy(proxy interface{}) {
+	fp.nextProxy = proxy.(DbRepo)
 }
 
-func (this *cacheProxy) ProxyName() string {
+func (fp *cacheProxy) ProxyName() string {
 	return "cache_proxy"
 }
 
@@ -73,7 +73,7 @@ func NewRealDb() *realDb {
 	return &realDb{}
 }
 
-func (this *realDb) Get(str string) string {
+func (fp *realDb) Get(str string) string {
 	return "1.0.0"
 }
 

@@ -1,17 +1,16 @@
 package db2entity
 
 import (
-	"testing"
-	"github.com/stretchr/testify/assert"
 	"github.com/jukylin/esim/log"
+	"github.com/jukylin/esim/pkg"
 	"github.com/jukylin/esim/pkg/file-dir"
 	"github.com/spf13/viper"
-	"github.com/jukylin/esim/pkg"
+	"github.com/stretchr/testify/assert"
 	"os"
 	"path/filepath"
 	"github.com/jukylin/esim/tool/db2entity/domain-file"
+	"testing"
 )
-
 
 func TestDb2Entity_Run(t *testing.T) {
 
@@ -62,6 +61,7 @@ func TestDb2Entity_ParseInfra(t *testing.T) {
 
 func TestDb2Entity_ProcessInfraInfo(t *testing.T)  {
 	db2EntityOptions := Db2EnOptions{}
+
 	db2Entity := NewDb2Entity(
 		db2EntityOptions.WithInfraInfo(NewInfraInfo()))
 

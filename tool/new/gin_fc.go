@@ -1,7 +1,7 @@
 package new
 
-func GinInit() {
-	fc1 := &FileContent{
+var (
+	ginfc1 = &FileContent{
 		FileName: "demo_controller.go",
 		Dir:      "internal/transports/http/controllers",
 		Content: `package controllers
@@ -9,9 +9,9 @@ func GinInit() {
 import (
 	"net/http"
 	"github.com/gin-gonic/gin"
-	"{{PROPATH}}{{service_name}}/internal/application"
-	"{{PROPATH}}{{service_name}}/internal/infra"
-	"{{PROPATH}}{{service_name}}/internal/transports/http/dto"
+	"{{.ProPath}}{{.ServerName}}/internal/application"
+	"{{.ProPath}}{{.ServerName}}/internal/infra"
+	"{{.ProPath}}{{.ServerName}}/internal/transports/http/dto"
 )
 
 type DemoController struct {
@@ -60,13 +60,13 @@ func (this *EsimController) Esim(c *gin.Context)  {
 `,
 	}
 
-	fc2 := &FileContent{
+	ginfc2 = &FileContent{
 		FileName: "routers.go",
 		Dir:      "internal/transports/http/routers",
 		Content: `package routers
 
 import (
-	"{{PROPATH}}{{service_name}}/internal/transports/http/controllers"
+	"{{.ProPath}}{{.ServerName}}/internal/transports/http/controllers"
 	"github.com/gin-gonic/gin"
 
 )
@@ -82,7 +82,7 @@ func RegisterGinServer(en *gin.Engine, controllers *controllers.Controllers)  {
 `,
 	}
 
-	fc3 := &FileContent{
+	ginfc3 = &FileContent{
 		FileName: "gin.go",
 		Dir:      "internal/transports/http",
 		Content: `package http
@@ -93,11 +93,11 @@ import (
 	"context"
 	"time"
 	"github.com/gin-gonic/gin"
-	"{{PROPATH}}{{service_name}}/internal/transports/http/routers"
+	"{{.ProPath}}{{.ServerName}}/internal/transports/http/routers"
 	middle_ware "github.com/jukylin/esim/middle-ware"
 	"github.com/jukylin/esim/log"
-	"{{PROPATH}}{{service_name}}/internal/transports/http/controllers"
-	{{service_name}} "{{PROPATH}}{{service_name}}/internal"
+	"{{.ProPath}}{{.ServerName}}/internal/transports/http/controllers"
+	"{{.ProPath}}{{.ServerName}}/internal"
 )
 
 type GinServer struct{
@@ -109,10 +109,10 @@ type GinServer struct{
 
 	server *http.Server
 
-	app *{{service_name}}.App
+	app *{{.PackageName}}.App
 }
 
-func NewGinServer(app *{{package_name}}.App) *GinServer {
+func NewGinServer(app *{{.PackageName}}.App) *GinServer {
 
 	httpport := app.Conf.GetString("httpport")
 
@@ -173,7 +173,7 @@ func (this *GinServer) GracefulShutDown()  {
 `,
 	}
 
-	fc4 := &FileContent{
+	ginfc4 = &FileContent{
 		FileName: "component_test.go",
 		Dir:      "internal/transports/http/component-test",
 		Content: `package component_test
@@ -193,7 +193,7 @@ import (
 func TestControllers_Esim(t *testing.T) {
 	logger := log.NewLogger()
 
-	client := http_client.NewHttpClient()
+	client := http_client.NewClient()
 	ctx := context.Background()
 	resp, err := client.Get(ctx, "http://localhost:8080")
 
@@ -212,21 +212,21 @@ func TestControllers_Esim(t *testing.T) {
 }`,
 	}
 
-	fc5 := &FileContent{
+	ginfc5 = &FileContent{
 		FileName: "controllers.go",
 		Dir:      "internal/transports/http/controllers",
 		Content: `package controllers
 
 import (
-	{{service_name}} "{{PROPATH}}{{service_name}}/internal"
+	"{{.ProPath}}{{.ServerName}}/internal"
 	"github.com/google/wire"
-	"{{PROPATH}}{{service_name}}/internal/application"
+	"{{.ProPath}}{{.ServerName}}/internal/application"
 )
 
 
 type Controllers struct {
 
-	App *{{package_name}}.App
+	App *{{.PackageName}}.App
 
 	Ping *PingController
 
@@ -245,27 +245,27 @@ var controllersSet = wire.NewSet(
 )
 
 
-func NewControllers(app *{{package_name}}.App) *Controllers {
+func NewControllers(app *{{.PackageName}}.App) *Controllers {
 	controllers := initControllers(app)
 	return controllers
 }
 
 
-func providePingController(app *{{package_name}}.App) *PingController {
+func providePingController(app *{{.PackageName}}.App) *PingController {
 	pingController := &PingController{}
 	pingController.infra = app.Infra
 	return pingController
 }
 
 
-func provideEsimController(app *{{package_name}}.App) *EsimController {
+func provideEsimController(app *{{.PackageName}}.App) *EsimController {
 	esimController := &EsimController{}
 	esimController.infra = app.Infra
 	return esimController
 }
 
 
-func provideDemoController(app *{{package_name}}.App) *DemoController {
+func provideDemoController(app *{{.PackageName}}.App) *DemoController {
 
 	userSvc := application.NewUserSvc(app.Infra)
 
@@ -279,7 +279,7 @@ func provideDemoController(app *{{package_name}}.App) *DemoController {
 	}
 
 
-	fc6 := &FileContent{
+	ginfc6 = &FileContent{
 		FileName: "wire.go",
 		Dir:      "internal/transports/http/controllers",
 		Content: `//+build wireinject
@@ -288,12 +288,12 @@ package controllers
 
 import (
 	"github.com/google/wire"
-	{{service_name}} "{{PROPATH}}{{service_name}}/internal"
+	"{{.ProPath}}{{.ServerName}}/internal"
 )
 
 
 
-func initControllers(app *{{package_name}}.App) *Controllers {
+func initControllers(app *{{.PackageName}}.App) *Controllers {
 	wire.Build(controllersSet)
 	return nil
 }
@@ -301,7 +301,7 @@ func initControllers(app *{{package_name}}.App) *Controllers {
 	}
 
 
-	fc7 := &FileContent{
+	ginfc7 = &FileContent{
 		FileName: "wire_gen.go",
 		Dir:      "internal/transports/http/controllers",
 		Content: `// Code generated by Wire. DO NOT EDIT.
@@ -312,12 +312,12 @@ func initControllers(app *{{package_name}}.App) *Controllers {
 package controllers
 
 import (
-	{{service_name}} "{{PROPATH}}{{service_name}}/internal"
+	"{{.ProPath}}{{.ServerName}}/internal"
 )
 
 // Injectors from wire.go:
 
-func initControllers(app *{{package_name}}.App) *Controllers {
+func initControllers(app *{{.PackageName}}.App) *Controllers {
 	pingController := providePingController(app)
 	esimController := provideEsimController(app)
 	demoController := provideDemoController(app)
@@ -333,20 +333,20 @@ func initControllers(app *{{package_name}}.App) *Controllers {
 `,
 	}
 
-	fc8 := &FileContent{
+	ginfc8 = &FileContent{
 		FileName: "user_dto.go",
 		Dir:      "internal/transports/http/dto",
 		Content: `package dto
 
-import "{{PROPATH}}{{service_name}}/internal/domain/user/entity"
+import "{{.ProPath}}{{.ServerName}}/internal/domain/user/entity"
 
 type User struct {
 
 	//用户名称
-	UserName string {{!}}json:"user_name"{{!}}
+	UserName string {{.SingleMark}}json:"user_name"{{.SingleMark}}
 
 	//密码
-	PassWord string {{!}}json:"pass_word"{{!}}
+	PassWord string {{.SingleMark}}json:"pass_word"{{.SingleMark}}
 }
 
 func NewUser(user entity.User) User {
@@ -358,7 +358,7 @@ func NewUser(user entity.User) User {
 }`,
 	}
 
-	fc9 := &FileContent{
+	ginfc9 = &FileContent{
 		FileName: "main_test.go",
 		Dir:      "internal/transports/http/component-test",
 		Content: `package component_test
@@ -367,18 +367,18 @@ import (
 	"os"
 	"testing"
 	"context"
-	"{{PROPATH}}{{service_name}}/internal"
+	"{{.ProPath}}{{.ServerName}}/internal"
 	"github.com/jukylin/esim/container"
 	"github.com/jukylin/esim/grpc"
 	_grpc "google.golang.org/grpc"
-	"{{PROPATH}}{{service_name}}/internal/infra"
-	"{{PROPATH}}{{service_name}}/internal/transports/http"
+	"{{.ProPath}}{{.ServerName}}/internal/infra"
+	"{{.ProPath}}{{.ServerName}}/internal/transports/http"
 )
 
 
 func TestMain(m *testing.M) {
-	appOptions := {{package_name}}.AppOptions{}
-	app := {{package_name}}.NewApp(appOptions.WithConfPath("../../../../conf/"))
+	appOptions := {{.PackageName}}.AppOptions{}
+	app := {{.PackageName}}.NewApp(appOptions.WithConfPath("../../../../conf/"))
 
 	setUp(app)
 
@@ -410,7 +410,7 @@ func provideStubsGrpcClient(esim *container.Esim) *grpc.GrpcClient {
 }
 
 
-func setUp(app *{{package_name}}.App) {
+func setUp(app *{{.PackageName}}.App) {
 
 	app.Infra = infra.NewStubsInfra(provideStubsGrpcClient(app.Esim))
 
@@ -427,10 +427,13 @@ func setUp(app *{{package_name}}.App) {
 }
 
 
-func tearDown(app *{{package_name}}.App) {
+func tearDown(app *{{.PackageName}}.App) {
 	app.Infra.Close()
 }`,
 	}
 
-	Files = append(Files, fc1, fc2, fc3, fc4, fc5, fc6, fc7, fc8, fc9)
+	)
+
+func GinInit()  {
+	Files = append(Files, ginfc1, ginfc2, ginfc3, ginfc4, ginfc5, ginfc6, ginfc7, ginfc8, ginfc9)
 }

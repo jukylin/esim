@@ -1,7 +1,11 @@
 package new
 
-func RepoInit() {
-	fc1 := &FileContent{
+func init()  {
+	Files = append(Files, repofc1)
+}
+
+var(
+	repofc1 = &FileContent{
 		FileName: "user_repo.go",
 		Dir:      "internal/infra/repo",
 		Content: `package repo
@@ -9,8 +13,8 @@ func RepoInit() {
 import (
 	"context"
 	"github.com/jukylin/esim/log"
-	"{{PROPATH}}{{service_name}}/internal/domain/user/entity"
-	"{{PROPATH}}{{service_name}}/internal/infra/dao"
+	"{{.ProPath}}{{.ServerName}}/internal/domain/user/entity"
+	"{{.ProPath}}{{.ServerName}}/internal/infra/dao"
 )
 
 type UserRepo interface {
@@ -51,5 +55,4 @@ func (this *userRepo) FindByUserName(ctx context.Context, username string) entit
 `,
 	}
 
-	Files = append(Files, fc1)
-}
+)

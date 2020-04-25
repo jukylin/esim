@@ -40,7 +40,6 @@ func TestMain(m *testing.M) {
 
 	code := m.Run()
 
-
 	// You can't defer this because os.Exit doesn't care for defer
 	if err := pool.Purge(resource); err != nil {
 		logger.Fatalf("Could not purge resource: %s", err)
@@ -53,8 +52,8 @@ func TestMain(m *testing.M) {
 func TestGetProxyConn(t *testing.T) {
 	poolRedisOnce = sync.Once{}
 
-	redisClientOptions := RedisClientOptions{}
-	redisClent := NewRedisClient(
+	redisClientOptions := ClientOptions{}
+	redisClent := NewClient(
 		redisClientOptions.WithProxy(
 			func() interface{} {
 				monitorProxyOptions := MonitorProxyOptions{}
@@ -75,11 +74,11 @@ func TestGetProxyConn(t *testing.T) {
 func TestGetNotProxyConn(t *testing.T) {
 	poolRedisOnce = sync.Once{}
 
-	redisClientOptions := RedisClientOptions{}
+	redisClientOptions := ClientOptions{}
 	memConfig := config.NewMemConfig()
 	memConfig.Set("debug", true)
 
-	redisClent := NewRedisClient(
+	redisClent := NewClient(
 		redisClientOptions.WithConf(memConfig),
 		redisClientOptions.WithProxy(
 			func() interface{} {
@@ -102,11 +101,11 @@ func TestGetNotProxyConn(t *testing.T) {
 func TestMonitorProxy_Do(t *testing.T) {
 	poolRedisOnce = sync.Once{}
 
-	redisClientOptions := RedisClientOptions{}
+	redisClientOptions := ClientOptions{}
 	memConfig := config.NewMemConfig()
 	memConfig.Set("debug", true)
 
-	redisClent := NewRedisClient(
+	redisClent := NewClient(
 		redisClientOptions.WithConf(memConfig),
 		redisClientOptions.WithProxy(
 			func() interface{} {
@@ -131,13 +130,13 @@ func TestMonitorProxy_Do(t *testing.T) {
 func TestMulLevelProxy_Do(t *testing.T) {
 	poolRedisOnce = sync.Once{}
 
-	redisClientOptions := RedisClientOptions{}
+	redisClientOptions := ClientOptions{}
 	memConfig := config.NewMemConfig()
 	memConfig.Set("debug", true)
 
 	spyProxy := NewSpyProxy(log.NewLogger(), "spyProxy")
 
-	redisClent := NewRedisClient(
+	redisClent := NewClient(
 		redisClientOptions.WithConf(memConfig),
 		redisClientOptions.WithProxy(
 			func() interface{} {
@@ -165,17 +164,17 @@ func TestMulLevelProxy_Do(t *testing.T) {
 func TestMulGo_Do(t *testing.T) {
 	poolRedisOnce = sync.Once{}
 
-	redisClientOptions := RedisClientOptions{}
+	redisClientOptions := ClientOptions{}
 	memConfig := config.NewMemConfig()
 	memConfig.Set("debug", true)
 
-	redisClent := NewRedisClient(
+	redisClent := NewClient(
 		redisClientOptions.WithConf(memConfig),
-		//redisClientOptions.WithProxy(
-		//	func() ContextConn {
-		//		return NewStubsProxy(log.NewLogger(), "stubsProxy")
-		//	},
-		//),
+		redisClientOptions.WithProxy(
+			func() interface{} {
+				return NewStubsProxy(log.NewLogger(), "stubsProxy")
+			},
+		),
 	)
 
 	conn := redisClent.GetRedisConn()
@@ -210,11 +209,11 @@ func TestMulGo_Do(t *testing.T) {
 
 func Benchmark_MulGo_Do(b *testing.B) {
 
-	redisClientOptions := RedisClientOptions{}
+	redisClientOptions := ClientOptions{}
 	memConfig := config.NewMemConfig()
 	memConfig.Set("debug", true)
 
-	redisClent := NewRedisClient(
+	redisClent := NewClient(
 		redisClientOptions.WithConf(memConfig),
 	)
 
@@ -250,11 +249,11 @@ func Benchmark_MulGo_Do(b *testing.B) {
 
 func TestRedisClient_Stats(t *testing.T) {
 
-	redisClientOptions := RedisClientOptions{}
+	redisClientOptions := ClientOptions{}
 	memConfig := config.NewMemConfig()
 	memConfig.Set("debug", true)
 
-	redisClent := NewRedisClient(
+	redisClent := NewClient(
 		redisClientOptions.WithConf(memConfig),
 		redisClientOptions.WithStateTicker(10*time.Microsecond),
 	)

@@ -23,8 +23,8 @@ type {{.StructName}} struct{
 }`
 
 
-func (this StructInfo) String() string {
-	if this.StructName == "" {
+func (si StructInfo) String() string {
+	if si.StructName == "" {
 		return ""
 	}
 
@@ -35,7 +35,7 @@ func (this StructInfo) String() string {
 	}
 
 	var buf bytes.Buffer
-	err = tmpl.Execute(&buf, this)
+	err = tmpl.Execute(&buf, si)
 	if err != nil{
 		panic(err.Error())
 		return ""

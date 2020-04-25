@@ -1,12 +1,16 @@
 package new
 
-func ConfigInit() {
-	fc1 := &FileContent{
+func init()  {
+	Files = append(Files, configfc1, configfc2)
+}
+
+var (
+	configfc1 = &FileContent{
 		FileName: "conf.yaml",
 		Dir:      "conf",
 		Content: `
 runmode : '${ENV}'
-appname : {{service_name}}
+appname : {{.ServerName}}
 
 #HTTP 服务
 httpport : 8080
@@ -71,82 +75,81 @@ prometheus_http_addr : 9002
 `,
 	}
 
-	fc2 := &FileContent{
+	configfc2 = &FileContent{
 		FileName: "monitoring.yaml",
 		Dir:      "conf",
 		Content: `
 #grpc 服务端
 #开启慢检查 true/false
-grpc_server_check_slow : {{bool}}
+grpc_server_check_slow : {{.Monitoring}}
 #单位: ms
 grpc_server_slow_time : 500
 #开启 tracer true/false
-grpc_server_tracer : {{bool}}
+grpc_server_tracer : {{.Monitoring}}
 #启动metrice true/false
-grpc_server_metrics : {{bool}}
+grpc_server_metrics : {{.Monitoring}}
 #启动debug true/false
-grpc_server_debug: {{bool}}
+grpc_server_debug: {{.Monitoring}}
 
 #grpc 客户端
 #开启慢检查 true/false
-grpc_client_check_slow : {{bool}}
+grpc_client_check_slow : {{.Monitoring}}
 #单位: ms
 grpc_client_slow_time : 500
 #开启 tracer true/false
-grpc_client_tracer : {{bool}}
+grpc_client_tracer : {{.Monitoring}}
 #启动metrice true/false
-grpc_client_metrics : {{bool}}
+grpc_client_metrics : {{.Monitoring}}
 #启动debug true/false
-grpc_client_debug: {{bool}}
+grpc_client_debug: {{.Monitoring}}
 
 #mysql
 #开启慢检查 true/false
-mysql_check_slow : {{bool}}
+mysql_check_slow : {{.Monitoring}}
 # 大于 slow_sql_time 为慢sql 单位：ms
 mysql_slow_time : 500
 #开启 tracer true/false
-mysql_tracer : {{bool}}
+mysql_tracer : {{.Monitoring}}
 #启动metrice true/false
-mysql_metrics : {{bool}}
+mysql_metrics : {{.Monitoring}}
 
 #mongodb
 #开启慢检查 true/false
-mgo_check_slow : {{bool}}
+mgo_check_slow : {{.Monitoring}}
 # 大于 slow_sql_time 为慢命令 单位：ms
 mgo_slow_time : 250
 #开启 tracer true/false
-mgo_tracer : {{bool}}
+mgo_tracer : {{.Monitoring}}
 #启动metrice true/false
-mgo_metrics : {{bool}}
+mgo_metrics : {{.Monitoring}}
 
 
 # http client
 #开启慢检查 true/false
-http_client_check_slow : {{bool}}
+http_client_check_slow : {{.Monitoring}}
 #  单位：ms
 http_client_slow_time : 500
 #开启 tracer true/false
-http_client_tracer : {{bool}}
+http_client_tracer : {{.Monitoring}}
 #启动metrice true/false
-http_client_metrics : {{bool}}
+http_client_metrics : {{.Monitoring}}
 
 # http server
 #开启 tracer true/false
-http_tracer: {{bool}}
+http_tracer: {{.Monitoring}}
 #启动metrice true/false
-http_metrics: {{bool}}
+http_metrics: {{.Monitoring}}
 
 #redis
 #开启慢检查 true/false
-redis_check_slow : {{bool}}
+redis_check_slow : {{.Monitoring}}
 #慢命令 单位 ms
 redis_slow_time : 50
 #开启 tracer true/false
-redis_tracer : {{bool}}
+redis_tracer : {{.Monitoring}}
 #启动metrice true/false
-redis_metrics : {{bool}}
+redis_metrics : {{.Monitoring}}
 `,
 	}
 
-	Files = append(Files, fc1, fc2,)
-}
+)
