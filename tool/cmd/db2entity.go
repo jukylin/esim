@@ -43,19 +43,17 @@ func init() {
 
 	db2entityCmd.Flags().BoolP("gorm", "g", true, "Add gorm annotations (tags)")
 
-	db2entityCmd.Flags().StringP("target", "", "", "Save file path")
-
 	db2entityCmd.Flags().StringP("entity_target", "", "", "Save entity file path")
 
-	db2entityCmd.Flags().BoolP("disable_entity", "", false, "Disabled Save model")
+	db2entityCmd.Flags().BoolP("disable_entity", "", false, "Disable Save entity")
 
 	db2entityCmd.Flags().StringP("dao_target", "", "internal/infra/dao", "Save dao file path")
 
-	db2entityCmd.Flags().BoolP("disable_dao", "", false, "Disabled Save dao")
+	db2entityCmd.Flags().BoolP("disable_dao", "", false, "Disable Save dao")
 
 	db2entityCmd.Flags().StringP("repo_target", "", "internal/infra/repo", "Save dao file path")
 
-	db2entityCmd.Flags().BoolP("disable_repo", "", false, "Disabled Save repo")
+	db2entityCmd.Flags().BoolP("disable_repo", "", false, "Disable Save repo")
 
 	db2entityCmd.Flags().BoolP("inject", "i", true, "Automatic inject")
 
