@@ -7,16 +7,52 @@ import (
 	"github.com/jukylin/esim/tool/db2entity"
 	"os"
 	"github.com/jukylin/esim/log"
+	"github.com/jukylin/esim/tool/db2entity/domain-file"
+	"github.com/jukylin/esim/pkg/file-dir"
+	"github.com/jukylin/esim/pkg"
+	"github.com/jukylin/esim/pkg/templates"
 )
 
 var db2entityCmd = &cobra.Command{
 	Use:   "db2entity",
-	Short: "将数据库表结构生成实体",
+	Short: "table's fields to entity",
 	Long: ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		logger := log.NewLogger()
+
+		dbConf := domain_file.NewDbConfig()
+		dbConf.ParseConfig(v, logger)
+
+		//select table's columns from db
+		columnsInter := domain_file.NewDBColumnsInter(logger)
+
+		tpl := templates.NewTextTpl()
+
+		daoDomainFile := domain_file.NewDaoDomainFile(
+			domain_file.WithDaoDomainFileLogger(logger),
+			domain_file.WithDaoDomainFileTpl(tpl),
+		)
+
+		entityDomainFile := domain_file.NewEntityDomainFile(
+			domain_file.WithEntityDomainFileLogger(logger),
+			domain_file.WithEntityDomainFileTpl(tpl),
+		)
+
+		repoDomainFile := domain_file.NewRepoDomainFile(
+			domain_file.WithRepoDomainFileLogger(logger),
+			domain_file.WithRepoDomainFileTpl(tpl),
+		)
+
 		db2EntityOptions := db2entity.Db2EnOptions{}
-		db2entity.NewDb2Entity(db2EntityOptions.WithLogger(logger)).Run(v)
+		db2entity.NewDb2Entity(
+			db2EntityOptions.WithLogger(logger),
+			db2EntityOptions.WithDbConf(dbConf),
+			db2EntityOptions.WithColumnsInter(columnsInter),
+			db2EntityOptions.WithIfaceWrite(file_dir.NewEsimWriter()),
+			db2EntityOptions.WithInfraInfo(db2entity.NewInfraInfo()),
+			db2EntityOptions.WithExecer(pkg.NewCmdExec()),
+			db2EntityOptions.WithDomainFile(daoDomainFile, entityDomainFile, repoDomainFile),
+		).Run(v)
 	},
 }
 

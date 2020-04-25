@@ -13,7 +13,7 @@ const (
 //DomainFile
 type DomainFile interface {
 
-	//if true not need the domain file
+	//if true not need this domain file
 	Disabled() bool
 
 	BindInput(*viper.Viper) error
@@ -100,4 +100,15 @@ type ShareInfo struct {
 
 func NewShareInfo() *ShareInfo {
 	return &ShareInfo{}
+}
+
+func (shareInfo *ShareInfo) ParseInfo(obj interface{})  {
+	switch data := obj.(type) {
+	case *entityDomainFile:
+		shareInfo.WithEntityTarget = data.withEntityTarget
+	case *daoDomainFile:
+		shareInfo.WithDaoTarget = data.withDaoTarget
+	case *repoDomainFile:
+		shareInfo.WithRepoTarget = data.withRepoTarget
+	}
 }

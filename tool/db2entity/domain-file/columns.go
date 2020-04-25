@@ -27,7 +27,7 @@ const (
 )
 
 type ColumnsRepo interface {
-	GetColumns(dbConf DbConfig) ([]Column, error)
+	SelectColumns(dbConf *DbConfig) ([]Column, error)
 }
 
 type Column struct {
@@ -56,8 +56,8 @@ func NewDBColumnsInter(logger log.Logger) ColumnsRepo {
 	return dBColumnsInter
 }
 
-// GetColumns Select column details
-func (dc *DBColumnsInter) GetColumns(dbConf DbConfig) ([]Column, error) {
+// SelectColumns Select column details
+func (dc *DBColumnsInter) SelectColumns(dbConf *DbConfig) ([]Column, error) {
 
 	var err error
 	var db *gorm.DB

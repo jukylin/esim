@@ -19,33 +19,10 @@ import (
 	"bytes"
 	"golang.org/x/tools/imports"
 	"github.com/serenize/snaker"
+	"errors"
 )
 
 type Db2Entity struct {
-	WithDisabledRepo bool
-
-	WithRepoTarget string
-
-	WithDisabledDao bool
-
-	WithDaoTarget string
-
-	//true not create entity file
-	//false create a new entity file in withEntityTarget
-	WithDisabledEntity bool
-
-	WithEntityTarget string
-
-	//true inject repo to infra
-	withInject bool
-
-	logger logger.Logger
-
-	withBoubctx string
-
-	withPackage string
-
-	withStruct string
 
 	//Camel Form
 	CamelStruct string
@@ -56,10 +33,6 @@ type Db2Entity struct {
 
 	writer file_dir.IfaceWriter
 
-	withInfraDir string
-
-	withInfraFile string
-
 	hasInfraStruct bool
 
 	oldInfraInfo *infraInfo
@@ -67,6 +40,31 @@ type Db2Entity struct {
 	newInfraInfo *infraInfo
 
 	execer pkg.Exec
+
+	domainFiles []domain_file.DomainFile
+
+	//parsed content 
+	domainContent map[string]string
+
+	//record wrote content, if an error occurred roll back the file
+	wroteContent map[string]string
+
+	shareInfo *domain_file.ShareInfo
+
+	WithRepoTarget string
+
+	//true inject repo to infra
+	withInject bool
+
+	logger logger.Logger
+
+	withPackage string
+
+	withStruct string
+
+	withInfraDir string
+
+	withInfraFile string
 }
 
 type Db2EnOption func(*Db2Entity)
@@ -93,6 +91,8 @@ func NewDb2Entity(options ...Db2EnOption) *Db2Entity {
 		d.logger = logger.NewNullLogger()
 	}
 
+	d.domainContent = make(map[string]string)
+	
 	return d
 }
 
@@ -139,6 +139,18 @@ func (Db2EnOptions) WithDbConf(dbConf *domain_file.DbConfig) Db2EnOption {
 	}
 }
 
+func (Db2EnOptions) WithDomainFile(dfs ...domain_file.DomainFile) Db2EnOption {
+	return func(d *Db2Entity) {
+		d.domainFiles = dfs
+	}
+}
+
+func (Db2EnOptions) WithShareInfo(shareInfo *domain_file.ShareInfo) Db2EnOption {
+	return func(d *Db2Entity) {
+		d.shareInfo = shareInfo
+	}
+}
+
 type infraInfo struct {
 
 	imports pkg.Imports
@@ -181,6 +193,43 @@ func NewInfraInfo() *infraInfo {
 func (de *Db2Entity) Run(v *viper.Viper) error {
 	de.bindInput(v)
 
+	de.shareInfo.CamelStruct = de.CamelStruct
+
+	if len(de.domainFiles) < 0 {
+		return errors.New("not think")
+	}
+
+	//select table's columns
+	cs, err := de.ColumnsRepo.SelectColumns(de.DbConf)
+	if err != nil {
+		return err
+	}
+
+	var content string
+
+	//first loop domainFiles to generate domain File
+	for _, df := range de.domainFiles {
+		if !df.Disabled() {
+			err := df.BindInput(v)
+			if err != nil {
+				return err
+			}
+
+			de.shareInfo.ParseInfo(df)
+
+			df.ParseCloumns(cs, de.shareInfo)
+
+			//parsed template
+			content = df.Execute()
+
+			content = de.makeCodeBeautiful(content)
+			
+			de.domainContent[df.GetSavePath()] = content
+		}
+	}
+
+
+
 	de.injectToInfra()
 
 	return nil
@@ -205,8 +254,6 @@ func (de *Db2Entity) bindInput(v *viper.Viper) {
 
 	de.bindInfra(v)
 }
-
-
 
 func (de *Db2Entity) bindInfra(v *viper.Viper) {
 	de.withInject = v.GetBool("inject")
@@ -273,7 +320,8 @@ func (de *Db2Entity) injectToInfra() {
 //parseInfra parse infra.go 's content, find "import", "Infra" , "infraSet" and record origin syntax
 func (de *Db2Entity) parseInfra(srcStr string) bool {
 
-	fset := token.NewFileSet() // positions are relative to fset
+	// positions are relative to fset
+	fset := token.NewFileSet()
 	f, err := parser.ParseFile(fset, "", srcStr, parser.ParseComments)
 	if err != nil {
 		de.logger.Fatalf(err.Error())
@@ -362,7 +410,7 @@ func (de *Db2Entity) processNewInfra() bool {
 	de.newInfraInfo.infraSetArgs.Args = append(de.newInfraInfo.infraSetArgs.Args,
 		"provide" + de.CamelStruct + "Repo" + ",")
 	
-	imp := pkg.Import{Path: file_dir.GetGoProPath() + pkg.DirPathToImportPath(de.WithRepoTarget)}
+	imp := pkg.Import{Path: file_dir.GetGoProPath() + pkg.DirPathToImportPath(de.shareInfo.WithRepoTarget)}
 
 	de.newInfraInfo.imports = append(de.newInfraInfo.imports, imp)
 
@@ -376,7 +424,6 @@ func (de *Db2Entity) toStringNewInfra() {
 	de.newInfraInfo.structStr = de.newInfraInfo.structInfo.String()
 
 	de.newInfraInfo.infraSetStr = de.newInfraInfo.infraSetArgs.String()
-
 }
 
 func (de *Db2Entity) buildNewInfraString() {
@@ -416,23 +463,23 @@ func (de *Db2Entity) executeTmpl(tmplName string, data interface{}, text string)
 	return buf.String()
 }
 
+func (de *Db2Entity) makeCodeBeautiful(src string) string {
+	result, err := imports.Process("", []byte(src), nil)
+	if err != nil {
+		de.logger.Fatalf(err.Error())
+		return ""
+	}
+
+	return string(result)
+}
+
 func (de *Db2Entity) writeNewInfra() {
 
-	sourceSrc, err := format.Source([]byte(de.newInfraInfo.content))
-	if err != nil {
-		de.logger.Fatalf(err.Error())
-		return
-	}
-
-	processSrc, err := imports.Process("", sourceSrc, nil)
-	if err != nil {
-		de.logger.Fatalf(err.Error())
-		return
-	}
+	processSrc := de.makeCodeBeautiful(de.newInfraInfo.content)
 
 	de.writer.Write(de.withInfraDir + de.withInfraFile, string(processSrc))
 
-	err = de.execer.ExecWire(de.withInfraDir)
+	err := de.execer.ExecWire(de.withInfraDir)
 	if err != nil {
 		de.logger.Fatalf(err.Error())
 	}

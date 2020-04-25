@@ -10,20 +10,10 @@ import (
 	"os"
 	"path/filepath"
 	"github.com/jukylin/esim/tool/db2entity/domain-file"
+	"github.com/jukylin/esim/pkg/templates"
 )
 
 func TestDb2Entity_Run(t *testing.T) {
-
-	db2EntityOptions := Db2EnOptions{}
-	StubsColumnsRepo := domain_file.StubsColumnsRepo{}
-
-	db2Entity := NewDb2Entity(db2EntityOptions.WithLogger(log.NewLogger()),
-		db2EntityOptions.WithColumnsInter(StubsColumnsRepo),
-		db2EntityOptions.WithIfaceWrite(file_dir.NewEsimWriter()),
-		db2EntityOptions.WithInfraInfo(NewInfraInfo()),
-		db2EntityOptions.WithExecer(pkg.NewNullExec()),
-		db2EntityOptions.WithDbConf(domain_file.NewDbConfig()),
-	)
 
 	v := viper.New()
 	v.Set("entity_target", "./example/entity")
@@ -37,6 +27,44 @@ func TestDb2Entity_Run(t *testing.T) {
 	v.Set("passport", "")
 	v.Set("database", "user")
 	v.Set("table", "test_history")
+
+	logger := log.NewLogger()
+	tpl := templates.NewTextTpl()
+
+	dbConf := domain_file.NewDbConfig()
+	dbConf.ParseConfig(v, logger)
+
+	daoDomainFile := domain_file.NewDaoDomainFile(
+		domain_file.WithDaoDomainFileLogger(logger),
+		domain_file.WithDaoDomainFileTpl(tpl),
+	)
+
+	entityDomainFile := domain_file.NewEntityDomainFile(
+		domain_file.WithEntityDomainFileLogger(logger),
+		domain_file.WithEntityDomainFileTpl(tpl),
+	)
+
+	repoDomainFile := domain_file.NewRepoDomainFile(
+		domain_file.WithRepoDomainFileLogger(logger),
+		domain_file.WithRepoDomainFileTpl(tpl),
+	)
+
+	db2EntityOptions := Db2EnOptions{}
+	StubsColumnsRepo := domain_file.StubsColumnsRepo{}
+
+	shareInfo := domain_file.NewShareInfo()
+	shareInfo.DbConf = dbConf
+
+	db2Entity := NewDb2Entity(
+		db2EntityOptions.WithLogger(logger),
+		db2EntityOptions.WithColumnsInter(StubsColumnsRepo),
+		db2EntityOptions.WithIfaceWrite(file_dir.NewEsimWriter()),
+		db2EntityOptions.WithInfraInfo(NewInfraInfo()),
+		db2EntityOptions.WithExecer(pkg.NewNullExec()),
+		db2EntityOptions.WithDbConf(domain_file.NewDbConfig()),
+		db2EntityOptions.WithDomainFile(entityDomainFile, daoDomainFile, repoDomainFile),
+		db2EntityOptions.WithShareInfo(shareInfo),
+	)
 
 	err := db2Entity.Run(v)
 	assert.Nil(t, err)

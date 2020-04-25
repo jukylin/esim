@@ -11,7 +11,7 @@ import (
 func TestDBColumnsInter_GetColumns(t *testing.T) {
 	logger := log.NewLogger()
 	dbcColumns := NewDBColumnsInter(logger)
-	dbConf := DbConfig{
+	dbConf := &DbConfig{
 		Host:     "localhost",
 		Port:     3306,
 		User:     "root",
@@ -19,7 +19,7 @@ func TestDBColumnsInter_GetColumns(t *testing.T) {
 		Database: "test_1",
 		Table:    "test",
 	}
-	_, err := dbcColumns.GetColumns(dbConf)
+	_, err := dbcColumns.SelectColumns(dbConf)
 	assert.Nil(t, err)
 	//spew.Dump(columns)
 }
