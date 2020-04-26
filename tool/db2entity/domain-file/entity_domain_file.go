@@ -22,7 +22,7 @@ type entityDomainFile struct {
 
 	withDisbleEntity bool
 
-	tplName string
+	Name string
 
 	template string
 
@@ -46,7 +46,7 @@ func NewEntityDomainFile(options ...EntityDomainFileOption) DomainFile {
 		option(e)
 	}
 
-	e.tplName = "entity"
+	e.Name = "entity"
 
 	e.template = entityTemplate
 
@@ -205,7 +205,7 @@ func (edf *entityDomainFile) ParseCloumns(cs []Column, info *ShareInfo) {
 
 //execute implements DomainFile.
 func (edf *entityDomainFile) Execute() string {
-	content, err := edf.tpl.Execute(edf.tplName, edf.template, edf.data)
+	content, err := edf.tpl.Execute(edf.Name, edf.template, edf.data)
 	if err != nil {
 		edf.logger.Panicf(err.Error())
 	}
@@ -216,4 +216,8 @@ func (edf *entityDomainFile) Execute() string {
 //getSavePath implements DomainFile.
 func (edf *entityDomainFile) GetSavePath() string  {
 	return edf.withEntityTarget + edf.tableName + DOMAIN_File_EXT
+}
+
+func (edf *entityDomainFile) GetName() string {
+	return edf.Name
 }

@@ -21,7 +21,7 @@ type daoDomainFile struct {
 
 	withDisableDao bool
 
-	tplName string
+	Name string
 
 	template string
 
@@ -45,7 +45,7 @@ func NewDaoDomainFile(options ...DaoDomainFileOption) DomainFile {
 		option(e)
 	}
 
-	e.tplName = "dao"
+	e.Name = "dao"
 
 	e.template = daoTemplate
 
@@ -137,7 +137,7 @@ func (ddf *daoDomainFile) ParseCloumns(cs []Column, shareInfo *ShareInfo) {
 
 //Execute implements DomainFile.
 func (ddf *daoDomainFile) Execute() string {
-	content, err := ddf.tpl.Execute(ddf.tplName, ddf.template, ddf.data)
+	content, err := ddf.tpl.Execute(ddf.Name, ddf.template, ddf.data)
 	if err != nil {
 		ddf.logger.Panicf(err.Error())
 	}
@@ -148,4 +148,8 @@ func (ddf *daoDomainFile) Execute() string {
 //GetSavePath implements DomainFile.
 func (ddf *daoDomainFile) GetSavePath() string  {
 	return ddf.withDaoTarget + ddf.tableName + DOMAIN_File_EXT
+}
+
+func (ddf *daoDomainFile) GetName() string  {
+	return ddf.Name
 }

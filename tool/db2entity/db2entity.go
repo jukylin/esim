@@ -90,7 +90,8 @@ func NewDb2Entity(options ...Db2EnOption) *Db2Entity {
 	}
 
 	d.domainContent = make(map[string]string)
-	
+	d.wroteContent = make(map[string]string)
+
 	return d
 }
 
@@ -103,12 +104,6 @@ func (Db2EnOptions) WithLogger(logger logger.Logger) Db2EnOption {
 func (Db2EnOptions) WithColumnsInter(ColumnsRepo domain_file.ColumnsRepo) Db2EnOption {
 	return func(d *Db2Entity) {
 		d.ColumnsRepo = ColumnsRepo
-	}
-}
-
-func (Db2EnOptions) WithIfaceWrite(writer file_dir.IfaceWriter) Db2EnOption {
-	return func(d *Db2Entity) {
-		d.writer = writer
 	}
 }
 
@@ -198,14 +193,13 @@ func (de *Db2Entity) Run(v *viper.Viper) error {
 
 	defer func() {
 		if err := recover(); err != nil {
-			de.logger.Errorf("a panic occurred %s", err)
+			de.logger.Errorf("a panic occurred : %s", err)
 
-			if len(de.domainContent) > 0 {
-
-				for path, _ := range de.domainContent {
+			if len(de.wroteContent) > 0 {
+				for path, _ := range de.wroteContent {
+					de.logger.Debugf("remove %s", path)
 					os.RemoveAll(path)
 				}
-
 			}
 		}
 	}()
@@ -228,11 +222,12 @@ func (de *Db2Entity) Run(v *viper.Viper) error {
 
 	//loop domainFiles to generate domain file
 	for _, df := range de.domainFiles {
+		err := df.BindInput(v)
+		if err != nil {
+			return err
+		}
+
 		if !df.Disabled() {
-			err := df.BindInput(v)
-			if err != nil {
-				return err
-			}
 
 			de.shareInfo.ParseInfo(df)
 
@@ -244,6 +239,8 @@ func (de *Db2Entity) Run(v *viper.Viper) error {
 			content = de.makeCodeBeautiful(content)
 			
 			de.domainContent[df.GetSavePath()] = content
+		} else {
+			de.logger.Infof("disabled %s", df.GetName())
 		}
 	}
 
@@ -251,10 +248,12 @@ func (de *Db2Entity) Run(v *viper.Viper) error {
 	if len(de.domainContent) > 0 {
 
 		for path, content := range de.domainContent {
+			de.logger.Debugf("writing %s", path)
 			err = de.writer.Write(path, content)
 			if err != nil {
 				de.logger.Panicf(err.Error())
 			}
+			de.wroteContent[path] = content
 		}
 
 	}
@@ -280,6 +279,8 @@ func (de *Db2Entity) bindInput(v *viper.Viper) {
 	}
 	de.withStruct = stuctName
 	de.CamelStruct = snaker.SnakeToCamel(stuctName)
+
+	de.logger.Debugf("CamelStruct : %s", de.CamelStruct)
 
 	de.bindInfra(v)
 }
@@ -314,6 +315,7 @@ func (de *Db2Entity) bindInfra(v *viper.Viper) {
 func (de *Db2Entity) injectToInfra() {
 
 	if de.withInject == false {
+		de.logger.Infof("disable inject")
 		return
 	}
 
@@ -434,7 +436,7 @@ func (de *Db2Entity) processNewInfra() bool {
 	de.newInfraInfo.structInfo.Fields = append(de.newInfraInfo.structInfo.Fields, field)
 
 	de.newInfraInfo.infraSetArgs.Args = append(de.newInfraInfo.infraSetArgs.Args,
-		"provide" + de.CamelStruct + "Repo" + ",")
+		"provide" + de.CamelStruct + "Repo")
 	
 	imp := pkg.Import{Path: file_dir.GetGoProPath() + pkg.DirPathToImportPath(de.shareInfo.WithRepoTarget)}
 
@@ -482,7 +484,7 @@ func (de *Db2Entity) appendProvideFunc() string {
 func (de *Db2Entity) makeCodeBeautiful(src string) string {
 	result, err := imports.Process("", []byte(src), nil)
 	if err != nil {
-		de.logger.Panicf(err.Error())
+		de.logger.Panicf("err %s : %s", err.Error(), src)
 		return ""
 	}
 

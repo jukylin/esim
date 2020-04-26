@@ -1,5 +1,6 @@
 package file_dir
 
+import "errors"
 
 type IfaceWriter interface {
 	Write(outFile, content string) error
@@ -22,4 +23,25 @@ func NewEsimWriter() IfaceWriter {
 
 func (ew *EsimWriter) Write(outFile, content string) error {
 	return EsimWrite(outFile, content)
+}
+
+
+type ErrWrite struct{
+
+	nilNum int
+
+	count int
+}
+
+func NewErrWrite(nilNum int) IfaceWriter {
+	return &ErrWrite{nilNum: nilNum}
+}
+
+func (er *ErrWrite) Write(outFile, content string) error {
+	er.count++
+	if er.nilNum > 0 && er.nilNum >= er.count {
+		return nil
+	}
+
+	return errors.New("write error")
 }

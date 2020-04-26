@@ -18,7 +18,7 @@ type repoDomainFile struct {
 
 	withDisableRepo bool
 
-	tplName string
+	Name string
 
 	template string
 
@@ -42,7 +42,7 @@ func NewRepoDomainFile(options ...RepoDomainFileOption) DomainFile {
 		option(e)
 	}
 
-	e.tplName = "repo"
+	e.Name = "repo"
 
 	e.template = repoTemplate
 
@@ -124,7 +124,7 @@ func (rdf *repoDomainFile) ParseCloumns(cs []Column, info *ShareInfo) {
 
 //Execute implements DomainFile.
 func (rdf *repoDomainFile) Execute() string {
-	content, err := rdf.tpl.Execute(rdf.tplName, rdf.template, rdf.data)
+	content, err := rdf.tpl.Execute(rdf.Name, rdf.template, rdf.data)
 	if err != nil {
 		rdf.logger.Panicf(err.Error())
 	}
@@ -135,4 +135,8 @@ func (rdf *repoDomainFile) Execute() string {
 //GetSavePath implements DomainFile.
 func (rdf *repoDomainFile) GetSavePath() string  {
 	return rdf.withRepoTarget + rdf.tableName + DOMAIN_File_EXT
+}
+
+func (rdf *repoDomainFile) GetName() string {
+	return rdf.Name
 }

@@ -27,6 +27,8 @@ type DomainFile interface {
 
 	//save the domain file content path
 	GetSavePath() string
+
+	GetName() string
 }
 
 type DbConfig struct {
