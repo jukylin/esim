@@ -64,6 +64,7 @@ func TestDb2Entity_Run(t *testing.T) {
 		db2EntityOptions.WithDbConf(domain_file.NewDbConfig()),
 		db2EntityOptions.WithDomainFile(entityDomainFile, daoDomainFile, repoDomainFile),
 		db2EntityOptions.WithShareInfo(shareInfo),
+		db2EntityOptions.WithTpl(templates.NewTextTpl()),
 	)
 
 	err := db2Entity.Run(v)
