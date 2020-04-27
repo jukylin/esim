@@ -3,13 +3,13 @@ package domain_file
 import (
 	"path/filepath"
 	"strings"
+	"errors"
 
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
 	"github.com/spf13/viper"
 	"github.com/jukylin/esim/pkg"
-	"errors"
 )
 
 type repoDomainFile struct {
@@ -18,7 +18,9 @@ type repoDomainFile struct {
 
 	withDisableRepo bool
 
-	Name string
+	name string
+
+	shareInfo *ShareInfo
 
 	template string
 
@@ -42,7 +44,7 @@ func NewRepoDomainFile(options ...RepoDomainFileOption) DomainFile {
 		option(e)
 	}
 
-	e.Name = "repo"
+	e.name = "repo"
 
 	e.template = repoTemplate
 
@@ -101,6 +103,8 @@ func (rdf *repoDomainFile) BindInput(v *viper.Viper) error {
 //ParseCloumns implements DomainFile.
 func (rdf *repoDomainFile) ParseCloumns(cs []Column, info *ShareInfo) {
 
+	rdf.shareInfo = info
+
 	repoTpl := NewRepoTpl(info.CamelStruct)
 
 	if len(cs) < 1 {
@@ -124,7 +128,7 @@ func (rdf *repoDomainFile) ParseCloumns(cs []Column, info *ShareInfo) {
 
 //Execute implements DomainFile.
 func (rdf *repoDomainFile) Execute() string {
-	content, err := rdf.tpl.Execute(rdf.Name, rdf.template, rdf.data)
+	content, err := rdf.tpl.Execute(rdf.name, rdf.template, rdf.data)
 	if err != nil {
 		rdf.logger.Panicf(err.Error())
 	}
@@ -134,9 +138,36 @@ func (rdf *repoDomainFile) Execute() string {
 
 //GetSavePath implements DomainFile.
 func (rdf *repoDomainFile) GetSavePath() string  {
-	return rdf.withRepoTarget + rdf.tableName + DOMAIN_File_EXT
+	return rdf.withRepoTarget + rdf.tableName + DOMAIN_FILE_EXT
 }
 
 func (rdf *repoDomainFile) GetName() string {
-	return rdf.Name
+	return rdf.name
+}
+
+func (rdf *repoDomainFile) GetInjectInfo() *InjectInfo {
+	injectInfo := NewInjectInfo()
+
+	field := pkg.Field{}
+	field.Name = rdf.shareInfo.CamelStruct + "Repo"
+	field.Type = " repo." + rdf.shareInfo.CamelStruct + "Repo"
+	field.Field = field.Name + " " + field.Type
+	injectInfo.Fields = append(injectInfo.Fields, field)
+
+	injectInfo.InfraSetArgs = append(injectInfo.InfraSetArgs,
+		"provide" + rdf.shareInfo.CamelStruct + "Repo")
+
+	injectInfo.Imports = append(injectInfo.Imports,
+		pkg.Import{Path: file_dir.GetGoProPath() + pkg.DirPathToImportPath(rdf.shareInfo.WithRepoTarget)})
+
+	content, err :=  rdf.tpl.Execute("provide_tpl",
+		ProvideFuncTemplate, NewRepoTpl(rdf.shareInfo.CamelStruct))
+
+	if err != nil {
+		rdf.logger.Panicf(err.Error())
+	}
+
+	injectInfo.Provides = append(injectInfo.Provides, content)
+
+	return injectInfo
 }

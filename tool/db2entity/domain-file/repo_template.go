@@ -55,7 +55,7 @@ func ({{.StructName | shorten}} *{{.StructName}}) FindById(ctx context.Context, 
 	return {{.TableName | snakeToCamelLower}}
 }`
 
-var ProvideTemplate = `
+var ProvideFuncTemplate = `
 func provide{{.EntityName}}Repo(esim *container.Esim) repo.{{.EntityName}}Repo {
 	return repo.New{{.StructName}}(esim.Logger)
 }`

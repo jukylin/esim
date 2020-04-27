@@ -51,6 +51,8 @@ type Db2Entity struct {
 
 	shareInfo *domain_file.ShareInfo
 
+	injectInfos []*domain_file.InjectInfo
+
 	//true inject repo to infra
 	withInject bool
 
@@ -169,6 +171,11 @@ type infraInfo struct {
 	infraSetStr string
 
 	content string
+
+	provide []string
+
+	provideStr []string
+
 }
 
 func NewInfraInfo() *infraInfo {
@@ -239,6 +246,13 @@ func (de *Db2Entity) Run(v *viper.Viper) error {
 			content = de.makeCodeBeautiful(content)
 			
 			de.domainContent[df.GetSavePath()] = content
+
+			injectInfo := df.GetInjectInfo()
+
+			if injectInfo != nil {
+				de.injectInfos = append(de.injectInfos, injectInfo)
+			}
+
 		} else {
 			de.logger.Infof("disabled %s", df.GetName())
 		}
@@ -328,6 +342,10 @@ func (de *Db2Entity) injectToInfra() {
 
 	beautifulSource := de.sourceInfraFile()
 
+	if len(de.injectInfos) < 0 {
+		return
+	}
+
 	de.parseInfra(beautifulSource)
 
 	if de.hasInfraStruct {
@@ -337,7 +355,7 @@ func (de *Db2Entity) injectToInfra() {
 
 		de.toStringNewInfra()
 
-		de.buildNewInfraString()
+		de.buildNewInfraContent()
 
 		de.writeNewInfra()
 
@@ -429,18 +447,29 @@ func (de *Db2Entity) copyInfraInfo() {
 //processInfraInfo process newInfraInfo, append import, repo field and wire's provider
 func (de *Db2Entity) processNewInfra() bool {
 
-	field := pkg.Field{}
-	field.Name = de.CamelStruct + "Repo"
-	field.Type = " repo." + de.CamelStruct + "Repo"
-	field.Field = field.Name + " " + field.Type
-	de.newInfraInfo.structInfo.Fields = append(de.newInfraInfo.structInfo.Fields, field)
+	//field := pkg.Field{}
+	//field.Name = de.CamelStruct + "Repo"
+	//field.Type = " repo." + de.CamelStruct + "Repo"
+	//field.Field = field.Name + " " + field.Type
+	//
+	for _, injectInfo := range de.injectInfos {
+		de.newInfraInfo.structInfo.Fields = append(de.newInfraInfo.structInfo.Fields, injectInfo.Fields...)
 
-	de.newInfraInfo.infraSetArgs.Args = append(de.newInfraInfo.infraSetArgs.Args,
-		"provide" + de.CamelStruct + "Repo")
-	
-	imp := pkg.Import{Path: file_dir.GetGoProPath() + pkg.DirPathToImportPath(de.shareInfo.WithRepoTarget)}
+		de.newInfraInfo.infraSetArgs.Args = append(de.newInfraInfo.infraSetArgs.Args, injectInfo.InfraSetArgs...)
 
-	de.newInfraInfo.imports = append(de.newInfraInfo.imports, imp)
+		de.newInfraInfo.imports = append(de.newInfraInfo.imports, injectInfo.Imports...)
+
+		de.newInfraInfo.provide = append(de.newInfraInfo.provide, injectInfo.Provides...)
+	}
+
+	//de.newInfraInfo.structInfo.Fields = append(de.newInfraInfo.structInfo.Fields, field)
+	//
+	//de.newInfraInfo.infraSetArgs.Args = append(de.newInfraInfo.infraSetArgs.Args,
+	//	"provide" + de.CamelStruct + "Repo")
+	//
+	//imp := pkg.Import{Path: file_dir.GetGoProPath() + pkg.DirPathToImportPath(de.shareInfo.WithRepoTarget)}
+	//
+	//de.newInfraInfo.imports = append(de.newInfraInfo.imports, imp)
 
 	return true
 }
@@ -454,7 +483,7 @@ func (de *Db2Entity) toStringNewInfra() {
 	de.newInfraInfo.infraSetStr = de.newInfraInfo.infraSetArgs.String()
 }
 
-func (de *Db2Entity) buildNewInfraString() {
+func (de *Db2Entity) buildNewInfraContent() {
 
 	oldContent := de.oldInfraInfo.content
 

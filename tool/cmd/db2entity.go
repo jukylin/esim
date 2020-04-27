@@ -48,7 +48,7 @@ var db2entityCmd = &cobra.Command{
 			db2EntityOptions.WithLogger(logger),
 			db2EntityOptions.WithDbConf(dbConf),
 			db2EntityOptions.WithColumnsInter(columnsInter),
-			db2EntityOptions.WithIfaceWrite(file_dir.NewEsimWriter()),
+			db2EntityOptions.WithWriter(file_dir.NewEsimWriter()),
 			db2EntityOptions.WithInfraInfo(db2entity.NewInfraInfo()),
 			db2EntityOptions.WithExecer(pkg.NewCmdExec()),
 			db2EntityOptions.WithDomainFile(daoDomainFile, entityDomainFile, repoDomainFile),

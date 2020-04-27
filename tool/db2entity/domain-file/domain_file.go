@@ -1,13 +1,16 @@
 package domain_file
 
 import (
+	"bytes"
+	"text/template"
 	"github.com/spf13/viper"
 	"github.com/jukylin/esim/log"
+	"github.com/jukylin/esim/pkg"
 )
 
 
 const (
-	DOMAIN_File_EXT = ".go"
+	DOMAIN_FILE_EXT = ".go"
 )
 
 //DomainFile
@@ -18,7 +21,7 @@ type DomainFile interface {
 
 	BindInput(*viper.Viper) error
 
-	//parse columns Information for domain file object
+	//parse columns information for domain file object
 	ParseCloumns([]Column, *ShareInfo)
 
 	//applies a parsed template to the domain file object
@@ -29,6 +32,9 @@ type DomainFile interface {
 	GetSavePath() string
 
 	GetName() string
+
+	//
+	GetInjectInfo() *InjectInfo
 }
 
 type DbConfig struct {
@@ -113,4 +119,56 @@ func (shareInfo *ShareInfo) ParseInfo(obj interface{})  {
 	case *repoDomainFile:
 		shareInfo.WithRepoTarget = data.withRepoTarget
 	}
+}
+
+
+type InjectInfo struct {
+	Fields pkg.Fields
+
+	Imports pkg.Imports
+
+	InfraSetArgs []string
+
+	Provides []string
+}
+
+func NewInjectInfo() *InjectInfo {
+	injectInfo := &InjectInfo{}
+
+	return injectInfo
+}
+
+
+var provideTpl = `{{ range .Provides}}
+{{.Content}}
+{{end}}`
+
+
+type Provide struct {
+	Content string
+}
+
+type Provides []Provide
+
+func (ps Provides) Len() int {
+	return len(ps)
+}
+
+func (ps Provides) String() string {
+	if ps.Len() < 0 {
+		return ""
+	}
+
+	tmpl, err := template.New("provide_template").Parse(provideTpl)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	var buf bytes.Buffer
+	err = tmpl.Execute(&buf, struct{ Provides }{ps})
+	if err != nil {
+		panic(err.Error())
+	}
+
+	return buf.String()
 }
