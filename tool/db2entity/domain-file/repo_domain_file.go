@@ -167,7 +167,9 @@ func (rdf *repoDomainFile) GetInjectInfo() *InjectInfo {
 		rdf.logger.Panicf(err.Error())
 	}
 
-	injectInfo.Provides = append(injectInfo.Provides, content)
+	provide := Provide{}
+	provide.Content = content
+	injectInfo.Provides = append(injectInfo.Provides, provide)
 
 	return injectInfo
 }

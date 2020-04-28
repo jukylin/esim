@@ -82,13 +82,13 @@ func TestDb2Entity_Run(t *testing.T) {
 		os.Remove(path)
 	}
 
-	err = file_dir.EsimRecoverFile(file_dir.GetCurrentDir() +
-		string(filepath.Separator) + "example" + string(filepath.Separator) + "infra" + string(filepath.Separator) + "infra.go")
+	//err = file_dir.EsimRecoverFile(file_dir.GetCurrentDir() +
+	//	string(filepath.Separator) + "example" + string(filepath.Separator) + "infra" + string(filepath.Separator) + "infra.go")
 	assert.Nil(t, err)
 }
 
 
-func TestDb2Entity_Run_ErrWrite(t *testing.T) {
+func TestDb2Entity_ErrWrite(t *testing.T) {
 
 	v := viper.New()
 	v.Set("entity_target", "./example/entity")
@@ -153,7 +153,60 @@ func TestDb2Entity_Run_ErrWrite(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestDb2Entity_ParseInfra(t *testing.T) {
+func TestDb2Entity_BuildNewInfraContent(t *testing.T) {
+
+	expected := `package infra
+
+import (
+
+	//sync
+	//is a test
+	"sync"
+
+	"github.com/google/wire"
+	"github.com/jukylin/esim/container"
+	"github.com/jukylin/esim/redis"
+)
+
+var infraOnce sync.Once
+var onceInfra *Infra
+
+type Infra struct {
+
+	//Esim
+	*container.Esim
+
+	//redis
+	Redis redis.RedisClient
+
+	check bool
+
+	a int
+}
+
+var infraSet = wire.NewSet(
+	wire.Struct(new(Infra), "*"),
+	provideA,
+)
+
+func NewInfra() *Infra {
+	infraOnce.Do(func() {
+	})
+
+	return onceInfra
+}
+
+// Close close the infra when app stop
+func (this *Infra) Close() {
+}
+
+func (this *Infra) HealthCheck() []error {
+	var errs []error
+	return errs
+}
+func provideA() { println("test") }
+`
+
 	db2EntityOptions := Db2EnOptions{}
 	StubsColumnsRepo := domain_file.StubsColumnsRepo{}
 
@@ -166,17 +219,22 @@ func TestDb2Entity_ParseInfra(t *testing.T) {
 	)
 
 	assert.True(t, db2Entity.parseInfra(infraContent))
-}
 
-func TestDb2Entity_ProcessInfraInfo(t *testing.T)  {
-	db2EntityOptions := Db2EnOptions{}
+	injectInfo := domain_file.NewInjectInfo()
+	injectInfo.Imports = append(injectInfo.Imports, pkg.Import{Path: "time"})
+	injectInfo.Fields = append(injectInfo.Fields, pkg.Field{Field : "a int"})
+	injectInfo.InfraSetArgs = append(injectInfo.InfraSetArgs, "provideA")
+	injectInfo.Provides = append(injectInfo.Provides, domain_file.Provide{`func provideA() {println("test")}`})
 
-	db2Entity := NewDb2Entity(
-		db2EntityOptions.WithInfraInfo(NewInfraInfo()),
-		db2EntityOptions.WithShareInfo(domain_file.NewShareInfo()),
-		)
+	db2Entity.injectInfos = append(db2Entity.injectInfos, injectInfo)
 
-	db2Entity.withStruct = "Test"
+	db2Entity.copyInfraInfo()
 
-	assert.True(t, db2Entity.processNewInfra())
+	db2Entity.processNewInfra()
+
+	db2Entity.toStringNewInfra()
+
+	db2Entity.buildNewInfraContent()
+
+	assert.Equal(t, expected, db2Entity.makeCodeBeautiful(db2Entity.newInfraInfo.content))
 }

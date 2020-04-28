@@ -129,7 +129,7 @@ type InjectInfo struct {
 
 	InfraSetArgs []string
 
-	Provides []string
+	Provides Provides
 }
 
 func NewInjectInfo() *InjectInfo {

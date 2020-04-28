@@ -172,9 +172,9 @@ type infraInfo struct {
 
 	content string
 
-	provide []string
+	provides domain_file.Provides
 
-	provideStr []string
+	provideStr string
 
 }
 
@@ -447,11 +447,6 @@ func (de *Db2Entity) copyInfraInfo() {
 //processInfraInfo process newInfraInfo, append import, repo field and wire's provider
 func (de *Db2Entity) processNewInfra() bool {
 
-	//field := pkg.Field{}
-	//field.Name = de.CamelStruct + "Repo"
-	//field.Type = " repo." + de.CamelStruct + "Repo"
-	//field.Field = field.Name + " " + field.Type
-	//
 	for _, injectInfo := range de.injectInfos {
 		de.newInfraInfo.structInfo.Fields = append(de.newInfraInfo.structInfo.Fields, injectInfo.Fields...)
 
@@ -459,17 +454,8 @@ func (de *Db2Entity) processNewInfra() bool {
 
 		de.newInfraInfo.imports = append(de.newInfraInfo.imports, injectInfo.Imports...)
 
-		de.newInfraInfo.provide = append(de.newInfraInfo.provide, injectInfo.Provides...)
+		de.newInfraInfo.provides = append(de.newInfraInfo.provides, injectInfo.Provides...)
 	}
-
-	//de.newInfraInfo.structInfo.Fields = append(de.newInfraInfo.structInfo.Fields, field)
-	//
-	//de.newInfraInfo.infraSetArgs.Args = append(de.newInfraInfo.infraSetArgs.Args,
-	//	"provide" + de.CamelStruct + "Repo")
-	//
-	//imp := pkg.Import{Path: file_dir.GetGoProPath() + pkg.DirPathToImportPath(de.shareInfo.WithRepoTarget)}
-	//
-	//de.newInfraInfo.imports = append(de.newInfraInfo.imports, imp)
 
 	return true
 }
@@ -481,6 +467,8 @@ func (de *Db2Entity) toStringNewInfra() {
 	de.newInfraInfo.structStr = de.newInfraInfo.structInfo.String()
 
 	de.newInfraInfo.infraSetStr = de.newInfraInfo.infraSetArgs.String()
+
+	de.newInfraInfo.provideStr = de.newInfraInfo.provides.String()
 }
 
 func (de *Db2Entity) buildNewInfraContent() {
@@ -496,21 +484,11 @@ func (de *Db2Entity) buildNewInfraContent() {
 	de.newInfraInfo.content = strings.Replace(oldContent,
 		de.oldInfraInfo.infraSetStr, de.newInfraInfo.infraSetStr, -1)
 
-	de.newInfraInfo.content += de.appendProvideFunc()
-}
-
-func (de *Db2Entity) appendProvideFunc() string {
-	content, err :=  de.tpl.Execute("provide_tpl",
-		domain_file.ProvideTemplate, domain_file.NewRepoTpl(de.CamelStruct))
-
-	if err != nil {
-		de.logger.Panicf(err.Error())
-	}
-
-	return content
+	de.newInfraInfo.content += de.newInfraInfo.provideStr
 }
 
 func (de *Db2Entity) makeCodeBeautiful(src string) string {
+
 	result, err := imports.Process("", []byte(src), nil)
 	if err != nil {
 		de.logger.Panicf("err %s : %s", err.Error(), src)
