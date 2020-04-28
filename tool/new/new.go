@@ -9,10 +9,7 @@ import (
 	"golang.org/x/tools/imports"
 	"path/filepath"
 	"regexp"
-	"text/template"
-	"bytes"
 	"github.com/jukylin/esim/pkg/templates"
-	"io/ioutil"
 	"sync"
 )
 
@@ -31,18 +28,18 @@ type Project struct {
 
 	PackageName string
 
-	RunServer []string
+	RunTrans []string
 
 	ProPath string
 
 	ImportServer []string
 
-	//"true" or "false"
-	Monitoring string
-
 	SingleMark string
 
 	withMonitoring bool
+
+	//"true" or "false"
+	Monitoring string
 
 	logger logger.Logger
 
@@ -51,6 +48,10 @@ type Project struct {
 	withBeego bool
 
 	withGrpc bool
+
+	writer file_dir.IfaceWriter
+
+	tpl templates.Tpl
 }
 
 func NewProject(logger logger.Logger) *Project {
@@ -59,11 +60,15 @@ func NewProject(logger logger.Logger) *Project {
 
 	project.logger = logger
 
-	project.RunServer = make([]string, 0)
+	project.RunTrans = make([]string, 0)
 
 	project.ImportServer = make([]string, 0)
 
 	project.SingleMark = "`"
+
+	project.tpl = templates.NewTextTpl()
+
+	project.writer = file_dir.NewEsimWriter()
 
 	return project
 }
@@ -75,7 +80,7 @@ func (pj *Project) Run(v *viper.Viper) {
 
 	pj.getPackName()
 
-	pj.initServer()
+	pj.initTransport()
 
 	pj.createServerDir()
 
@@ -117,6 +122,7 @@ func (pj *Project) bindInput(v *viper.Viper) bool {
 	return true
 }
 
+//checkServerName ServerName only support lowercase ,"_", "-"
 func (pj *Project) checkServerName() bool {
 	match, err := regexp.MatchString("^[a-z_-]+$", pj.ServerName)
 	if err != nil {
@@ -152,31 +158,34 @@ func (pj *Project) getProPath()  {
 	pj.ProPath = currentDir
 }
 
-//PackName In most cases,  ServerName eq PackageName
+//getPackName in most cases,  ServerName eq PackageName
 func (pj *Project) getPackName() {
 	pj.PackageName = strings.Replace(pj.ServerName, "-", "_", -1)
 }
 
-func (pj *Project) initServer() {
+//initTransport initialization Transport mode to do the work
+func (pj *Project) initTransport() {
 	if pj.withGin == true {
 		GinInit()
-		pj.RunServer = append(pj.RunServer, "app.Trans = append(app.Trans, http.NewGinServer(app))")
+		pj.RunTrans = append(pj.RunTrans, "app.Trans = append(app.Trans, http.NewGinServer(app))")
 		pj.ImportServer = append(pj.ImportServer, pj.ProPath + pj.ServerName + "/internal/transports/http")
 	}
 
 	if pj.withBeego == true {
 		BeegoInit()
-		pj.RunServer = append(pj.RunServer, "app.Trans = append(app.Trans, http.NewBeegoServer(app.Esim))")
+		pj.RunTrans = append(pj.RunTrans, "app.Trans = append(app.Trans, http.NewBeegoServer(app.Esim))")
 		pj.ImportServer = append(pj.ImportServer, pj.ProPath + pj.ServerName + "/internal/transports/http")
 	}
 
 	if pj.withGrpc == true {
 		GrpcInit()
-		pj.RunServer = append(pj.RunServer, "app.Trans = append(app.Trans, grpc.NewGrpcServer(app))")
+		pj.RunTrans = append(pj.RunTrans, "app.Trans = append(app.Trans, grpc.NewGrpcServer(app))")
 		pj.ImportServer = append(pj.ImportServer, pj.ProPath + pj.ServerName + "/internal/transports/grpc")
 	}
 }
 
+//build create a new project locally
+//if an error occurred, remove the project
 func (pj *Project) build() bool {
 
 	pj.logger.Infof("starting create %s, package name %s", pj.ServerName, pj.PackageName)
@@ -211,7 +220,7 @@ func (pj *Project) build() bool {
 
 			fileName := dir + string(filepath.Separator) + file.FileName
 
-			content, err := pj.executeTmpl(file.FileName, file.Content)
+			content, err := pj.tpl.Execute(file.FileName,  file.Content, pj)
 			if err != nil {
 				pj.logger.Errorf("%s : %s", file.FileName, err.Error())
 				err = os.Remove(pj.ServerName)
@@ -221,7 +230,6 @@ func (pj *Project) build() bool {
 			}
 
 			var src []byte
-
 			if filepath.Ext(fileName) == ".go" {
 				src, err = imports.Process("", []byte(content), nil)
 				if err != nil {
@@ -230,13 +238,10 @@ func (pj *Project) build() bool {
 					if err != nil {
 						pj.logger.Fatalf("remove err : %s", err.Error())
 					}
-
 				}
-			}else{
-				src = []byte(content)
 			}
 
-			err = ioutil.WriteFile(fileName, src, 0666)
+			err = pj.writer.Write(fileName, string(src))
 			if err != nil {
 				pj.logger.Errorf("%s : %s", file.FileName, err.Error())
 				err = os.Remove(pj.ServerName)
@@ -253,20 +258,4 @@ func (pj *Project) build() bool {
 	wg.Wait()
 	pj.logger.Infof("creation complete : %s ", pj.ServerName)
 	return true
-}
-
-func (pj *Project) executeTmpl(tplName string, text string) ([]byte, error) {
-	tmpl, err := template.New(tplName).Funcs(templates.EsimFuncMap()).
-		Parse(text)
-	if err != nil{
-		return nil, err
-	}
-
-	var buf bytes.Buffer
-	err = tmpl.Execute(&buf, pj)
-	if err != nil{
-		return nil, err
-	}
-
-	return buf.Bytes(), nil
 }

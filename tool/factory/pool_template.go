@@ -3,6 +3,7 @@ package factory
 import (
 	"bytes"
 	"text/template"
+	"github.com/jukylin/esim/pkg/templates"
 )
 
 type PoolTpl struct {
@@ -15,7 +16,7 @@ func NewPoolTpl() PoolTpl {
 	return PoolTpl{}
 }
 
-var poolTemplate = `{{.VarPoolName}} = sync.Pool{
+var poolTemplate = `{{.VarPoolName | snakeToCamelLower | firstToLower}} = sync.Pool{
 	New: func() interface{} {
 		return &{{.StructName}}{}
 	},
@@ -23,8 +24,7 @@ var poolTemplate = `{{.VarPoolName}} = sync.Pool{
 `
 
 func (pt PoolTpl) String() string {
-
-	tmpl, err := template.New("pool_template").Parse(poolTemplate)
+	tmpl, err := template.New("pool_template").Funcs(templates.EsimFuncMap()).Parse(poolTemplate)
 	if err != nil{
 		panic(err.Error())
 	}

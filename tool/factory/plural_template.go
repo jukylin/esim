@@ -19,14 +19,14 @@ func NewPlural() Plural {
 }
 
 var pluralNewTemplate = `func New{{.PluralName}}() *{{.PluralName}} {
-	{{.PluralName | tolower}} := {{.PluralName | tolower}}Pool.Get().(*{{.PluralName}})
-	return {{.PluralName | tolower}}
+	{{.PluralName | snakeToCamelLower}} := {{.PluralName | snakeToCamelLower | firstToLower}}Pool.Get().(*{{.PluralName}})
+	return {{.PluralName | snakeToCamelLower}}
 }
 `
 
-var pluralreleaseTemplate = `func (pl *{{.PluralName}}) Release() {
-	*pl = (*pl)[:0]
-	{{.PluralName | tolower}}Pool.Put(pl)
+var pluralreleaseTemplate = `func ({{.PluralName | snakeToCamelLower | shorten}} *{{.PluralName}}) Release() {
+	*{{.PluralName | snakeToCamelLower | shorten}} = (*{{.PluralName | snakeToCamelLower | shorten}})[:0]
+	{{.PluralName | snakeToCamelLower | firstToLower}}Pool.Put({{.PluralName | snakeToCamelLower | shorten}})
 }
 `
 

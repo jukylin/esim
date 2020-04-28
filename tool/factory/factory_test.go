@@ -3,9 +3,7 @@ package factory
 import (
 	"os"
 	"testing"
-	//"strings"
 	"github.com/stretchr/testify/assert"
-	//"golang.org/x/tools/imports"
 	"github.com/jukylin/esim/pkg/file-dir"
 	"github.com/spf13/viper"
 	"github.com/jukylin/esim/pkg"
@@ -36,7 +34,7 @@ func setUp()  {
 
 func TestEsimFactory_Run(t *testing.T) {
 	v := viper.New()
-	v.Set("sname", "Test")
+	v.Set("sname", "TestHistory")
 	v.Set("option", true)
 	v.Set("sort", true)
 	v.Set("gen_logger_option", true)

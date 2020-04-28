@@ -4,7 +4,7 @@ import (
 	"github.com/jukylin/esim/pkg"
 )
 
-type Test struct {
+type TestHistory struct {
 	b int64
 
 	c int8

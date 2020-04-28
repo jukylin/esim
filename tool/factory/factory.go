@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"github.com/jukylin/esim/pkg"
 	"github.com/jukylin/esim/pkg/templates"
+	"github.com/serenize/snaker"
 )
 
 
@@ -646,7 +647,7 @@ func (ef *esimFactory) genStructInitStr() {
 			" := &" + ef.StructName + "{}"
 	}else if ef.withPool == true{
 		structInitStr = strings.ToLower(string(ef.StructName[0])) + ` := ` +
-			strings.ToLower(ef.StructName) + `Pool.Get().(*` +
+			templates.FirstToLower(snaker.SnakeToCamelLower(ef.StructName)) + `Pool.Get().(*` +
 				ef.StructName + `)`
 	}else{
 		structInitStr = strings.ToLower(string(ef.StructName[0]))  +
@@ -729,7 +730,7 @@ func (ef *esimFactory) genPlural() bool {
 }
 
 func (ef *esimFactory) incrPoolVar(StructName string) bool {
-	poolName := strings.ToLower(StructName) + "Pool"
+	poolName := StructName + "Pool"
 	if ef.varNameExists(ef.NewStructInfo.vars, poolName) == true {
 		ef.logger.Debugf("var is exists : %s", poolName)
 	} else {
@@ -772,7 +773,7 @@ func (ef *esimFactory) genSpecFieldInitStr()  {
 }
 
 func (ef *esimFactory) genReleaseStructStr(initFields []string) string {
-	str := "func (ef " + ef.NewStructInfo.ReturnVarStr + ") Release() {\n"
+	str := "func (" + templates.Shorten(snaker.SnakeToCamelLower(ef.StructName)) + "  " + ef.NewStructInfo.ReturnVarStr + ") Release() {\n"
 
 	for _, field := range ef.InitField.Fields {
 		if strings.Contains(field, "time.Time") {
@@ -781,38 +782,8 @@ func (ef *esimFactory) genReleaseStructStr(initFields []string) string {
 		str += "		" + field + "\n"
 	}
 
-	str += "		" + strings.ToLower(ef.StructName) +
-		"Pool.Put(ef)\n"
-	str += "}"
-
-	return str
-}
-
-func (ef *esimFactory) genNewPluralStr() string {
-	str := `func New` + ef.pluralName + `() *` + ef.pluralName + ` {
-	` + strings.ToLower(ef.pluralName) + ` := ` +
-		strings.ToLower(ef.pluralName) + `Pool.Get().(*` + ef.pluralName + `)
-`
-
-	str += `return ` + strings.ToLower(ef.pluralName) + `
-}
-`
-
-	return str
-}
-
-func (ef *esimFactory) genTypePluralStr() string {
-	return "type " + ef.pluralName + " []" + ef.StructName
-}
-
-
-func (ef *esimFactory) genReleasePluralStr() string {
-	str := "func (ef *" +
-		ef.pluralName + ") Release() {\n"
-
-	str += "*ef = (*ef)[:0]\n"
-	str += "		" + strings.ToLower(ef.pluralName) +
-		"Pool.Put(ef)\n"
+	str += "		" + templates.FirstToLower(snaker.SnakeToCamelLower(ef.StructName)) +
+		"Pool.Put(" + templates.Shorten(snaker.SnakeToCamelLower(ef.StructName)) + ")\n"
 	str += "}"
 
 	return str
