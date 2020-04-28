@@ -67,7 +67,7 @@ func (ModelImp) InitField() string {
 
 		writer := file_dir.NewEsimWriter()
 		rpcPlugin := factory.NewRpcPluginStructField(writer, log.NewLogger())
-		structFields := rpcPlugin.GenInitFieldStr(getType, "{{.StructName | snakeToCamelLower | shorten}}", string(strings.ToLower(getType.Name())[0]), fields)
+		structFields := rpcPlugin.GenInitFieldStr(getType, "{{.StructName | snakeToCamelLower | shorten}}", "{{.StructName | snakeToCamelLower | shorten}}", fields)
 
 		initReturn.SpecFields = *fields
 		initReturn.Fields = structFields

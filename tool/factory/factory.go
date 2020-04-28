@@ -643,14 +643,14 @@ func (ef *esimFactory) genOptionParam()  {
 func (ef *esimFactory) genStructInitStr() {
 	var structInitStr string
 	if ef.withStar == true{
-		structInitStr = strings.ToLower(string(ef.StructName[0]))  +
+		structInitStr = templates.Shorten(snaker.SnakeToCamelLower(ef.StructName))  +
 			" := &" + ef.StructName + "{}"
 	}else if ef.withPool == true{
-		structInitStr = strings.ToLower(string(ef.StructName[0])) + ` := ` +
+		structInitStr = templates.Shorten(snaker.SnakeToCamelLower(ef.StructName)) + ` := ` +
 			templates.FirstToLower(snaker.SnakeToCamelLower(ef.StructName)) + `Pool.Get().(*` +
 				ef.StructName + `)`
 	}else{
-		structInitStr = strings.ToLower(string(ef.StructName[0]))  +
+		structInitStr = templates.Shorten(snaker.SnakeToCamelLower(ef.StructName))  +
 			" := " + ef.StructName + "{}"
 	}
 
@@ -660,7 +660,7 @@ func (ef *esimFactory) genStructInitStr() {
 
 //return {{.ReturnStr}}
 func (ef *esimFactory) genReturnStr() {
-	ef.ReturnStr = strings.ToLower(string(ef.StructName[0]))
+	ef.ReturnStr = templates.Shorten(snaker.SnakeToCamelLower(ef.StructName))
 }
 
 
@@ -674,15 +674,15 @@ func (ef *esimFactory) genOptions()  {
 
 	ef.Option4 = `
 	for _, option := range options {
-		option(` + strings.ToLower(string(ef.StructName[0])) + `)
+		option(` + templates.Shorten(snaker.SnakeToCamelLower(ef.StructName)) + `)
 	}`
 
 	if ef.withGenConfOption == true{
 
 		ef.Option5 += `
 func (` + ef.StructName + `Options) WithConf(conf config.Config) ` + ef.StructName + `Option {
-	return func(` + string(ef.StructName[0]) + ` `+ ef.NewStructInfo.ReturnVarStr +`) {
-	` + string(ef.StructName[0]) + `.conf = conf
+	return func(` + templates.Shorten(snaker.SnakeToCamelLower(ef.StructName)) + ` `+ ef.NewStructInfo.ReturnVarStr +`) {
+	` + templates.Shorten(snaker.SnakeToCamelLower(ef.StructName)) + `.conf = conf
 	}
 }
 `
@@ -692,8 +692,8 @@ func (` + ef.StructName + `Options) WithConf(conf config.Config) ` + ef.StructNa
 	if ef.withGenLoggerOption == true {
 		ef.Option6 += `
 func (` + ef.StructName + `Options) WithLogger(logger log.Logger) ` + ef.StructName + `Option {
-	return func(` + string(ef.StructName[0]) + ` ` + ef.NewStructInfo.ReturnVarStr + `) {
-		` + string(ef.StructName[0]) + `.logger = logger
+	return func(` + templates.Shorten(snaker.SnakeToCamelLower(ef.StructName)) + ` ` + ef.NewStructInfo.ReturnVarStr + `) {
+		` + templates.Shorten(snaker.SnakeToCamelLower(ef.StructName)) + `.logger = logger
 	}
 }
 `
