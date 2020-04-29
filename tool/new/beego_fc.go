@@ -246,7 +246,7 @@ import (
 	"github.com/jukylin/esim/grpc"
 	_grpc "google.golang.org/grpc"
 	"github.com/jukylin/esim/container"
-	"{{.ProPath}}{{.ServerName}}/internal"
+	{{.PackageName}} "{{.ProPath}}{{.ServerName}}/internal"
 	"{{.ProPath}}{{.ServerName}}/internal/infra"
 	"{{.ProPath}}{{.ServerName}}/internal/transports/http"
 )

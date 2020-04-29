@@ -82,13 +82,13 @@ func (this *Infra) HealthCheck() []error {
 }
 
 
-func provideDb(esim *container.Esim) *mysql.MysqlClient {
+func provideDb(esim *container.Esim) *mysql.Client {
 
-	mysqlClientOptions := mysql.MysqlClientOptions{}
-	mysqlClent := mysql.NewMysqlClient(
-		mysqlClientOptions.WithConf(esim.Conf),
-		mysqlClientOptions.WithLogger(esim.Logger),
-		mysqlClientOptions.WithProxy(
+	clientOptions := mysql.ClientOptions{}
+	mysqlClent := mysql.NewClient(
+		clientOptions.WithConf(esim.Conf),
+		clientOptions.WithLogger(esim.Logger),
+		clientOptions.WithProxy(
 			func() interface{} {
 				monitorProxyOptions := mysql.MonitorProxyOptions{}
 				return mysql.NewMonitorProxy(

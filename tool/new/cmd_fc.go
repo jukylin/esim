@@ -32,7 +32,7 @@ import (
 	"github.com/spf13/cobra"
 {{ range $Import := .ImportServer}}"{{$Import}}"
 {{end}}
-	"{{.ProPath}}{{.ServerName}}/internal"
+	{{.PackageName}} "{{.ProPath}}{{.ServerName}}/internal"
 	"{{.ProPath}}{{.ServerName}}/internal/infra"
 )
 
@@ -47,7 +47,7 @@ var rootCmd = &cobra.Command{
 
 		app.Infra = infra.NewInfra()
 
-{{ range $Server := .RunServer}}{{$Server}}
+{{ range $Server := .RunTrans}}{{$Server}}
 {{end}}
 		app.Start()
 		app.AwaitSignal()
