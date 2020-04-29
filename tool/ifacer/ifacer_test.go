@@ -41,6 +41,11 @@ func (this TestStub) Iface10(arg0 Close) {
 	return
 }
 
+func (this TestStub) Iface11(arg0 ...interface{}) {
+
+	return
+}
+
 func (this TestStub) Iface2(ctx context.Context, found *bool) (result bool, err error) {
 
 	return

@@ -44,6 +44,8 @@ type Test interface {
 	Iface9(TestStruct, []TestStruct, [3]TestStruct)
 
 	Iface10(Close)
+
+	Iface11(...interface{})
 }
 
 

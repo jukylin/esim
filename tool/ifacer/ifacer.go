@@ -14,7 +14,6 @@ import (
 	"text/template"
 	"github.com/jukylin/esim/pkg/file-dir"
 	"fmt"
-	"go/format"
 	"github.com/jukylin/esim/pkg"
 )
 
@@ -101,16 +100,18 @@ func (f *Ifacer) Run(v *viper.Viper) error {
 		return err
 	}
 
-	iface, err := f.Parser.Find(f.IfaceName)
+	ifacer, err := f.Parser.Find(f.IfaceName)
 	if err != nil {
 		return err
 	}
-	f.PackageName = iface.Pkg.Name()
 
-	f.setNoConflictImport(iface.Pkg.Name(), iface.Pkg.Path())
-	f.ManageNoConflictImport(iface.Pkg.Imports())
 
-	f.GenMethods(iface.Type)
+	f.PackageName = ifacer.Pkg.Name()
+
+	f.setNoConflictImport(ifacer.Pkg.Name(), ifacer.Pkg.Path())
+	f.ManageNoConflictImport(ifacer.Pkg.Imports())
+
+	f.GenMethods(ifacer.Type)
 
 	f.getUsingImportStr()
 
@@ -167,7 +168,7 @@ func (f *Ifacer) GenMethods(interacer *types.Interface) {
 		m.ReturnStr = "return "
 
 		m.FuncName = fn.Name()
-		f.getArgStr(ftype.Params(), m)
+		f.getArgStr(ftype.Params(), m, ftype.Variadic())
 		f.getReturnStr(ftype.Results(), m)
 		f.Methods = append(f.Methods, *m)
 	}
@@ -252,31 +253,33 @@ func (f *Ifacer) getUniqueImportName(pkgName string, level int) string {
 }
 
 
-func (f *Ifacer) getArgStr(tuple *types.Tuple, m *Method) {
-	if tuple.Len() > 0 {
-		for i := 0; i < tuple.Len(); i++ {
-			ArgVar := tuple.At(i)
-			if ArgVar.Name() != "" {
-				m.ArgStr += ArgVar.Name() + " "
-			} else {
-				m.ArgStr += "arg" + strconv.Itoa(i) + " "
-			}
+func (f *Ifacer) getArgStr(tuple *types.Tuple, m *Method, variadic bool) {
+	for i := 0; i < tuple.Len(); i++ {
+		ArgVar := tuple.At(i)
+		if ArgVar.Name() != "" {
+			m.ArgStr += ArgVar.Name() + " "
+		} else {
+			m.ArgStr += "arg" + strconv.Itoa(i) + " "
+		}
 
-			m.ArgStr += f.parseVar(ArgVar)
+		if i == tuple.Len() - 1 {
+			m.ArgStr += f.parseVar(ArgVar, variadic)
+		} else {
+			m.ArgStr += f.parseVar(ArgVar, false)
+		}
 
-			if i < tuple.Len()-1 {
-				m.ArgStr += ", "
-			}
+		if i < tuple.Len()-1 {
+			m.ArgStr += ", "
 		}
 	}
 }
 
 
-func (f *Ifacer) parseVar(varObj *types.Var) string {
-	return f.parseVarType(varObj.Type())
+func (f *Ifacer) parseVar(varObj *types.Var, variadic bool) string {
+	return f.parseVarType(varObj.Type(), variadic)
 }
 
-func (f *Ifacer) parseVarType(typ types.Type) string {
+func (f *Ifacer) parseVarType(typ types.Type, variadic bool) string {
 
 	var varType string
 
@@ -291,13 +294,17 @@ func (f *Ifacer) parseVarType(typ types.Type) string {
 		varType += t.Obj().Name()
 	case *types.Pointer:
 		varType = "*"
-		varType += f.parseVarType(t.Elem())
+		varType += f.parseVarType(t.Elem(), false)
 	case *types.Slice:
-		varType = "[]"
-		varType += f.parseVarType(t.Elem())
+		if variadic == true {
+			varType = "..."
+		} else {
+			varType = "[]"
+		}
+		varType += f.parseVarType(t.Elem(), false)
 	case *types.Array:
 		varType = fmt.Sprintf("[%d]", t.Len())
-		varType += f.parseVarType(t.Elem())
+		varType += f.parseVarType(t.Elem(), false)
 	case *types.Chan:
 		switch t.Dir() {
 		case types.SendRecv:
@@ -307,10 +314,10 @@ func (f *Ifacer) parseVarType(typ types.Type) string {
 		default:
 			varType += "chan<- "
 		}
-		varType += f.parseVarType(t.Elem())
+		varType += f.parseVarType(t.Elem(), false)
 	case *types.Map:
-		key := f.parseVarType(t.Key())
-		val := f.parseVarType(t.Elem())
+		key := f.parseVarType(t.Key(), false)
+		val := f.parseVarType(t.Elem(), false)
 		varType = fmt.Sprintf("map[%s]%s", key, val)
 	case *types.Signature:
 		varType = fmt.Sprintf(
@@ -332,7 +339,7 @@ func (f *Ifacer) parseTypeTuple(tup *types.Tuple) string {
 	for i := 0; i < tup.Len(); i++ {
 		v := tup.At(i)
 
-		parts = append(parts, f.parseVar(v))
+		parts = append(parts, f.parseVar(v, false))
 	}
 
 	return strings.Join(parts, " , ")
@@ -344,12 +351,12 @@ func (f *Ifacer) getReturnStr(tuple *types.Tuple, m *Method) {
 		m.ReturnTypeStr += "("
 		for i := 0; i < tuple.Len(); i++ {
 			ArgVar := tuple.At(i)
-			m.ReturnTypeStr += ArgVar.Name() + " " + f.parseVar(ArgVar)
+			m.ReturnTypeStr += ArgVar.Name() + " " + f.parseVar(ArgVar, false)
 			var returnVarName string
 			if ArgVar.Name() == "" {
 				returnVarName = "r" + strconv.Itoa(i)
 				m.InitReturnVarStr += "	var " + returnVarName + " "
-				m.InitReturnVarStr += f.parseVar(ArgVar) + " \r\n"
+				m.InitReturnVarStr += f.parseVar(ArgVar, false) + " \r\n"
 			}
 
 			m.ReturnStr += returnVarName + ","
@@ -373,13 +380,8 @@ func (f *Ifacer) Process() error {
 	if err != nil {
 		return err
 	}
-
-	sourceSrc, err := format.Source(buf.Bytes())
-	if err != nil {
-		return err
-	}
 	
-	src, err := imports.Process("", sourceSrc, nil)
+	src, err := imports.Process("", buf.Bytes(), nil)
 	if err != nil {
 		return err
 	}
