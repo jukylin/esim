@@ -8,9 +8,9 @@ import (
 )
 
 type Exec interface {
-	ExecWire(string) error
+	ExecWire(string, ...string) error
 
-	ExecFmt(string) error
+	ExecFmt(string, ...string) error
 }
 
 type CmdExec struct{}
@@ -19,16 +19,28 @@ func NewCmdExec() Exec {
 	return &CmdExec{}
 }
 
-type NullExec struct{}
+func (ce *CmdExec) ExecWire(dir string, args ...string) error {
 
-func NewNullExec() Exec {
-	return &NullExec{}
+	cmd := exec.Command("wire", args...)
+	cmd.Dir = dir
+
+	cmd.Env = os.Environ()
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Run()
+
+	return err
 }
 
-func (ce *CmdExec) ExecWire(dir string) error {
-	cmdLine := fmt.Sprintf("wire")
+func (ce *CmdExec) ExecFmt(dir string, args ...string) error {
+	return nil
+}
 
-	args := strings.Split(cmdLine, " ")
+func (ce *CmdExec) ExecBuild(dir string, args ...string) error {
+	cmdLine := fmt.Sprintf("go build")
+
+	args = append(strings.Split(cmdLine, " "), args...)
 
 	cmd := exec.Command(args[0], args[1:]...)
 	cmd.Dir = dir
@@ -42,14 +54,20 @@ func (ce *CmdExec) ExecWire(dir string) error {
 	return err
 }
 
-func (ce *CmdExec) ExecFmt(dir string) error {
+type NullExec struct{}
+
+func NewNullExec() Exec {
+	return &NullExec{}
+}
+
+func (ce *NullExec) ExecWire(dir string, args ...string) error {
 	return nil
 }
 
-func (ce *NullExec) ExecWire(dir string) error {
+func (ce *NullExec) ExecFmt(dir string, args ...string) error {
 	return nil
 }
 
-func (ce *NullExec) ExecFmt(dir string) error {
+func (ce *NullExec) ExecBuild(dir string, args ...string) error {
 	return nil
 }

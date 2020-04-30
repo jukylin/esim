@@ -4,13 +4,12 @@ import (
 	"github.com/spf13/viper"
 	"github.com/jukylin/esim/pkg/file-dir"
 	logger "github.com/jukylin/esim/log"
-	"os"
 	"strings"
 	"golang.org/x/tools/imports"
 	"path/filepath"
 	"regexp"
 	"github.com/jukylin/esim/pkg/templates"
-	"sync"
+	//"sync"
 )
 
 var (
@@ -23,6 +22,7 @@ type FileContent struct {
 	Content  string `json:"context"`
 }
 
+//Project
 type Project struct {
 	ServerName string
 
@@ -54,11 +54,17 @@ type Project struct {
 	tpl templates.Tpl
 }
 
-func NewProject(logger logger.Logger) *Project {
+type ProjectOption func(*Project)
+
+type ProjectOptions struct{}
+
+func NewProject(options ...ProjectOption) *Project {
 
 	project := &Project{}
 
-	project.logger = logger
+	for _, option := range options {
+		option(project)
+	}
 
 	project.RunTrans = make([]string, 0)
 
@@ -66,11 +72,25 @@ func NewProject(logger logger.Logger) *Project {
 
 	project.SingleMark = "`"
 
-	project.tpl = templates.NewTextTpl()
-
-	project.writer = file_dir.NewEsimWriter()
-
 	return project
+}
+
+func WithProjectLogger(logger logger.Logger) ProjectOption {
+	return func(pj *Project) {
+		pj.logger = logger
+	}
+}
+
+func WithProjectWriter(writer file_dir.IfaceWriter) ProjectOption {
+	return func(pj *Project) {
+		pj.writer = writer
+	}
+}
+
+func WithProjectTpl(tpl templates.Tpl) ProjectOption {
+	return func(pj *Project) {
+		pj.tpl = tpl
+	}
 }
 
 func (pj *Project) Run(v *viper.Viper) {
@@ -82,7 +102,7 @@ func (pj *Project) Run(v *viper.Viper) {
 
 	pj.initTransport()
 
-	pj.createServerDir()
+	pj.createDir()
 
 	pj.build()
 }
@@ -132,7 +152,7 @@ func (pj *Project) checkServerName() bool {
 	return match
 }
 
-func (pj *Project) createServerDir() bool {
+func (pj *Project) createDir() bool {
 	exists, err := file_dir.IsExistsDir(pj.ServerName)
 	if err != nil {
 		pj.logger.Fatalf(err.Error())
@@ -145,6 +165,23 @@ func (pj *Project) createServerDir() bool {
 	err = file_dir.CreateDir(pj.ServerName)
 	if err != nil {
 		pj.logger.Fatalf(err.Error())
+	}
+
+	return true
+}
+
+func (pj *Project) delDir() bool {
+	dirExists, err := file_dir.IsExistsDir(pj.ServerName)
+	if err != nil {
+		pj.logger.Errorf(err.Error())
+	}
+
+	if dirExists {
+		err = file_dir.RemoveDir(pj.ServerName)
+		if err != nil {
+			pj.logger.Errorf("remove err : %s", err.Error())
+		}
+		pj.logger.Infof("remove %s success", pj.ServerName)
 	}
 
 	return true
@@ -190,72 +227,52 @@ func (pj *Project) build() bool {
 
 	pj.logger.Infof("starting create %s, package name %s", pj.ServerName, pj.PackageName)
 
-	wg := sync.WaitGroup{}
-	wg.Add(len(Files))
+	defer func() {
+		if err := recover(); err != nil {
+			pj.delDir()
+		}
+	}()
 
-	for _, f := range Files {
-		go func(file *FileContent) {
-			dir := pj.ServerName + string(filepath.Separator) + file.Dir
+	for _, file := range Files {
+		dir := pj.ServerName + string(filepath.Separator) + file.Dir
 
-			exists, err := file_dir.IsExistsDir(dir)
+		exists, err := file_dir.IsExistsDir(dir)
+		if err != nil {
+			pj.logger.Panicf("%s : %s", file.FileName, err.Error())
+		}
+
+		if exists == false {
+			err = file_dir.CreateDir(dir)
 			if err != nil {
-				pj.logger.Errorf("%s : %s", file.FileName, err.Error())
-				err = os.Remove(pj.ServerName)
-				if err != nil {
-					pj.logger.Fatalf("remove err : %s", err.Error())
-				}
-
+				pj.logger.Panicf("%s : %s", file.FileName, err.Error())
 			}
+		}
 
-			if exists == false {
-				err = file_dir.CreateDir(dir)
-				if err != nil {
-					pj.logger.Errorf("%s : %s", file.FileName, err.Error())
-					err = os.Remove(pj.ServerName)
-					if err != nil {
-						pj.logger.Fatalf("remove err : %s", err.Error())
-					}
-				}
-			}
+		fileName := dir + string(filepath.Separator) + file.FileName
 
-			fileName := dir + string(filepath.Separator) + file.FileName
+		content, err := pj.tpl.Execute(file.FileName,  file.Content, pj)
+		if err != nil {
+			pj.logger.Panicf("%s : %s", file.FileName, err.Error())
+		}
 
-			content, err := pj.tpl.Execute(file.FileName,  file.Content, pj)
+		var src []byte
+		if filepath.Ext(fileName) == ".go" {
+			src, err = imports.Process("", []byte(content), nil)
 			if err != nil {
-				pj.logger.Errorf("%s : %s", file.FileName, err.Error())
-				err = os.Remove(pj.ServerName)
-				if err != nil {
-					pj.logger.Fatalf("remove err : %s", err.Error())
-				}
+				pj.logger.Panicf("%s : %s", file.FileName, err.Error())
 			}
+		} else {
+			src = []byte(content)
+		}
 
-			var src []byte
-			if filepath.Ext(fileName) == ".go" {
-				src, err = imports.Process("", []byte(content), nil)
-				if err != nil {
-					pj.logger.Errorf("%s : %s", file.FileName, err.Error())
-					err = os.Remove(pj.ServerName)
-					if err != nil {
-						pj.logger.Fatalf("remove err : %s", err.Error())
-					}
-				}
-			}
+		err = pj.writer.Write(fileName, string(src))
+		if err != nil {
+			pj.logger.Panicf("%s : %s", file.FileName, err.Error())
+		}
 
-			err = pj.writer.Write(fileName, string(src))
-			if err != nil {
-				pj.logger.Errorf("%s : %s", file.FileName, err.Error())
-				err = os.Remove(pj.ServerName)
-				if err != nil {
-					pj.logger.Fatalf("remove err : %s", err.Error())
-				}
-			}
-
-			pj.logger.Infof("wrote success : %s", fileName)
-			wg.Done()
-		}(f)
+		pj.logger.Infof("wrote success : %s", fileName)
 	}
 
-	wg.Wait()
 	pj.logger.Infof("creation complete : %s ", pj.ServerName)
 	return true
 }

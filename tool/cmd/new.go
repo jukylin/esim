@@ -4,6 +4,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/jukylin/esim/tool/new"
 	"github.com/jukylin/esim/log"
+	"github.com/jukylin/esim/pkg/file-dir"
+	"github.com/jukylin/esim/pkg/templates"
 )
 
 // grpcCmd represents the grpc command
@@ -12,9 +14,12 @@ var newCmd = &cobra.Command{
 	Short: "create a new project",
 	Long: ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		loggerOptions := log.LoggerOptions{}
-		log := log.NewLogger(loggerOptions.WithDebug(true))
-		new.NewProject(log).Run(v)
+		logger := log.NewLogger()
+		new.NewProject(
+			new.WithProjectLogger(logger),
+			new.WithProjectWriter(file_dir.NewEsimWriter()),
+			new.WithProjectTpl(templates.NewTextTpl()),
+		).Run(v)
 	},
 }
 

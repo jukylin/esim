@@ -7,11 +7,37 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/jukylin/esim/pkg/file-dir"
+	"github.com/jukylin/esim/pkg/templates"
 )
 
 
 func TestProject_Run(t *testing.T) {
-	project := NewProject(log.NewLogger())
+	project := NewProject(
+		WithProjectLogger(log.NewLogger()),
+		WithProjectWriter(file_dir.NewEsimWriter()),
+		WithProjectTpl(templates.NewTextTpl()),
+	)
+
+	v := viper.New()
+
+	v.Set("server_name", "example-a")
+	v.Set("gin", true)
+
+	project.Run(v)
+
+	exists, err := file_dir.IsExistsDir("example-a")
+	assert.Nil(t, err)
+	if exists {
+		os.RemoveAll("example-a")
+	}
+}
+
+func TestProject_ErrRun(t *testing.T) {
+	project := NewProject(
+		WithProjectLogger(log.NewLogger()),
+		WithProjectWriter(file_dir.NewErrWrite(3)),
+		WithProjectTpl(templates.NewTextTpl()),
+	)
 
 	v := viper.New()
 
@@ -28,7 +54,7 @@ func TestProject_Run(t *testing.T) {
 }
 
 func TestProject_GetPackName(t *testing.T) {
-	project := NewProject(log.NewNullLogger())
+	project := NewProject(WithProjectLogger(log.NewNullLogger()))
 
 	testCases := []struct{
 		caseName string
@@ -50,7 +76,7 @@ func TestProject_GetPackName(t *testing.T) {
 }
 
 func TestProject_CheckServiceName(t *testing.T) {
-	project := NewProject(log.NewNullLogger())
+	project := NewProject(WithProjectLogger(log.NewNullLogger()))
 
 	testCases := []struct{
 		caseName string
@@ -73,21 +99,10 @@ func TestProject_CheckServiceName(t *testing.T) {
 }
 
 func TestProject_BindInput(t *testing.T) {
-	project := NewProject(log.NewNullLogger())
+	project := NewProject(WithProjectLogger(log.NewNullLogger()))
 
 	v := viper.New()
 	v.Set("service_name", "example")
 
 	project.bindInput(v)
-}
-
-func TestProject_ExecuteTmpl(t *testing.T) {
-	project := NewProject(log.NewNullLogger())
-	project.ServerName = "test"
-
-	text := `/{{.ServerName}}`
-
-	result, err := project.executeTmpl("test", text)
-	assert.Nil(t, err)
-	assert.Equal(t, "/test", string(result))
 }
