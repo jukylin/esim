@@ -6,6 +6,8 @@ import (
 	"github.com/jukylin/esim/pkg/file-dir"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	"github.com/jukylin/esim/log"
+	"github.com/jukylin/esim/pkg/templates"
 )
 
 var Result = `package example1
@@ -19,74 +21,74 @@ import (
 
 type TestStub struct{}
 
-func (this TestStub) Close(arg0 string, arg1 int) error {
+func (ts TestStub) Close(arg0 string, arg1 int) error {
 	var r0 error
 
 	return r0
 }
 
-func (this TestStub) Err() error {
+func (ts TestStub) Err() error {
 	var r0 error
 
 	return r0
 }
 
-func (this TestStub) Iface1(arg0 func(string) string) (result bool, pool redis.Pool) {
+func (ts TestStub) Iface1(arg0 func(string) string) (result bool, pool redis.Pool) {
 
 	return
 }
 
-func (this TestStub) Iface10(arg0 Close) {
+func (ts TestStub) Iface10(arg0 Close) {
 
 	return
 }
 
-func (this TestStub) Iface11(arg0 ...interface{}) {
+func (ts TestStub) Iface11(arg0 ...interface{}) {
 
 	return
 }
 
-func (this TestStub) Iface2(ctx context.Context, found *bool) (result bool, err error) {
+func (ts TestStub) Iface2(ctx context.Context, found *bool) (result bool, err error) {
 
 	return
 }
 
-func (this TestStub) Iface3() (f func(repo.Repo) string) {
+func (ts TestStub) Iface3() (f func(repo.Repo) string) {
 
 	return
 }
 
-func (this TestStub) Iface4(arg0 map[string]*redis.Client) map[string]string {
+func (ts TestStub) Iface4(arg0 map[string]*redis.Client) map[string]string {
 	var r0 map[string]string
 
 	return r0
 }
 
-func (this TestStub) Iface5(redisClient *redis.Client) *redis.Client {
+func (ts TestStub) Iface5(redisClient *redis.Client) *redis.Client {
 	var r0 *redis.Client
 
 	return r0
 }
 
-func (this TestStub) Iface6(redisClient redis.Client) redis.Client {
+func (ts TestStub) Iface6(redisClient redis.Client) redis.Client {
 	var r0 redis.Client
 
 	return r0
 }
 
-func (this TestStub) Iface7(arg0 chan<- bool, arg1 chan<- redis.Client) <-chan bool {
+func (ts TestStub) Iface7(arg0 chan<- bool, arg1 chan<- redis.Client) <-chan bool {
 	var r0 <-chan bool
 
 	return r0
 }
 
-func (this TestStub) Iface8(rp repo.Repo) repo.Repo {
+func (ts TestStub) Iface8(rp repo.Repo) repo.Repo {
 	var r0 repo.Repo
 
 	return r0
 }
 
-func (this TestStub) Iface9(arg0 TestStruct, arg1 []TestStruct, arg2 [3]TestStruct) {
+func (ts TestStub) Iface9(arg0 TestStruct, arg1 []TestStruct, arg2 [3]TestStruct) {
 
 	return
 }
@@ -104,7 +106,12 @@ func TestIfacer_RunNullWrite(t *testing.T) {
 	v.Set("ipath", "./example/iface.go")
 
 	writer := &file_dir.NullWrite{}
-	ifacer := NewIface(writer)
+	ifacer := NewIfacer(
+		WithIfacerLogger(log.NewLogger()),
+		WithIfacerTpl(templates.NewTextTpl()),
+		WithIfacerWriter(writer),
+		)
+
 	err := ifacer.Run(v)
 	assert.Equal(t, Result, ifacer.Content)
 	assert.Nil(t, err)
@@ -121,7 +128,11 @@ func TestIfacer_Write(t *testing.T) {
 	v.Set("ipath", "./example/iface.go")
 
 	writer := &file_dir.EsimWriter{}
-	ifacer := NewIface(writer)
+	ifacer := NewIfacer(
+		WithIfacerLogger(log.NewLogger()),
+		WithIfacerTpl(templates.NewTextTpl()),
+		WithIfacerWriter(writer),
+		)
 
 	err := ifacer.Run(v)
 	assert.Equal(t, Result, ifacer.Content)
@@ -133,7 +144,11 @@ func TestIfacer_GetUniqueImportName(t *testing.T) {
 	pkgName := "github.com/jukylin/esim/redis"
 
 	writer := &file_dir.NullWrite{}
-	ifacer := NewIface(writer)
+	ifacer := NewIfacer(
+		WithIfacerLogger(log.NewLogger()),
+		WithIfacerTpl(templates.NewTextTpl()),
+		WithIfacerWriter(writer),
+		)
 
 	importName := ifacer.getUniqueImportName(pkgName, 0)
 	assert.Equal(t, "redis", importName)
@@ -168,7 +183,11 @@ func TestIfacer_SetNoConflictImport(t *testing.T) {
 	}
 
 	writer := &file_dir.NullWrite{}
-	ifacer := NewIface(writer)
+	ifacer := NewIfacer(
+		WithIfacerLogger(log.NewLogger()),
+		WithIfacerTpl(templates.NewTextTpl()),
+		WithIfacerWriter(writer),
+		)
 
 	for _, test := range testCases {
 		t.Run(test.caseName, func(t *testing.T) {

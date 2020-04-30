@@ -1,7 +1,6 @@
 package ifacer
 
 import (
-	"bytes"
 	"errors"
 	"github.com/jukylin/esim/log"
 	"github.com/spf13/viper"
@@ -11,10 +10,10 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"text/template"
 	"github.com/jukylin/esim/pkg/file-dir"
 	"fmt"
 	"github.com/jukylin/esim/pkg"
+	"github.com/jukylin/esim/pkg/templates"
 )
 
 type Ifacer struct {
@@ -47,26 +46,47 @@ type Ifacer struct {
 
 	writer file_dir.IfaceWriter
 
+	tpl templates.Tpl
+
 	UsingImportStr string
 }
 
+type Option func(*Ifacer)
 
-func NewIface(writer file_dir.IfaceWriter) *Ifacer {
+func NewIfacer(options ...Option) *Ifacer {
 
 	ifacer := &Ifacer{}
+
+	for _, option := range options {
+		option(ifacer)
+	}
+
 	ifacer.Parser = mockery.NewParser([]string{})
 
 	ifacer.PkgNoConflictImport = make(map[string]pkg.Import)
 
 	ifacer.IfaceUsingIngImport = make(map[string]string)
 
-	ifacer.logger = log.NewLogger()
-
-	ifacer.writer = writer
-
 	return ifacer
 }
 
+func WithIfacerLogger(logger log.Logger) Option {
+	return func(f *Ifacer) {
+		f.logger = logger
+	}
+}
+
+func WithIfacerWriter(writer file_dir.IfaceWriter) Option {
+	return func(f *Ifacer) {
+		f.writer = writer
+	}
+}
+
+func WithIfacerTpl(tpl templates.Tpl) Option {
+	return func(f *Ifacer) {
+		f.tpl = tpl
+	}
+}
 
 type Method struct {
 	FuncName string
@@ -369,19 +389,14 @@ func (f *Ifacer) getReturnStr(tuple *types.Tuple, m *Method) {
 	}
 }
 
+//Process parsed template and formats and adjusts imports for the parsed content
 func (f *Ifacer) Process() error {
-	tmpl, err := template.New("ifacer").Parse(ifacerTemplate)
-	if err != nil {
-		return err
-	}
-
-	var buf bytes.Buffer
-	err = tmpl.Execute(&buf, f)
+	content, err := f.tpl.Execute("ifacer", ifacerTemplate, f)
 	if err != nil {
 		return err
 	}
 	
-	src, err := imports.Process("", buf.Bytes(), nil)
+	src, err := imports.Process("", []byte(content), nil)
 	if err != nil {
 		return err
 	}

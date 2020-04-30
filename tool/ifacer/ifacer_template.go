@@ -11,7 +11,7 @@ var ifacerTemplate = `package {{.PackageName}}
 type {{$StructName}} struct {}
 
 {{ range .Methods }}
-func (this {{$Star}}{{$StructName}}) {{.FuncName}}({{.ArgStr}}) {{.ReturnTypeStr}} {
+func ({{$StructName | shorten | firstToLower}} {{$Star}}{{$StructName}}) {{.FuncName}}({{.ArgStr}}) {{.ReturnTypeStr}} {
 {{.InitReturnVarStr}}
 
 {{.ReturnStr}}

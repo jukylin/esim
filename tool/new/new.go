@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"github.com/jukylin/esim/pkg/templates"
-	//"sync"
 )
 
 var (
@@ -200,7 +199,7 @@ func (pj *Project) getPackName() {
 	pj.PackageName = strings.Replace(pj.ServerName, "-", "_", -1)
 }
 
-//initTransport initialization Transport mode to do the work
+//initTransport initialization Transport mode
 func (pj *Project) initTransport() {
 	if pj.withGin == true {
 		GinInit()
