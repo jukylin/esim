@@ -2,9 +2,7 @@ package factory
 
 import (
 	"testing"
-	"text/template"
 	"github.com/stretchr/testify/assert"
-	"bytes"
 	"github.com/jukylin/esim/pkg"
 	"github.com/jukylin/esim/pkg/templates"
 )
@@ -29,12 +27,10 @@ func TestExecuteRpcPluginTemplate(t *testing.T)  {
 		fields,
 	}
 
-	var buf bytes.Buffer
-	tmpl, err := template.New("rpc_plugin").Funcs(templates.EsimFuncMap()).
-		Parse(rpcPluginTemplate)
+	tpl := templates.NewTextTpl()
+	tmpl, err := tpl.Execute("rpc_plugin", rpcPluginTemplate, data)
 	assert.Nil(t, err)
-	err = tmpl.Execute(&buf, data)
-	assert.Nil(t, err)
+	assert.NotEmpty(t, tmpl)
 }
 
 

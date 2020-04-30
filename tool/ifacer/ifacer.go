@@ -19,7 +19,7 @@ import (
 type Ifacer struct {
 	logger log.Logger
 
-	Parser *mockery.Parser
+	parser *mockery.Parser
 
 	IfaceName string
 
@@ -39,10 +39,10 @@ type Ifacer struct {
 	OutFile string
 
 	//import from interface file
-	PkgNoConflictImport map[string]pkg.Import
+	pkgNoConflictImport map[string]pkg.Import
 
 	//import in the interface
-	IfaceUsingIngImport map[string]string
+	ifaceUsingIngImport map[string]string
 
 	writer file_dir.IfaceWriter
 
@@ -61,11 +61,11 @@ func NewIfacer(options ...Option) *Ifacer {
 		option(ifacer)
 	}
 
-	ifacer.Parser = mockery.NewParser([]string{})
+	ifacer.parser = mockery.NewParser([]string{})
 
-	ifacer.PkgNoConflictImport = make(map[string]pkg.Import)
+	ifacer.pkgNoConflictImport = make(map[string]pkg.Import)
 
-	ifacer.IfaceUsingIngImport = make(map[string]string)
+	ifacer.ifaceUsingIngImport = make(map[string]string)
 
 	return ifacer
 }
@@ -110,21 +110,20 @@ func (f *Ifacer) Run(v *viper.Viper) error {
 		return err
 	}
 
-	err = f.Parser.Parse(f.IfacePath)
+	err = f.parser.Parse(f.IfacePath)
 	if err != nil {
 		return err
 	}
 
-	err = f.Parser.Load()
+	err = f.parser.Load()
 	if err != nil {
 		return err
 	}
 
-	ifacer, err := f.Parser.Find(f.IfaceName)
+	ifacer, err := f.parser.Find(f.IfaceName)
 	if err != nil {
 		return err
 	}
-
 
 	f.PackageName = ifacer.Pkg.Name()
 
@@ -197,7 +196,7 @@ func (f *Ifacer) GenMethods(interacer *types.Interface) {
 
 func (f *Ifacer) getUsingImportStr() {
 	imps := pkg.Imports{}
-	for _, imp := range f.PkgNoConflictImport {
+	for _, imp := range f.pkgNoConflictImport {
 		imps = append(imps, imp)
 	}
 
@@ -215,7 +214,7 @@ func (f *Ifacer) ManageNoConflictImport(imports []*types.Package) bool {
 
 
 func (f *Ifacer) setNoConflictImport(importName string, importPath string) bool {
-	if impPath, ok := f.PkgNoConflictImport[importName]; ok {
+	if impPath, ok := f.pkgNoConflictImport[importName]; ok {
 		if impPath.Path == importPath {
 			return true
 		}
@@ -226,12 +225,12 @@ func (f *Ifacer) setNoConflictImport(importName string, importPath string) bool 
 		for flag {
 			importName := f.getUniqueImportName(importPath, level)
 
-			if _, ok := f.PkgNoConflictImport[importName]; !ok {
+			if _, ok := f.pkgNoConflictImport[importName]; !ok {
 				imp := pkg.Import{}
 				imp.Name = importName
 				imp.Path = importPath
 
-				f.PkgNoConflictImport[importName] = imp
+				f.pkgNoConflictImport[importName] = imp
 				flag = false
 			}
 			level++
@@ -240,7 +239,7 @@ func (f *Ifacer) setNoConflictImport(importName string, importPath string) bool 
 		imp := pkg.Import{}
 		imp.Name = importName
 		imp.Path = importPath
-		f.PkgNoConflictImport[importName] = imp
+		f.pkgNoConflictImport[importName] = imp
 	}
 
 	return true
@@ -308,7 +307,7 @@ func (f *Ifacer) parseVarType(typ types.Type, variadic bool) string {
 		if t.Obj().Pkg() != nil{
 			if t.Obj().Pkg().Name() != f.PackageName{
 				varType += t.Obj().Pkg().Name() + "."
-				f.IfaceUsingIngImport[t.Obj().Pkg().Name()] = t.Obj().Pkg().Path()
+				f.ifaceUsingIngImport[t.Obj().Pkg().Name()] = t.Obj().Pkg().Path()
 			}
 		}
 		varType += t.Obj().Name()

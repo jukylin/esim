@@ -6,6 +6,8 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/tool/factory"
+	"github.com/jukylin/esim/pkg/file-dir"
+	"github.com/jukylin/esim/pkg/templates"
 )
 
 var factoryCmd = &cobra.Command{
@@ -14,7 +16,11 @@ var factoryCmd = &cobra.Command{
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		logger := log.NewLogger()
-		esimFactory := factory.NewEsimFactory(logger)
+		esimFactory := factory.NewEsimFactory(
+			factory.WithEsimFactoryLogger(logger),
+			factory.WithEsimFactoryWriter(file_dir.NewEsimWriter()),
+			factory.WithEsimFactoryTpl(templates.NewTextTpl()),
+		)
 		err := esimFactory.Run(v)
 		if err != nil {
 			log.Log.Error(err.Error())

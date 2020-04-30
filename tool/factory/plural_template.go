@@ -1,8 +1,6 @@
 package factory
 
 import (
-	"bytes"
-	"text/template"
 	"github.com/jukylin/esim/pkg/templates"
 )
 
@@ -12,10 +10,14 @@ type Plural struct {
 	StructName string
 
 	Star string
+
+	tpl templates.Tpl
 }
 
 func NewPlural() Plural {
-	return Plural{}
+	p := Plural{}
+	p.tpl = templates.NewTextTpl()
+	return p
 }
 
 var pluralNewTemplate = `func New{{.PluralName}}() *{{.PluralName}} {
@@ -34,51 +36,32 @@ var pluralTypeTemplate = `type {{.PluralName}} []{{.Star}}{{.StructName}}`
 
 
 func (pl Plural) NewString() string {
-	tmpl, err := template.New("plural_new_template").Funcs(templates.EsimFuncMap()).
-		Parse(pluralNewTemplate)
+	result, err := pl.tpl.Execute("plural_new_template", pluralNewTemplate, pl)
 	if err != nil{
 		panic(err.Error())
 	}
 
-	var buf bytes.Buffer
-	err = tmpl.Execute(&buf, pl)
-	if err != nil{
-		panic(err.Error())
-	}
-
-	return buf.String()
+	return result
 }
 
 
 func (pl Plural) ReleaseString() string {
-	tmpl, err := template.New("plural_release_template").Funcs(templates.EsimFuncMap()).
-		Parse(pluralreleaseTemplate)
+
+	result, err := pl.tpl.Execute("plural_release_template", pluralreleaseTemplate, pl)
 	if err != nil{
 		panic(err.Error())
 	}
 
-	var buf bytes.Buffer
-	err = tmpl.Execute(&buf, pl)
-	if err != nil{
-		panic(err.Error())
-	}
-
-	return buf.String()
+	return result
 }
 
 
 func (pl Plural) TypeString() string {
-	tmpl, err := template.New("plural_type_template").Funcs(templates.EsimFuncMap()).
-		Parse(pluralTypeTemplate)
+
+	result, err := pl.tpl.Execute("plural_type_template", pluralTypeTemplate, pl)
 	if err != nil{
 		panic(err.Error())
 	}
 
-	var buf bytes.Buffer
-	err = tmpl.Execute(&buf, pl)
-	if err != nil{
-		panic(err.Error())
-	}
-
-	return buf.String()
+	return result
 }

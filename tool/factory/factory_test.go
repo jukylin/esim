@@ -9,6 +9,7 @@ import (
 	"github.com/jukylin/esim/pkg"
 	"github.com/jukylin/esim/log"
 	"path/filepath"
+	"github.com/jukylin/esim/pkg/templates"
 )
 
 
@@ -28,13 +29,17 @@ var esimfactory *esimFactory
 func setUp()  {
 	loggerOptions := log.LoggerOptions{}
 	logger := log.NewLogger(loggerOptions.WithDebug(true))
-	esimfactory = NewEsimFactory(logger)
+	esimfactory = NewEsimFactory(
+		WithEsimFactoryLogger(logger),
+		WithEsimFactoryWriter(file_dir.NewEsimWriter()),
+		WithEsimFactoryTpl(templates.NewTextTpl()),
+	)
 }
 
 
 func TestEsimFactory_Run(t *testing.T) {
 	v := viper.New()
-	v.Set("sname", "TestHistory")
+	v.Set("sname", "Test")
 	v.Set("option", true)
 	v.Set("sort", true)
 	v.Set("gen_logger_option", true)
@@ -100,7 +105,11 @@ type test struct {
 func TestExtendFieldAndReplaceStructContent(t *testing.T)  {
 	loggerOptions := log.LoggerOptions{}
 	logger := log.NewLogger(loggerOptions.WithDebug(true))
-	esimfactory = NewEsimFactory(logger)
+	esimfactory = NewEsimFactory(
+		WithEsimFactoryLogger(logger),
+		WithEsimFactoryWriter(file_dir.NewEsimWriter()),
+		WithEsimFactoryTpl(templates.NewTextTpl()),
+	)
 
 	esimfactory.withOption = true
 	esimfactory.withGenLoggerOption = true

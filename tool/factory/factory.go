@@ -5,7 +5,7 @@ import (
 	"github.com/martinusso/inflect"
 	"github.com/spf13/viper"
 	"github.com/jukylin/esim/pkg/file-dir"
-	logger "github.com/jukylin/esim/log"
+	"github.com/jukylin/esim/log"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -14,8 +14,6 @@ import (
 	"strings"
 	"golang.org/x/tools/imports"
 	"path/filepath"
-	"text/template"
-	"bytes"
 	"github.com/jukylin/esim/pkg"
 	"github.com/jukylin/esim/pkg/templates"
 	"github.com/serenize/snaker"
@@ -125,7 +123,7 @@ type esimFactory struct {
 
 	OptionParam string
 
-	logger logger.Logger
+	logger log.Logger
 
 	withSort bool
 
@@ -144,24 +142,59 @@ type esimFactory struct {
 	ReturnStr string
 
 	StructTpl templates.StructInfo
+
+	tpl templates.Tpl
 }
 
-func NewEsimFactory(logger logger.Logger) *esimFactory {
+type Option func(*esimFactory)
+
+func NewEsimFactory(options ...Option) *esimFactory {
 	factory := &esimFactory{}
+
+	for _, option := range options {
+		option(factory)
+	}
+
+	if factory.logger == nil {
+		factory.logger = log.NewLogger()
+	}
+
+	if factory.writer == nil {
+		factory.writer = file_dir.NewEsimWriter()
+	}
+
+	if factory.tpl == nil {
+		factory.tpl = templates.NewTextTpl()
+	}
 
 	factory.oldStructInfo = &structInfo{}
 
 	factory.NewStructInfo = &structInfo{}
 
-	factory.logger = logger
-
-	factory.writer = file_dir.NewEsimWriter()
-
-	factory.structFieldIface = NewRpcPluginStructField(factory.writer, logger)
+	factory.structFieldIface = NewRpcPluginStructField(factory.writer, factory.logger)
 
 	factory.StructTpl = templates.StructInfo{}
 
 	return factory
+}
+
+
+func WithEsimFactoryLogger(logger log.Logger) Option {
+	return func(ef *esimFactory) {
+		ef.logger = logger
+	}
+}
+
+func WithEsimFactoryWriter(writer file_dir.IfaceWriter) Option {
+	return func(ef *esimFactory) {
+		ef.writer = writer
+	}
+}
+
+func WithEsimFactoryTpl(tpl templates.Tpl) Option {
+	return func(ef *esimFactory) {
+		ef.tpl = tpl
+	}
 }
 
 type structInfo struct{
@@ -280,19 +313,13 @@ func (ef *esimFactory) assignStructTpl()  {
 }
 
 func (ef *esimFactory) executeNewTmpl() {
-	tmpl, err := template.New("factory").Funcs(templates.EsimFuncMap()).
-		Parse(newTemplate)
+
+	content, err := ef.tpl.Execute("factory", newTemplate, ef)
 	if err != nil{
 		ef.logger.Panicf(err.Error())
 	}
 
-	var buf bytes.Buffer
-	err = tmpl.Execute(&buf, ef)
-	if err != nil{
-		ef.logger.Panicf(err.Error())
-	}
-
-	ef.NewStructInfo.structStr = buf.String()
+	ef.NewStructInfo.structStr = content
 }
 
 //replaceOriginContent gen a new struct file content

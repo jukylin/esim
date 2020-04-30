@@ -1,8 +1,6 @@
 package factory
 
 import (
-	"bytes"
-	"text/template"
 	"github.com/jukylin/esim/pkg/templates"
 )
 
@@ -10,10 +8,14 @@ type PoolTpl struct {
 	VarPoolName string
 
 	StructName string
+
+	tpl templates.Tpl
 }
 
 func NewPoolTpl() PoolTpl {
-	return PoolTpl{}
+	pt := PoolTpl{}
+	pt.tpl = templates.NewTextTpl()
+	return pt
 }
 
 var poolTemplate = `{{.VarPoolName | snakeToCamelLower | firstToLower}} = sync.Pool{
@@ -24,16 +26,11 @@ var poolTemplate = `{{.VarPoolName | snakeToCamelLower | firstToLower}} = sync.P
 `
 
 func (pt PoolTpl) String() string {
-	tmpl, err := template.New("pool_template").Funcs(templates.EsimFuncMap()).Parse(poolTemplate)
+	result, err := pt.tpl.Execute("pool_template", poolTemplate, pt)
+
 	if err != nil{
 		panic(err.Error())
 	}
 
-	var buf bytes.Buffer
-	err = tmpl.Execute(&buf, struct {PoolTpl}{pt})
-	if err != nil{
-		panic(err.Error())
-	}
-
-	return buf.String()
+	return result
 }

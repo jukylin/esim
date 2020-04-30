@@ -6,6 +6,7 @@ import (
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/tool/ifacer"
 	"github.com/jukylin/esim/pkg/file-dir"
+	"github.com/jukylin/esim/pkg/templates"
 )
 
 var ifacerCmd = &cobra.Command{
@@ -14,7 +15,11 @@ var ifacerCmd = &cobra.Command{
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		writer := &file_dir.EsimWriter{}
-		ifacer := ifacer.NewIface(writer)
+		ifacer := ifacer.NewIfacer(
+			ifacer.WithIfacerLogger(log.NewLogger()),
+			ifacer.WithIfacerTpl(templates.NewTextTpl()),
+			ifacer.WithIfacerWriter(writer),
+		)
 		err := ifacer.Run(v)
 		if err != nil {
 			log.Log.Error(err.Error())
