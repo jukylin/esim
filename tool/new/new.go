@@ -55,8 +55,6 @@ type Project struct {
 
 type ProjectOption func(*Project)
 
-type ProjectOptions struct{}
-
 func NewProject(options ...ProjectOption) *Project {
 
 	project := &Project{}
