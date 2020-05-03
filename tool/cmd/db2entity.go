@@ -11,6 +11,7 @@ import (
 	"github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg"
 	"github.com/jukylin/esim/pkg/templates"
+	"github.com/jukylin/esim/infra"
 )
 
 var db2entityCmd = &cobra.Command{
@@ -43,15 +44,22 @@ var db2entityCmd = &cobra.Command{
 			domain_file.WithRepoDomainFileTpl(tpl),
 		)
 
+		writer := file_dir.NewEsimWriter()
+
 		db2EntityOptions := db2entity.Db2EnOptions{}
 		db2entity.NewDb2Entity(
 			db2EntityOptions.WithLogger(logger),
 			db2EntityOptions.WithDbConf(dbConf),
 			db2EntityOptions.WithColumnsInter(columnsInter),
-			db2EntityOptions.WithWriter(file_dir.NewEsimWriter()),
-			db2EntityOptions.WithInfraInfo(db2entity.NewInfraInfo()),
+			db2EntityOptions.WithWriter(writer),
 			db2EntityOptions.WithExecer(pkg.NewCmdExec()),
 			db2EntityOptions.WithDomainFile(daoDomainFile, entityDomainFile, repoDomainFile),
+			db2EntityOptions.WithInfraer(infra.NewInfraer(
+				infra.WithIfacerInfraInfo(infra.NewInfraInfo()),
+				infra.WithIfacerLogger(logger),
+				infra.WithIfacerWriter(writer),
+				infra.WithIfacerExecer(pkg.NewCmdExec()),
+			)),
 		).Run(v)
 	},
 }
@@ -90,12 +98,6 @@ func init() {
 	db2entityCmd.Flags().StringP("repo_target", "", "internal/infra/repo", "Save dao file path")
 
 	db2entityCmd.Flags().BoolP("disable_repo", "", false, "Disable Save repo")
-
-	db2entityCmd.Flags().BoolP("inject", "i", true, "Automatic inject")
-
-	db2entityCmd.Flags().StringP("infra_dir", "", "internal/infra/", "Infra dir")
-
-	db2entityCmd.Flags().StringP("infra_file", "", "infra.go", "Infra file name")
 
 	v.BindPFlags(db2entityCmd.Flags())
 }

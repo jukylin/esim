@@ -19,7 +19,9 @@ import (
 type protocer struct {
 	target string
 
-	fromProtoc string
+	fromProto string
+
+	protoPath string
 
 	packageName string
 
@@ -49,6 +51,8 @@ func (p *protocer) Run(v *viper.Viper) bool {
 
 	p.logger.Infof("Please confirm that protoc is installed")
 
+	p.parseProtoPath()
+
 	p.execCmd()
 
 	return true
@@ -66,13 +70,17 @@ func (p *protocer) bindInput(v *viper.Viper) bool {
 	if ex == false {
 		p.logger.Fatalf("Dir not exists %s", target)
 	}
-	p.target = target
+	if target != "/" {
+		p.target = strings.TrimRight(target, "/")
+	} else {
+		p.target = target
+	}
 
 	fromProto := v.GetString("from_proto")
 	if fromProto == "" {
 		p.logger.Fatalf("Please special proto file")
 	}
-	p.fromProtoc = fromProto
+	p.fromProto = fromProto
 
 	pkgName := v.GetString("package")
 	if pkgName == "" {
@@ -91,11 +99,17 @@ func (p *protocer) bindInput(v *viper.Viper) bool {
 	return true
 }
 
+func (p *protocer) parseProtoPath()  {
+	strs := strings.Split(p.fromProto, "/")
+	protoPath := strs[0 : len(strs) - 1]
+	p.protoPath = strings.Join(protoPath, "/")
+}
+
 func (p *protocer) execCmd() bool {
 	pwd, _ := os.Getwd()
 
-	cmdLine := fmt.Sprintf("protoc --go_out=plugins=grpc:%s %s",
-		p.target + string(filepath.Separator) + p.packageName, p.fromProtoc)
+	cmdLine := fmt.Sprintf("protoc --go_out=plugins=grpc:%s --proto_path %s %s",
+		p.target + string(filepath.Separator) + p.packageName, p.protoPath, p.fromProto)
 
 	p.logger.Infof(cmdLine)
 

@@ -1,4 +1,4 @@
-package db2entity
+package infra
 
 import (
 	"bytes"

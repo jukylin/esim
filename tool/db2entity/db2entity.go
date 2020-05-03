@@ -10,14 +10,11 @@ import (
 	"github.com/jukylin/esim/pkg/templates"
 	"github.com/spf13/viper"
 	"path/filepath"
-	"go/token"
-	"go/parser"
-	"go/ast"
-	"io/ioutil"
-	"golang.org/x/tools/imports"
 	"github.com/serenize/snaker"
 	"errors"
 	"os"
+	"golang.org/x/tools/imports"
+	"github.com/jukylin/esim/infra"
 )
 
 type Db2Entity struct {
@@ -32,10 +29,6 @@ type Db2Entity struct {
 	writer file_dir.IfaceWriter
 
 	hasInfraStruct bool
-
-	oldInfraInfo *infraInfo
-
-	newInfraInfo *infraInfo
 
 	execer pkg.Exec
 
@@ -52,6 +45,8 @@ type Db2Entity struct {
 	shareInfo *domain_file.ShareInfo
 
 	injectInfos []*domain_file.InjectInfo
+
+	infraer *infra.Infraer
 
 	//true inject repo to infra
 	withInject bool
@@ -109,13 +104,6 @@ func (Db2EnOptions) WithColumnsInter(ColumnsRepo domain_file.ColumnsRepo) Db2EnO
 	}
 }
 
-func (Db2EnOptions) WithInfraInfo(infra *infraInfo) Db2EnOption {
-	return func(d *Db2Entity) {
-		d.oldInfraInfo = infra
-		d.newInfraInfo = infra
-	}
-}
-
 func (Db2EnOptions) WithWriter(writer file_dir.IfaceWriter) Db2EnOption {
 	return func(d *Db2Entity) {
 		d.writer = writer
@@ -152,48 +140,10 @@ func (Db2EnOptions) WithTpl(tpl templates.Tpl) Db2EnOption {
 	}
 }
 
-type infraInfo struct {
-
-	imports pkg.Imports
-
-	importStr string
-
-	structInfo templates.StructInfo
-
-	structStr string
-
-	specialStructName string
-
-	specialVarName string
-
-	infraSetArgs infraSetArgs
-
-	infraSetStr string
-
-	content string
-
-	provides domain_file.Provides
-
-	provideStr string
-
-}
-
-func NewInfraInfo() *infraInfo {
-	ifaInfo := &infraInfo{}
-
-	ifaInfo.specialStructName = "Infra"
-
-	ifaInfo.specialVarName = "infraSet"
-
-	ifaInfo.infraSetArgs = infraSetArgs{}
-
-	structInfo := templates.StructInfo{}
-	structInfo.StructName = ifaInfo.specialStructName
-	ifaInfo.structInfo = structInfo
-
-	ifaInfo.imports = pkg.Imports{}
-
-	return ifaInfo
+func (Db2EnOptions) WithInfraer(infraer *infra.Infraer) Db2EnOption {
+	return func(d *Db2Entity) {
+		d.infraer = infraer
+	}
 }
 
 func (de *Db2Entity) Run(v *viper.Viper) error {
@@ -225,42 +175,13 @@ func (de *Db2Entity) Run(v *viper.Viper) error {
 		return err
 	}
 
-	var content string
-
-	//loop domainFiles to generate domain file
-	for _, df := range de.domainFiles {
-		err := df.BindInput(v)
-		if err != nil {
-			return err
-		}
-
-		if !df.Disabled() {
-
-			de.shareInfo.ParseInfo(df)
-
-			df.ParseCloumns(cs, de.shareInfo)
-
-			//parsed template
-			content = df.Execute()
-
-			content = de.makeCodeBeautiful(content)
-			
-			de.domainContent[df.GetSavePath()] = content
-
-			injectInfo := df.GetInjectInfo()
-
-			if injectInfo != nil {
-				de.injectInfos = append(de.injectInfos, injectInfo)
-			}
-
-		} else {
-			de.logger.Infof("disabled %s", df.GetName())
-		}
+	err = de.generateDomainFile(v, cs)
+	if err != nil {
+		return err
 	}
 
 	//save domain content
 	if len(de.domainContent) > 0 {
-
 		for path, content := range de.domainContent {
 			de.logger.Debugf("writing %s", path)
 			err = de.writer.Write(path, content)
@@ -269,10 +190,9 @@ func (de *Db2Entity) Run(v *viper.Viper) error {
 			}
 			de.wroteContent[path] = content
 		}
-
 	}
 
-	de.injectToInfra()
+	de.injectToInfra(v)
 
 	return nil
 }
@@ -326,165 +246,15 @@ func (de *Db2Entity) bindInfra(v *viper.Viper) {
 }
 
 //injectToInfra inject repo to infra.go and execute wire command
-func (de *Db2Entity) injectToInfra() {
+func (de *Db2Entity) injectToInfra(v *viper.Viper) {
 
 	if de.withInject == false {
 		de.logger.Infof("disable inject")
 		return
 	}
 
-	//back up infra.go
-	err := file_dir.EsimBackUpFile(file_dir.GetCurrentDir() + string(filepath.Separator) + de.withInfraDir + de.withInfraFile)
-	if err != nil {
-		de.logger.Panicf(err.Error())
-		return
-	}
+	de.infraer.Inject(v, de.injectInfos)
 
-	beautifulSource := de.sourceInfraFile()
-
-	if len(de.injectInfos) < 0 {
-		return
-	}
-
-	de.parseInfra(beautifulSource)
-
-	if de.hasInfraStruct {
-		de.copyInfraInfo()
-
-		de.processNewInfra()
-
-		de.toStringNewInfra()
-
-		de.buildNewInfraContent()
-
-		de.writeNewInfra()
-
-	} else {
-		de.logger.Panicf("not found the %s", de.oldInfraInfo.specialStructName)
-	}
-
-	de.logger.Infof("inject success")
-}
-
-//parseInfra parse infra.go 's content, find "import", "Infra" , "infraSet" and record origin syntax
-func (de *Db2Entity) parseInfra(srcStr string) bool {
-
-	// positions are relative to fset
-	fset := token.NewFileSet()
-	f, err := parser.ParseFile(fset, "", srcStr, parser.ParseComments)
-	if err != nil {
-		de.logger.Panicf(err.Error())
-	}
-
-	for _, decl := range f.Decls {
-		if GenDecl, ok := decl.(*ast.GenDecl); ok {
-			if GenDecl.Tok.String() == "import" {
-				imps := pkg.Imports{}
-				imps.ParseFromAst(GenDecl)
-				de.oldInfraInfo.imports = imps
-				de.oldInfraInfo.importStr = srcStr[GenDecl.Pos()-1 : GenDecl.End()]
-			}
-
-			if GenDecl.Tok.String() == "type" {
-				for _, specs := range GenDecl.Specs {
-					if typeSpec, ok := specs.(*ast.TypeSpec); ok {
-						if typeSpec.Name.String() == de.oldInfraInfo.specialStructName {
-							de.hasInfraStruct = true
-							fields := pkg.Fields{}
-							fields.ParseFromAst(GenDecl, srcStr)
-							de.oldInfraInfo.structInfo.Fields = fields
-							de.oldInfraInfo.structStr = srcStr[GenDecl.Pos()-1 : GenDecl.End()]
-						}
-					}
-				}
-			}
-
-			if GenDecl.Tok.String() == "var" {
-				for _, specs := range GenDecl.Specs {
-					if typeSpec, ok := specs.(*ast.ValueSpec); ok {
-						for _, name := range typeSpec.Names {
-							if name.String() == de.oldInfraInfo.specialVarName {
-								de.oldInfraInfo.infraSetStr = srcStr[GenDecl.TokPos-1 : GenDecl.End()]
-								de.oldInfraInfo.infraSetArgs.Args = append(de.oldInfraInfo.infraSetArgs.Args,
-									de.parseInfraSetArgs(GenDecl, srcStr)...)
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	if de.hasInfraStruct == false {
-		de.logger.Panicf("not find %s", de.oldInfraInfo.specialStructName)
-	}
-
-	de.oldInfraInfo.content = srcStr
-
-	return true
-}
-
-//sourceInfraFile Beautify infra.go
-func (de *Db2Entity) sourceInfraFile() string {
-
-	src, err := ioutil.ReadFile(de.withInfraDir + de.withInfraFile)
-	if err != nil {
-		de.logger.Fatalf(err.Error())
-	}
-
-	formatSrc := de.makeCodeBeautiful(string(src))
-
-	ioutil.WriteFile(de.withInfraDir + de.withInfraFile, []byte(formatSrc), 0666)
-
-	return string(formatSrc)
-}
-
-func (de *Db2Entity) copyInfraInfo() {
-	oldContent := *de.oldInfraInfo
-	de.newInfraInfo = &oldContent
-}
-
-//processInfraInfo process newInfraInfo, append import, repo field and wire's provider
-func (de *Db2Entity) processNewInfra() bool {
-
-	for _, injectInfo := range de.injectInfos {
-		de.newInfraInfo.structInfo.Fields = append(de.newInfraInfo.structInfo.Fields, injectInfo.Fields...)
-
-		de.newInfraInfo.infraSetArgs.Args = append(de.newInfraInfo.infraSetArgs.Args, injectInfo.InfraSetArgs...)
-
-		de.newInfraInfo.imports = append(de.newInfraInfo.imports, injectInfo.Imports...)
-
-		de.newInfraInfo.provides = append(de.newInfraInfo.provides, injectInfo.Provides...)
-	}
-
-	return true
-}
-
-func (de *Db2Entity) toStringNewInfra() {
-
-	de.newInfraInfo.importStr = de.newInfraInfo.imports.String()
-
-	de.newInfraInfo.structStr = de.newInfraInfo.structInfo.String()
-
-	de.newInfraInfo.infraSetStr = de.newInfraInfo.infraSetArgs.String()
-
-	de.newInfraInfo.provideStr = de.newInfraInfo.provides.String()
-}
-
-func (de *Db2Entity) buildNewInfraContent() {
-
-	oldContent := de.oldInfraInfo.content
-
-	oldContent = strings.Replace(oldContent,
-		de.oldInfraInfo.importStr, de.newInfraInfo.importStr, -1)
-
-	oldContent = strings.Replace(oldContent,
-		de.oldInfraInfo.structStr, de.newInfraInfo.structStr, -1)
-
-	de.newInfraInfo.content = strings.Replace(oldContent,
-		de.oldInfraInfo.infraSetStr, de.newInfraInfo.infraSetStr, -1)
-
-	de.newInfraInfo.content += de.newInfraInfo.provideStr
 }
 
 func (de *Db2Entity) makeCodeBeautiful(src string) string {
@@ -498,34 +268,39 @@ func (de *Db2Entity) makeCodeBeautiful(src string) string {
 	return string(result)
 }
 
-//writeNewInfra cover old infra.go's content
-func (de *Db2Entity) writeNewInfra() {
+func (de *Db2Entity) generateDomainFile(v *viper.Viper, cs []domain_file.Column) error {
+	var content string
 
-	processSrc := de.makeCodeBeautiful(de.newInfraInfo.content)
+	//loop domainFiles to generate domain file
+	for _, df := range de.domainFiles {
+		err := df.BindInput(v)
+		if err != nil {
+			return err
+		}
 
-	de.writer.Write(de.withInfraDir + de.withInfraFile, string(processSrc))
+		if !df.Disabled() {
 
-	err := de.execer.ExecWire(de.withInfraDir)
-	if err != nil {
-		de.logger.Panicf(err.Error())
-	}
-}
+			de.shareInfo.ParseInfo(df)
 
-func (de *Db2Entity) parseInfraSetArgs(GenDecl *ast.GenDecl, srcStr string) []string {
-	var args []string
-	for _, specs := range GenDecl.Specs {
-		if spec, ok := specs.(*ast.ValueSpec); ok {
-			for _, value := range spec.Values {
-				if callExpr, ok := value.(*ast.CallExpr); ok {
-					for _, callArg := range callExpr.Args {
-						args = append(args, strings.Trim(pkg.ParseExpr(callArg, srcStr), ","))
-					}
-				}
+			df.ParseCloumns(cs, de.shareInfo)
+
+			//parsed template
+			content = df.Execute()
+
+			content = de.makeCodeBeautiful(content)
+
+			de.domainContent[df.GetSavePath()] = content
+
+			injectInfo := df.GetInjectInfo()
+
+			if injectInfo != nil {
+				de.injectInfos = append(de.injectInfos, injectInfo)
 			}
+
+		} else {
+			de.logger.Infof("disabled %s", df.GetName())
 		}
 	}
 
-	return args
+	return nil
 }
-
-
