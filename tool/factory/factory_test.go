@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/jukylin/esim/pkg"
 	"github.com/jukylin/esim/log"
-	"path/filepath"
+	//"path/filepath"
 	"github.com/jukylin/esim/pkg/templates"
 )
 
@@ -52,8 +52,8 @@ func TestEsimFactory_Run(t *testing.T) {
 
 	esimfactory.Run(v)
 	esimfactory.Close()
-	file_dir.EsimRecoverFile(esimfactory.structDir +
-		string(filepath.Separator) + esimfactory.structFileName)
+	//file_dir.EsimRecoverFile(esimfactory.structDir +
+	//	string(filepath.Separator) + esimfactory.structFileName)
 }
 
 

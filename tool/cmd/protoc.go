@@ -5,6 +5,7 @@ import (
 	//"log"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jukylin/esim/tool/protoc"
+	"github.com/jukylin/esim/log"
 )
 
 var protocCmd = &cobra.Command{
@@ -15,8 +16,10 @@ var protocCmd = &cobra.Command{
 生成的protobuf文件会被放到项目的 internal/infra/third_party/package/*.pb.go,
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		v.Set("debug", false)
-		protoc.Gen(v)
+		protocer := protoc.NewProtoc(
+			protoc.WithProtocLogger(log.NewLogger()),
+		)
+		protocer.Run(v)
 	},
 }
 

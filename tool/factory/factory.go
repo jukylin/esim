@@ -118,7 +118,6 @@ type esimFactory struct {
 
 	Option5 string
 
-	Option6 string
 	//option end
 
 	OptionParam string
@@ -695,19 +694,17 @@ func (ef *esimFactory) genOptions()  {
 
 	ef.Option1 = `type ` + ef.StructName + `Option func(` + ef.OptionParam + `)`
 
-	ef.Option2 = `type ` + ef.StructName + `Options struct{}`
+	ef.Option2 = `options ...` + ef.StructName +`Option`
 
-	ef.Option3 = `options ...` + ef.StructName +`Option`
-
-	ef.Option4 = `
+	ef.Option3 = `
 	for _, option := range options {
 		option(` + templates.Shorten(snaker.SnakeToCamelLower(ef.StructName)) + `)
 	}`
 
 	if ef.withGenConfOption == true{
 
-		ef.Option5 += `
-func (` + ef.StructName + `Options) WithConf(conf config.Config) ` + ef.StructName + `Option {
+		ef.Option4 += `
+func With` + ef.StructName + `Conf(conf config.Config) ` + ef.StructName + `Option {
 	return func(` + templates.Shorten(snaker.SnakeToCamelLower(ef.StructName)) + ` `+ ef.NewStructInfo.ReturnVarStr +`) {
 	` + templates.Shorten(snaker.SnakeToCamelLower(ef.StructName)) + `.conf = conf
 	}
@@ -717,8 +714,8 @@ func (` + ef.StructName + `Options) WithConf(conf config.Config) ` + ef.StructNa
 	}
 
 	if ef.withGenLoggerOption == true {
-		ef.Option6 += `
-func (` + ef.StructName + `Options) WithLogger(logger log.Logger) ` + ef.StructName + `Option {
+		ef.Option5 += `
+func With` + ef.StructName + `Logger(logger log.Logger) ` + ef.StructName + `Option {
 	return func(` + templates.Shorten(snaker.SnakeToCamelLower(ef.StructName)) + ` ` + ef.NewStructInfo.ReturnVarStr + `) {
 		` + templates.Shorten(snaker.SnakeToCamelLower(ef.StructName)) + `.logger = logger
 	}

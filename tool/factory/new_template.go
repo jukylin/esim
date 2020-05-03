@@ -7,14 +7,12 @@ var newTemplate = `
 
 {{.Option1}}
 
-{{.Option2}}
-
 {{if .WithNew}}
-func New{{.StructName | snakeToCamel}}({{.Option3}}) {{.NewStructInfo.ReturnVarStr}}{
+func New{{.StructName | snakeToCamel}}({{.Option2}}) {{.NewStructInfo.ReturnVarStr}}{
 
 {{.NewStructInfo.StructInitStr}}
 
-{{.Option4}}
+{{.Option3}}
 
 {{.SpecFieldInitStr}}
 
@@ -22,9 +20,9 @@ func New{{.StructName | snakeToCamel}}({{.Option3}}) {{.NewStructInfo.ReturnVarS
 }
 {{end}}
 
-{{.Option5}}
+{{.Option4}}
 
-{{.Option6}}
+{{.Option5}}
 
 {{.ReleaseStr}}
 
