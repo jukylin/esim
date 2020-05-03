@@ -1,13 +1,14 @@
 package container
 
 import (
+	"sync"
+
 	"github.com/google/wire"
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
 	eot "github.com/jukylin/esim/opentracing"
 	"github.com/jukylin/esim/prometheus"
 	"github.com/opentracing/opentracing-go"
-	"sync"
 )
 
 var esimOnce sync.Once

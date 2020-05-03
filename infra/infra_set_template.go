@@ -2,8 +2,9 @@ package infra
 
 import (
 	"bytes"
-	"github.com/jukylin/esim/pkg/templates"
 	"text/template"
+
+	"github.com/jukylin/esim/pkg/templates"
 )
 
 type infraSetArgs struct {

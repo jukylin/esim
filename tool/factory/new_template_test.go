@@ -2,13 +2,13 @@ package factory
 
 import (
 	"testing"
-	"github.com/stretchr/testify/assert"
+
 	"github.com/jukylin/esim/pkg"
 	"github.com/jukylin/esim/pkg/templates"
+	"github.com/stretchr/testify/assert"
 )
 
-
-func TestExecuteFactoryTemplate(t *testing.T)  {
+func TestExecuteFactoryTemplate(t *testing.T) {
 
 	factory := esimFactory{}
 	factory.StructName = "Test"
@@ -39,5 +39,3 @@ func TestExecuteFactoryTemplate(t *testing.T)  {
 	assert.Nil(t, err)
 	assert.NotEmpty(t, tmpl)
 }
-
-

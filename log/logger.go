@@ -2,12 +2,13 @@ package log
 
 import (
 	"context"
+	"runtime"
+	"time"
+
 	"github.com/opentracing/opentracing-go"
 	"github.com/uber/jaeger-client-go"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"runtime"
-	"time"
 )
 
 var Log Logger

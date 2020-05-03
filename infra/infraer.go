@@ -1,25 +1,25 @@
 package infra
 
 import (
-	"strings"
-	"github.com/spf13/viper"
-	"path/filepath"
-	"github.com/jukylin/esim/pkg/file-dir"
-	"github.com/jukylin/esim/log"
-	"go/token"
-	"go/parser"
 	"go/ast"
-	"golang.org/x/tools/imports"
+	"go/parser"
+	"go/token"
 	"io/ioutil"
+	"path/filepath"
+	"strings"
+
+	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
-	"github.com/jukylin/esim/tool/db2entity/domain-file"
+	file_dir "github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
+	domain_file "github.com/jukylin/esim/tool/db2entity/domain-file"
+	"github.com/spf13/viper"
+	"golang.org/x/tools/imports"
 )
 
 type Infraer struct {
-	
 	logger log.Logger
-	
+
 	writer file_dir.IfaceWriter
 
 	execer pkg.Exec
@@ -31,15 +31,13 @@ type Infraer struct {
 	injectInfos []*domain_file.InjectInfo
 
 	hasInfraStruct bool
-	
+
 	withInfraDir string
 
 	withInfraFile string
 }
 
-
 type infraInfo struct {
-
 	imports pkg.Imports
 
 	importStr string
@@ -86,11 +84,11 @@ type Option func(*Infraer)
 func NewInfraer(options ...Option) *Infraer {
 
 	infraer := &Infraer{}
-	
+
 	for _, option := range options {
 		option(infraer)
 	}
-	
+
 	return infraer
 }
 
@@ -176,7 +174,7 @@ func (ir *Infraer) Inject(v *viper.Viper, injectInfos []*domain_file.InjectInfo)
 func (ir *Infraer) bindInput(v *viper.Viper) bool {
 
 	ir.withInfraDir = v.GetString("infra_dir")
-	if ir.withInfraDir == ""{
+	if ir.withInfraDir == "" {
 		ir.withInfraDir = "internal" + string(filepath.Separator) + "infra" + string(filepath.Separator)
 	} else {
 		ir.withInfraDir = strings.TrimLeft(ir.withInfraDir, ".") + string(filepath.Separator)
@@ -194,7 +192,7 @@ func (ir *Infraer) bindInput(v *viper.Viper) bool {
 	}
 
 	if exists == false {
-		ir.logger.Errorf("%s not exists", ir.withInfraDir + ir.withInfraFile)
+		ir.logger.Errorf("%s not exists", ir.withInfraDir+ir.withInfraFile)
 		return false
 	}
 
@@ -272,7 +270,7 @@ func (ir *Infraer) sourceInfraFile() string {
 
 	formatSrc := ir.makeCodeBeautiful(string(src))
 
-	ioutil.WriteFile(ir.withInfraDir + ir.withInfraFile, []byte(formatSrc), 0666)
+	ioutil.WriteFile(ir.withInfraDir+ir.withInfraFile, []byte(formatSrc), 0666)
 
 	return string(formatSrc)
 }
@@ -341,7 +339,7 @@ func (ir *Infraer) writeNewInfra() bool {
 
 	processSrc := ir.makeCodeBeautiful(ir.newInfraInfo.content)
 
-	ir.writer.Write(ir.withInfraDir + ir.withInfraFile, string(processSrc))
+	ir.writer.Write(ir.withInfraDir+ir.withInfraFile, string(processSrc))
 
 	err := ir.execer.ExecWire(ir.withInfraDir)
 	if err != nil {
@@ -368,5 +366,3 @@ func (ir *Infraer) parseInfraSetArgs(GenDecl *ast.GenDecl, srcStr string) []stri
 
 	return args
 }
-
-

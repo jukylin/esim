@@ -1,6 +1,6 @@
 package new
 
-func init()  {
+func init() {
 	Files = append(Files, mainfc)
 }
 
@@ -17,5 +17,4 @@ func main() {
 }
 `,
 	}
-
 )

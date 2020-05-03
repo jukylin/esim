@@ -1,9 +1,10 @@
 package middle_ware
 
 import (
-	"github.com/prometheus/client_golang/prometheus"
 	"net/http"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 func Monitor(h http.Handler) http.HandlerFunc {

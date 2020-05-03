@@ -1,8 +1,9 @@
 package domain_file
 
 import (
-	"strings"
 	"strconv"
+	"strings"
+
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
 	"github.com/jukylin/esim/log"
@@ -128,7 +129,6 @@ func (c *Column) GetGoType(nullable bool) string {
 	return ""
 }
 
-
 func (c *Column) CheckDelField() string {
 	if strings.Index(c.ColumnName, "del") != -1 &&
 		strings.Index(c.ColumnName, "is") != -1 {
@@ -137,7 +137,6 @@ func (c *Column) CheckDelField() string {
 
 	return ""
 }
-
 
 func (c *Column) IsTime(goType string) bool {
 	if goType == golangTime {

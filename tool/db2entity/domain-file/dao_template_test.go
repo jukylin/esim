@@ -2,11 +2,12 @@ package domain_file
 
 import (
 	"bytes"
+	"testing"
+	"text/template"
+
 	"github.com/jukylin/esim/pkg"
 	"github.com/jukylin/esim/pkg/templates"
 	"github.com/stretchr/testify/assert"
-	"testing"
-	"text/template"
 )
 
 func TestDaoTemplate(t *testing.T) {

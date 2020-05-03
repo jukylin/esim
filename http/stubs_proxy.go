@@ -1,8 +1,9 @@
 package http
 
 import (
-	"github.com/jukylin/esim/log"
 	"net/http"
+
+	"github.com/jukylin/esim/log"
 )
 
 type stubsProxy struct {

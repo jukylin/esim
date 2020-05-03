@@ -2,11 +2,12 @@ package log
 
 import (
 	"context"
+	"testing"
+
 	"github.com/opentracing/opentracing-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/uber/jaeger-client-go"
 	jaegerConfig "github.com/uber/jaeger-client-go/config"
-	"testing"
 )
 
 func initJaeger() (opentracing.Tracer, error) {

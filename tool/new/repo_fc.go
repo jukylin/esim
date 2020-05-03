@@ -1,10 +1,10 @@
 package new
 
-func init()  {
+func init() {
 	Files = append(Files, repofc1)
 }
 
-var(
+var (
 	repofc1 = &FileContent{
 		FileName: "user_repo.go",
 		Dir:      "internal/infra/repo",
@@ -54,5 +54,4 @@ func (this *userRepo) FindByUserName(ctx context.Context, username string) entit
 }
 `,
 	}
-
 )

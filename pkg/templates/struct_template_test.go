@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"testing"
 	"text/template"
-	"github.com/stretchr/testify/assert"
+
 	"github.com/jukylin/esim/pkg"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestStructTemplate(t *testing.T)  {
+func TestStructTemplate(t *testing.T) {
 	tmpl, err := template.New("struct_template").Funcs(EsimFuncMap()).
 		Parse(StructTemplate)
 	assert.Nil(t, err)
@@ -34,8 +35,3 @@ func TestStructTemplate(t *testing.T)  {
 	assert.Nil(t, err)
 	//println(buf.String())
 }
-
-
-
-
-

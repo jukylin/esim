@@ -3,14 +3,15 @@ package http
 import (
 	"bytes"
 	"context"
-	"github.com/jukylin/esim/config"
-	"github.com/jukylin/esim/log"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_model/go"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
 	"testing"
+
+	"github.com/jukylin/esim/config"
+	"github.com/jukylin/esim/log"
+	"github.com/prometheus/client_golang/prometheus"
+	io_prometheus_client "github.com/prometheus/client_model/go"
+	"github.com/stretchr/testify/assert"
 )
 
 var logger log.Logger

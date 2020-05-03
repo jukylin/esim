@@ -1,12 +1,13 @@
 package factory
 
 import (
-	"testing"
-	"github.com/jukylin/esim/pkg/file-dir"
 	"path/filepath"
-	"github.com/stretchr/testify/assert"
-	"github.com/jukylin/esim/pkg"
+	"testing"
+
 	"github.com/jukylin/esim/log"
+	"github.com/jukylin/esim/pkg"
+	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRpcPluginStructField_SortField(t *testing.T) {
@@ -16,7 +17,7 @@ func TestRpcPluginStructField_SortField(t *testing.T) {
 	rpcPlugin := NewRpcPluginStructField(writer, log.NewLogger())
 	dir, err := filepath.Abs(".")
 	assert.Nil(t, err)
-	rpcPlugin.structDir =  dir + "/example"
+	rpcPlugin.structDir = dir + "/example"
 	rpcPlugin.StructName = "Test"
 
 	rpcPlugin.StrcutInfo = &structInfo{}

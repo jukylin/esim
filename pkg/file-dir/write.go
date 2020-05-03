@@ -14,7 +14,6 @@ func NewNullWrite() IfaceWriter {
 
 func (nw *NullWrite) Write(outFile, content string) error { return nil }
 
-
 type EsimWriter struct{}
 
 func NewEsimWriter() IfaceWriter {
@@ -25,9 +24,7 @@ func (ew *EsimWriter) Write(outFile, content string) error {
 	return EsimWrite(outFile, content)
 }
 
-
-type ErrWrite struct{
-
+type ErrWrite struct {
 	nilNum int
 
 	count int

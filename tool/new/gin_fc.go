@@ -278,7 +278,6 @@ func provideDemoController(app *{{.PackageName}}.App) *DemoController {
 `,
 	}
 
-
 	ginfc6 = &FileContent{
 		FileName: "wire.go",
 		Dir:      "internal/transports/http/controllers",
@@ -299,7 +298,6 @@ func initControllers(app *{{.PackageName}}.App) *Controllers {
 }
 `,
 	}
-
 
 	ginfc7 = &FileContent{
 		FileName: "wire_gen.go",
@@ -431,9 +429,8 @@ func tearDown(app *{{.PackageName}}.App) {
 	app.Infra.Close()
 }`,
 	}
+)
 
-	)
-
-func GinInit()  {
+func GinInit() {
 	Files = append(Files, ginfc1, ginfc2, ginfc3, ginfc4, ginfc5, ginfc6, ginfc7, ginfc8, ginfc9)
 }

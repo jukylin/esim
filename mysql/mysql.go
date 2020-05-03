@@ -3,15 +3,16 @@ package mysql
 import (
 	"context"
 	"database/sql"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/proxy"
 	"github.com/prometheus/client_golang/prometheus"
-	"strings"
-	"sync"
-	"time"
 )
 
 var clientOnce sync.Once

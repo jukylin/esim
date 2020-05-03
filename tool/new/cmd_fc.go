@@ -1,16 +1,14 @@
 package new
 
-func init()  {
+func init() {
 	Files = append(Files, cmdfc)
 }
 
-
-
 var (
 	cmdfc = &FileContent{
-	FileName: "root.go",
-	Dir:      "cmd",
-	Content: `/*
+		FileName: "root.go",
+		Dir:      "cmd",
+		Content: `/*
 Copyright © 2019 NAME HERE <EMAIL ADDRESS>
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -66,5 +64,5 @@ func Execute() {
 func init() {
 }
 `,
-}
+	}
 )

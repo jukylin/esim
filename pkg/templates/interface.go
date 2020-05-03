@@ -2,9 +2,8 @@ package templates
 
 import (
 	"bytes"
-	"text/template"
 	htpl "html/template"
-
+	"text/template"
 )
 
 type Tpl interface {
@@ -24,7 +23,6 @@ func NewTextTpl() Tpl {
 
 	return tt
 }
-
 
 func (tt TextTpl) Execute(tplName string, text string, data interface{}) (string, error) {
 	tmpl, err := tt.template.New(tplName).Funcs(EsimFuncMap()).

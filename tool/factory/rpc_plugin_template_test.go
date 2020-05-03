@@ -2,13 +2,13 @@ package factory
 
 import (
 	"testing"
-	"github.com/stretchr/testify/assert"
+
 	"github.com/jukylin/esim/pkg"
 	"github.com/jukylin/esim/pkg/templates"
+	"github.com/stretchr/testify/assert"
 )
 
-
-func TestExecuteRpcPluginTemplate(t *testing.T)  {
+func TestExecuteRpcPluginTemplate(t *testing.T) {
 
 	Field1 := pkg.Field{}
 	Field1.Field = "a int"
@@ -21,7 +21,7 @@ func TestExecuteRpcPluginTemplate(t *testing.T)  {
 
 	data := struct {
 		StructName string
-		Fields []pkg.Field
+		Fields     []pkg.Field
 	}{
 		"Test",
 		fields,
@@ -32,5 +32,3 @@ func TestExecuteRpcPluginTemplate(t *testing.T)  {
 	assert.Nil(t, err)
 	assert.NotEmpty(t, tmpl)
 }
-
-

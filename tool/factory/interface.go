@@ -28,7 +28,6 @@ func (g *ModelRPC) Sort() string {
 	return resp
 }
 
-
 func (g *ModelRPC) InitField() string {
 	var resp string
 	err := g.client.Call("Plugin.InitField", new(interface{}), &resp)
@@ -52,7 +51,6 @@ func (s *ModelRPCServer) Sort(args interface{}, resp *string) error {
 	*resp = s.Impl.Sort()
 	return nil
 }
-
 
 func (s *ModelRPCServer) InitField(args interface{}, resp *string) error {
 	*resp = s.Impl.InitField()

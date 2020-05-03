@@ -2,19 +2,19 @@ package protoc
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
-	"github.com/spf13/viper"
-	"github.com/jukylin/esim/pkg/file-dir"
-	logger "github.com/jukylin/esim/log"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
-	"errors"
-)
 
+	logger "github.com/jukylin/esim/log"
+	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	"github.com/spf13/viper"
+)
 
 type protocer struct {
 	target string
@@ -58,7 +58,6 @@ func (p *protocer) Run(v *viper.Viper) bool {
 	return true
 }
 
-
 func (p *protocer) bindInput(v *viper.Viper) bool {
 	target := v.GetString("target")
 
@@ -93,15 +92,15 @@ func (p *protocer) bindInput(v *viper.Viper) bool {
 
 	err = file_dir.CreateDir(target + "/" + pkgName)
 	if err != nil {
-		p.logger.Fatalf("Create fail % : %s", target + string(filepath.Separator) + pkgName, err.Error())
+		p.logger.Fatalf("Create fail % : %s", target+string(filepath.Separator)+pkgName, err.Error())
 	}
 
 	return true
 }
 
-func (p *protocer) parseProtoPath()  {
+func (p *protocer) parseProtoPath() {
 	strs := strings.Split(p.fromProto, "/")
-	protoPath := strs[0 : len(strs) - 1]
+	protoPath := strs[0 : len(strs)-1]
 	p.protoPath = strings.Join(protoPath, "/")
 }
 
@@ -109,7 +108,7 @@ func (p *protocer) execCmd() bool {
 	pwd, _ := os.Getwd()
 
 	cmdLine := fmt.Sprintf("protoc --go_out=plugins=grpc:%s --proto_path %s %s",
-		p.target + string(filepath.Separator) + p.packageName, p.protoPath, p.fromProto)
+		p.target+string(filepath.Separator)+p.packageName, p.protoPath, p.fromProto)
 
 	p.logger.Infof(cmdLine)
 

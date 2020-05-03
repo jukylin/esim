@@ -1,14 +1,15 @@
 package new
 
 import (
-	"github.com/spf13/viper"
-	"github.com/jukylin/esim/pkg/file-dir"
-	logger "github.com/jukylin/esim/log"
-	"strings"
-	"golang.org/x/tools/imports"
 	"path/filepath"
 	"regexp"
+	"strings"
+
+	logger "github.com/jukylin/esim/log"
+	file_dir "github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
+	"github.com/spf13/viper"
+	"golang.org/x/tools/imports"
 )
 
 var (
@@ -184,9 +185,9 @@ func (pj *Project) delDir() bool {
 	return true
 }
 
-func (pj *Project) getProPath()  {
+func (pj *Project) getProPath() {
 	currentDir := file_dir.GetGoProPath()
-	if currentDir != ""{
+	if currentDir != "" {
 		currentDir = currentDir + string(filepath.Separator)
 	}
 	pj.ProPath = currentDir
@@ -202,19 +203,19 @@ func (pj *Project) initTransport() {
 	if pj.withGin == true {
 		GinInit()
 		pj.RunTrans = append(pj.RunTrans, "app.Trans = append(app.Trans, http.NewGinServer(app))")
-		pj.ImportServer = append(pj.ImportServer, pj.ProPath + pj.ServerName + "/internal/transports/http")
+		pj.ImportServer = append(pj.ImportServer, pj.ProPath+pj.ServerName+"/internal/transports/http")
 	}
 
 	if pj.withBeego == true {
 		BeegoInit()
 		pj.RunTrans = append(pj.RunTrans, "app.Trans = append(app.Trans, http.NewBeegoServer(app.Esim))")
-		pj.ImportServer = append(pj.ImportServer, pj.ProPath + pj.ServerName + "/internal/transports/http")
+		pj.ImportServer = append(pj.ImportServer, pj.ProPath+pj.ServerName+"/internal/transports/http")
 	}
 
 	if pj.withGrpc == true {
 		GrpcInit()
 		pj.RunTrans = append(pj.RunTrans, "app.Trans = append(app.Trans, grpc.NewGrpcServer(app))")
-		pj.ImportServer = append(pj.ImportServer, pj.ProPath + pj.ServerName + "/internal/transports/grpc")
+		pj.ImportServer = append(pj.ImportServer, pj.ProPath+pj.ServerName+"/internal/transports/grpc")
 	}
 }
 
@@ -247,7 +248,7 @@ func (pj *Project) build() bool {
 
 		fileName := dir + string(filepath.Separator) + file.FileName
 
-		content, err := pj.tpl.Execute(file.FileName,  file.Content, pj)
+		content, err := pj.tpl.Execute(file.FileName, file.Content, pj)
 		if err != nil {
 			pj.logger.Panicf("%s : %s", file.FileName, err.Error())
 		}

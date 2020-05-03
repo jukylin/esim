@@ -1,8 +1,9 @@
 package proxy
 
 import (
-	"github.com/jukylin/esim/log"
 	"sync"
+
+	"github.com/jukylin/esim/log"
 )
 
 type Proxy interface {

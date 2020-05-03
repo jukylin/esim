@@ -2,13 +2,14 @@ package http
 
 import (
 	"context"
-	"github.com/jukylin/esim/log"
-	"github.com/jukylin/esim/proxy"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/jukylin/esim/log"
+	"github.com/jukylin/esim/proxy"
 )
 
 type Client struct {

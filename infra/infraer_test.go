@@ -2,11 +2,12 @@ package infra
 
 import (
 	"testing"
-	"github.com/jukylin/esim/tool/db2entity/domain-file"
-	"github.com/jukylin/esim/pkg/file-dir"
-	"github.com/stretchr/testify/assert"
+
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
+	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	domain_file "github.com/jukylin/esim/tool/db2entity/domain-file"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestInfraer_BuildNewInfraContent(t *testing.T) {
@@ -74,7 +75,7 @@ func provideA() { println("test") }
 
 	injectInfo := domain_file.NewInjectInfo()
 	injectInfo.Imports = append(injectInfo.Imports, pkg.Import{Path: "time"})
-	injectInfo.Fields = append(injectInfo.Fields, pkg.Field{Field : "a int"})
+	injectInfo.Fields = append(injectInfo.Fields, pkg.Field{Field: "a int"})
 	injectInfo.InfraSetArgs = append(injectInfo.InfraSetArgs, "provideA")
 	injectInfo.Provides = append(injectInfo.Provides, domain_file.Provide{`func provideA() {println("test")}`})
 

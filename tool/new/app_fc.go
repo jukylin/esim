@@ -1,14 +1,14 @@
 package new
 
-func init()  {
+func init() {
 	Files = append(Files, appfc)
 }
 
 var (
 	appfc = &FileContent{
-	FileName: "user_service.go",
-	Dir:      "internal/application",
-	Content: `package application
+		FileName: "user_service.go",
+		Dir:      "internal/application",
+		Content: `package application
 
 import (
 	"context"
@@ -32,5 +32,5 @@ func (svc *UserService) GetUserInfo(ctx context.Context, username string) (user 
 
 	return
 }`,
-}
+	}
 )

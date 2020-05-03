@@ -1,6 +1,6 @@
 package new
 
-func init()  {
+func init() {
 	Files = append(Files, daofc1)
 }
 

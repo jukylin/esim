@@ -2,15 +2,16 @@ package grpc
 
 import (
 	"context"
+	"net"
+	"testing"
+	"time"
+
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	pb "google.golang.org/grpc/examples/helloworld/helloworld"
 	"google.golang.org/grpc/reflection"
-	"net"
-	"testing"
-	"time"
 )
 
 var logger log.Logger

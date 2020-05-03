@@ -34,32 +34,29 @@ var pluralreleaseTemplate = `func ({{.PluralName | snakeToCamelLower | shorten}}
 
 var pluralTypeTemplate = `type {{.PluralName}} []{{.Star}}{{.StructName}}`
 
-
 func (pl Plural) NewString() string {
 	result, err := pl.tpl.Execute("plural_new_template", pluralNewTemplate, pl)
-	if err != nil{
+	if err != nil {
 		panic(err.Error())
 	}
 
 	return result
 }
-
 
 func (pl Plural) ReleaseString() string {
 
 	result, err := pl.tpl.Execute("plural_release_template", pluralreleaseTemplate, pl)
-	if err != nil{
+	if err != nil {
 		panic(err.Error())
 	}
 
 	return result
 }
 
-
 func (pl Plural) TypeString() string {
 
 	result, err := pl.tpl.Execute("plural_type_template", pluralTypeTemplate, pl)
-	if err != nil{
+	if err != nil {
 		panic(err.Error())
 	}
 

@@ -1,17 +1,17 @@
 package domain_file
 
 import (
+	"database/sql"
 	"os"
 	"testing"
-	"database/sql"
-	"github.com/ory/dockertest/v3"
-	dc "github.com/ory/dockertest/v3/docker"
+
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg/templates"
+	"github.com/ory/dockertest/v3"
+	dc "github.com/ory/dockertest/v3/docker"
 )
 
 var (
-
 	testEntityDomainFile DomainFile
 
 	testDaoDomainFile DomainFile
@@ -20,7 +20,6 @@ var (
 
 	db *sql.DB
 )
-
 
 func TestMain(m *testing.M) {
 	loggerOptions := log.LoggerOptions{}
@@ -32,7 +31,6 @@ func TestMain(m *testing.M) {
 		WithEntityDomainFileLogger(logger),
 		WithEntityDomainFileTpl(tpl))
 
-
 	testDaoDomainFile = NewDaoDomainFile(
 		WithDaoDomainFileLogger(logger),
 		WithDaoDomainFileTpl(tpl))
@@ -40,7 +38,6 @@ func TestMain(m *testing.M) {
 	testRepoDomainFile = NewRepoDomainFile(
 		WithRepoDomainFileLogger(logger),
 		WithRepoDomainFileTpl(tpl))
-
 
 	pool, err := dockertest.NewPool("")
 	if err != nil {
@@ -84,7 +81,7 @@ func TestMain(m *testing.M) {
 		  id int not NULL auto_increment,
 		  title VARCHAR(10) not NULL DEFAULT '',
 		  PRIMARY KEY (id)
-		)engine=innodb;`,}
+		)engine=innodb;`}
 
 	for _, execSql := range sqls {
 		res, err := db.Exec(execSql)

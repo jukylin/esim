@@ -3,11 +3,11 @@ package domain_file
 import (
 	"bytes"
 	"text/template"
-	"github.com/spf13/viper"
+
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
+	"github.com/spf13/viper"
 )
-
 
 const (
 	DOMAIN_FILE_EXT = ".go"
@@ -103,14 +103,13 @@ type ShareInfo struct {
 	WithDaoTarget string
 
 	WithRepoTarget string
-
 }
 
 func NewShareInfo() *ShareInfo {
 	return &ShareInfo{}
 }
 
-func (shareInfo *ShareInfo) ParseInfo(obj interface{})  {
+func (shareInfo *ShareInfo) ParseInfo(obj interface{}) {
 	switch data := obj.(type) {
 	case *entityDomainFile:
 		shareInfo.WithEntityTarget = data.withEntityTarget
@@ -120,7 +119,6 @@ func (shareInfo *ShareInfo) ParseInfo(obj interface{})  {
 		shareInfo.WithRepoTarget = data.withRepoTarget
 	}
 }
-
 
 type InjectInfo struct {
 	Fields pkg.Fields
@@ -138,11 +136,9 @@ func NewInjectInfo() *InjectInfo {
 	return injectInfo
 }
 
-
 var provideTpl = `{{ range .Provides}}
 {{.Content}}
 {{end}}`
-
 
 type Provide struct {
 	Content string

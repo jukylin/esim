@@ -4,12 +4,13 @@ import (
 	"path/filepath"
 	"strings"
 
+	"errors"
+
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
-	"github.com/jukylin/esim/pkg/file-dir"
+	file_dir "github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
 	"github.com/spf13/viper"
-	"errors"
 )
 
 type daoDomainFile struct {
@@ -146,11 +147,11 @@ func (ddf *daoDomainFile) Execute() string {
 }
 
 //GetSavePath implements DomainFile.
-func (ddf *daoDomainFile) GetSavePath() string  {
+func (ddf *daoDomainFile) GetSavePath() string {
 	return ddf.withDaoTarget + ddf.tableName + DOMAIN_FILE_EXT
 }
 
-func (ddf *daoDomainFile) GetName() string  {
+func (ddf *daoDomainFile) GetName() string {
 	return ddf.name
 }
 

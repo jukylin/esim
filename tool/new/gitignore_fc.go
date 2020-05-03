@@ -1,10 +1,10 @@
 package new
 
-func init()  {
+func init() {
 	Files = append(Files, gitIgnorefc)
 }
 
-var(
+var (
 	gitIgnorefc = &FileContent{
 		FileName: ".gitignore",
 		Dir:      ".",
@@ -16,5 +16,4 @@ lastupdate.tmp
 *.svg
 *.proto`,
 	}
-
 )

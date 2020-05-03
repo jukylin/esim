@@ -3,11 +3,11 @@ package ifacer
 import (
 	"testing"
 
-	"github.com/jukylin/esim/pkg/file-dir"
+	"github.com/jukylin/esim/log"
+	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	"github.com/jukylin/esim/pkg/templates"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
-	"github.com/jukylin/esim/log"
-	"github.com/jukylin/esim/pkg/templates"
 )
 
 var Result = `package example1
@@ -94,7 +94,6 @@ func (ts TestStub) Iface9(arg0 TestStruct, arg1 []TestStruct, arg2 [3]TestStruct
 }
 `
 
-
 func TestIfacer_RunNullWrite(t *testing.T) {
 	v := viper.New()
 	v.Set("out", "./abc/test_stub.go")
@@ -110,7 +109,7 @@ func TestIfacer_RunNullWrite(t *testing.T) {
 		WithIfacerLogger(log.NewLogger()),
 		WithIfacerTpl(templates.NewTextTpl()),
 		WithIfacerWriter(writer),
-		)
+	)
 
 	err := ifacer.Run(v)
 	assert.Equal(t, Result, ifacer.Content)
@@ -132,7 +131,7 @@ func TestIfacer_Write(t *testing.T) {
 		WithIfacerLogger(log.NewLogger()),
 		WithIfacerTpl(templates.NewTextTpl()),
 		WithIfacerWriter(writer),
-		)
+	)
 
 	err := ifacer.Run(v)
 	assert.Equal(t, Result, ifacer.Content)
@@ -148,7 +147,7 @@ func TestIfacer_GetUniqueImportName(t *testing.T) {
 		WithIfacerLogger(log.NewLogger()),
 		WithIfacerTpl(templates.NewTextTpl()),
 		WithIfacerWriter(writer),
-		)
+	)
 
 	importName := ifacer.getUniqueImportName(pkgName, 0)
 	assert.Equal(t, "redis", importName)
@@ -187,7 +186,7 @@ func TestIfacer_SetNoConflictImport(t *testing.T) {
 		WithIfacerLogger(log.NewLogger()),
 		WithIfacerTpl(templates.NewTextTpl()),
 		WithIfacerWriter(writer),
-		)
+	)
 
 	for _, test := range testCases {
 		t.Run(test.caseName, func(t *testing.T) {

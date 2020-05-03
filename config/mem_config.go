@@ -1,9 +1,10 @@
 package config
 
 import (
+	"time"
+
 	"github.com/spf13/cast"
 	"github.com/spf13/viper"
-	"time"
 )
 
 type MemConfig struct {

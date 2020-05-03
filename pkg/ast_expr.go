@@ -11,7 +11,7 @@ func ParseExpr(expr ast.Expr, fileContent string) string {
 	switch typ := expr.(type) {
 	case *ast.CallExpr:
 		argsType += ParseExpr(typ.Fun, fileContent)
-		argsType += fileContent[typ.Lparen - 1 : typ.Rparen + 1]
+		argsType += fileContent[typ.Lparen-1 : typ.Rparen+1]
 
 	case *ast.SelectorExpr:
 		argsType += ParseExpr(typ.X, fileContent)
@@ -40,7 +40,7 @@ func ParseExpr(expr ast.Expr, fileContent string) string {
 	case *ast.InterfaceType:
 		argsType += "interface{}"
 	case *ast.FuncType:
-		argsType += strings.Trim(fileContent[typ.Pos() - 1 : typ.End()], "\n")
+		argsType += strings.Trim(fileContent[typ.Pos()-1:typ.End()], "\n")
 	default:
 		panic(fmt.Sprintf("unsupport expr type %T", typ))
 	}

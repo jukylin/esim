@@ -1,19 +1,18 @@
 package domain_file
 
 import (
+	"errors"
 	"path/filepath"
 	"strings"
-	"errors"
 
 	"github.com/jukylin/esim/log"
-	"github.com/jukylin/esim/pkg/file-dir"
+	"github.com/jukylin/esim/pkg"
+	file_dir "github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
 	"github.com/spf13/viper"
-	"github.com/jukylin/esim/pkg"
 )
 
 type repoDomainFile struct {
-
 	withRepoTarget string
 
 	withDisableRepo bool
@@ -137,7 +136,7 @@ func (rdf *repoDomainFile) Execute() string {
 }
 
 //GetSavePath implements DomainFile.
-func (rdf *repoDomainFile) GetSavePath() string  {
+func (rdf *repoDomainFile) GetSavePath() string {
 	return rdf.withRepoTarget + rdf.tableName + DOMAIN_FILE_EXT
 }
 
@@ -155,12 +154,12 @@ func (rdf *repoDomainFile) GetInjectInfo() *InjectInfo {
 	injectInfo.Fields = append(injectInfo.Fields, field)
 
 	injectInfo.InfraSetArgs = append(injectInfo.InfraSetArgs,
-		"provide" + rdf.shareInfo.CamelStruct + "Repo")
+		"provide"+rdf.shareInfo.CamelStruct+"Repo")
 
 	injectInfo.Imports = append(injectInfo.Imports,
 		pkg.Import{Path: file_dir.GetGoProPath() + pkg.DirPathToImportPath(rdf.shareInfo.WithRepoTarget)})
 
-	content, err :=  rdf.tpl.Execute("provide_tpl",
+	content, err := rdf.tpl.Execute("provide_tpl",
 		ProvideFuncTemplate, NewRepoTpl(rdf.shareInfo.CamelStruct))
 
 	if err != nil {

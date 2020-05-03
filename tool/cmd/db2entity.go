@@ -3,21 +3,22 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 	//"log"
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/jukylin/esim/tool/db2entity"
 	"os"
-	"github.com/jukylin/esim/log"
-	"github.com/jukylin/esim/tool/db2entity/domain-file"
-	"github.com/jukylin/esim/pkg/file-dir"
-	"github.com/jukylin/esim/pkg"
-	"github.com/jukylin/esim/pkg/templates"
+
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/jukylin/esim/infra"
+	"github.com/jukylin/esim/log"
+	"github.com/jukylin/esim/pkg"
+	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	"github.com/jukylin/esim/pkg/templates"
+	"github.com/jukylin/esim/tool/db2entity"
+	domain_file "github.com/jukylin/esim/tool/db2entity/domain-file"
 )
 
 var db2entityCmd = &cobra.Command{
 	Use:   "db2entity",
 	Short: "table's fields to entity",
-	Long: ``,
+	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		logger := log.NewLogger()
 

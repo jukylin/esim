@@ -1,6 +1,6 @@
 package new
 
-func init()  {
+func init() {
 	Files = append(Files, infrafc1, infrafc2, infrafc3)
 }
 
@@ -124,7 +124,6 @@ func provideGrpcClient(esim *container.Esim) *grpc.GrpcClient {
 `,
 	}
 
-
 	infrafc2 = &FileContent{
 		FileName: "wire.go",
 		Dir:      "internal/infra",
@@ -145,7 +144,6 @@ func initInfra(esim *container.Esim,grpc *grpc.GrpcClient) *Infra {
 }
 `,
 	}
-
 
 	infrafc3 = &FileContent{
 		FileName: "wire_gen.go",
@@ -177,5 +175,4 @@ func initInfra(esim *container.Esim, grpc2 *grpc.GrpcClient) *Infra {
 }
 `,
 	}
-
 )

@@ -1,6 +1,6 @@
 package new
 
-func init()  {
+func init() {
 	Files = append(Files, internalfc1)
 }
 
@@ -108,6 +108,4 @@ func (this *App) stop()  {
 }
 `,
 	}
-
-
 )

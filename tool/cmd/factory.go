@@ -5,9 +5,9 @@ import (
 	//"log"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jukylin/esim/log"
-	"github.com/jukylin/esim/tool/factory"
-	"github.com/jukylin/esim/pkg/file-dir"
+	file_dir "github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
+	"github.com/jukylin/esim/tool/factory"
 )
 
 var factoryCmd = &cobra.Command{

@@ -28,7 +28,7 @@ var poolTemplate = `{{.VarPoolName | snakeToCamelLower | firstToLower}} = sync.P
 func (pt PoolTpl) String() string {
 	result, err := pt.tpl.Execute("pool_template", poolTemplate, pt)
 
-	if err != nil{
+	if err != nil {
 		panic(err.Error())
 	}
 

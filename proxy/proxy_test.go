@@ -1,9 +1,10 @@
 package proxy
 
 import (
+	"testing"
+
 	"github.com/jukylin/esim/log"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 type DbRepo interface {

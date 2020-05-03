@@ -7,7 +7,7 @@ import (
 
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
-	"github.com/jukylin/esim/pkg/file-dir"
+	file_dir "github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
 	"github.com/serenize/snaker"
 	"github.com/spf13/viper"
@@ -170,7 +170,7 @@ func (edf *entityDomainFile) ParseCloumns(cs []Column, info *ShareInfo) {
 
 		doc = column.FilterComment()
 		if doc != "" {
-			field.Doc = append(field.Doc, "//" + doc)
+			field.Doc = append(field.Doc, "//"+doc)
 		}
 
 		primary := ""
@@ -214,7 +214,7 @@ func (edf *entityDomainFile) Execute() string {
 }
 
 //getSavePath implements DomainFile.
-func (edf *entityDomainFile) GetSavePath() string  {
+func (edf *entityDomainFile) GetSavePath() string {
 	return edf.withEntityTarget + edf.tableName + DOMAIN_FILE_EXT
 }
 

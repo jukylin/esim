@@ -1,24 +1,25 @@
 package factory
 
 import (
-	"strings"
-	"os"
-	"reflect"
-	"github.com/jukylin/esim/pkg/file-dir"
-	"regexp"
-	"io/ioutil"
-	"path/filepath"
 	"bytes"
-	"os/exec"
-	"fmt"
 	"encoding/json"
-	log2 "github.com/jukylin/esim/log"
-	"github.com/hashicorp/go-plugin"
-	"github.com/hashicorp/go-hclog"
+	"fmt"
+	"io/ioutil"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"reflect"
+	"regexp"
+	"strings"
 	"text/template"
+
+	"github.com/hashicorp/go-hclog"
+	"github.com/hashicorp/go-plugin"
+	log2 "github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
-	"golang.org/x/tools/imports"
+	file_dir "github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
+	"golang.org/x/tools/imports"
 )
 
 type StructFieldIface interface {
@@ -41,9 +42,7 @@ type StructFieldIface interface {
 	SetPackName(packName string)
 }
 
-
-type rpcPluginStructField struct{
-
+type rpcPluginStructField struct {
 	logger log2.Logger
 
 	structDir string
@@ -113,15 +112,15 @@ func (rps *rpcPluginStructField) buildPluginEnv() error {
 	reg, _ := regexp.Compile(`package[\s*]` + rps.packName)
 
 	for _, name := range rps.filesName {
-		if name == rps.StructFileName{
+		if name == rps.StructFileName {
 			src := reg.ReplaceAll([]byte(rps.StrcutInfo.structFileContent), []byte("package main"))
-			rps.writer.Write(targetDir + string(filepath.Separator) + rps.StructFileName,
+			rps.writer.Write(targetDir+string(filepath.Separator)+rps.StructFileName,
 				string(src))
 			continue
 		}
 
-		rps.copyFile(targetDir + string(filepath.Separator) + name,
-			rps.structDir + string(filepath.Separator) + name, reg)
+		rps.copyFile(targetDir+string(filepath.Separator)+name,
+			rps.structDir+string(filepath.Separator)+name, reg)
 	}
 
 	rps.genStructPlugin(targetDir)
@@ -163,22 +162,22 @@ func (rps *rpcPluginStructField) copyFile(dstName, srcName string, reg *regexp.R
 }
 
 // gen modelName_plugin.go
-func (rps *rpcPluginStructField) genStructPlugin(dir string)  {
+func (rps *rpcPluginStructField) genStructPlugin(dir string) {
 
 	tmpl, err := template.New("rpc_plugin").Funcs(templates.EsimFuncMap()).
 		Parse(rpcPluginTemplate)
-	if err != nil{
+	if err != nil {
 		rps.logger.Panicf(err.Error())
 	}
 
 	var buf bytes.Buffer
 	err = tmpl.Execute(&buf, rps)
-	if err != nil{
+	if err != nil {
 		rps.logger.Panicf(err.Error())
 	}
 
-	src ,err := imports.Process("", buf.Bytes(), nil)
-	if err != nil{
+	src, err := imports.Process("", buf.Bytes(), nil)
+	if err != nil {
 		rps.logger.Panicf("%s : %s", err.Error(), buf.String())
 	}
 
@@ -210,11 +209,11 @@ func (rps *rpcPluginStructField) buildPlugin(dir string) error {
 		return err
 	}
 
-	os.Chmod(dir + string(filepath.Separator) + "plugin", 0777)
+	os.Chmod(dir+string(filepath.Separator)+"plugin", 0777)
 	return nil
 }
 
-func (rps *rpcPluginStructField) dispense()  {
+func (rps *rpcPluginStructField) dispense() {
 	rpcClient, err := rps.pluginClient.Client()
 	if err != nil {
 		rps.logger.Panicf(err.Error())
@@ -229,13 +228,13 @@ func (rps *rpcPluginStructField) dispense()  {
 	rps.model = raw.(Model)
 }
 
-func (rps *rpcPluginStructField) run()  {
+func (rps *rpcPluginStructField) run() {
 
-	if rps.structDir == ""{
+	if rps.structDir == "" {
 		rps.logger.Panicf("%s is empty", rps.structDir)
 	}
 
-	if rps.StructName == ""{
+	if rps.StructName == "" {
 		rps.logger.Panicf("%s is empty", rps.StructName)
 	}
 
@@ -243,7 +242,7 @@ func (rps *rpcPluginStructField) run()  {
 		HandshakeConfig: HandshakeConfig,
 		Plugins:         pluginMap,
 		Cmd:             exec.Command(rps.structDir + string(filepath.Separator) + "plugin" + string(filepath.Separator) + "plugin"),
-		Logger : hclog.New(&hclog.LoggerOptions{
+		Logger: hclog.New(&hclog.LoggerOptions{
 			Output: hclog.DefaultOutput,
 			Level:  hclog.Error,
 			Name:   "plugin",
@@ -259,13 +258,13 @@ func (rps *rpcPluginStructField) SortField(fields []pkg.Field) *SortReturn {
 
 	rps.Fields = fields
 
-	if rps.model == nil{
+	if rps.model == nil {
 		rps.run()
 	}
 
 	sortReturn := &SortReturn{}
 	err := json.Unmarshal([]byte(rps.model.Sort()), sortReturn)
-	if err != nil{
+	if err != nil {
 		rps.logger.Panicf(err.Error())
 	}
 
@@ -275,48 +274,44 @@ func (rps *rpcPluginStructField) SortField(fields []pkg.Field) *SortReturn {
 func (rps *rpcPluginStructField) InitField(fields []pkg.Field) *InitFieldsReturn {
 	rps.Fields = fields
 
-	if rps.model == nil{
+	if rps.model == nil {
 		rps.run()
 	}
 
 	initReturn := &InitFieldsReturn{}
 	err := json.Unmarshal([]byte(rps.model.InitField()), initReturn)
-	if err != nil{
+	if err != nil {
 		rps.logger.Panicf(err.Error())
 	}
 
 	return initReturn
 }
 
-func (rps *rpcPluginStructField) SetStructDir(structDir string)  {
+func (rps *rpcPluginStructField) SetStructDir(structDir string) {
 	rps.structDir = structDir
 }
 
-
-func (rps *rpcPluginStructField) SetStructName(structName string)  {
+func (rps *rpcPluginStructField) SetStructName(structName string) {
 	rps.StructName = structName
 }
 
-
-func (rps *rpcPluginStructField) SetStructInfo(s *structInfo)  {
+func (rps *rpcPluginStructField) SetStructInfo(s *structInfo) {
 	rps.StrcutInfo = s
 }
 
-func (rps *rpcPluginStructField) SetStructFileName (structFileName string)  {
+func (rps *rpcPluginStructField) SetStructFileName(structFileName string) {
 	rps.StructFileName = structFileName
 }
 
-
-func (rps *rpcPluginStructField) SetFilesName(filesName []string)  {
+func (rps *rpcPluginStructField) SetFilesName(filesName []string) {
 	rps.filesName = filesName
 }
 
-
-func (rps *rpcPluginStructField) SetPackName(packName string)  {
+func (rps *rpcPluginStructField) SetPackName(packName string) {
 	rps.packName = packName
 }
 
-func (rps *rpcPluginStructField) Close()  {
+func (rps *rpcPluginStructField) Close() {
 	rps.pluginClient.Kill()
 	rps.clear()
 }
@@ -387,7 +382,6 @@ func (rps *rpcPluginStructField) GenInitFieldStr(getType reflect.Type, fieldLink
 
 	return structFields
 }
-
 
 func (rps *rpcPluginStructField) KindToInit(refType reflect.Type) string {
 	var initStr string

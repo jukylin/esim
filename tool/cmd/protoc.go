@@ -4,8 +4,8 @@ import (
 	"github.com/spf13/cobra"
 	//"log"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/jukylin/esim/tool/protoc"
 	"github.com/jukylin/esim/log"
+	"github.com/jukylin/esim/tool/protoc"
 )
 
 var protocCmd = &cobra.Command{

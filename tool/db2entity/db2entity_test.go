@@ -1,17 +1,18 @@
 package db2entity
 
 import (
-	"github.com/jukylin/esim/log"
-	"github.com/jukylin/esim/pkg"
-	"github.com/jukylin/esim/pkg/file-dir"
-	"github.com/spf13/viper"
-	"github.com/stretchr/testify/assert"
-	"testing"
-	"github.com/jukylin/esim/tool/db2entity/domain-file"
-	"github.com/jukylin/esim/pkg/templates"
 	"os"
 	"path/filepath"
+	"testing"
+
 	"github.com/jukylin/esim/infra"
+	"github.com/jukylin/esim/log"
+	"github.com/jukylin/esim/pkg"
+	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	"github.com/jukylin/esim/pkg/templates"
+	domain_file "github.com/jukylin/esim/tool/db2entity/domain-file"
+	"github.com/spf13/viper"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestDb2Entity_Run(t *testing.T) {
@@ -76,7 +77,6 @@ func TestDb2Entity_Run(t *testing.T) {
 			infra.WithIfacerLogger(logger),
 			infra.WithIfacerWriter(writer),
 			infra.WithIfacerExecer(pkg.NewNullExec()),
-
 		)),
 	)
 
@@ -96,7 +96,6 @@ func TestDb2Entity_Run(t *testing.T) {
 	//	string(filepath.Separator) + "example" + string(filepath.Separator) + "infra" + string(filepath.Separator) + "infra.go")
 	assert.Nil(t, err)
 }
-
 
 func TestDb2Entity_ErrWrite(t *testing.T) {
 
@@ -157,7 +156,6 @@ func TestDb2Entity_ErrWrite(t *testing.T) {
 			infra.WithIfacerLogger(logger),
 			infra.WithIfacerWriter(file_dir.NewNullWrite()),
 			infra.WithIfacerExecer(pkg.NewNullExec()),
-
 		)),
 	)
 

@@ -2,19 +2,21 @@ package db2entity
 
 import (
 	"strings"
+
 	logger "github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
-	"github.com/jukylin/esim/pkg/file-dir"
+	file_dir "github.com/jukylin/esim/pkg/file-dir"
 
-	"github.com/jukylin/esim/tool/db2entity/domain-file"
-	"github.com/jukylin/esim/pkg/templates"
-	"github.com/spf13/viper"
-	"path/filepath"
-	"github.com/serenize/snaker"
 	"errors"
 	"os"
-	"golang.org/x/tools/imports"
+	"path/filepath"
+
 	"github.com/jukylin/esim/infra"
+	"github.com/jukylin/esim/pkg/templates"
+	domain_file "github.com/jukylin/esim/tool/db2entity/domain-file"
+	"github.com/serenize/snaker"
+	"github.com/spf13/viper"
+	"golang.org/x/tools/imports"
 )
 
 type Db2Entity struct {
@@ -34,7 +36,7 @@ type Db2Entity struct {
 
 	domainFiles []domain_file.DomainFile
 
-	//parsed content 
+	//parsed content
 	domainContent map[string]string
 
 	//record wrote content, if an error occurred roll back the file
@@ -223,7 +225,7 @@ func (de *Db2Entity) bindInfra(v *viper.Viper) {
 	de.withInject = v.GetBool("inject")
 
 	de.withInfraDir = v.GetString("infra_dir")
-	if de.withInfraDir == ""{
+	if de.withInfraDir == "" {
 		de.withInfraDir = "internal" + string(filepath.Separator) + "infra" + string(filepath.Separator)
 	} else {
 		de.withInfraDir = strings.TrimLeft(de.withInfraDir, ".") + string(filepath.Separator)
@@ -241,7 +243,7 @@ func (de *Db2Entity) bindInfra(v *viper.Viper) {
 	}
 
 	if exists == false {
-		de.logger.Fatalf("%s not exists", de.withInfraDir + de.withInfraFile)
+		de.logger.Fatalf("%s not exists", de.withInfraDir+de.withInfraFile)
 	}
 }
 

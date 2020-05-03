@@ -2,18 +2,19 @@ package ifacer
 
 import (
 	"errors"
-	"github.com/jukylin/esim/log"
-	"github.com/spf13/viper"
-	"github.com/vektra/mockery/mockery"
+	"fmt"
 	"go/types"
-	"golang.org/x/tools/imports"
 	"path/filepath"
 	"strconv"
 	"strings"
-	"github.com/jukylin/esim/pkg/file-dir"
-	"fmt"
+
+	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
+	file_dir "github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
+	"github.com/spf13/viper"
+	"github.com/vektra/mockery/mockery"
+	"golang.org/x/tools/imports"
 )
 
 type Ifacer struct {
@@ -102,7 +103,6 @@ type Method struct {
 	ReturnVar []string
 }
 
-
 func (f *Ifacer) Run(v *viper.Viper) error {
 
 	err := f.bindInput(v)
@@ -147,7 +147,6 @@ func (f *Ifacer) Run(v *viper.Viper) error {
 	return nil
 }
 
-
 func (f *Ifacer) bindInput(v *viper.Viper) error {
 
 	name := v.GetString("iname")
@@ -178,7 +177,6 @@ func (f *Ifacer) bindInput(v *viper.Viper) error {
 	return nil
 }
 
-
 func (f *Ifacer) GenMethods(interacer *types.Interface) {
 	for i := 0; i < interacer.NumMethods(); i++ {
 		fn := interacer.Method(i)
@@ -193,16 +191,14 @@ func (f *Ifacer) GenMethods(interacer *types.Interface) {
 	}
 }
 
-
 func (f *Ifacer) getUsingImportStr() {
 	imps := pkg.Imports{}
 	for _, imp := range f.pkgNoConflictImport {
 		imps = append(imps, imp)
 	}
 
-	f.UsingImportStr = imps.String() 
+	f.UsingImportStr = imps.String()
 }
-
 
 func (f *Ifacer) ManageNoConflictImport(imports []*types.Package) bool {
 	for _, imp := range imports {
@@ -211,7 +207,6 @@ func (f *Ifacer) ManageNoConflictImport(imports []*types.Package) bool {
 
 	return true
 }
-
 
 func (f *Ifacer) setNoConflictImport(importName string, importPath string) bool {
 	if impPath, ok := f.pkgNoConflictImport[importName]; ok {
@@ -256,7 +251,7 @@ func (f *Ifacer) getUniqueImportName(pkgName string, level int) string {
 
 	lenStr := len(strs)
 
-	if lenStr - 1 < level {
+	if lenStr-1 < level {
 		f.logger.Panicf("%d out of range", level)
 	}
 
@@ -271,7 +266,6 @@ func (f *Ifacer) getUniqueImportName(pkgName string, level int) string {
 	return importName
 }
 
-
 func (f *Ifacer) getArgStr(tuple *types.Tuple, m *Method, variadic bool) {
 	for i := 0; i < tuple.Len(); i++ {
 		ArgVar := tuple.At(i)
@@ -281,7 +275,7 @@ func (f *Ifacer) getArgStr(tuple *types.Tuple, m *Method, variadic bool) {
 			m.ArgStr += "arg" + strconv.Itoa(i) + " "
 		}
 
-		if i == tuple.Len() - 1 {
+		if i == tuple.Len()-1 {
 			m.ArgStr += f.parseVar(ArgVar, variadic)
 		} else {
 			m.ArgStr += f.parseVar(ArgVar, false)
@@ -293,7 +287,6 @@ func (f *Ifacer) getArgStr(tuple *types.Tuple, m *Method, variadic bool) {
 	}
 }
 
-
 func (f *Ifacer) parseVar(varObj *types.Var, variadic bool) string {
 	return f.parseVarType(varObj.Type(), variadic)
 }
@@ -304,8 +297,8 @@ func (f *Ifacer) parseVarType(typ types.Type, variadic bool) string {
 
 	switch t := typ.(type) {
 	case *types.Named:
-		if t.Obj().Pkg() != nil{
-			if t.Obj().Pkg().Name() != f.PackageName{
+		if t.Obj().Pkg() != nil {
+			if t.Obj().Pkg().Name() != f.PackageName {
 				varType += t.Obj().Pkg().Name() + "."
 				f.ifaceUsingIngImport[t.Obj().Pkg().Name()] = t.Obj().Pkg().Path()
 			}
@@ -351,7 +344,6 @@ func (f *Ifacer) parseVarType(typ types.Type, variadic bool) string {
 	return varType
 }
 
-
 func (f *Ifacer) parseTypeTuple(tup *types.Tuple) string {
 	var parts []string
 
@@ -363,7 +355,6 @@ func (f *Ifacer) parseTypeTuple(tup *types.Tuple) string {
 
 	return strings.Join(parts, " , ")
 }
-
 
 func (f *Ifacer) getReturnStr(tuple *types.Tuple, m *Method) {
 	if tuple.Len() > 0 {
@@ -394,7 +385,7 @@ func (f *Ifacer) Process() error {
 	if err != nil {
 		return err
 	}
-	
+
 	src, err := imports.Process("", []byte(content), nil)
 	if err != nil {
 		return err

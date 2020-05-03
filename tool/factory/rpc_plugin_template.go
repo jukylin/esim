@@ -1,6 +1,5 @@
 package factory
 
-
 var rpcPluginTemplate = `package main
 
 import (

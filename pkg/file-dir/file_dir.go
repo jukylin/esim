@@ -1,29 +1,28 @@
 package file_dir
 
 import (
-	"os"
 	"errors"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
+
 	"github.com/jukylin/esim/log"
 )
 
-
 func CreateFile(file string) (bool, error) {
 	f, err := os.Create(file)
-	if err != nil{
+	if err != nil {
 		return false, err
-	}else{
+	} else {
 		f.Close()
 		return true, nil
 	}
 }
 
-
-func IsExistsDir(dir string)  (bool, error) {
+func IsExistsDir(dir string) (bool, error) {
 	_, err := os.Stat(dir)
-	if err == nil{
+	if err == nil {
 		return true, err
 	}
 
@@ -36,13 +35,12 @@ func IsExistsDir(dir string)  (bool, error) {
 
 func CreateDir(dir string) error {
 	err := os.MkdirAll(dir, os.ModePerm)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
 	return nil
 }
-
 
 func IsExistsFile(file string) (bool, error) {
 	if _, err := os.Stat(file); err == nil {
@@ -57,30 +55,29 @@ func IsExistsFile(file string) (bool, error) {
 func IsEmptyDir(dir string) (bool, error) {
 
 	exists, err := IsExistsDir(dir)
-	if err != nil{
+	if err != nil {
 		return false, err
 	}
 
-	if exists == false{
+	if exists == false {
 		return false, errors.New("目录不存在")
 	}
 
-
 	dirs, err := ioutil.ReadDir(dir)
 
-	if err != nil{
+	if err != nil {
 		return false, err
 	}
 
-	if len(dirs) == 0{
+	if len(dirs) == 0 {
 		return true, nil
-	}else {
+	} else {
 		return false, nil
 	}
 }
 
 func GetParDir() string {
-	wd,err := os.Getwd()
+	wd, err := os.Getwd()
 	if err != nil {
 		panic(err)
 	}
@@ -89,7 +86,6 @@ func GetParDir() string {
 
 	return parDir
 }
-
 
 func GetCurrentDir() string {
 	wd, err := os.Getwd()
@@ -102,21 +98,20 @@ func GetCurrentDir() string {
 	return wd
 }
 
-
 func GetGoProPath() string {
-	wd,err := os.Getwd()
+	wd, err := os.Getwd()
 	if err != nil {
 		panic(err)
 	}
 
 	gopath := os.Getenv("GOPATH")
-	if gopath == ""{
+	if gopath == "" {
 		panic(errors.New("not set GOPATH"))
 	}
 
 	srcPath := gopath + string(filepath.Separator) + "src" + string(filepath.Separator)
 
-	parDir := strings.Replace(wd + string(filepath.Separator), srcPath, "", -1)
+	parDir := strings.Replace(wd+string(filepath.Separator), srcPath, "", -1)
 
 	parDir = strings.Trim(parDir, string(filepath.Separator))
 
@@ -132,19 +127,19 @@ func RemoveDir(dir string) error {
 // Overwrite as soon as the file exists
 func EsimBackUpFile(backFile string) error {
 
-	if backFile == ""{
+	if backFile == "" {
 		return errors.New("没有文件")
 	}
 
 	dir := filepath.Dir(backFile)
-	relativeDir := strings.Replace(dir, os.Getenv("GOPATH") + string(filepath.Separator) +
-		"src" + string(filepath.Separator), "", -1)
+	relativeDir := strings.Replace(dir, os.Getenv("GOPATH")+string(filepath.Separator)+
+		"src"+string(filepath.Separator), "", -1)
 
 	backUpPath := os.Getenv("GOPATH") + string(filepath.Separator) + "pkg" +
 		string(filepath.Separator) + "esim" + string(filepath.Separator) + "backup" + string(filepath.Separator)
 	targetPath := backUpPath + relativeDir
 	exists, err := IsExistsDir(targetPath)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
@@ -155,10 +150,10 @@ func EsimBackUpFile(backFile string) error {
 		}
 	}
 
-	relativePath := strings.Replace(backFile, os.Getenv("GOPATH") + string(filepath.Separator) +
-		"src" + string(filepath.Separator), "", -1)
+	relativePath := strings.Replace(backFile, os.Getenv("GOPATH")+string(filepath.Separator)+
+		"src"+string(filepath.Separator), "", -1)
 	fileExists, err := IsExistsFile(backUpPath + relativePath)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
@@ -174,7 +169,7 @@ func EsimBackUpFile(backFile string) error {
 		return err
 	}
 
-	err = ioutil.WriteFile(backUpPath + relativePath, input, 0644)
+	err = ioutil.WriteFile(backUpPath+relativePath, input, 0644)
 	if err != nil {
 		return err
 	}
@@ -187,12 +182,12 @@ func EsimBackUpFile(backFile string) error {
 //EsimRecoverFile recover file from os.Getenv("GOPATH") + "/pkg/esim/backup/"
 func EsimRecoverFile(recoverFile string) error {
 
-	if recoverFile == ""{
+	if recoverFile == "" {
 		return errors.New("没有文件")
 	}
 
-	relativeFile := strings.Replace(recoverFile, os.Getenv("GOPATH") + string(filepath.Separator) +
-		"src" + string(filepath.Separator), "", -1)
+	relativeFile := strings.Replace(recoverFile, os.Getenv("GOPATH")+string(filepath.Separator)+
+		"src"+string(filepath.Separator), "", -1)
 
 	backUpPath := os.Getenv("GOPATH") + string(filepath.Separator) + "pkg" + string(filepath.Separator) +
 		"esim" + string(filepath.Separator) + "backup" + string(filepath.Separator)
@@ -206,9 +201,8 @@ func EsimRecoverFile(recoverFile string) error {
 		return errors.New(targetPath + " not exists")
 	}
 
-
 	fileExists, err := IsExistsFile(recoverFile)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
@@ -234,19 +228,18 @@ func EsimRecoverFile(recoverFile string) error {
 	return nil
 }
 
-
 func EsimWrite(filePath string, content string) error {
 
 	dir := filepath.Dir(filePath)
 
 	exists, err := IsExistsDir(dir)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
 	if exists == false {
 		err = CreateDir(dir)
-		if err != nil{
+		if err != nil {
 			return err
 		}
 	}

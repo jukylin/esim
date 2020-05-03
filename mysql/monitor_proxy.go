@@ -3,12 +3,13 @@ package mysql
 import (
 	"context"
 	"database/sql"
+	"time"
+
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/opentracing"
 	opentracing2 "github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
-	"time"
 )
 
 type monitorProxy struct {

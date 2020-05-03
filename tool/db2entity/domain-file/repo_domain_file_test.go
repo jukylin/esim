@@ -4,10 +4,10 @@ import (
 	"os"
 	"testing"
 
+	"github.com/jukylin/esim/log"
+	file_dir "github.com/jukylin/esim/pkg/file-dir"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
-	"github.com/jukylin/esim/log"
-	"github.com/jukylin/esim/pkg/file-dir"
 )
 
 func TestRepoDomainFile(t *testing.T) {

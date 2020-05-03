@@ -1,6 +1,6 @@
 package new
 
-func init()  {
+func init() {
 	Files = append(Files, configfc1, configfc2)
 }
 
@@ -151,5 +151,4 @@ redis_tracer : {{.Monitoring}}
 redis_metrics : {{.Monitoring}}
 `,
 	}
-
 )

@@ -1,20 +1,21 @@
 package templates
 
 import (
-	"text/template"
 	"strings"
+	"text/template"
 	"unicode"
+
 	"github.com/serenize/snaker"
 )
 
 func EsimFuncMap() map[string]interface{} {
 	return template.FuncMap{
-		"tolower" : strings.ToLower,
-		"cutFirstToLower" : CutFirstToLower,
-		"firstToLower" : FirstToLower,
-		"snakeToCamel" : snaker.SnakeToCamel,
-		"snakeToCamelLower" : snaker.SnakeToCamelLower,
-		"shorten" : Shorten,
+		"tolower":           strings.ToLower,
+		"cutFirstToLower":   CutFirstToLower,
+		"firstToLower":      FirstToLower,
+		"snakeToCamel":      snaker.SnakeToCamel,
+		"snakeToCamelLower": snaker.SnakeToCamelLower,
+		"shorten":           Shorten,
 	}
 }
 
@@ -28,7 +29,6 @@ func FirstToLower(s string) string {
 	return strings.ToLower(string([]rune(s)[0])) + string([]rune(s)[1:])
 }
 
-
 //Shorten shorten the string
 func Shorten(s string) string {
 	var result string
@@ -41,9 +41,9 @@ func Shorten(s string) string {
 			words = append(words, rs[i])
 		} else if i == 0 && unicode.IsLower(rs[i]) {
 			words = append(words, rs[i])
-		} else if (string(rs[i]) == "_" || string(rs[i]) == "-"){
-			if unicode.IsUpper(rs[i + 1]) || unicode.IsLower(rs[i + 1]) {
-				words = append(words, rs[i + 1])
+		} else if string(rs[i]) == "_" || string(rs[i]) == "-" {
+			if unicode.IsUpper(rs[i+1]) || unicode.IsLower(rs[i+1]) {
+				words = append(words, rs[i+1])
 			}
 		}
 	}

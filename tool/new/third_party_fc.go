@@ -1,6 +1,6 @@
 package new
 
-func init()  {
+func init() {
 	Files = append(Files, thirdPartyfc1, thirdPartyfc2)
 }
 
@@ -16,5 +16,4 @@ var (
 		Dir:      "internal/infra/third_party/protobuf",
 		Content:  `用于存放 proto 生成的源码文件`,
 	}
-
 )

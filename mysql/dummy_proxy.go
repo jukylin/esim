@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"database/sql"
+
 	"github.com/jukylin/esim/log"
 )
 

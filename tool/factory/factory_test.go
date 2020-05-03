@@ -3,15 +3,18 @@ package factory
 import (
 	"os"
 	"testing"
-	"github.com/stretchr/testify/assert"
-	"github.com/jukylin/esim/pkg/file-dir"
-	"github.com/spf13/viper"
-	"github.com/jukylin/esim/pkg"
+
 	"github.com/jukylin/esim/log"
+	"github.com/jukylin/esim/pkg"
+	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	"github.com/spf13/viper"
+	"github.com/stretchr/testify/assert"
+
 	//"path/filepath"
+	"path/filepath"
+
 	"github.com/jukylin/esim/pkg/templates"
 )
-
 
 func TestMain(m *testing.M) {
 
@@ -22,11 +25,9 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-
 var esimfactory *esimFactory
 
-
-func setUp()  {
+func setUp() {
 	loggerOptions := log.LoggerOptions{}
 	logger := log.NewLogger(loggerOptions.WithDebug(true))
 	esimfactory = NewEsimFactory(
@@ -35,7 +36,6 @@ func setUp()  {
 		WithEsimFactoryTpl(templates.NewTextTpl()),
 	)
 }
-
 
 func TestEsimFactory_Run(t *testing.T) {
 	v := viper.New()
@@ -52,10 +52,9 @@ func TestEsimFactory_Run(t *testing.T) {
 
 	esimfactory.Run(v)
 	esimfactory.Close()
-	//file_dir.EsimRecoverFile(esimfactory.structDir +
-	//	string(filepath.Separator) + esimfactory.structFileName)
+	file_dir.EsimRecoverFile(esimfactory.structDir +
+		string(filepath.Separator) + esimfactory.structFileName)
 }
-
 
 func TestEsimFactory_InputBind(t *testing.T) {
 	v := viper.New()
@@ -71,10 +70,9 @@ func TestEsimFactory_InputBind(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-
-func TestCopyOldStructInfo(t *testing.T)  {
+func TestCopyOldStructInfo(t *testing.T) {
 	esimfactory.oldStructInfo.imports = esimfactory.oldStructInfo.imports[:0]
-	esimfactory.oldStructInfo.imports = append(esimfactory.oldStructInfo.imports, pkg.Import{Path:"fmt"})
+	esimfactory.oldStructInfo.imports = append(esimfactory.oldStructInfo.imports, pkg.Import{Path: "fmt"})
 	esimfactory.oldStructInfo.structFileContent = "package main"
 	esimfactory.copyOldStructInfo()
 	assert.Equal(t, "fmt", esimfactory.NewStructInfo.imports[0].Path)
@@ -82,7 +80,6 @@ func TestCopyOldStructInfo(t *testing.T)  {
 	esimfactory.NewStructInfo.varStr = "var ()"
 	assert.NotEqual(t, esimfactory.oldStructInfo.varStr, esimfactory.NewStructInfo.varStr)
 }
-
 
 var replaceStructContent = `package main
 
@@ -102,7 +99,7 @@ type test struct {
 }
 `
 
-func TestExtendFieldAndReplaceStructContent(t *testing.T)  {
+func TestExtendFieldAndReplaceStructContent(t *testing.T) {
 	loggerOptions := log.LoggerOptions{}
 	logger := log.NewLogger(loggerOptions.WithDebug(true))
 	esimfactory = NewEsimFactory(
@@ -168,5 +165,3 @@ type test struct {
 	assert.Nil(t, err)
 	assert.Equal(t, replaceStructContent, esimfactory.NewStructInfo.structFileContent)
 }
-
-

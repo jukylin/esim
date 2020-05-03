@@ -3,9 +3,9 @@ package templates
 import (
 	"bytes"
 	"text/template"
+
 	"github.com/jukylin/esim/pkg"
 )
-
 
 type StructInfo struct {
 	StructName string
@@ -22,21 +22,20 @@ type {{.StructName}} struct{
 {{.Fields.String}}
 }`
 
-
 func (si StructInfo) String() string {
 	if si.StructName == "" {
 		return ""
 	}
 
 	tmpl, err := template.New("struct_template").Parse(StructTemplate)
-	if err != nil{
+	if err != nil {
 		panic(err.Error())
 		return ""
 	}
 
 	var buf bytes.Buffer
 	err = tmpl.Execute(&buf, si)
-	if err != nil{
+	if err != nil {
 		panic(err.Error())
 		return ""
 	}

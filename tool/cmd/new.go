@@ -1,18 +1,18 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
-	"github.com/jukylin/esim/tool/new"
 	"github.com/jukylin/esim/log"
-	"github.com/jukylin/esim/pkg/file-dir"
+	file_dir "github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
+	"github.com/jukylin/esim/tool/new"
+	"github.com/spf13/cobra"
 )
 
 // grpcCmd represents the grpc command
 var newCmd = &cobra.Command{
 	Use:   "new",
 	Short: "create a new project",
-	Long: ``,
+	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		logger := log.NewLogger()
 		new.NewProject(

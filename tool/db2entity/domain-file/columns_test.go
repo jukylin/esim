@@ -1,12 +1,12 @@
 package domain_file
 
 import (
+	"testing"
+
 	"github.com/jukylin/esim/log"
 	"github.com/stretchr/testify/assert"
-	"testing"
 	//"github.com/davecgh/go-spew/spew"
 )
-
 
 func TestDBColumnsInter_GetColumns(t *testing.T) {
 	logger := log.NewLogger()

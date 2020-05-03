@@ -136,7 +136,6 @@ func TestUserService_GetUserByUserName(t *testing.T) {
 }`,
 	}
 
-
 	grpcfc5 = &FileContent{
 		FileName: "controllers.go",
 		Dir:      "internal/transports/grpc/controllers",
@@ -182,7 +181,6 @@ func provideDemoController(app *{{.PackageName}}.App) *DemoController {
 `,
 	}
 
-
 	grpcfc6 = &FileContent{
 		FileName: "wire.go",
 		Dir:      "internal/transports/grpc/controllers",
@@ -203,7 +201,6 @@ func initControllers(app *{{.PackageName}}.App) *Controllers {
 }
 `,
 	}
-
 
 	grpcfc7 = &FileContent{
 		FileName: "wire_gen.go",
@@ -329,9 +326,8 @@ func tearDown(app *{{.PackageName}}.App) {
 	app.Infra.Close()
 }`,
 	}
-
 )
 
-func GrpcInit()  {
+func GrpcInit() {
 	Files = append(Files, grpcfc1, grpcfc2, grpcfc3, grpcfc4, grpcfc5, grpcfc6, grpcfc7, grpcfc8, grpcfc9)
 }

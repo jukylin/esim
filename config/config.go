@@ -1,12 +1,13 @@
 package config
 
 import (
-	"github.com/spf13/viper"
 	"io/ioutil"
 	"log"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/spf13/viper"
 )
 
 type viperConf struct {

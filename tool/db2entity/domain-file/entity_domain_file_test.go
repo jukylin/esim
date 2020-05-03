@@ -4,9 +4,9 @@ import (
 	"os"
 	"testing"
 
+	"github.com/jukylin/esim/log"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
-	"github.com/jukylin/esim/log"
 )
 
 func TestEntityDomainFile_BindInput(t *testing.T) {
@@ -19,7 +19,6 @@ func TestEntityDomainFile_BindInput(t *testing.T) {
 	err := testEntityDomainFile.BindInput(v)
 	assert.Nil(t, err)
 }
-
 
 func TestEntityDomainFile(t *testing.T) {
 	v := viper.New()

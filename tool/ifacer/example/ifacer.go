@@ -4,23 +4,19 @@ import (
 	"context"
 	_ "os"
 
-	aa "github.com/jukylin/esim/redis"
 	"github.com/gomodule/redigo/redis"
+	aa "github.com/jukylin/esim/redis"
 	"github.com/jukylin/esim/tool/ifacer/example/repo"
 )
 
-type TestStruct struct{
-
+type TestStruct struct {
 }
-
 
 type Close interface {
 	Close(string, int) error
 
 	Err() error
 }
-
-
 
 type Test interface {
 	Iface1(func(string) string) (result bool, pool redis.Pool)
@@ -31,9 +27,9 @@ type Test interface {
 
 	Iface4(map[string]*aa.Client) map[string]string
 
-	Iface5(redisClient *aa.Client) (*aa.Client)
+	Iface5(redisClient *aa.Client) *aa.Client
 
-	Iface6(redisClient aa.Client) (aa.Client)
+	Iface6(redisClient aa.Client) aa.Client
 
 	Iface7(chan<- bool, chan<- aa.Client) <-chan bool
 
@@ -47,5 +43,3 @@ type Test interface {
 
 	Iface11(...interface{})
 }
-
-

@@ -1,10 +1,10 @@
 package new
 
-func init()  {
+func init() {
 	Files = append(Files, protoBuffc1)
 }
 
-var(
+var (
 	protoBuffc1 = &FileContent{
 		FileName: "user.pb.go",
 		Dir:      "internal/infra/third_party/protobuf/passport",
@@ -286,5 +286,4 @@ var _UserInfo_serviceDesc = grpc.ServiceDesc{
 
 `,
 	}
-
 )

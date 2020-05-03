@@ -1,11 +1,12 @@
 package protoc
 
 import (
-	"testing"
-	"github.com/jukylin/esim/log"
-	"github.com/stretchr/testify/assert"
-	"github.com/spf13/viper"
 	"os"
+	"testing"
+
+	"github.com/jukylin/esim/log"
+	"github.com/spf13/viper"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestProtoc_Run(t *testing.T) {
@@ -22,7 +23,7 @@ func TestProtoc_Run(t *testing.T) {
 	os.Remove("./helloworld/helloworld.pb.go")
 }
 
-func TestProtoc_ParsePkgName(t *testing.T)  {
+func TestProtoc_ParsePkgName(t *testing.T) {
 	protocer := NewProtoc(
 		WithProtocLogger(log.NewLogger()),
 	)
@@ -32,7 +33,7 @@ func TestProtoc_ParsePkgName(t *testing.T)  {
 	assert.Equal(t, "helloworld", packName)
 }
 
-func TestProtoc_NotPkgName(t *testing.T)  {
+func TestProtoc_NotPkgName(t *testing.T) {
 	protocer := NewProtoc(
 		WithProtocLogger(log.NewLogger()),
 	)
@@ -40,7 +41,7 @@ func TestProtoc_NotPkgName(t *testing.T)  {
 	assert.Error(t, err)
 }
 
-func TestProtoc_ParseProtoPath(t *testing.T)  {
+func TestProtoc_ParseProtoPath(t *testing.T) {
 	protocer := NewProtoc(
 		WithProtocLogger(log.NewLogger()),
 	)

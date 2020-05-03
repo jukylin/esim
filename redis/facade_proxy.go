@@ -2,6 +2,7 @@ package redis
 
 import (
 	"context"
+
 	"github.com/gomodule/redigo/redis"
 )
 

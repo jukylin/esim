@@ -1,14 +1,15 @@
 package http
 
 import (
+	"net/http"
+	"time"
+
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/opentracing"
 	"github.com/opentracing-contrib/go-stdlib/nethttp"
 	opentracing2 "github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
-	"net/http"
-	"time"
 )
 
 // monitorProxy wraps a RoundTripper.

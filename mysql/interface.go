@@ -3,6 +3,7 @@ package mysql
 import (
 	"context"
 	"database/sql"
+
 	"github.com/jinzhu/gorm"
 )
 

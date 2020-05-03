@@ -4,7 +4,7 @@ var (
 	Cols = make([]Column, 0)
 )
 
-func init()  {
+func init() {
 	col1 := Column{
 		ColumnName:    "user_name",
 		DataType:      "varchar",
