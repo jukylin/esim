@@ -49,6 +49,7 @@ go test -v -tags="component_test"
 ## 分层
 
 > Esim使用松散的分层架构，上层可以任意调用下层。
+> Esim 使用松散的分层架构，并不是因为app 层
 
 ![此处输入图片的描述][2]
 

@@ -1,7 +1,7 @@
 package new
 
 func init() {
-	Files = append(Files, repofc1)
+	Files = append(Files, repofc1, repofc2)
 }
 
 var (
@@ -51,6 +51,50 @@ func (this *userRepo) FindByUserName(ctx context.Context, username string) entit
 	}
 
 	return user
+}
+`,
+	}
+
+	repofc2 = &FileContent{
+		FileName: "integration_test.go",
+		Dir:      "internal/infra/repo",
+		Content: `package repo
+
+import (
+	"os"
+	"testing"
+	"github.com/jukylin/esim/mysql"
+	"github.com/jukylin/esim/config"
+)
+
+var mysqlClient *mysql.Client
+
+func TestMain(m *testing.M) {
+	clientOptions := mysql.ClientOptions{}
+
+	options := config.ViperConfOptions{}
+	confFile := "../../../conf/dev.yaml"
+	file := []string{confFile}
+	conf := config.NewViperConfig(options.WithConfigType("yaml"),
+		options.WithConfFile(file))
+
+	mysqlClient = mysql.NewClient(clientOptions.WithConf(conf))
+
+	setUp()
+
+	code := m.Run()
+
+	tearDown()
+
+	os.Exit(code)
+}
+
+func setUp()  {
+
+}
+
+func tearDown()  {
+	mysqlClient.Close()
 }
 `,
 	}

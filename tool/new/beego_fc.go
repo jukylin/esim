@@ -170,7 +170,7 @@ func (this *PingController) Get() {
 	}
 
 	beegofc5 = &FileContent{
-		FileName: "component_test.go",
+		FileName: "controller_test.go",
 		Dir:      "internal/transports/http/component-test",
 		Content: `package component_test
 
@@ -233,7 +233,7 @@ func NewUser(user entity.User) User {
 	}
 
 	beegofc7 = &FileContent{
-		FileName: "main_test.go",
+		FileName: "component_test.go",
 		Dir:      "internal/transports/http/component-test",
 		Content: `package component_test
 

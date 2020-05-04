@@ -174,7 +174,7 @@ func (this *GinServer) GracefulShutDown()  {
 	}
 
 	ginfc4 = &FileContent{
-		FileName: "component_test.go",
+		FileName: "controller_test.go",
 		Dir:      "internal/transports/http/component-test",
 		Content: `package component_test
 
@@ -357,7 +357,7 @@ func NewUser(user entity.User) User {
 	}
 
 	ginfc9 = &FileContent{
-		FileName: "main_test.go",
+		FileName: "component_test.go",
 		Dir:      "internal/transports/http/component-test",
 		Content: `package component_test
 

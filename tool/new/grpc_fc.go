@@ -98,7 +98,7 @@ func NewGrpcServer(app *{{.PackageName}}.App) *grpc.GrpcServer {
 	}
 
 	grpcfc4 = &FileContent{
-		FileName: "component_test.go",
+		FileName: "controller_test.go",
 		Dir:      "internal/transports/grpc/component-test",
 		Content: `package component_test
 
@@ -257,7 +257,7 @@ func NewUserInfo(user entity.User) *passport.Info {
 	}
 
 	grpcfc9 = &FileContent{
-		FileName: "main_test.go",
+		FileName: "component_test.go",
 		Dir:      "internal/transports/grpc/component-test",
 		Content: `package component_test
 
