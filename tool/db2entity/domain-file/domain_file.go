@@ -22,7 +22,7 @@ type DomainFile interface {
 	BindInput(*viper.Viper) error
 
 	//parse columns information for domain file object
-	ParseCloumns([]Column, *ShareInfo)
+	ParseCloumns(Columns, *ShareInfo)
 
 	//applies a parsed template to the domain file object
 	//return Parsed content

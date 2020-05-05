@@ -103,11 +103,11 @@ func (ddf *daoDomainFile) BindInput(v *viper.Viper) error {
 }
 
 //ParseCloumns implements DomainFile.
-func (ddf *daoDomainFile) ParseCloumns(cs []Column, shareInfo *ShareInfo) {
+func (ddf *daoDomainFile) ParseCloumns(cs Columns, shareInfo *ShareInfo) {
 
 	daoTpl := NewDaoTpl(shareInfo.CamelStruct)
 
-	if len(cs) < 1 {
+	if cs.Len() < 1 {
 		return
 	}
 

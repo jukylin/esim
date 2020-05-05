@@ -92,8 +92,8 @@ func TestDb2Entity_Run(t *testing.T) {
 		os.Remove(path)
 	}
 
-	//err = file_dir.EsimRecoverFile(file_dir.GetCurrentDir() +
-	//	string(filepath.Separator) + "example" + string(filepath.Separator) + "infra" + string(filepath.Separator) + "infra.go")
+	err = file_dir.EsimRecoverFile(file_dir.GetCurrentDir() +
+		string(filepath.Separator) + "example" + string(filepath.Separator) + "infra" + string(filepath.Separator) + "infra.go")
 	assert.Nil(t, err)
 }
 

@@ -28,7 +28,7 @@ const (
 )
 
 type ColumnsRepo interface {
-	SelectColumns(dbConf *DbConfig) ([]Column, error)
+	SelectColumns(dbConf *DbConfig) (Columns, error)
 }
 
 type Column struct {
@@ -41,6 +41,25 @@ type Column struct {
 	ColumnComment          string `gorm:"column:COLUMN_COMMENT"`
 	Extra                  string `gorm:"column:EXTRA"`
 }
+
+type Columns []Column
+
+func (cs Columns) Len() int {
+	return len(cs)
+}
+
+
+func (cs Columns) IsEntity() bool {
+
+	for _, cl := range cs {
+		if cl.IsPri() {
+			return true
+		}
+	}
+
+	return false
+}
+
 
 type AutoTime struct {
 	CurTimeStamp      []string
@@ -58,7 +77,7 @@ func NewDBColumnsInter(logger log.Logger) ColumnsRepo {
 }
 
 // SelectColumns Select column details
-func (dc *DBColumnsInter) SelectColumns(dbConf *DbConfig) ([]Column, error) {
+func (dc *DBColumnsInter) SelectColumns(dbConf *DbConfig) (Columns, error) {
 
 	var err error
 	var db *gorm.DB
@@ -172,7 +191,6 @@ func (c *Column) FilterComment() string {
 	return c.ColumnComment
 }
 
-//filterComment filter and escaping speckial string
 func (c *Column) IsPri() bool {
 	if c.ColumnKey == "PRI" {
 		return true

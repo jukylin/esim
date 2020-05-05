@@ -48,7 +48,7 @@ var db2entityCmd = &cobra.Command{
 		writer := file_dir.NewEsimWriter()
 
 		db2EntityOptions := db2entity.Db2EnOptions{}
-		db2entity.NewDb2Entity(
+		db2Entity := db2entity.NewDb2Entity(
 			db2EntityOptions.WithLogger(logger),
 			db2EntityOptions.WithDbConf(dbConf),
 			db2EntityOptions.WithColumnsInter(columnsInter),
@@ -61,7 +61,12 @@ var db2entityCmd = &cobra.Command{
 				infra.WithIfacerWriter(writer),
 				infra.WithIfacerExecer(pkg.NewCmdExec()),
 			)),
-		).Run(v)
+		)
+
+		err := db2Entity.Run(v)
+		if err != nil {
+			logger.Errorf(err.Error())
+		}
 	},
 }
 

@@ -168,13 +168,17 @@ func (de *Db2Entity) Run(v *viper.Viper) error {
 	de.shareInfo.CamelStruct = de.CamelStruct
 
 	if len(de.domainFiles) < 0 {
-		return errors.New("not domain file")
+		return errors.New("Not domain file")
 	}
 
-	//select table's columns
+	//select table's columns from repository
 	cs, err := de.ColumnsRepo.SelectColumns(de.DbConf)
 	if err != nil {
 		return err
+	}
+
+	if cs.IsEntity() == false {
+		return errors.New("It is not the entity")
 	}
 
 	err = de.generateDomainFile(v, cs)
@@ -270,7 +274,7 @@ func (de *Db2Entity) makeCodeBeautiful(src string) string {
 	return string(result)
 }
 
-func (de *Db2Entity) generateDomainFile(v *viper.Viper, cs []domain_file.Column) error {
+func (de *Db2Entity) generateDomainFile(v *viper.Viper, cs domain_file.Columns) error {
 	var content string
 
 	//loop domainFiles to generate domain file

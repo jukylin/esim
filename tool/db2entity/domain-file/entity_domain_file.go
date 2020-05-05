@@ -118,11 +118,11 @@ func (edf *entityDomainFile) BindInput(v *viper.Viper) error {
 }
 
 //parseCloumns implements DomainFile.
-func (edf *entityDomainFile) ParseCloumns(cs []Column, info *ShareInfo) {
+func (edf *entityDomainFile) ParseCloumns(cs Columns, info *ShareInfo) {
 
 	entityTpl := entityTpl{}
 
-	if len(cs) < 1 {
+	if cs.Len() < 1 {
 		return
 	}
 

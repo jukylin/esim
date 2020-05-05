@@ -100,13 +100,13 @@ func (rdf *repoDomainFile) BindInput(v *viper.Viper) error {
 }
 
 //ParseCloumns implements DomainFile.
-func (rdf *repoDomainFile) ParseCloumns(cs []Column, info *ShareInfo) {
+func (rdf *repoDomainFile) ParseCloumns(cs Columns, info *ShareInfo) {
 
 	rdf.shareInfo = info
 
 	repoTpl := NewRepoTpl(info.CamelStruct)
 
-	if len(cs) < 1 {
+	if cs.Len() < 1 {
 		return
 	}
 
