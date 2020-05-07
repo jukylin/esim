@@ -22,7 +22,7 @@ var ifacerCmd = &cobra.Command{
 		)
 		err := ifacer.Run(v)
 		if err != nil {
-			log.Log.Error(err.Error())
+			log.Log.Errorf(err.Error())
 		}
 	},
 }

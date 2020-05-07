@@ -23,10 +23,10 @@ type DemoController struct {
 
 func (this *DemoController) GetUserByUserName(ctx context.Context,
 	request *gp.GetUserByUserNameRequest) (*gp.GrpcUserReply, error) {
-	grpcReply = &gp.GrpcUserReply{}
-	userName = request.GetUsername()
+	grpcReply := &gp.GrpcUserReply{}
+	userName := request.GetUsername()
 
-	userInfo = this.userSvc.GetUserInfo(ctx, userName)
+	userInfo := this.userSvc.GetUserInfo(ctx, userName)
 
 	grpcReply.Code = 0;
 
@@ -71,17 +71,17 @@ import (
 
 func NewGrpcServer(app *{{.PackageName}}.App) *grpc.GrpcServer {
 
-	target = app.Conf.GetString("grpc_server_tcp")
+	target := app.Conf.GetString("grpc_server_tcp")
 
-	in = strings.Index(target, ":")
+	in := strings.Index(target, ":")
 	if in < 0 {
 		target = ":"+target
 	}
 
-	serverOptions = grpc.ServerOptions{}
+	serverOptions := grpc.ServerOptions{}
 
 	//grpc服务初始化
-	grpcServer =  grpc.NewGrpcServer(target,
+	grpcServer :=  grpc.NewGrpcServer(target,
 		serverOptions.WithServerConf(app.Conf),
 		serverOptions.WithServerLogger(app.Logger),
 		serverOptions.WithUnarySrvItcp(),
@@ -114,19 +114,19 @@ import (
 
 //go test
 func TestUserService_GetUserByUserName(t *testing.T) {
-	logger = log.NewLogger()
+	logger := log.NewLogger()
 
-	ctx = context.Background()
+	ctx := context.Background()
 
-	grpcClient = egrpc.NewClient(egrpc.NewClientOptions())
-	conn = grpcClient.DialContext(ctx, ":50055")
+	grpcClient := egrpc.NewClient(egrpc.NewClientOptions())
+	conn := grpcClient.DialContext(ctx, ":50055")
 	defer conn.Close()
 
-	client = gp.NewUserInfoClient(conn)
+	client := gp.NewUserInfoClient(conn)
 
-	req = &gp.GetUserByUserNameRequest{}
+	req := &gp.GetUserByUserNameRequest{}
 	req.Username = "demo"
-	reply, err = client.GetUserByUserName(ctx, req)
+	reply, err := client.GetUserByUserName(ctx, req)
 	if err != nil {
 		logger.Errorf(err.Error())
 	} else {
@@ -163,16 +163,16 @@ var controllersSet = wire.NewSet(
 
 
 func NewControllers(app *{{.PackageName}}.App) *Controllers {
-	controllers = initControllers(app)
+	controllers := initControllers(app)
 	return controllers
 }
 
 
 func provideDemoController(app *{{.PackageName}}.App) *DemoController {
 
-	userSvc = application.NewUserSvc(app.Infra)
+	userSvc := application.NewUserSvc(app.Infra)
 
-	demoController = &DemoController{}
+	demoController := &DemoController{}
 	demoController.infra = app.Infra
 	demoController.userSvc = userSvc
 
@@ -219,8 +219,8 @@ import (
 // Injectors from wire.go:
 
 func initControllers(app *{{.PackageName}}.App) *Controllers {
-	demoController = provideDemoController(app)
-	controllers = &Controllers{
+	demoController := provideDemoController(app)
+	controllers := &Controllers{
 		App:  app,
 		Demo: demoController,
 	}
@@ -249,7 +249,7 @@ type User struct {
 }
 
 func NewUserInfo(user entity.User) *passport.Info {
-	info = &passport.Info{}
+	info := &passport.Info{}
 	info.UserName = user.UserName
 	info.PassWord = user.PassWord
 	return info
@@ -275,12 +275,12 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	appOptions = {{.PackageName}}.AppOptions{}
-	app = {{.PackageName}}.NewApp(appOptions.WithConfPath("../../../../conf/"))
+	appOptions := {{.PackageName}}.AppOptions{}
+	app := {{.PackageName}}.NewApp(appOptions.WithConfPath("../../../../conf/"))
 
 	setUp(app)
 
-	code = m.Run()
+	code := m.Run()
 
 	tearDown(app)
 
@@ -288,20 +288,20 @@ func TestMain(m *testing.M) {
 }
 
 func provideStubsGrpcClient(esim *container.Esim) *egrpc.GrpcClient {
-	clientOptional = egrpc.ClientOptionals{}
-	clientOptions = egrpc.NewClientOptions(
+	clientOptional := egrpc.ClientOptionals{}
+	clientOptions := egrpc.NewClientOptions(
 		clientOptional.WithLogger(esim.Logger),
 		clientOptional.WithConf(esim.Conf),
 		clientOptional.WithDialOptions(_grpc.WithUnaryInterceptor(
 			egrpc.ClientStubs(func(ctx context.Context, method string, req, reply interface{}, cc *_grpc.ClientConn, invoker _grpc.UnaryInvoker, opts ..._grpc.CallOption) error {
 				esim.Logger.Infof(method)
-				err = invoker(ctx, method, req, reply, cc, opts...)
+				err := invoker(ctx, method, req, reply, cc, opts...)
 				return err
 			}),
 		)),
 	)
 
-	grpcClient = egrpc.NewClient(clientOptions)
+	grpcClient := egrpc.NewClient(clientOptions)
 
 	return grpcClient
 }
@@ -314,9 +314,9 @@ func setUp(app *{{.PackageName}}.App) {
 
 	app.Start()
 
-	errs = app.Infra.HealthCheck()
+	errs := app.Infra.HealthCheck()
 	if len(errs) > 0 {
-		for _, err = range errs {
+		for _, err := range errs {
 			app.Logger.Errorf(err.Error())
 		}
 	}

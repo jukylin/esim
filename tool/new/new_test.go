@@ -22,6 +22,7 @@ func TestProject_Run(t *testing.T) {
 
 	v.Set("server_name", "example-a")
 	v.Set("gin", true)
+	v.Set("grpc", true)
 
 	project.Run(v)
 

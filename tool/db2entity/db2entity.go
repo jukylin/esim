@@ -152,12 +152,15 @@ func (de *Db2Entity) Run(v *viper.Viper) error {
 
 	defer func() {
 		if err := recover(); err != nil {
-			de.logger.Errorf("a panic occurred : %s", err)
+			de.logger.Errorf("A panic occurred : %s", err)
 
 			if len(de.wroteContent) > 0 {
 				for path, _ := range de.wroteContent {
 					de.logger.Debugf("remove %s", path)
-					os.RemoveAll(path)
+					err := os.RemoveAll(path)
+					if err != nil {
+						de.logger.Errorf(err.Error())
+					}
 				}
 			}
 		}
@@ -168,7 +171,7 @@ func (de *Db2Entity) Run(v *viper.Viper) error {
 	de.shareInfo.CamelStruct = de.CamelStruct
 
 	if len(de.domainFiles) < 0 {
-		return errors.New("Not domain file")
+		return errors.New("Have not domain file")
 	}
 
 	//select table's columns from repository

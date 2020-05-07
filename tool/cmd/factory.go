@@ -23,7 +23,7 @@ var factoryCmd = &cobra.Command{
 		)
 		err := esimFactory.Run(v)
 		if err != nil {
-			log.Log.Error(err.Error())
+			log.Log.Errorf(err.Error())
 		}
 		esimFactory.Close()
 	},
