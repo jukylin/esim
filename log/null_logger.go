@@ -15,6 +15,8 @@ func NewNullLogger() Logger {
 	return logger
 }
 
+func (log *nullLogger) Error(msg string) {}
+
 func (log *nullLogger) Debugf(template string, args ...interface{}) {}
 
 func (log *nullLogger) Infof(template string, args ...interface{}) {}
