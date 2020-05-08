@@ -81,7 +81,6 @@ func (log *logger) Error(msg string) {
 	log.logger.Error(msg)
 }
 
-
 func (log *logger) Debugf(template string, args ...interface{}) {
 	log.sugar.With("caller", log.getCaller(runtime.Caller(1))).Debugf(template, args...)
 }
