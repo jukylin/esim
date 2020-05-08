@@ -24,7 +24,7 @@ type App struct{
 
 	*container.Esim
 
-	Trans []transports.Transports
+	trans []transports.Transports
 
 	Infra *infra.Infra
 
@@ -80,31 +80,35 @@ func (AppOptions) WithConfPath(confPath string) Option {
 	}
 }
 
-func (this *App) Start()  {
-	for _, tran := range this.Trans {
+func (app *App) Start()  {
+	for _, tran := range app.trans {
 		tran.Start()
 	}
 }
 
-func (this *App) AwaitSignal() {
+func (app *App) RegisterTran(tran transports.Transports) {
+	app.trans = append(app.trans, tran)
+}
+
+func (app *App) AwaitSignal() {
 	c := make(chan os.Signal, 1)
 	signal.Reset(syscall.SIGTERM, syscall.SIGINT)
 	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
 	select {
 	case s := <-c:
-		this.Esim.Logger.Infof("receive a signal %s", s.String())
-		this.stop()
+		app.Esim.Logger.Infof("receive a signal %s", s.String())
+		app.stop()
 		os.Exit(0)
 	}
 }
 
 
-func (this *App) stop()  {
-	for _, tran := range this.Trans {
+func (app *App) stop()  {
+	for _, tran := range app.trans {
 		tran.GracefulShutDown()
 	}
 
-	this.Infra.Close()
+	app.Infra.Close()
 }
 `,
 	}

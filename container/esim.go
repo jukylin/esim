@@ -99,7 +99,7 @@ func provideTracer(conf config.Config, logger log.Logger) opentracing.Tracer {
 
 //esim init end
 
-//使用单例模式，基础设施为全局资源
+
 func NewEsim() *Esim {
 	esimOnce.Do(func() {
 		onceEsim = initEsim()

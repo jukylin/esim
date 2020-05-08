@@ -412,7 +412,7 @@ func setUp(app *{{.PackageName}}.App) {
 
 	app.Infra = infra.NewStubsInfra(provideStubsGrpcClient(app.Esim))
 
-	app.Trans = append(app.Trans, http.NewGinServer(app))
+	app.RegisterTran(http.NewGinServer(app))
 
 	app.Start()
 

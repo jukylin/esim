@@ -202,19 +202,19 @@ func (pj *Project) getPackName() {
 func (pj *Project) initTransport() {
 	if pj.withGin == true {
 		GinInit()
-		pj.RunTrans = append(pj.RunTrans, "app.Trans = append(app.Trans, http.NewGinServer(app))")
+		pj.RunTrans = append(pj.RunTrans, "app.RegisterTran(http.NewGinServer(app))")
 		pj.ImportServer = append(pj.ImportServer, pj.ProPath+pj.ServerName+"/internal/transports/http")
 	}
 
 	if pj.withBeego == true {
 		BeegoInit()
-		pj.RunTrans = append(pj.RunTrans, "app.Trans = append(app.Trans, http.NewBeegoServer(app.Esim))")
+		pj.RunTrans = append(pj.RunTrans, "app.RegisterTran(http.NewBeegoServer(app.Esim))")
 		pj.ImportServer = append(pj.ImportServer, pj.ProPath+pj.ServerName+"/internal/transports/http")
 	}
 
 	if pj.withGrpc == true {
 		GrpcInit()
-		pj.RunTrans = append(pj.RunTrans, "app.Trans = append(app.Trans, grpc.NewGrpcServer(app))")
+		pj.RunTrans = append(pj.RunTrans, "app.RegisterTran(grpc.NewGrpcServer(app))")
 		pj.ImportServer = append(pj.ImportServer, pj.ProPath+pj.ServerName+"/internal/transports/grpc")
 	}
 }

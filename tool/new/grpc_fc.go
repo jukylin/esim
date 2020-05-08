@@ -310,7 +310,7 @@ func setUp(app *{{.PackageName}}.App) {
 
 	app.Infra = infra.NewStubsInfra(provideStubsGrpcClient(app.Esim))
 
-	app.Trans = append(app.Trans, grpc.NewGrpcServer(app))
+	app.RegisterTran(grpc.NewGrpcServer(app))
 
 	app.Start()
 
