@@ -167,7 +167,7 @@ func (f *Ifacer) bindInput(v *viper.Viper) error {
 	}
 	f.StructName = structName
 
-	star := v.GetBool("istar")
+	star := v.GetBool("star")
 	if star {
 		f.Star = "*"
 	}

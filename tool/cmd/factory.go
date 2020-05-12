@@ -41,8 +41,6 @@ func init() {
 
 	factoryCmd.Flags().BoolP("oc", "", false, "generate conf option")
 
-	factoryCmd.Flags().BoolP("star", "", false, "with star")
-
 	factoryCmd.Flags().BoolP("print", "", false, "print to terminal")
 
 	factoryCmd.Flags().StringP("sname", "", "", "struct name")

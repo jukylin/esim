@@ -35,8 +35,6 @@ func init() {
 
 	ifacerCmd.Flags().StringP("ipath", "i", "./*", "接口路径")
 
-	ifacerCmd.Flags().BoolP("istar", "s", false, "带星")
-
 	ifacerCmd.Flags().StringP("stname", "", "", "struct 名称：type struct_name struct{}")
 
 	err := v.BindPFlags(ifacerCmd.Flags())

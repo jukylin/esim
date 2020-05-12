@@ -48,16 +48,27 @@ func init() {
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.esim.yaml)")
 
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-
 	rootCmd.PersistentFlags().BoolP("inject", "i", true, "Automatic inject instance to infra")
 
 	rootCmd.PersistentFlags().StringP("infra_dir", "", "internal/infra/", "Infra dir")
 
 	rootCmd.PersistentFlags().StringP("infra_file", "", "infra.go", "Infra file name")
 
+	rootCmd.PersistentFlags().BoolP("star", "", false, "With star")
+
+	// Cobra also supports local flags, which will only run
+	// when this action is called directly.
+	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+
+	err := v.BindPFlags(rootCmd.PersistentFlags())
+	if err != nil {
+		logger.Errorf(err.Error())
+	}
+
+	err = v.BindPFlags(rootCmd.Flags())
+	if err != nil {
+		logger.Errorf(err.Error())
+	}
 }
 
 // initConfig reads in config file and ENV variables if set.
