@@ -20,9 +20,9 @@ func NewMemConfig() *MemConfig {
 func (mc *MemConfig) Get(key string) interface{} {
 	if val, ok := mc.data[key]; ok {
 		return val
-	} else {
-		return nil
 	}
+	
+	return nil
 }
 
 func (mc *MemConfig) GetString(key string) string {

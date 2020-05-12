@@ -150,13 +150,12 @@ func (p *protocer) parsePkgName(protoFile string) (string, error) {
 		if err != nil || io.EOF == err {
 			break
 		}
-
-		match, err := regexp.MatchString("^package", line)
+		reg, err := regexp.Compile("^package")
 		if err != nil {
 			return "", nil
 		}
 
-		if match {
+		if reg.FindString(line) != "" {
 			reg, err := regexp.Compile(`\w+`)
 			if err != nil {
 				return "", err

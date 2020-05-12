@@ -42,7 +42,7 @@ type Option func(c *Client)
 
 type ClientOptions struct{}
 
-func NewMongo(options ...Option) *Client {
+func NewClient(options ...Option) *Client {
 	clientOnce.Do(func() {
 		onceClient = &Client{
 			Mgos: make(map[string]*mongo.Client),
@@ -118,7 +118,7 @@ func (c *Client) init() {
 			eventComMon := &event.CommandMonitor{
 				Started: func(ctx context.Context, startEvent *event.CommandStartedEvent) {
 					execCommand, ok := ctx.Value("command").(*string)
-					if ok == true {
+					if ok {
 						*execCommand = startEvent.Command.String()
 					}
 					firstEvent.Start(ctx, startEvent)
@@ -171,7 +171,7 @@ func (c *Client) init() {
 			c.logger.Panicf("new mongo client error: %s , uri: %s \n", err.Error(), mgo.Uri)
 		}
 
-		ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
+		ctx, _ := context.WithTimeout(context.Background(), 2 * time.Second)
 
 		err = client.Connect(ctx)
 		if err != nil {
@@ -193,7 +193,7 @@ func (c *Client) initMonitorMulLevelEvent(dbName string) MonitorEvent {
 	var firstProxy MonitorEvent
 	proxyInses := make([]MonitorEvent, eventNum)
 	for k, proxyFunc := range c.monitorEvents {
-		if _, ok := proxyFunc().(MonitorEvent); ok == false {
+		if _, ok := proxyFunc().(MonitorEvent); !ok {
 			c.logger.Panicf("[mongodb] not implement MonitorEvent interface")
 		} else {
 			proxyInses[k] = proxyFunc()
@@ -238,7 +238,7 @@ func (c *Client) poolEvent(pev *event.PoolEvent) {
 }
 
 func (c *Client) Ping() []error {
-	ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, _ := context.WithTimeout(context.Background(), 2 * time.Second)
 
 	var errs []error
 	var err error
@@ -254,7 +254,7 @@ func (c *Client) Ping() []error {
 
 func (c *Client) Close() {
 	var err error
-	ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, _ := context.WithTimeout(context.Background(), 2 * time.Second)
 
 	for _, db := range c.Mgos {
 		err = db.Disconnect(ctx)

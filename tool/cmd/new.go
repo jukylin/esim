@@ -1,8 +1,7 @@
 package cmd
 
 import (
-	"github.com/jukylin/esim/log"
-	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	"github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
 	"github.com/jukylin/esim/tool/new"
 	"github.com/spf13/cobra"
@@ -14,7 +13,6 @@ var newCmd = &cobra.Command{
 	Short: "create a new project",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		logger := log.NewLogger()
 		new.NewProject(
 			new.WithProjectLogger(logger),
 			new.WithProjectWriter(file_dir.NewEsimWriter()),
@@ -36,5 +34,8 @@ func init() {
 
 	newCmd.Flags().StringP("server_name", "s", "", "server name")
 
-	v.BindPFlags(newCmd.Flags())
+	err := v.BindPFlags(newCmd.Flags())
+	if err != nil {
+		logger.Errorf(err.Error())
+	}
 }

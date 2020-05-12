@@ -467,7 +467,7 @@ func (ef *esimFactory) parseStruct() bool {
 		}
 
 		//不复制测试文件
-		if strings.Index(fileInfo.Name(), "_test") > -1 {
+		if strings.Contains(fileInfo.Name(), "_test") {
 			continue
 		}
 
@@ -785,7 +785,6 @@ func (ef *esimFactory) genSpecFieldInitStr() {
 	}
 
 	ef.SpecFieldInitStr = str
-	return
 }
 
 func (ef *esimFactory) genReleaseStructStr(initFields []string) string {

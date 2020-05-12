@@ -2,17 +2,15 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	//"log"
 	"os"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jukylin/esim/infra"
-	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
-	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	"github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
 	"github.com/jukylin/esim/tool/db2entity"
-	domain_file "github.com/jukylin/esim/tool/db2entity/domain-file"
+	"github.com/jukylin/esim/tool/db2entity/domain-file"
 )
 
 var db2entityCmd = &cobra.Command{
@@ -20,7 +18,6 @@ var db2entityCmd = &cobra.Command{
 	Short: "table's fields to entity",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		logger := log.NewLogger()
 
 		dbConf := domain_file.NewDbConfig()
 		dbConf.ParseConfig(v, logger)
@@ -105,5 +102,8 @@ func init() {
 
 	db2entityCmd.Flags().BoolP("disable_repo", "", false, "Disable Save repo")
 
-	v.BindPFlags(db2entityCmd.Flags())
+	err := v.BindPFlags(db2entityCmd.Flags())
+	if err != nil {
+		logger.Errorf(err.Error())
+	}
 }

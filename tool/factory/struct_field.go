@@ -156,6 +156,10 @@ func (rps *rpcPluginStructField) copyFile(dstName, srcName string, reg *regexp.R
 	defer dst.Close()
 
 	contents, err := ioutil.ReadAll(src)
+	if err != nil {
+		rps.logger.Panicf(err.Error())
+	}
+
 	contents = reg.ReplaceAll(contents, []byte("package main"))
 
 	dst.Write(contents)

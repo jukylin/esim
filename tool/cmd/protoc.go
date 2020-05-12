@@ -2,9 +2,7 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	//"log"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/tool/protoc"
 )
 
@@ -17,7 +15,7 @@ var protocCmd = &cobra.Command{
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		protocer := protoc.NewProtoc(
-			protoc.WithProtocLogger(log.NewLogger()),
+			protoc.WithProtocLogger(logger),
 		)
 		protocer.Run(v)
 	},
@@ -34,5 +32,8 @@ func init() {
 
 	protocCmd.Flags().StringP("package", "p", "", "package名称")
 
-	v.BindPFlags(protocCmd.Flags())
+	err := v.BindPFlags(protocCmd.Flags())
+	if err != nil {
+		logger.Errorf(err.Error())
+	}
 }

@@ -1,17 +1,19 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
+	"github.com/jukylin/esim/log"
 )
 
 var cfgFile string
 var v = viper.New()
+var logger = log.NewLogger()
+
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -32,7 +34,7 @@ to quickly create a Cobra application.`,
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
+		logger.Errorf(err.Error())
 		os.Exit(1)
 	}
 }
@@ -67,7 +69,7 @@ func initConfig() {
 		// Find home directory.
 		home, err := homedir.Dir()
 		if err != nil {
-			fmt.Println(err)
+			logger.Errorf(err.Error())
 			os.Exit(1)
 		}
 
@@ -80,6 +82,6 @@ func initConfig() {
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println("Using config file:", viper.ConfigFileUsed())
+		logger.Errorf("Using config file: %s", viper.ConfigFileUsed())
 	}
 }

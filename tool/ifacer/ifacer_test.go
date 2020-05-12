@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/jukylin/esim/log"
-	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	"github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
@@ -191,7 +191,7 @@ func TestIfacer_SetNoConflictImport(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.caseName, func(t *testing.T) {
 			ifacer.setNoConflictImport(test.importName, test.pkgName)
-			assert.Equal(t, test.expected, ifacer.PkgNoConflictImport[test.caseName].Path)
+			assert.Equal(t, test.expected, ifacer.pkgNoConflictImport[test.caseName].Path)
 		})
 	}
 }

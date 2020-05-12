@@ -149,8 +149,8 @@ func (c *Column) GetGoType(nullable bool) string {
 }
 
 func (c *Column) CheckDelField() string {
-	if strings.Index(c.ColumnName, "del") != -1 &&
-		strings.Index(c.ColumnName, "is") != -1 {
+	if strings.Contains(c.ColumnName, "del") &&
+		strings.Contains(c.ColumnName, "is") {
 		return c.ColumnName
 	}
 

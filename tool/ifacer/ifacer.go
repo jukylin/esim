@@ -257,7 +257,7 @@ func (f *Ifacer) getUniqueImportName(pkgName string, level int) string {
 
 	var importName string
 	for _, str := range strs[lenStr-level-1:] {
-		if strings.Index(str, ".") > -1 {
+		if strings.Contains(str, ".") {
 			str = strings.Replace(str, ".", "", -1)
 		}
 		importName += str

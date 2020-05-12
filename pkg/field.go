@@ -31,13 +31,13 @@ type Field struct {
 
 type Fields []Field
 
-func (f Fields) Len() int { return len(f) }
+func (fs Fields) Len() int { return len(fs) }
 
-func (f Fields) Less(i, j int) bool {
-	return f[i].Size < f[j].Size
+func (fs Fields) Less(i, j int) bool {
+	return fs[i].Size < fs[j].Size
 }
 
-func (f Fields) Swap(i, j int) { f[i], f[j] = f[j], f[i] }
+func (fs Fields) Swap(i, j int) { fs[i], fs[j] = fs[j], fs[i] }
 
 func (fs Fields) String() (string, error) {
 

@@ -7,7 +7,7 @@ import (
 
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
-	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	"github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
 	"github.com/serenize/snaker"
 	"github.com/spf13/viper"
@@ -154,7 +154,7 @@ func (edf *entityDomainFile) ParseCloumns(cs Columns, info *ShareInfo) {
 		valueType = column.GetGoType(nullable)
 		if column.IsTime(valueType) {
 			entityTpl.Imports = append(entityTpl.Imports, pkg.Import{Path: "time"})
-		} else if strings.Index(valueType, "sql.") != -1 {
+		} else if strings.Contains(valueType, "sql.") {
 			entityTpl.Imports = append(entityTpl.Imports, pkg.Import{Path: "database/sql"})
 		}
 		field.Type = valueType
@@ -190,10 +190,7 @@ func (edf *entityDomainFile) ParseCloumns(cs Columns, info *ShareInfo) {
 		structInfo.Fields = append(structInfo.Fields, field)
 
 		colDefault = ""
-		valueType = ""
-		doc = ""
 		nullable = false
-		fieldName = ""
 	}
 
 	structInfo.StructName = entityTpl.StructName

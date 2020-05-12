@@ -152,7 +152,7 @@ func (c *Client) init() {
 
 			c.setDb(dbConfig.Db, DB, DB.DB())
 
-			if c.conf.GetBool("debug") == true {
+			if c.conf.GetBool("debug") {
 				DB.LogMode(true)
 			}
 		} else {
@@ -186,7 +186,7 @@ func (c *Client) init() {
 
 			c.setDb(dbConfig.Db, DB, dbSQL)
 
-			if c.conf.GetBool("debug") == true {
+			if c.conf.GetBool("debug") {
 				DB.LogMode(true)
 			}
 		}
@@ -209,7 +209,7 @@ func (c *Client) setDb(dbName string, gdb *gorm.DB, db *sql.DB) bool {
 }
 
 func (c *Client) GetDb(dbName string) *gorm.DB {
-	return c.getDb(nil, dbName)
+	return c.getDb(context.Background(), dbName)
 }
 
 func (c *Client) getDb(ctx context.Context, dbName string) *gorm.DB {
@@ -252,7 +252,6 @@ func (c *Client) Close() {
 	}
 
 	//c.closeChan <- true
-	return
 }
 
 func (c *Client) Stats() {
@@ -296,6 +295,4 @@ func (c *Client) Stats() {
 
 Stop:
 	ticker.Stop()
-
-	return
 }

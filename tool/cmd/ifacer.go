@@ -2,9 +2,7 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	//"log"
-	"github.com/jukylin/esim/log"
-	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	"github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
 	"github.com/jukylin/esim/tool/ifacer"
 )
@@ -16,18 +14,19 @@ var ifacerCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		writer := &file_dir.EsimWriter{}
 		ifacer := ifacer.NewIfacer(
-			ifacer.WithIfacerLogger(log.NewLogger()),
+			ifacer.WithIfacerLogger(logger),
 			ifacer.WithIfacerTpl(templates.NewTextTpl()),
 			ifacer.WithIfacerWriter(writer),
 		)
 		err := ifacer.Run(v)
 		if err != nil {
-			log.Log.Errorf(err.Error())
+			logger.Errorf(err.Error())
 		}
 	},
 }
 
 func init() {
+
 	rootCmd.AddCommand(ifacerCmd)
 
 	ifacerCmd.Flags().StringP("iname", "", "", "接口名称")
@@ -40,5 +39,8 @@ func init() {
 
 	ifacerCmd.Flags().StringP("stname", "", "", "struct 名称：type struct_name struct{}")
 
-	v.BindPFlags(ifacerCmd.Flags())
+	err := v.BindPFlags(ifacerCmd.Flags())
+	if err != nil {
+		logger.Errorf(err.Error())
+	}
 }

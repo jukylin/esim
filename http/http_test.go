@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"testing"
+	"os"
 
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
@@ -20,7 +21,9 @@ func TestMain(m *testing.M) {
 	loggerOptions := log.LoggerOptions{}
 	logger = log.NewLogger(loggerOptions.WithDebug(true))
 
-	m.Run()
+	code := m.Run()
+
+	os.Exit(code)
 }
 
 func TestMulLevelRoundTrip(t *testing.T) {

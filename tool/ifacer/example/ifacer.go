@@ -2,7 +2,6 @@ package example1
 
 import (
 	"context"
-	_ "os"
 
 	"github.com/gomodule/redigo/redis"
 	aa "github.com/jukylin/esim/redis"

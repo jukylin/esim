@@ -5,6 +5,7 @@ import (
 	"net"
 	"testing"
 	"time"
+	"os"
 
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
@@ -69,7 +70,9 @@ func TestMain(m *testing.M) {
 		}
 	}()
 
-	m.Run()
+	code := m.Run()
+
+	os.Exit(code)
 }
 
 func TestNewGrpcClient(t *testing.T) {

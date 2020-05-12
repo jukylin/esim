@@ -103,7 +103,7 @@ func (mp *monitorProxy) RoundTrip(req *http.Request) (*http.Response, error) {
 	var resp *http.Response
 	var err error
 
-	if mp.conf.GetBool("http_client_tracer") == true {
+	if mp.conf.GetBool("http_client_tracer") {
 		req, ht := nethttp.TraceRequest(mp.tracer, req)
 
 		transport := nethttp.Transport{}
@@ -126,15 +126,15 @@ func (mp *monitorProxy) RoundTrip(req *http.Request) (*http.Response, error) {
 
 func (mp *monitorProxy) registerAfterEvent() {
 
-	if mp.conf.GetBool("http_client_check_slow") == true {
+	if mp.conf.GetBool("http_client_check_slow") {
 		mp.afterEvents = append(mp.afterEvents, mp.slowHttpRequest)
 	}
 
-	if mp.conf.GetBool("http_client_metrics") == true {
+	if mp.conf.GetBool("http_client_metrics") {
 		mp.afterEvents = append(mp.afterEvents, mp.httpClientMetrice)
 	}
 
-	if mp.conf.GetBool("debug") == true {
+	if mp.conf.GetBool("debug") {
 		mp.afterEvents = append(mp.afterEvents, mp.debugHttp)
 	}
 }
@@ -151,7 +151,7 @@ func (mp *monitorProxy) slowHttpRequest(beginTime time.Time, endTime time.Time,
 	httpClientSlowTime := mp.conf.GetInt64("http_client_slow_time")
 
 	if httpClientSlowTime != 0 {
-		if endTime.Sub(beginTime) > time.Duration(httpClientSlowTime)*time.Millisecond {
+		if endTime.Sub(beginTime) > time.Duration(httpClientSlowTime) * time.Millisecond {
 			mp.logger.Warnf("slow http request [%s] ：%s", endTime.Sub(beginTime).String(),
 				res.RequestURI)
 		}

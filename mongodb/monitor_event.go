@@ -125,19 +125,19 @@ func (m *monitorEvent) FailedEvent(ctx context.Context, failedEvent *event.Comma
 }
 
 func (m *monitorEvent) registerAfterEvent() {
-	if m.conf.GetBool("mgo_tracer") == true {
+	if m.conf.GetBool("mgo_tracer") {
 		m.afterEvents = append(m.afterEvents, m.withTracer)
 	}
 
-	if m.conf.GetBool("mgo_check_slow") == true {
+	if m.conf.GetBool("mgo_check_slow") {
 		m.afterEvents = append(m.afterEvents, m.withSlowCommand)
 	}
 
-	if m.conf.GetBool("mgo_metrics") == true {
+	if m.conf.GetBool("mgo_metrics") {
 		m.afterEvents = append(m.afterEvents, m.withMetrics)
 	}
 
-	if m.conf.GetBool("debug") == true {
+	if m.conf.GetBool("debug") {
 		m.afterEvents = append(m.afterEvents, m.withDebug)
 	}
 }
@@ -156,7 +156,7 @@ func (m *monitorEvent) withSlowCommand(ctx context.Context, backEvent *mongoBack
 		durNan = backEvent.failedEvent.DurationNanos
 	}
 
-	if ok == true && durNan != 0 && mgoSlowTime != 0 {
+	if ok && durNan != 0 && mgoSlowTime != 0 {
 		if int64(durNan/1000000) >= int64(mgoSlowTime) {
 			m.logger.Warnf("slow command %s", execCommand)
 		}

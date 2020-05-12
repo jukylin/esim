@@ -162,15 +162,15 @@ func (mp *monitorProxy) Receive(ctx context.Context) (reply interface{}, err err
 
 //初始化回调事件
 func (mp *monitorProxy) registerAfterEvent() {
-	if mp.conf.GetBool("redis_tracer") == true {
+	if mp.conf.GetBool("redis_tracer") {
 		mp.afterEvents = append(mp.afterEvents, mp.redisTracer)
 	}
 
-	if mp.conf.GetBool("redis_check_slow") == true {
+	if mp.conf.GetBool("redis_check_slow") {
 		mp.afterEvents = append(mp.afterEvents, mp.redisSlowCommand)
 	}
 
-	if mp.conf.GetBool("redis_metrics") == true {
+	if mp.conf.GetBool("redis_metrics") {
 		mp.afterEvents = append(mp.afterEvents, mp.redisMetrics)
 	}
 }

@@ -91,20 +91,20 @@ func NewClientOptions(options ...ClientOptional) *ClientOptions {
 		grpc.WithKeepaliveParams(keepAliveClient),
 	}
 
-	if clientOptions.conf.GetBool("grpc_client_tracer") == true {
+	if clientOptions.conf.GetBool("grpc_client_tracer") {
 		opts = append(opts, grpc.WithChainUnaryInterceptor(otgrpc.OpenTracingClientInterceptor(clientOptions.tracer)))
 	}
 
-	if clientOptions.conf.GetBool("grpc_client_metrics") == true {
+	if clientOptions.conf.GetBool("grpc_client_metrics") {
 		opts = append(opts, grpc.WithChainUnaryInterceptor(
 			clientOptions.clientMetrics.UnaryClientInterceptor()))
 	}
 
-	if clientOptions.conf.GetBool("grpc_client_check_slow") == true {
+	if clientOptions.conf.GetBool("grpc_client_check_slow") {
 		opts = append(opts, grpc.WithChainUnaryInterceptor(clientOptions.checkClientSlow()))
 	}
 
-	if clientOptions.conf.GetBool("grpc_client_debug") == true {
+	if clientOptions.conf.GetBool("grpc_client_debug") {
 		opts = append(opts, grpc.WithChainUnaryInterceptor(clientOptions.clientDebug()))
 	}
 

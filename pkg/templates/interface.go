@@ -41,19 +41,19 @@ func (tt TextTpl) Execute(tplName string, text string, data interface{}) (string
 }
 
 //HtmlTpl is the representation of the html parsed template
-type HtmlTpl struct {
+type HTMLTpl struct {
 	template *htpl.Template
 }
 
-func NewHtmlTpl() Tpl {
-	tt := &HtmlTpl{}
+func NewHTMLTpl() Tpl {
+	tt := &HTMLTpl{}
 
 	tt.template = &htpl.Template{}
 
 	return tt
 }
 
-func (ht HtmlTpl) Execute(tplName string, text string, data interface{}) (string, error) {
+func (ht HTMLTpl) Execute(tplName string, text string, data interface{}) (string, error) {
 	tmpl, err := ht.template.New(tplName).Funcs(EsimFuncMap()).
 		Parse(text)
 	if err != nil {

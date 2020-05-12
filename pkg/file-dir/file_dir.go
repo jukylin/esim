@@ -14,10 +14,10 @@ func CreateFile(file string) (bool, error) {
 	f, err := os.Create(file)
 	if err != nil {
 		return false, err
-	} else {
-		f.Close()
-		return true, nil
 	}
+
+	f.Close()
+	return true, nil
 }
 
 func IsExistsDir(dir string) (bool, error) {
@@ -59,7 +59,7 @@ func IsEmptyDir(dir string) (bool, error) {
 		return false, err
 	}
 
-	if exists == false {
+	if !exists {
 		return false, errors.New("目录不存在")
 	}
 
@@ -71,9 +71,9 @@ func IsEmptyDir(dir string) (bool, error) {
 
 	if len(dirs) == 0 {
 		return true, nil
-	} else {
-		return false, nil
 	}
+
+	return false, nil
 }
 
 func GetParDir() string {
@@ -143,7 +143,7 @@ func EsimBackUpFile(backFile string) error {
 		return err
 	}
 
-	if exists == false {
+	if !exists {
 		err = CreateDir(targetPath)
 		if err != nil {
 			return err
@@ -157,7 +157,7 @@ func EsimBackUpFile(backFile string) error {
 		return err
 	}
 
-	if fileExists == false {
+	if !fileExists {
 		_, err = CreateFile(backUpPath + relativePath)
 		if err != nil {
 			return err
@@ -197,7 +197,7 @@ func EsimRecoverFile(recoverFile string) error {
 		return err
 	}
 
-	if exists == false {
+	if !exists {
 		return errors.New(targetPath + " not exists")
 	}
 
@@ -206,7 +206,7 @@ func EsimRecoverFile(recoverFile string) error {
 		return err
 	}
 
-	if fileExists == false {
+	if !fileExists {
 		_, err = CreateFile(recoverFile)
 		if err != nil {
 			return err
@@ -237,7 +237,7 @@ func EsimWrite(filePath string, content string) error {
 		return err
 	}
 
-	if exists == false {
+	if !exists {
 		err = CreateDir(dir)
 		if err != nil {
 			return err

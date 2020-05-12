@@ -3,7 +3,6 @@ package mongodb
 import (
 	"context"
 	"os"
-	"sync"
 	"testing"
 
 	"github.com/jukylin/esim/config"
@@ -19,7 +18,7 @@ type User struct {
 	Name string
 }
 
-var client *MgoClient
+var client *Client
 var logger log.Logger
 
 func TestMain(m *testing.M) {
@@ -49,8 +48,8 @@ func TestMain(m *testing.M) {
 	resource.Expire(10)
 
 	if err := pool.Retry(func() error {
-		mgoClientOptions := MgoClientOptions{}
-		client = NewMongo(
+		mgoClientOptions := ClientOptions{}
+		client = NewClient(
 			mgoClientOptions.WithDbConfig([]MgoConfig{
 				{
 					"test",
@@ -79,12 +78,11 @@ func TestMain(m *testing.M) {
 }
 
 func TestGetColl(t *testing.T) {
-	mgoOnce = sync.Once{}
 
 	conf := config.NewMemConfig()
 
-	mgoClientOptions := MgoClientOptions{}
-	mongoClient := NewMongo(
+	mgoClientOptions := ClientOptions{}
+	mongoClient := NewClient(
 		mgoClientOptions.WithLogger(logger),
 		mgoClientOptions.WithConf(conf),
 		mgoClientOptions.WithDbConfig([]MgoConfig{
@@ -108,13 +106,12 @@ func TestGetColl(t *testing.T) {
 }
 
 func TestWithMonitorEvent(t *testing.T) {
-	mgoOnce = sync.Once{}
 
 	conf := config.NewMemConfig()
 	conf.Set("debug", true)
 
-	mgoClientOptions := MgoClientOptions{}
-	mongoClient := NewMongo(
+	mgoClientOptions := ClientOptions{}
+	mongoClient := NewClient(
 		mgoClientOptions.WithLogger(logger),
 		mgoClientOptions.WithConf(conf),
 		mgoClientOptions.WithMonitorEvent(
@@ -145,13 +142,12 @@ func TestWithMonitorEvent(t *testing.T) {
 }
 
 func TestMulEvent(t *testing.T) {
-	mgoOnce = sync.Once{}
 
 	conf := config.NewMemConfig()
 	conf.Set("debug", true)
 
-	mgoClientOptions := MgoClientOptions{}
-	mongoClient := NewMongo(
+	mgoClientOptions := ClientOptions{}
+	mongoClient := NewClient(
 		mgoClientOptions.WithLogger(logger),
 		mgoClientOptions.WithConf(conf),
 		mgoClientOptions.WithMonitorEvent(

@@ -2,10 +2,8 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	//"log"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/jukylin/esim/log"
-	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	"github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
 	"github.com/jukylin/esim/tool/factory"
 )
@@ -15,7 +13,6 @@ var factoryCmd = &cobra.Command{
 	Short: "初始化结构体",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		logger := log.NewLogger()
 		esimFactory := factory.NewEsimFactory(
 			factory.WithEsimFactoryLogger(logger),
 			factory.WithEsimFactoryWriter(file_dir.NewEsimWriter()),
@@ -23,7 +20,7 @@ var factoryCmd = &cobra.Command{
 		)
 		err := esimFactory.Run(v)
 		if err != nil {
-			log.Log.Errorf(err.Error())
+			logger.Errorf(err.Error())
 		}
 		esimFactory.Close()
 	},
@@ -56,5 +53,8 @@ func init() {
 
 	factoryCmd.Flags().StringP("imp_iface", "", "", "implement the interface")
 
-	v.BindPFlags(factoryCmd.Flags())
+	err := v.BindPFlags(factoryCmd.Flags())
+	if err != nil {
+		logger.Errorf(err.Error())
+	}
 }

@@ -127,7 +127,7 @@ func (ir *Infraer) Inject(v *viper.Viper, injectInfos []*domain_file.InjectInfo)
 	}
 
 	result := ir.bindInput(v)
-	if result == false {
+	if !result {
 		return false
 	}
 
@@ -146,7 +146,7 @@ func (ir *Infraer) Inject(v *viper.Viper, injectInfos []*domain_file.InjectInfo)
 	}
 
 	parseResult := ir.parseInfra(beautifulSource)
-	if parseResult == false {
+	if !parseResult {
 		return false
 	}
 
@@ -191,7 +191,7 @@ func (ir *Infraer) bindInput(v *viper.Viper) bool {
 		return false
 	}
 
-	if exists == false {
+	if !exists {
 		ir.logger.Errorf("%s not exists", ir.withInfraDir+ir.withInfraFile)
 		return false
 	}

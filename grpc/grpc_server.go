@@ -90,23 +90,23 @@ func NewGrpcServer(target string, options ...ServerOption) *GrpcServer {
 	}
 
 	unaryServerInterceptors := make([]grpc.UnaryServerInterceptor, 0)
-	if grpcServer.conf.GetBool("grpc_server_tracer") == true {
+	if grpcServer.conf.GetBool("grpc_server_tracer") {
 		unaryServerInterceptors = append(unaryServerInterceptors,
 			otgrpc.OpenTracingServerInterceptor(grpcServer.tracer))
 	}
 
-	if grpcServer.conf.GetBool("grpc_server_metrics") == true {
+	if grpcServer.conf.GetBool("grpc_server_metrics") {
 		ggp.EnableHandlingTimeHistogram()
 		serverMetrics := ggp.DefaultServerMetrics
 		serverMetrics.EnableHandlingTimeHistogram(ggp.WithHistogramBuckets(prometheus.DefBuckets))
 		unaryServerInterceptors = append(unaryServerInterceptors, serverMetrics.UnaryServerInterceptor())
 	}
 
-	if grpcServer.conf.GetBool("grpc_server_check_slow") == true {
+	if grpcServer.conf.GetBool("grpc_server_check_slow") {
 		unaryServerInterceptors = append(unaryServerInterceptors, grpcServer.checkServerSlow())
 	}
 
-	if grpcServer.conf.GetBool("grpc_server_debug") == true {
+	if grpcServer.conf.GetBool("grpc_server_debug") {
 		unaryServerInterceptors = append(unaryServerInterceptors, grpcServer.serverDebug())
 	}
 

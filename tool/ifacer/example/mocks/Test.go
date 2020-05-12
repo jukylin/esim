@@ -69,6 +69,18 @@ func (_m *Test) Iface1(_a0 func(string) string) (bool, redis.Pool) {
 	return r0, r1
 }
 
+// Iface10 provides a mock function with given fields: _a0
+func (_m *Test) Iface10(_a0 example1.Close) {
+	_m.Called(_a0)
+}
+
+// Iface11 provides a mock function with given fields: _a0
+func (_m *Test) Iface11(_a0 ...interface{}) {
+	var _ca []interface{}
+	_ca = append(_ca, _a0...)
+	_m.Called(_ca...)
+}
+
 // Iface2 provides a mock function with given fields: ctx, found
 func (_m *Test) Iface2(ctx context.Context, found *bool) (bool, error) {
 	ret := _m.Called(ctx, found)
@@ -91,28 +103,28 @@ func (_m *Test) Iface2(ctx context.Context, found *bool) (bool, error) {
 }
 
 // Iface3 provides a mock function with given fields:
-func (_m *Test) Iface3() func(string) string {
+func (_m *Test) Iface3() func(repo.Repo) string {
 	ret := _m.Called()
 
-	var r0 func(string) string
-	if rf, ok := ret.Get(0).(func() func(string) string); ok {
+	var r0 func(repo.Repo) string
+	if rf, ok := ret.Get(0).(func() func(repo.Repo) string); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(func(string) string)
+			r0 = ret.Get(0).(func(repo.Repo) string)
 		}
 	}
 
 	return r0
 }
 
-// Iface4 provides a mock function with given fields:
-func (_m *Test) Iface4() map[string]string {
-	ret := _m.Called()
+// Iface4 provides a mock function with given fields: _a0
+func (_m *Test) Iface4(_a0 map[string]*esimredis.Client) map[string]string {
+	ret := _m.Called(_a0)
 
 	var r0 map[string]string
-	if rf, ok := ret.Get(0).(func() map[string]string); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(map[string]*esimredis.Client) map[string]string); ok {
+		r0 = rf(_a0)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(map[string]string)
@@ -123,15 +135,15 @@ func (_m *Test) Iface4() map[string]string {
 }
 
 // Iface5 provides a mock function with given fields: redisClient
-func (_m *Test) Iface5(redisClient *esimredis.RedisClient) *esimredis.RedisClient {
+func (_m *Test) Iface5(redisClient *esimredis.Client) *esimredis.Client {
 	ret := _m.Called(redisClient)
 
-	var r0 *esimredis.RedisClient
-	if rf, ok := ret.Get(0).(func(*esimredis.RedisClient) *esimredis.RedisClient); ok {
+	var r0 *esimredis.Client
+	if rf, ok := ret.Get(0).(func(*esimredis.Client) *esimredis.Client); ok {
 		r0 = rf(redisClient)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*esimredis.RedisClient)
+			r0 = ret.Get(0).(*esimredis.Client)
 		}
 	}
 
@@ -139,26 +151,26 @@ func (_m *Test) Iface5(redisClient *esimredis.RedisClient) *esimredis.RedisClien
 }
 
 // Iface6 provides a mock function with given fields: redisClient
-func (_m *Test) Iface6(redisClient esimredis.RedisClient) esimredis.RedisClient {
+func (_m *Test) Iface6(redisClient esimredis.Client) esimredis.Client {
 	ret := _m.Called(redisClient)
 
-	var r0 esimredis.RedisClient
-	if rf, ok := ret.Get(0).(func(esimredis.RedisClient) esimredis.RedisClient); ok {
+	var r0 esimredis.Client
+	if rf, ok := ret.Get(0).(func(esimredis.Client) esimredis.Client); ok {
 		r0 = rf(redisClient)
 	} else {
-		r0 = ret.Get(0).(esimredis.RedisClient)
+		r0 = ret.Get(0).(esimredis.Client)
 	}
 
 	return r0
 }
 
-// Iface7 provides a mock function with given fields: _a0
-func (_m *Test) Iface7(_a0 chan<- bool) <-chan bool {
-	ret := _m.Called(_a0)
+// Iface7 provides a mock function with given fields: _a0, _a1
+func (_m *Test) Iface7(_a0 chan<- bool, _a1 chan<- esimredis.Client) <-chan bool {
+	ret := _m.Called(_a0, _a1)
 
 	var r0 <-chan bool
-	if rf, ok := ret.Get(0).(func(chan<- bool) <-chan bool); ok {
-		r0 = rf(_a0)
+	if rf, ok := ret.Get(0).(func(chan<- bool, chan<- esimredis.Client) <-chan bool); ok {
+		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(<-chan bool)
@@ -184,7 +196,7 @@ func (_m *Test) Iface8(rp repo.Repo) repo.Repo {
 	return r0
 }
 
-// Iface9 provides a mock function with given fields: _a0
-func (_m *Test) Iface9(_a0 example1.TestStruct) {
-	_m.Called(_a0)
+// Iface9 provides a mock function with given fields: _a0, _a1, _a2
+func (_m *Test) Iface9(_a0 example1.TestStruct, _a1 []example1.TestStruct, _a2 [3]example1.TestStruct) {
+	_m.Called(_a0, _a1, _a2)
 }
