@@ -112,7 +112,7 @@ func (pj *Project) bindInput(v *viper.Viper) bool {
 	}
 	pj.ServerName = serverName
 
-	if pj.checkServerName() == false {
+	if !pj.checkServerName() {
 		pj.logger.Fatalf("The server_name only supports【a-z_-】")
 	}
 
@@ -120,18 +120,18 @@ func (pj *Project) bindInput(v *viper.Viper) bool {
 
 	pj.withBeego = v.GetBool("beego")
 
-	if pj.withGin == true && pj.withBeego == true {
+	if pj.withGin && pj.withBeego {
 		pj.logger.Fatalf("either gin or beego")
 	}
 
-	if pj.withGin == false && pj.withBeego == false {
+	if !pj.withGin && !pj.withBeego {
 		pj.withGin = true
 	}
 
 	pj.withGrpc = v.GetBool("grpc")
 
 	pj.withMonitoring = v.GetBool("monitoring")
-	if pj.withMonitoring == true {
+	if pj.withMonitoring {
 		pj.Monitoring = "true"
 	} else {
 		pj.Monitoring = "false"

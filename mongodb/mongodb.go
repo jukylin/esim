@@ -92,7 +92,7 @@ func (ClientOptions) WithMonitorEvent(mongoEvent ...func() MonitorEvent) Option 
 
 type MgoConfig struct {
 	Db  string `json:"db",yaml:"db"`
-	Uri string `json:"uri",yaml:"uri"`
+	URI string `json:"uri",yaml:"uri"`
 }
 
 func (c *Client) init() {
@@ -110,7 +110,7 @@ func (c *Client) init() {
 	for _, mgo := range mgoConfigs {
 
 		clientOptions := options.Client()
-		clientOptions.ApplyURI(mgo.Uri)
+		clientOptions.ApplyURI(mgo.URI)
 
 		if c.monitorEvents != nil {
 			firstEvent := c.initMonitorMulLevelEvent(mgo.Db)
@@ -168,19 +168,19 @@ func (c *Client) init() {
 
 		client, err := mongo.NewClient(clientOptions)
 		if err != nil {
-			c.logger.Panicf("new mongo client error: %s , uri: %s \n", err.Error(), mgo.Uri)
+			c.logger.Panicf("new mongo client error: %s , uri: %s \n", err.Error(), mgo.URI)
 		}
 
 		ctx, _ := context.WithTimeout(context.Background(), 2 * time.Second)
 
 		err = client.Connect(ctx)
 		if err != nil {
-			c.logger.Panicf("conn mongo error: %s , uri: %s \n", err.Error(), mgo.Uri)
+			c.logger.Panicf("conn mongo error: %s , uri: %s \n", err.Error(), mgo.URI)
 		}
 
 		err = client.Ping(ctx, readpref.Primary())
 		if err != nil {
-			c.logger.Panicf("ping mongo error: %s , uri: %s \n", err.Error(), mgo.Uri)
+			c.logger.Panicf("ping mongo error: %s , uri: %s \n", err.Error(), mgo.URI)
 		}
 
 		c.setMgo(mgo.Db, client)
@@ -226,10 +226,10 @@ func (c *Client) GetColl(dataBase, coll string) *mongo.Collection {
 	dataBase = strings.ToLower(dataBase)
 	if mgo, ok := c.Mgos[dataBase]; ok {
 		return mgo.Database(dataBase).Collection(coll)
-	} else {
-		c.logger.Errorf("[db] %s not found", dataBase)
-		return nil
 	}
+
+	c.logger.Errorf("[db] %s not found", dataBase)
+	return nil
 }
 
 func (c *Client) poolEvent(pev *event.PoolEvent) {

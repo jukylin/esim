@@ -249,7 +249,7 @@ func (ir *Infraer) parseInfra(srcStr string) bool {
 		}
 	}
 
-	if ir.hasInfraStruct == false {
+	if !ir.hasInfraStruct {
 		ir.logger.Errorf("not find %s", ir.oldInfraInfo.specialStructName)
 		return false
 	}

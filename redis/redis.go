@@ -135,7 +135,7 @@ func newPoolRedis(options ...Option) *Client {
 				// 选择db
 				c.Do("SELECT", 0)
 
-				if onceRedisClient.conf.GetBool("debug") == true {
+				if onceRedisClient.conf.GetBool("debug") {
 					c = redis.NewLoggingConn(
 						c, log.New(os.Stdout, "",
 							log.Ldate|log.Ltime|log.Lshortfile), "")

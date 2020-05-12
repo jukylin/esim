@@ -80,7 +80,7 @@ var HandshakeConfig = plugin.HandshakeConfig{
 	MagicCookieValue: "hello",
 }
 
-func NewRpcPluginStructField(writer file_dir.IfaceWriter, logger log2.Logger) *rpcPluginStructField {
+func NewRPCPluginStructField(writer file_dir.IfaceWriter, logger log2.Logger) *rpcPluginStructField {
 	rpcPlugin := &rpcPluginStructField{}
 
 	rpcPlugin.writer = writer

@@ -168,7 +168,7 @@ func (f *Ifacer) bindInput(v *viper.Viper) error {
 	f.StructName = structName
 
 	star := v.GetBool("istar")
-	if star == true {
+	if star {
 		f.Star = "*"
 	}
 
@@ -308,7 +308,7 @@ func (f *Ifacer) parseVarType(typ types.Type, variadic bool) string {
 		varType = "*"
 		varType += f.parseVarType(t.Elem(), false)
 	case *types.Slice:
-		if variadic == true {
+		if variadic {
 			varType = "..."
 		} else {
 			varType = "[]"

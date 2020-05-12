@@ -74,7 +74,7 @@ func (ddf *daoDomainFile) Disabled() bool {
 func (ddf *daoDomainFile) BindInput(v *viper.Viper) error {
 
 	ddf.withDisableDao = v.GetBool("disable_dao")
-	if ddf.withDisableDao == false {
+	if !ddf.withDisableDao {
 
 		ddf.withDaoTarget = v.GetString("dao_target")
 		if ddf.withDaoTarget == "" {
@@ -90,7 +90,7 @@ func (ddf *daoDomainFile) BindInput(v *viper.Viper) error {
 			return err
 		}
 
-		if existsdao == false {
+		if !existsdao {
 			return errors.New("dao dir not exists")
 		}
 

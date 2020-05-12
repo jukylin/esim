@@ -180,7 +180,7 @@ func (de *Db2Entity) Run(v *viper.Viper) error {
 		return err
 	}
 
-	if cs.IsEntity() == false {
+	if !cs.IsEntity() {
 		return errors.New("It is not the entity")
 	}
 
@@ -249,7 +249,7 @@ func (de *Db2Entity) bindInfra(v *viper.Viper) {
 		return
 	}
 
-	if exists == false {
+	if !exists {
 		de.logger.Fatalf("%s not exists", de.withInfraDir+de.withInfraFile)
 	}
 }
@@ -257,7 +257,7 @@ func (de *Db2Entity) bindInfra(v *viper.Viper) {
 //injectToInfra inject repo to infra.go and execute wire command
 func (de *Db2Entity) injectToInfra(v *viper.Viper) {
 
-	if de.withInject == false {
+	if !de.withInject {
 		de.logger.Infof("disable inject")
 		return
 	}

@@ -80,7 +80,7 @@ func (edf *entityDomainFile) BindInput(v *viper.Viper) error {
 	}
 
 	edf.withDisbleEntity = v.GetBool("disable_entity")
-	if edf.withDisbleEntity == false {
+	if !edf.withDisbleEntity {
 
 		edf.withEntityTarget = v.GetString("entity_target")
 
@@ -102,7 +102,7 @@ func (edf *entityDomainFile) BindInput(v *viper.Viper) error {
 			return err
 		}
 
-		if entityTargetExists == false {
+		if !entityTargetExists {
 			err = file_dir.CreateDir(edf.withEntityTarget)
 			if err != nil {
 				return err
@@ -178,7 +178,7 @@ func (edf *entityDomainFile) ParseCloumns(cs Columns, info *ShareInfo) {
 			primary = ";primary_key"
 		}
 
-		if nullable == false {
+		if !nullable {
 			colDefault = column.GetDefCol()
 		}
 

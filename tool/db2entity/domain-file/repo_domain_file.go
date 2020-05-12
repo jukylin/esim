@@ -71,7 +71,7 @@ func (rdf *repoDomainFile) Disabled() bool {
 func (rdf *repoDomainFile) BindInput(v *viper.Viper) error {
 
 	rdf.withDisableRepo = v.GetBool("disable_repo")
-	if rdf.withDisableRepo == false {
+	if !rdf.withDisableRepo {
 
 		rdf.withRepoTarget = v.GetString("repo_target")
 		if rdf.withRepoTarget == "" {
@@ -87,7 +87,7 @@ func (rdf *repoDomainFile) BindInput(v *viper.Viper) error {
 			return err
 		}
 
-		if existsRepo == false {
+		if !existsRepo {
 			return errors.New("repo dir not exists")
 		}
 

@@ -14,7 +14,7 @@ import (
 )
 
 type User struct {
-	Id   int
+	ID   int
 	Name string
 }
 
@@ -58,9 +58,9 @@ func TestMain(m *testing.M) {
 			}))
 		if len(client.Ping()) > 0 {
 			return client.Ping()[0]
-		} else {
-			return nil
 		}
+
+		return nil
 	}); err != nil {
 		logger.Fatalf("Could not connect to docker: %s", err)
 	}
