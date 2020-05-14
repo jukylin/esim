@@ -114,8 +114,11 @@ func (rps *RPCPluginStructField) buildPluginEnv() error {
 	for _, name := range rps.filesName {
 		if name == rps.StructFileName {
 			src := reg.ReplaceAll([]byte(rps.StrcutInfo.structFileContent), []byte("package main"))
-			rps.writer.Write(targetDir+string(filepath.Separator)+rps.StructFileName,
+			err = rps.writer.Write(targetDir+string(filepath.Separator)+rps.StructFileName,
 				string(src))
+			if err != nil {
+				rps.logger.Errorf(err.Error())
+			}
 			continue
 		}
 
@@ -162,7 +165,10 @@ func (rps *RPCPluginStructField) copyFile(dstName, srcName string, reg *regexp.R
 
 	contents = reg.ReplaceAll(contents, []byte("package main"))
 
-	dst.Write(contents)
+	_, err = dst.Write(contents)
+	if err != nil {
+		rps.logger.Panicf(err.Error())
+	}
 }
 
 // gen modelName_plugin.go
@@ -211,8 +217,7 @@ func (rps *RPCPluginStructField) buildPlugin(dir string) error {
 		return err
 	}
 
-	os.Chmod(dir+string(filepath.Separator)+"plugin", 0777)
-	return nil
+	return os.Chmod(dir+string(filepath.Separator)+"plugin", 0777)
 }
 
 func (rps *RPCPluginStructField) dispense() {
@@ -251,7 +256,10 @@ func (rps *RPCPluginStructField) run() {
 		}),
 	})
 
-	rps.buildPluginEnv()
+	err := rps.buildPluginEnv()
+	if err != nil {
+		rps.logger.Panicf(err.Error())
+	}
 
 	rps.dispense()
 }

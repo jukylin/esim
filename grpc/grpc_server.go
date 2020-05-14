@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/davecgh/go-spew/spew"
-	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
+	"github.com/grpc-ecosystem/go-grpc-middleware"
+	"github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	ggp "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
 	"github.com/jukylin/esim/config"
@@ -21,7 +21,7 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-type GrpcServer struct {
+type Server struct {
 	Server *grpc.Server
 
 	logger log.Logger
@@ -39,85 +39,85 @@ type GrpcServer struct {
 	tracer opentracing2.Tracer
 }
 
-type ServerOption func(c *GrpcServer)
+type ServerOption func(c *Server)
 
 type ServerOptions struct{}
 
-func NewGrpcServer(target string, options ...ServerOption) *GrpcServer {
+func NewServer(target string, options ...ServerOption) *Server {
 
-	grpcServer := &GrpcServer{}
+	Server := &Server{}
 
-	grpcServer.target = target
+	Server.target = target
 
 	for _, option := range options {
-		option(grpcServer)
+		option(Server)
 	}
 
-	if grpcServer.logger == nil {
-		grpcServer.logger = log.NewLogger()
+	if Server.logger == nil {
+		Server.logger = log.NewLogger()
 	}
 
-	if grpcServer.conf == nil {
-		grpcServer.conf = config.NewNullConfig()
+	if Server.conf == nil {
+		Server.conf = config.NewNullConfig()
 	}
 
-	if grpcServer.tracer == nil {
-		grpcServer.tracer = opentracing2.NoopTracer{}
+	if Server.tracer == nil {
+		Server.tracer = opentracing2.NoopTracer{}
 	}
 
 	keepAliveServer := keepalive.ServerParameters{}
-	grpcServerKpTime := grpcServer.conf.GetInt("grpc_server_kp_time")
-	if grpcServerKpTime == 0 {
-		grpcServerKpTime = 60
+	ServerKpTime := Server.conf.GetInt("grpc_server_kp_time")
+	if ServerKpTime == 0 {
+		ServerKpTime = 60
 	}
-	keepAliveServer.Time = time.Duration(grpcServerKpTime) * time.Second
+	keepAliveServer.Time = time.Duration(ServerKpTime) * time.Second
 
-	grpcServerKpTimeOut := grpcServer.conf.GetInt("grpc_server_kp_time_out")
-	if grpcServerKpTimeOut == 0 {
-		grpcServerKpTimeOut = 5
+	ServerKpTimeOut := Server.conf.GetInt("grpc_server_kp_time_out")
+	if ServerKpTimeOut == 0 {
+		ServerKpTimeOut = 5
 	}
-	keepAliveServer.Timeout = time.Duration(grpcServerKpTimeOut) * time.Second
+	keepAliveServer.Timeout = time.Duration(ServerKpTimeOut) * time.Second
 
 	//测试没生效
-	grpcServerConnTimeOut := grpcServer.conf.GetInt("grpc_server_conn_time_out")
-	if grpcServerConnTimeOut == 0 {
-		grpcServerConnTimeOut = 3
+	ServerConnTimeOut := Server.conf.GetInt("grpc_server_conn_time_out")
+	if ServerConnTimeOut == 0 {
+		ServerConnTimeOut = 3
 	}
 
 	baseOpts := []grpc.ServerOption{
-		grpc.ConnectionTimeout(time.Duration(grpcServerConnTimeOut) * time.Second),
+		grpc.ConnectionTimeout(time.Duration(ServerConnTimeOut) * time.Second),
 		grpc.KeepaliveParams(keepAliveServer),
 	}
 
 	unaryServerInterceptors := make([]grpc.UnaryServerInterceptor, 0)
-	if grpcServer.conf.GetBool("grpc_server_tracer") {
+	if Server.conf.GetBool("grpc_server_tracer") {
 		unaryServerInterceptors = append(unaryServerInterceptors,
-			otgrpc.OpenTracingServerInterceptor(grpcServer.tracer))
+			otgrpc.OpenTracingServerInterceptor(Server.tracer))
 	}
 
-	if grpcServer.conf.GetBool("grpc_server_metrics") {
+	if Server.conf.GetBool("grpc_server_metrics") {
 		ggp.EnableHandlingTimeHistogram()
 		serverMetrics := ggp.DefaultServerMetrics
 		serverMetrics.EnableHandlingTimeHistogram(ggp.WithHistogramBuckets(prometheus.DefBuckets))
 		unaryServerInterceptors = append(unaryServerInterceptors, serverMetrics.UnaryServerInterceptor())
 	}
 
-	if grpcServer.conf.GetBool("grpc_server_check_slow") {
-		unaryServerInterceptors = append(unaryServerInterceptors, grpcServer.checkServerSlow())
+	if Server.conf.GetBool("grpc_server_check_slow") {
+		unaryServerInterceptors = append(unaryServerInterceptors, Server.checkServerSlow())
 	}
 
-	if grpcServer.conf.GetBool("grpc_server_debug") {
-		unaryServerInterceptors = append(unaryServerInterceptors, grpcServer.serverDebug())
+	if Server.conf.GetBool("grpc_server_debug") {
+		unaryServerInterceptors = append(unaryServerInterceptors, Server.serverDebug())
 	}
 
 	//handle panic
 	opts := []grpc_recovery.Option{
-		grpc_recovery.WithRecoveryHandlerContext(grpcServer.handelPanic()),
+		grpc_recovery.WithRecoveryHandlerContext(Server.handelPanic()),
 	}
 	unaryServerInterceptors = append(unaryServerInterceptors, grpc_recovery.UnaryServerInterceptor(opts...))
 
-	if len(grpcServer.unaryServerInterceptors) > 0 {
-		unaryServerInterceptors = append(unaryServerInterceptors, grpcServer.unaryServerInterceptors...)
+	if len(Server.unaryServerInterceptors) > 0 {
+		unaryServerInterceptors = append(unaryServerInterceptors, Server.unaryServerInterceptors...)
 	}
 
 	if len(unaryServerInterceptors) > 0 {
@@ -125,48 +125,48 @@ func NewGrpcServer(target string, options ...ServerOption) *GrpcServer {
 		baseOpts = append(baseOpts, ui)
 	}
 
-	if len(grpcServer.opts) > 0 {
-		baseOpts = append(baseOpts, grpcServer.opts...)
+	if len(Server.opts) > 0 {
+		baseOpts = append(baseOpts, Server.opts...)
 	}
 
 	s := grpc.NewServer(baseOpts...)
 
-	grpcServer.Server = s
+	Server.Server = s
 
-	return grpcServer
+	return Server
 }
 
 func (ServerOptions) WithServerConf(conf config.Config) ServerOption {
-	return func(g *GrpcServer) {
+	return func(g *Server) {
 		g.conf = conf
 	}
 }
 
 func (ServerOptions) WithServerLogger(logger log.Logger) ServerOption {
-	return func(g *GrpcServer) {
+	return func(g *Server) {
 		g.logger = logger
 	}
 }
 
 func (ServerOptions) WithUnarySrvItcp(options ...grpc.UnaryServerInterceptor) ServerOption {
-	return func(g *GrpcServer) {
+	return func(g *Server) {
 		g.unaryServerInterceptors = options
 	}
 }
 
-func (ServerOptions) WithGrpcServerOption(options ...grpc.ServerOption) ServerOption {
-	return func(g *GrpcServer) {
+func (ServerOptions) WithServerOption(options ...grpc.ServerOption) ServerOption {
+	return func(g *Server) {
 		g.opts = options
 	}
 }
 
 func (ServerOptions) WithTracer(tracer opentracing2.Tracer) ServerOption {
-	return func(g *GrpcServer) {
+	return func(g *Server) {
 		g.tracer = tracer
 	}
 }
 
-func (gs *GrpcServer) checkServerSlow() grpc.UnaryServerInterceptor {
+func (gs *Server) checkServerSlow() grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
 		req interface{},
@@ -189,7 +189,7 @@ func (gs *GrpcServer) checkServerSlow() grpc.UnaryServerInterceptor {
 	}
 }
 
-func (gs *GrpcServer) serverDebug() grpc.UnaryServerInterceptor {
+func (gs *Server) serverDebug() grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
 		req interface{},
@@ -210,7 +210,7 @@ func (gs *GrpcServer) serverDebug() grpc.UnaryServerInterceptor {
 	}
 }
 
-func (gs *GrpcServer) handelPanic() grpc_recovery.RecoveryHandlerFuncContext {
+func (gs *Server) handelPanic() grpc_recovery.RecoveryHandlerFuncContext {
 	return func(ctx context.Context, p interface{}) (err error) {
 		gs.logger.Errorc(ctx, spew.Sdump(p))
 		return errors.New(spew.Sdump("server panic : ", p))
@@ -266,7 +266,7 @@ func ServerStubs(stubsFunc func(
 	}
 }
 
-func (gs *GrpcServer) Start() {
+func (gs *Server) Start() {
 
 	lis, err := net.Listen("tcp", gs.target)
 	if err != nil {
@@ -285,6 +285,6 @@ func (gs *GrpcServer) Start() {
 	}()
 }
 
-func (gs *GrpcServer) GracefulShutDown() {
+func (gs *Server) GracefulShutDown() {
 	gs.Server.GracefulStop()
 }

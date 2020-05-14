@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"testing"
+	"sync"
 
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
@@ -95,10 +96,11 @@ func TestGetColl(t *testing.T) {
 
 	ctx := mongoClient.GetCtx(context.Background())
 	coll := mongoClient.GetColl("test", "coll")
-	mongoClient.GetCtx(ctx)
 
 	filter := bson.M{"phone": "123456"}
-	coll.Find(ctx, filter)
+	_, err := coll.Find(mongoClient.GetCtx(ctx), filter)
+	assert.Nil(t, err)
+
 	_, ok := ctx.Value("command").(*string)
 	assert.True(t, ok)
 
@@ -106,42 +108,7 @@ func TestGetColl(t *testing.T) {
 }
 
 func TestWithMonitorEvent(t *testing.T) {
-
-	conf := config.NewMemConfig()
-	conf.Set("debug", true)
-
-	mgoClientOptions := ClientOptions{}
-	mongoClient := NewClient(
-		mgoClientOptions.WithLogger(logger),
-		mgoClientOptions.WithConf(conf),
-		mgoClientOptions.WithMonitorEvent(
-			func() MonitorEvent {
-				monitorEventOptions := MonitorEventOptions{}
-				return NewMonitorEvent(
-					monitorEventOptions.WithConf(conf),
-					monitorEventOptions.WithLogger(logger),
-				)
-			},
-		),
-		mgoClientOptions.WithDbConfig([]MgoConfig{
-			{
-				"test",
-				"mongodb://127.0.0.1:27017",
-			},
-		}),
-	)
-
-	ctx := mongoClient.GetCtx(context.Background())
-	coll := mongoClient.GetColl("test", "coll")
-	mongoClient.GetCtx(ctx)
-
-	u := User{}
-	filter := bson.M{"phone": "123456"}
-	coll.FindOne(ctx, filter).Decode(u)
-	mongoClient.Close()
-}
-
-func TestMulEvent(t *testing.T) {
+	clientOnce = sync.Once{}
 
 	conf := config.NewMemConfig()
 	conf.Set("debug", true)
@@ -158,7 +125,47 @@ func TestMulEvent(t *testing.T) {
 					monitorEventOptions.WithLogger(logger),
 				)
 			},
-			func() MonitorEvent {
+		),
+		mgoClientOptions.WithDbConfig([]MgoConfig{
+			{
+				"test",
+				"mongodb://127.0.0.1:27017",
+			},
+		}),
+	)
+
+	ctx := mongoClient.GetCtx(context.Background())
+	coll := mongoClient.GetColl("test", "coll")
+
+	_, err := coll.InsertOne(ctx, bson.M{"id": 1, "name": "test"})
+	assert.Nil(t, err)
+
+	u := User{}
+	filter := bson.M{"name": "test"}
+	err = coll.FindOne(ctx, filter).Decode(&u)
+	assert.Nil(t, err)
+	mongoClient.Close()
+}
+
+func TestMulEvent(t *testing.T) {
+	clientOnce = sync.Once{}
+
+	conf := config.NewMemConfig()
+	conf.Set("debug", true)
+
+	mgoClientOptions := ClientOptions{}
+	mongoClient := NewClient(
+		mgoClientOptions.WithLogger(logger),
+		mgoClientOptions.WithConf(conf),
+		mgoClientOptions.WithMonitorEvent(
+			func() MgoEvent {
+				monitorEventOptions := MonitorEventOptions{}
+				return NewMonitorEvent(
+					monitorEventOptions.WithConf(conf),
+					monitorEventOptions.WithLogger(logger),
+				)
+			},
+			func() MgoEvent {
 				return newSpyEvent(logger)
 			},
 		),
@@ -175,7 +182,8 @@ func TestMulEvent(t *testing.T) {
 	mongoClient.GetCtx(ctx)
 
 	u := User{}
-	filter := bson.M{"phone": "123456"}
-	coll.FindOne(ctx, filter).Decode(u)
+	filter := bson.M{"name": "test"}
+	err := coll.FindOne(ctx, filter).Decode(&u)
+	assert.Nil(t, err)
 	mongoClient.Close()
 }

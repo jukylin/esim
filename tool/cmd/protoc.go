@@ -14,7 +14,7 @@ var protocCmd = &cobra.Command{
 生成的protobuf文件会被放到项目的 internal/infra/third_party/package/*.pb.go,
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		protocer := protoc.NewProtoc(
+		protocer := protoc.NewProtocer(
 			protoc.WithProtocLogger(logger),
 		)
 		protocer.Run(v)

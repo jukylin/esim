@@ -17,7 +17,7 @@ import (
 
 var logger log.Logger
 
-var svr *GrpcServer
+var svr *Server
 
 // server is used to implement helloworld.GreeterServer.
 type server struct{}
@@ -41,7 +41,7 @@ func TestMain(m *testing.M) {
 	memConfig.Set("debug", true)
 	memConfig.Set("grpc_server_debug", true)
 
-	svr = NewGrpcServer("test",
+	svr = NewServer("test",
 		serverOptions.WithServerLogger(logger),
 		serverOptions.WithServerConf(memConfig),
 		serverOptions.WithUnarySrvItcp(

@@ -47,10 +47,13 @@ func TestEsimFactory_Run(t *testing.T) {
 	v.Set("new", true)
 	//v.Set("print", true)
 
-	esimfactory.Run(v)
+	err := esimfactory.Run(v)
+	assert.Nil(t, err)
 	esimfactory.Close()
-	file_dir.EsimRecoverFile(esimfactory.structDir +
+
+	err = file_dir.EsimRecoverFile(esimfactory.structDir +
 		string(filepath.Separator) + esimfactory.structFileName)
+	assert.Nil(t, err)
 }
 
 func TestEsimFactory_InputBind(t *testing.T) {

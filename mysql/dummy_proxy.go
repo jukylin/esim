@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"database/sql"
+	"context"
 
 	"github.com/jukylin/esim/log"
 )
@@ -15,7 +16,7 @@ type dummyProxy struct {
 	name string
 }
 
-func newDummyProxy(logger log.Logger, name string) *dummyProxy {
+func newDummyProxy(logger log.Logger, name string) SQLCommon {
 	dummyProxy := &dummyProxy{}
 
 	dummyProxy.logger = logger
@@ -35,7 +36,7 @@ func (dp *dummyProxy) ProxyName() string {
 }
 
 func (dp *dummyProxy) Exec(query string, args ...interface{}) (sql.Result, error) {
-	result := &dummySqlResult{}
+	result := &dummySQLResult{}
 	return result, nil
 }
 
@@ -60,15 +61,24 @@ func (dp *dummyProxy) Close() error {
 }
 
 // implement sql.Result interface
-type dummySqlResult struct {
+type dummySQLResult struct {
 }
 
 // implement sql.Result interface
-func (dp *dummySqlResult) LastInsertId() (int64, error) {
+func (dp *dummySQLResult) LastInsertId() (int64, error) {
 	return 0, nil
 }
 
 // implement sql.Result interface
-func (dp *dummySqlResult) RowsAffected() (int64, error) {
+func (dp *dummySQLResult) RowsAffected() (int64, error) {
 	return 0, nil
+}
+
+
+func (dp *dummyProxy) Begin() (*sql.Tx, error) {
+	return dp.nextProxy.Begin()
+}
+
+func (dp *dummyProxy) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error) {
+	return dp.nextProxy.BeginTx(ctx, opts)
 }

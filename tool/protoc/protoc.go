@@ -2,7 +2,6 @@ package protoc
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -12,11 +11,11 @@ import (
 	"strings"
 
 	logger "github.com/jukylin/esim/log"
-	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	"github.com/jukylin/esim/pkg/file-dir"
 	"github.com/spf13/viper"
 )
 
-type protocer struct {
+type Protocer struct {
 	target string
 
 	fromProto string
@@ -28,10 +27,10 @@ type protocer struct {
 	logger logger.Logger
 }
 
-type Option func(*protocer)
+type Option func(*Protocer)
 
-func NewProtoc(options ...Option) *protocer {
-	p := &protocer{}
+func NewProtocer(options ...Option) *Protocer {
+	p := &Protocer{}
 
 	for _, option := range options {
 		option(p)
@@ -41,12 +40,12 @@ func NewProtoc(options ...Option) *protocer {
 }
 
 func WithProtocLogger(logger logger.Logger) Option {
-	return func(p *protocer) {
+	return func(p *Protocer) {
 		p.logger = logger
 	}
 }
 
-func (p *protocer) Run(v *viper.Viper) bool {
+func (p *Protocer) Run(v *viper.Viper) bool {
 	p.bindInput(v)
 
 	p.logger.Infof("Please confirm that protoc is installed")
@@ -58,7 +57,7 @@ func (p *protocer) Run(v *viper.Viper) bool {
 	return true
 }
 
-func (p *protocer) bindInput(v *viper.Viper) bool {
+func (p *Protocer) bindInput(v *viper.Viper) bool {
 	target := v.GetString("target")
 
 	ex, err := file_dir.IsExistsDir(target)
@@ -98,13 +97,13 @@ func (p *protocer) bindInput(v *viper.Viper) bool {
 	return true
 }
 
-func (p *protocer) parseProtoPath() {
+func (p *Protocer) parseProtoPath() {
 	strs := strings.Split(p.fromProto, "/")
 	protoPath := strs[0 : len(strs)-1]
 	p.protoPath = strings.Join(protoPath, "/")
 }
 
-func (p *protocer) execCmd() bool {
+func (p *Protocer) execCmd() bool {
 	pwd, _ := os.Getwd()
 
 	cmdLine := fmt.Sprintf("protoc --go_out=plugins=grpc:%s --proto_path %s %s",
@@ -131,10 +130,10 @@ func (p *protocer) execCmd() bool {
 
 //parsePkgName parse the package name from protoc file
 //if not found stop the run
-func (p *protocer) parsePkgName(protoFile string) (string, error) {
+func (p *Protocer) parsePkgName(protoFile string) (string, error) {
 
 	if filepath.Ext(protoFile) != ".proto" {
-		return "", errors.New(fmt.Sprintf("It is not the proto file : %s", protoFile))
+		return "", fmt.Errorf("it is not the proto file : %s", protoFile)
 	}
 
 	f, err := os.Open(protoFile)
@@ -168,5 +167,5 @@ func (p *protocer) parsePkgName(protoFile string) (string, error) {
 		}
 	}
 
-	return "", errors.New(fmt.Sprintf("Not found the package name from protoc file"))
+	return "", fmt.Errorf("not found the package name from protoc file")
 }

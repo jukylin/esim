@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"database/sql"
+	"context"
 
 	"github.com/jukylin/esim/log"
 )
@@ -72,4 +73,12 @@ func (sp *spyProxy) QueryRow(query string, args ...interface{}) *sql.Row {
 
 func (sp *spyProxy) Close() error {
 	return sp.nextProxy.Close()
+}
+
+func (sp *spyProxy) Begin() (*sql.Tx, error) {
+	return sp.nextProxy.Begin()
+}
+
+func (sp *spyProxy) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error) {
+	return sp.nextProxy.BeginTx(ctx, opts)
 }

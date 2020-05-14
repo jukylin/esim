@@ -16,7 +16,7 @@ import (
 	"google.golang.org/grpc/keepalive"
 )
 
-type GrpcClient struct {
+type Client struct {
 	conn *grpc.ClientConn
 
 	cancel context.CancelFunc
@@ -71,20 +71,20 @@ func NewClientOptions(options ...ClientOptional) *ClientOptions {
 	}
 
 	keepAliveClient := keepalive.ClientParameters{}
-	grpcClientKpTime := clientOptions.conf.GetInt("grpc_client_kp_time")
-	if grpcClientKpTime == 0 {
-		grpcClientKpTime = 60
+	ClientKpTime := clientOptions.conf.GetInt("grpc_client_kp_time")
+	if ClientKpTime == 0 {
+		ClientKpTime = 60
 	}
-	keepAliveClient.Time = time.Duration(grpcClientKpTime) * time.Second
+	keepAliveClient.Time = time.Duration(ClientKpTime) * time.Second
 
-	grpcClientKpTimeOut := clientOptions.conf.GetInt("grpc_client_kp_time_out")
-	if grpcClientKpTimeOut == 0 {
-		grpcClientKpTimeOut = 5
+	ClientKpTimeOut := clientOptions.conf.GetInt("grpc_client_kp_time_out")
+	if ClientKpTimeOut == 0 {
+		ClientKpTimeOut = 5
 	}
-	keepAliveClient.Timeout = time.Duration(grpcClientKpTimeOut) * time.Second
+	keepAliveClient.Timeout = time.Duration(ClientKpTimeOut) * time.Second
 
-	grpcClientPermitWithoutStream := clientOptions.conf.GetBool("grpc_client_permit_without_stream")
-	keepAliveClient.PermitWithoutStream = grpcClientPermitWithoutStream
+	ClientPermitWithoutStream := clientOptions.conf.GetBool("grpc_client_permit_without_stream")
+	keepAliveClient.PermitWithoutStream = ClientPermitWithoutStream
 
 	opts := []grpc.DialOption{
 		grpc.WithInsecure(),
@@ -143,25 +143,25 @@ func (ClientOptionals) WithDialOptions(options ...grpc.DialOption) ClientOptiona
 	}
 }
 
-//NewGrpcClient create GrpcClient for business.
+//NewClient create Client for business.
 //clientOptions clientOptions can not nil
-func NewClient(clientOptions *ClientOptions) *GrpcClient {
+func NewClient(clientOptions *ClientOptions) *Client {
 
-	grpcClient := &GrpcClient{}
+	Client := &Client{}
 
-	grpcClient.clientOpts = clientOptions
+	Client.clientOpts = clientOptions
 
-	return grpcClient
+	return Client
 }
 
-func (gc *GrpcClient) DialContext(ctx context.Context, target string) *grpc.ClientConn {
+func (gc *Client) DialContext(ctx context.Context, target string) *grpc.ClientConn {
 
 	var cancel context.CancelFunc
 
-	grpcClientConnTimeOut := gc.clientOpts.conf.GetInt("grpc_client_conn_time_out")
-	if grpcClientConnTimeOut == 0 {
-		grpcClientConnTimeOut = 3
-		ctx, cancel = context.WithTimeout(ctx, time.Duration(grpcClientConnTimeOut)*time.Second)
+	ClientConnTimeOut := gc.clientOpts.conf.GetInt("grpc_client_conn_time_out")
+	if ClientConnTimeOut == 0 {
+		ClientConnTimeOut = 3
+		ctx, cancel = context.WithTimeout(ctx, time.Duration(ClientConnTimeOut)*time.Second)
 		gc.cancel = cancel
 	}
 
@@ -175,7 +175,7 @@ func (gc *GrpcClient) DialContext(ctx context.Context, target string) *grpc.Clie
 	return conn
 }
 
-func (gc *GrpcClient) Close() {
+func (gc *Client) Close() {
 	gc.conn.Close()
 	gc.cancel()
 }
@@ -185,14 +185,14 @@ func (gc *ClientOptions) checkClientSlow() func(ctx context.Context,
 	invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 	return func(ctx context.Context, method string, req, reply interface{},
 		cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-		grpcClientSlowTime := gc.conf.GetInt64("grpc_client_slow_time")
+		ClientSlowTime := gc.conf.GetInt64("grpc_client_slow_time")
 
 		beginTime := time.Now()
 		err := invoker(ctx, method, req, reply, cc, opts...)
 		endTime := time.Now()
 
-		if grpcClientSlowTime != 0 {
-			if endTime.Sub(beginTime) > time.Duration(grpcClientSlowTime)*time.Millisecond {
+		if ClientSlowTime != 0 {
+			if endTime.Sub(beginTime) > time.Duration(ClientSlowTime)*time.Millisecond {
 				gc.logger.Warnc(ctx, "slow client grpc_handle %s", method)
 			}
 		}

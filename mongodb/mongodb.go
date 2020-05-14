@@ -168,19 +168,19 @@ func (c *Client) init() {
 
 		client, err := mongo.NewClient(clientOptions)
 		if err != nil {
-			c.logger.Panicf("new mongo client error: %s , uri: %s \n", err.Error(), mgo.URI)
+			c.logger.Panicf("New mongo client error: %s , uri: %s \n", err.Error(), mgo.URI)
 		}
 
 		ctx, _ := context.WithTimeout(context.Background(), 2 * time.Second)
 
 		err = client.Connect(ctx)
 		if err != nil {
-			c.logger.Panicf("conn mongo error: %s , uri: %s \n", err.Error(), mgo.URI)
+			c.logger.Panicf("Conn mongo error: %s , uri: %s \n", err.Error(), mgo.URI)
 		}
 
 		err = client.Ping(ctx, readpref.Primary())
 		if err != nil {
-			c.logger.Panicf("ping mongo error: %s , uri: %s \n", err.Error(), mgo.URI)
+			c.logger.Panicf("Ping mongo error: %s , uri: %s \n", err.Error(), mgo.URI)
 		}
 
 		c.setMgo(mgo.Db, client)

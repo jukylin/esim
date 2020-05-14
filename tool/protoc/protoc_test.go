@@ -10,7 +10,7 @@ import (
 )
 
 func TestProtoc_Run(t *testing.T) {
-	protocer := NewProtoc(
+	protocer := NewProtocer(
 		WithProtocLogger(log.NewLogger()),
 	)
 
@@ -24,7 +24,7 @@ func TestProtoc_Run(t *testing.T) {
 }
 
 func TestProtoc_ParsePkgName(t *testing.T) {
-	protocer := NewProtoc(
+	protocer := NewProtocer(
 		WithProtocLogger(log.NewLogger()),
 	)
 
@@ -34,7 +34,7 @@ func TestProtoc_ParsePkgName(t *testing.T) {
 }
 
 func TestProtoc_NotPkgName(t *testing.T) {
-	protocer := NewProtoc(
+	protocer := NewProtocer(
 		WithProtocLogger(log.NewLogger()),
 	)
 	_, err := protocer.parsePkgName("./helloworld/helloworld_not_pkg_name.proto")
@@ -42,7 +42,7 @@ func TestProtoc_NotPkgName(t *testing.T) {
 }
 
 func TestProtoc_ParseProtoPath(t *testing.T) {
-	protocer := NewProtoc(
+	protocer := NewProtocer(
 		WithProtocLogger(log.NewLogger()),
 	)
 	protocer.fromProto = "./data/go/src/github.com/grpc/grpc/examples/helloworld.proto"
