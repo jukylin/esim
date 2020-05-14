@@ -94,7 +94,7 @@ func (dc *DBColumnsInter) SelectColumns(dbConf *DbConfig) (Columns, error) {
 		dc.logger.Panicf("Open mysql err: %s", err.Error())
 	}
 
-	if db.HasTable(dbConf.Table) == false {
+	if !db.HasTable(dbConf.Table) {
 		dc.logger.Panicf("%s 表不存在", dbConf.Table)
 	}
 
@@ -145,6 +145,7 @@ func (c *Column) GetGoType(nullable bool) string {
 	case "binary", "blob", "longblob", "mediumblob", "varbinary":
 		return golangByteArray
 	}
+
 	return ""
 }
 

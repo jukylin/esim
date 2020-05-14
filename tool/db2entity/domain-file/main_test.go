@@ -83,8 +83,8 @@ func TestMain(m *testing.M) {
 		  PRIMARY KEY (id)
 		)engine=innodb;`}
 
-	for _, execSql := range sqls {
-		res, err := db.Exec(execSql)
+	for _, execSQL := range sqls {
+		res, err := db.Exec(execSQL)
 		if err != nil {
 			logger.Errorf(err.Error())
 		}

@@ -10,9 +10,9 @@ import (
 
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
-	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	"github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
-	domain_file "github.com/jukylin/esim/tool/db2entity/domain-file"
+	"github.com/jukylin/esim/tool/db2entity/domain-file"
 	"github.com/spf13/viper"
 	"golang.org/x/tools/imports"
 )
@@ -272,7 +272,7 @@ func (ir *Infraer) sourceInfraFile() string {
 
 	ioutil.WriteFile(ir.withInfraDir+ir.withInfraFile, []byte(formatSrc), 0666)
 
-	return string(formatSrc)
+	return formatSrc
 }
 
 func (ir *Infraer) copyInfraInfo() {

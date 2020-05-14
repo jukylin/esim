@@ -10,7 +10,7 @@ import (
 
 func TestExecuteFactoryTemplate(t *testing.T) {
 
-	factory := esimFactory{}
+	factory := EsimFactory{}
 	factory.StructName = "Test"
 	s := &structInfo{}
 

@@ -7,7 +7,7 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
-type SqlCommon interface {
+type SQLCommon interface {
 	gorm.SQLCommon
 
 	sqlClose
@@ -19,8 +19,4 @@ type SqlCommon interface {
 
 type sqlClose interface {
 	Close() error
-}
-
-type sqlPing interface {
-	Ping() error
 }

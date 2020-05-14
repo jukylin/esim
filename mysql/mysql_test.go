@@ -13,7 +13,7 @@ import (
 	"github.com/ory/dockertest/v3"
 	dc "github.com/ory/dockertest/v3/docker"
 	"github.com/prometheus/client_golang/prometheus"
-	io_prometheus_client "github.com/prometheus/client_model/go"
+	"github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -32,12 +32,12 @@ var (
 )
 
 type TestStruct struct {
-	Id    int    `json:"id"`
+	ID    int    `json:"id"`
 	Title string `json:"title"`
 }
 
 type UserStruct struct {
-	Id       int    `json:"id"`
+	ID       int    `json:"id"`
 	Username string `json:"username"`
 }
 
@@ -96,8 +96,8 @@ func TestMain(m *testing.M) {
 			PRIMARY KEY (id)
 		)engine=innodb;`}
 
-	for _, execSql := range sqls {
-		res, err := db.Exec(execSql)
+	for _, execSQL := range sqls {
+		res, err := db.Exec(execSQL)
 		if err != nil {
 			logger.Errorf(err.Error())
 		}
@@ -414,7 +414,7 @@ func TestClient_TxCommit(t *testing.T) {
 
 	db1.Table("test").First(test)
 
-	assert.Equal(t, 1, test.Id)
+	assert.Equal(t, 1, test.ID)
 
 	client.Close()
 }
@@ -450,7 +450,7 @@ func TestClient_TxRollBack(t *testing.T) {
 
 	db1.Table("test").First(test)
 
-	assert.Equal(t, 1, test.Id)
+	assert.Equal(t, 1, test.ID)
 
 	client.Close()
 }

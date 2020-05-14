@@ -7,7 +7,7 @@ import (
 )
 
 type spyProxy struct {
-	nextProxy SqlCommon
+	nextProxy SQLCommon
 
 	ExecWasCalled bool
 
@@ -33,7 +33,7 @@ func newSpyProxy(logger log.Logger, name string) *spyProxy {
 
 //implement Proxy interface
 func (sp *spyProxy) NextProxy(db interface{}) {
-	sp.nextProxy = db.(SqlCommon)
+	sp.nextProxy = db.(SQLCommon)
 }
 
 //implement Proxy interface

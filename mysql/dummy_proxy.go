@@ -8,7 +8,7 @@ import (
 
 //last proxy
 type dummyProxy struct {
-	nextProxy SqlCommon
+	nextProxy SQLCommon
 
 	logger log.Logger
 
@@ -26,7 +26,7 @@ func newDummyProxy(logger log.Logger, name string) *dummyProxy {
 
 //implement Proxy interface
 func (dp *dummyProxy) NextProxy(db interface{}) {
-	dp.nextProxy = db.(SqlCommon)
+	dp.nextProxy = db.(SQLCommon)
 }
 
 //implement Proxy interface

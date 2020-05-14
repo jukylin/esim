@@ -514,11 +514,11 @@ func (ef *EsimFactory) parseStruct() bool {
 
 			for _, decl := range f.Decls {
 				if GenDecl, ok := decl.(*ast.GenDecl); ok {
-					if GenDecl.Tok.String() == "var" && ef.found == true {
+					if GenDecl.Tok.String() == "var" && ef.found {
 						ef.oldStructInfo.vars.ParseFromAst(GenDecl, strSrc)
 					}
 
-					if GenDecl.Tok.String() == "import" && ef.found == true {
+					if GenDecl.Tok.String() == "import" && ef.found {
 						imps := pkg.Imports{}
 						imps.ParseFromAst(GenDecl)
 						ef.oldStructInfo.imports = imps
@@ -570,8 +570,7 @@ func (ef *EsimFactory) extendField() bool {
 
 			var foundConfField bool
 			for _, field := range ef.NewStructInfo.Fields {
-				if strings.Contains(field.Field, "config.Config") ==
-					true && foundConfField == false {
+				if strings.Contains(field.Field, "config.Config") && !foundConfField {
 					foundConfField = true
 				}
 			}

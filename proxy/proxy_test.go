@@ -17,7 +17,7 @@ type filterProxy struct {
 	logger log.Logger
 }
 
-func NewFilterProxy() *filterProxy {
+func newFilterProxy() *filterProxy {
 	filterProxy := &filterProxy{}
 
 	filterProxy.logger = log.NewLogger()
@@ -45,7 +45,7 @@ type cacheProxy struct {
 	logger log.Logger
 }
 
-func NewCacheProxy() *cacheProxy {
+func newCacheProxy() *cacheProxy {
 	cacheProxy := &cacheProxy{}
 
 	cacheProxy.logger = log.NewLogger()
@@ -67,10 +67,9 @@ func (fp *cacheProxy) ProxyName() string {
 	return "cache_proxy"
 }
 
-type realDb struct {
-}
+type realDb struct {}
 
-func NewRealDb() *realDb {
+func newRealDb() *realDb {
 	return &realDb{}
 }
 
@@ -79,12 +78,12 @@ func (fp *realDb) Get(str string) string {
 }
 
 func TestProxyFactory(t *testing.T) {
-	firstProxy := NewProxyFactory().GetFirstInstance("db_repo", NewRealDb(),
+	firstProxy := NewProxyFactory().GetFirstInstance("db_repo", newRealDb(),
 		func() interface{} {
-			return NewFilterProxy()
+			return newFilterProxy()
 		},
 		func() interface{} {
-			return NewCacheProxy()
+			return newCacheProxy()
 		}).(DbRepo)
 
 	assert.Equal(t, firstProxy.(Proxy).ProxyName(), "filter_proxy")
@@ -94,7 +93,7 @@ func TestProxyFactory(t *testing.T) {
 }
 
 func TestProxyFactoryNotProxy(t *testing.T) {
-	firstProxy := NewProxyFactory().GetFirstInstance("db_repo", NewRealDb())
+	firstProxy := NewProxyFactory().GetFirstInstance("db_repo", newRealDb())
 	assert.IsType(t, firstProxy, &realDb{})
 
 	result := firstProxy.(DbRepo).Get("version")
@@ -109,10 +108,10 @@ func TestProxyFactoryNotRealInstanceNotProxy(t *testing.T) {
 func TestProxyFactoryNotRealInstanceButProxy(t *testing.T) {
 	firstProxy := NewProxyFactory().GetFirstInstance("db_repo", nil,
 		func() interface{} {
-			return NewFilterProxy()
+			return newFilterProxy()
 		},
 		func() interface{} {
-			return NewCacheProxy()
+			return newCacheProxy()
 		})
 	assert.IsType(t, &filterProxy{}, firstProxy)
 }
@@ -120,10 +119,10 @@ func TestProxyFactoryNotRealInstanceButProxy(t *testing.T) {
 func TestProxyFactoryGetInstances(t *testing.T) {
 	firstProxy := NewProxyFactory().GetInstances("db_repo",
 		func() interface{} {
-			return NewFilterProxy()
+			return newFilterProxy()
 		},
 		func() interface{} {
-			return NewCacheProxy()
+			return newCacheProxy()
 		})
 	assert.IsType(t, &filterProxy{}, firstProxy[0])
 	assert.IsType(t, &cacheProxy{}, firstProxy[1])

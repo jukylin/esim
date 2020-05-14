@@ -215,15 +215,12 @@ func (c *Client) GetDb(dbName string) *gorm.DB {
 func (c *Client) getDb(ctx context.Context, dbName string) *gorm.DB {
 	dbName = strings.ToLower(dbName)
 
-	//m.mysqlLock.RLock()
 	if db, ok := c.gdbs[dbName]; ok {
-		//m.mysqlLock.RUnlock()
 		return db
-	} else {
-		//m.mysqlLock.RUnlock()
-		c.logger.Errorf("[db] %s not found", dbName)
-		return nil
 	}
+
+	c.logger.Errorf("[db] %s not found", dbName)
+	return nil
 }
 
 func (c *Client) GetCtxDb(ctx context.Context, dbName string) *gorm.DB {
