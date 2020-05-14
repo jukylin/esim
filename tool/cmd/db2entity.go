@@ -44,12 +44,17 @@ var db2entityCmd = &cobra.Command{
 
 		writer := file_dir.NewEsimWriter()
 
+		shareInfo := domain_file.NewShareInfo()
+		shareInfo.DbConf = dbConf
+
 		db2EntityOptions := db2entity.Db2EnOptions{}
 		db2Entity := db2entity.NewDb2Entity(
 			db2EntityOptions.WithLogger(logger),
 			db2EntityOptions.WithDbConf(dbConf),
 			db2EntityOptions.WithColumnsInter(columnsInter),
 			db2EntityOptions.WithWriter(writer),
+			db2EntityOptions.WithShareInfo(shareInfo),
+
 			db2EntityOptions.WithExecer(pkg.NewCmdExec()),
 			db2EntityOptions.WithDomainFile(daoDomainFile, entityDomainFile, repoDomainFile),
 			db2EntityOptions.WithInfraer(infra.NewInfraer(

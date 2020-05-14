@@ -136,7 +136,7 @@ func (ir *Infraer) Inject(v *viper.Viper, injectInfos []*domain_file.InjectInfo)
 	//back up infra.go
 	err = file_dir.EsimBackUpFile(file_dir.GetCurrentDir() + string(filepath.Separator) + ir.withInfraDir + ir.withInfraFile)
 	if err != nil {
-		ir.logger.Errorf(err.Error())
+		ir.logger.Errorf("Back up err : %s", err.Error())
 		return false
 	}
 
@@ -181,7 +181,8 @@ func (ir *Infraer) bindInput(v *viper.Viper) bool {
 		ir.withInfraDir = strings.Trim(ir.withInfraDir, "/") + string(filepath.Separator)
 	}
 
-	if v.GetString("infra_file") == "" {
+	ir.withInfraFile = v.GetString("infra_file")
+	if ir.withInfraFile == "" {
 		ir.withInfraFile = "infra.go"
 	}
 
