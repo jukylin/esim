@@ -8,9 +8,9 @@ import (
 	"github.com/jukylin/esim/infra"
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
-	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	"github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
-	domain_file "github.com/jukylin/esim/tool/db2entity/domain-file"
+	"github.com/jukylin/esim/tool/db2entity/domain-file"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
@@ -88,7 +88,7 @@ func TestDb2Entity_Run(t *testing.T) {
 		assert.FileExists(t, path)
 	}
 
-	for path, _ := range db2Entity.domainContent {
+	for path := range db2Entity.domainContent {
 		os.Remove(path)
 	}
 

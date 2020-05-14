@@ -155,7 +155,7 @@ func (de *Db2Entity) Run(v *viper.Viper) error {
 			de.logger.Errorf("A panic occurred : %s", err)
 
 			if len(de.wroteContent) > 0 {
-				for path, _ := range de.wroteContent {
+				for path := range de.wroteContent {
 					de.logger.Debugf("remove %s", path)
 					err := os.RemoveAll(path)
 					if err != nil {

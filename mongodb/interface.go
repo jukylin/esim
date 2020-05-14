@@ -8,8 +8,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type MonitorEvent interface {
-	NextEvent(MonitorEvent)
+type MgoEvent interface {
+	NextEvent(MgoEvent)
 
 	EventName() string
 

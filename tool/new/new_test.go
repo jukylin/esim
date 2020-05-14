@@ -12,7 +12,7 @@ import (
 )
 
 func TestProject_Run(t *testing.T) {
-	project := NewProject(
+	project := InitProject(
 		WithProjectLogger(log.NewLogger()),
 		WithProjectWriter(file_dir.NewEsimWriter()),
 		WithProjectTpl(templates.NewTextTpl()),
@@ -34,7 +34,7 @@ func TestProject_Run(t *testing.T) {
 }
 
 func TestProject_ErrRun(t *testing.T) {
-	project := NewProject(
+	project := InitProject(
 		WithProjectLogger(log.NewLogger()),
 		WithProjectWriter(file_dir.NewErrWrite(3)),
 		WithProjectTpl(templates.NewTextTpl()),
@@ -55,7 +55,7 @@ func TestProject_ErrRun(t *testing.T) {
 }
 
 func TestProject_GetPackName(t *testing.T) {
-	project := NewProject(WithProjectLogger(log.NewNullLogger()))
+	project := InitProject(WithProjectLogger(log.NewNullLogger()))
 
 	testCases := []struct {
 		caseName   string
@@ -77,7 +77,7 @@ func TestProject_GetPackName(t *testing.T) {
 }
 
 func TestProject_CheckServiceName(t *testing.T) {
-	project := NewProject(WithProjectLogger(log.NewNullLogger()))
+	project := InitProject(WithProjectLogger(log.NewNullLogger()))
 
 	testCases := []struct {
 		caseName    string
@@ -100,7 +100,7 @@ func TestProject_CheckServiceName(t *testing.T) {
 }
 
 func TestProject_BindInput(t *testing.T) {
-	project := NewProject(WithProjectLogger(log.NewNullLogger()))
+	project := InitProject(WithProjectLogger(log.NewNullLogger()))
 
 	v := viper.New()
 	v.Set("service_name", "example")

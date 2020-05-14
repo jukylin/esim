@@ -81,7 +81,7 @@ func (pf *Factory) GetInstances(realName string, proxys ...func() interface{}) [
 	if proxyNum > 0 {
 		proxyInses = make([]interface{}, proxyNum)
 		for k, proxyFunc := range proxys {
-			if _, ok := proxyFunc().(Proxy); ok == false {
+			if _, ok := proxyFunc().(Proxy); !ok {
 				pf.logger.Panicf("[%s] not implement the Proxy interface", realName)
 			} else {
 				proxyInses[k] = proxyFunc()

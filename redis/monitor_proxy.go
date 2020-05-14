@@ -11,7 +11,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-type monitorProxy struct {
+type MonitorProxy struct {
 	name string
 
 	nextConn ContextConn
@@ -27,74 +27,74 @@ type monitorProxy struct {
 
 type afterEvents func(context.Context, ExecRedisInfo)
 
-type MonitorProxyOption func(c *monitorProxy)
+type MonitorProxyOption func(c *MonitorProxy)
 
 type MonitorProxyOptions struct{}
 
-func NewMonitorProxy(options ...MonitorProxyOption) *monitorProxy {
+func NewMonitorProxy(options ...MonitorProxyOption) *MonitorProxy {
 
-	monitorProxy := &monitorProxy{}
+	MonitorProxy := &MonitorProxy{}
 	for _, option := range options {
-		option(monitorProxy)
+		option(MonitorProxy)
 	}
 
-	if monitorProxy.conf == nil {
-		monitorProxy.conf = config.NewNullConfig()
+	if MonitorProxy.conf == nil {
+		MonitorProxy.conf = config.NewNullConfig()
 	}
 
-	if monitorProxy.logger == nil {
-		monitorProxy.logger = log.NewLogger()
+	if MonitorProxy.logger == nil {
+		MonitorProxy.logger = log.NewLogger()
 	}
 
-	if monitorProxy.tracer == nil {
-		monitorProxy.tracer = opentracing.NewTracer("redis", monitorProxy.logger)
+	if MonitorProxy.tracer == nil {
+		MonitorProxy.tracer = opentracing.NewTracer("redis", MonitorProxy.logger)
 	}
 
-	monitorProxy.name = "monitor_proxy"
+	MonitorProxy.name = "monitor_proxy"
 
-	return monitorProxy
+	return MonitorProxy
 }
 
 func (MonitorProxyOptions) WithConf(conf config.Config) MonitorProxyOption {
-	return func(r *monitorProxy) {
+	return func(r *MonitorProxy) {
 		r.conf = conf
 	}
 }
 
 func (MonitorProxyOptions) WithLogger(logger log.Logger) MonitorProxyOption {
-	return func(r *monitorProxy) {
+	return func(r *MonitorProxy) {
 		r.logger = logger
 	}
 }
 
 func (MonitorProxyOptions) WithTracer(tracer opentracing2.Tracer) MonitorProxyOption {
-	return func(r *monitorProxy) {
+	return func(r *MonitorProxy) {
 		r.tracer = tracer
 	}
 }
 
 //implement Proxy interface
-func (mp *monitorProxy) NextProxy(conn interface{}) {
+func (mp *MonitorProxy) NextProxy(conn interface{}) {
 	mp.nextConn = conn.(ContextConn)
 }
 
 //implement Proxy interface
-func (mp *monitorProxy) ProxyName() string {
+func (mp *MonitorProxy) ProxyName() string {
 	return mp.name
 }
 
-func (mp *monitorProxy) Close() error {
+func (mp *MonitorProxy) Close() error {
 	err := mp.nextConn.Close()
 
 	return err
 }
 
-func (mp *monitorProxy) Err() (err error) {
+func (mp *MonitorProxy) Err() (err error) {
 	err = mp.nextConn.Err()
 	return
 }
 
-func (mp *monitorProxy) Do(ctx context.Context, commandName string, args ...interface{}) (reply interface{}, err error) {
+func (mp *MonitorProxy) Do(ctx context.Context, commandName string, args ...interface{}) (reply interface{}, err error) {
 	now := time.Now()
 
 	reply, err = mp.nextConn.Do(ctx, commandName, args...)
@@ -111,7 +111,7 @@ func (mp *monitorProxy) Do(ctx context.Context, commandName string, args ...inte
 	return
 }
 
-func (mp *monitorProxy) Send(ctx context.Context, commandName string, args ...interface{}) (err error) {
+func (mp *MonitorProxy) Send(ctx context.Context, commandName string, args ...interface{}) (err error) {
 
 	now := time.Now()
 	err = mp.nextConn.Send(ctx, commandName, args...)
@@ -128,7 +128,7 @@ func (mp *monitorProxy) Send(ctx context.Context, commandName string, args ...in
 	return
 }
 
-func (mp *monitorProxy) Flush(ctx context.Context) (err error) {
+func (mp *MonitorProxy) Flush(ctx context.Context) (err error) {
 
 	now := time.Now()
 	err = mp.nextConn.Flush(ctx)
@@ -144,7 +144,7 @@ func (mp *monitorProxy) Flush(ctx context.Context) (err error) {
 	return
 }
 
-func (mp *monitorProxy) Receive(ctx context.Context) (reply interface{}, err error) {
+func (mp *MonitorProxy) Receive(ctx context.Context) (reply interface{}, err error) {
 
 	now := time.Now()
 	reply, err = mp.nextConn.Receive(ctx)
@@ -161,7 +161,7 @@ func (mp *monitorProxy) Receive(ctx context.Context) (reply interface{}, err err
 }
 
 //初始化回调事件
-func (mp *monitorProxy) registerAfterEvent() {
+func (mp *MonitorProxy) registerAfterEvent() {
 	if mp.conf.GetBool("redis_tracer") {
 		mp.afterEvents = append(mp.afterEvents, mp.redisTracer)
 	}
@@ -175,13 +175,13 @@ func (mp *monitorProxy) registerAfterEvent() {
 	}
 }
 
-func (mp *monitorProxy) after(ctx context.Context, execInfo ExecRedisInfo) {
+func (mp *MonitorProxy) after(ctx context.Context, execInfo ExecRedisInfo) {
 	for _, e := range mp.afterEvents {
 		e(ctx, execInfo)
 	}
 }
 
-func (mp *monitorProxy) redisTracer(ctx context.Context, info ExecRedisInfo) {
+func (mp *MonitorProxy) redisTracer(ctx context.Context, info ExecRedisInfo) {
 	span := opentracing.GetSpan(ctx, mp.tracer, info.commandName, info.startTime)
 	if info.err != nil {
 		span.SetTag("error", true)
@@ -191,14 +191,14 @@ func (mp *monitorProxy) redisTracer(ctx context.Context, info ExecRedisInfo) {
 }
 
 //慢命令
-func (mp *monitorProxy) redisSlowCommand(ctx context.Context, info ExecRedisInfo) {
+func (mp *MonitorProxy) redisSlowCommand(ctx context.Context, info ExecRedisInfo) {
 	redisSlowTime := mp.conf.GetInt64("redis_slow_time")
 	if info.endTime.Sub(info.startTime) > time.Duration(redisSlowTime)*time.Millisecond {
 		mp.logger.Warnf("slow redis command %s", info.commandName)
 	}
 }
 
-func (mp *monitorProxy) redisMetrics(ctx context.Context, info ExecRedisInfo) {
+func (mp *MonitorProxy) redisMetrics(ctx context.Context, info ExecRedisInfo) {
 	redisTotalLab := prometheus.Labels{"cmd": info.commandName}
 	redisDurationLab := prometheus.Labels{"cmd": info.commandName}
 

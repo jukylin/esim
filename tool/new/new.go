@@ -56,7 +56,7 @@ type Project struct {
 
 type ProjectOption func(*Project)
 
-func NewProject(options ...ProjectOption) *Project {
+func InitProject(options ...ProjectOption) *Project {
 
 	project := &Project{}
 
@@ -239,7 +239,7 @@ func (pj *Project) build() bool {
 			pj.logger.Panicf("%s : %s", file.FileName, err.Error())
 		}
 
-		if exists == false {
+		if !exists {
 			err = file_dir.CreateDir(dir)
 			if err != nil {
 				pj.logger.Panicf("%s : %s", file.FileName, err.Error())

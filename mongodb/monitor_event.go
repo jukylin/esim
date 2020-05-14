@@ -12,8 +12,8 @@ import (
 	"go.mongodb.org/mongo-driver/event"
 )
 
-type monitorEvent struct {
-	nextEvent MonitorEvent
+type MonitorEvent struct {
+	nextEvent MgoEvent
 
 	conf config.Config
 
@@ -28,11 +28,11 @@ type afterEvents func(context.Context, *mongoBackEvent, time.Time, time.Time)
 
 type MonitorEventOptions struct{}
 
-type EventOption func(c *monitorEvent)
+type EventOption func(c *MonitorEvent)
 
-func NewMonitorEvent(options ...EventOption) *monitorEvent {
+func NewMonitorEvent(options ...EventOption) MgoEvent {
 
-	m := &monitorEvent{}
+	m := &MonitorEvent{}
 
 	for _, option := range options {
 		option(m)
@@ -56,38 +56,38 @@ func NewMonitorEvent(options ...EventOption) *monitorEvent {
 }
 
 func (MonitorEventOptions) WithConf(conf config.Config) EventOption {
-	return func(m *monitorEvent) {
+	return func(m *MonitorEvent) {
 		m.conf = conf
 	}
 }
 
 func (MonitorEventOptions) WithLogger(logger log.Logger) EventOption {
-	return func(m *monitorEvent) {
+	return func(m *MonitorEvent) {
 		m.logger = logger
 	}
 }
 
 func (MonitorEventOptions) WithTracer(tracer opentracing2.Tracer) EventOption {
-	return func(m *monitorEvent) {
+	return func(m *MonitorEvent) {
 		m.tracer = tracer
 	}
 }
 
-func (m *monitorEvent) NextEvent(event MonitorEvent) {
+func (m *MonitorEvent) NextEvent(event MgoEvent) {
 	m.nextEvent = event
 }
 
-func (m *monitorEvent) EventName() string {
+func (m *MonitorEvent) EventName() string {
 	return "monitor_proxy"
 }
 
-func (m *monitorEvent) Start(ctx context.Context, starEv *event.CommandStartedEvent) {
+func (m *MonitorEvent) Start(ctx context.Context, starEv *event.CommandStartedEvent) {
 	if m.nextEvent != nil {
 		m.nextEvent.Start(ctx, starEv)
 	}
 }
 
-func (m *monitorEvent) SucceededEvent(ctx context.Context,
+func (m *MonitorEvent) SucceededEvent(ctx context.Context,
 	succEvent *event.CommandSucceededEvent) {
 
 	var beginTime time.Time
@@ -106,7 +106,7 @@ func (m *monitorEvent) SucceededEvent(ctx context.Context,
 	}
 }
 
-func (m *monitorEvent) FailedEvent(ctx context.Context, failedEvent *event.CommandFailedEvent) {
+func (m *MonitorEvent) FailedEvent(ctx context.Context, failedEvent *event.CommandFailedEvent) {
 
 	var beginTime time.Time
 	monBackEvent := &mongoBackEvent{}
@@ -124,7 +124,7 @@ func (m *monitorEvent) FailedEvent(ctx context.Context, failedEvent *event.Comma
 	}
 }
 
-func (m *monitorEvent) registerAfterEvent() {
+func (m *MonitorEvent) registerAfterEvent() {
 	if m.conf.GetBool("mgo_tracer") {
 		m.afterEvents = append(m.afterEvents, m.withTracer)
 	}
@@ -145,7 +145,7 @@ func (m *monitorEvent) registerAfterEvent() {
 //执行慢的命令
 // dur_nan 纳秒
 //执行的命令
-func (m *monitorEvent) withSlowCommand(ctx context.Context, backEvent *mongoBackEvent, beginTime time.Time, endTime time.Time) {
+func (m *MonitorEvent) withSlowCommand(ctx context.Context, backEvent *mongoBackEvent, beginTime time.Time, endTime time.Time) {
 	mgoSlowTime := m.conf.GetInt64("mgo_slow_time")
 	execCommand, ok := ctx.Value("command").(*string)
 
@@ -163,7 +163,7 @@ func (m *monitorEvent) withSlowCommand(ctx context.Context, backEvent *mongoBack
 	}
 }
 
-func (m *monitorEvent) withTracer(ctx context.Context, backEvent *mongoBackEvent, beginTime time.Time, endTime time.Time) {
+func (m *MonitorEvent) withTracer(ctx context.Context, backEvent *mongoBackEvent, beginTime time.Time, endTime time.Time) {
 	execCommand, ok := ctx.Value("command").(*string)
 
 	if ok {
@@ -191,7 +191,7 @@ func (m *monitorEvent) withTracer(ctx context.Context, backEvent *mongoBackEvent
 
 }
 
-func (m *monitorEvent) withMetrics(ctx context.Context, backEvent *mongoBackEvent, beginTime time.Time, endTime time.Time) {
+func (m *MonitorEvent) withMetrics(ctx context.Context, backEvent *mongoBackEvent, beginTime time.Time, endTime time.Time) {
 
 	var commandName string
 
@@ -208,7 +208,7 @@ func (m *monitorEvent) withMetrics(ctx context.Context, backEvent *mongoBackEven
 	}
 }
 
-func (m *monitorEvent) withDebug(ctx context.Context, backEvent *mongoBackEvent, beginTime time.Time, endTime time.Time) {
+func (m *MonitorEvent) withDebug(ctx context.Context, backEvent *mongoBackEvent, beginTime time.Time, endTime time.Time) {
 	command, ok := ctx.Value("command").(*string)
 	if ok {
 		if backEvent.succEvent != nil {

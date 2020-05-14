@@ -20,7 +20,7 @@ type StubsProxyOption func(c *stubsProxy)
 
 type StubsProxyOptions struct{}
 
-func NewStubsProxy(options ...StubsProxyOption) *stubsProxy {
+func newStubsProxy(options ...StubsProxyOption) *stubsProxy {
 	stubsProxy := &stubsProxy{}
 
 	for _, option := range options {

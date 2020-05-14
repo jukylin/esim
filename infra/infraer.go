@@ -24,9 +24,9 @@ type Infraer struct {
 
 	execer pkg.Exec
 
-	oldInfraInfo *infraInfo
+	oldInfraInfo *InfraInfo
 
-	newInfraInfo *infraInfo
+	newInfraInfo *InfraInfo
 
 	injectInfos []*domain_file.InjectInfo
 
@@ -37,7 +37,7 @@ type Infraer struct {
 	withInfraFile string
 }
 
-type infraInfo struct {
+type InfraInfo struct {
 	imports pkg.Imports
 
 	importStr string
@@ -61,8 +61,8 @@ type infraInfo struct {
 	provideStr string
 }
 
-func NewInfraInfo() *infraInfo {
-	ifaInfo := &infraInfo{}
+func NewInfraInfo() *InfraInfo {
+	ifaInfo := &InfraInfo{}
 
 	ifaInfo.specialStructName = "Infra"
 
@@ -98,7 +98,7 @@ func WithIfacerLogger(logger log.Logger) Option {
 	}
 }
 
-func WithIfacerInfraInfo(infra *infraInfo) Option {
+func WithIfacerInfraInfo(infra *InfraInfo) Option {
 	return func(ir *Infraer) {
 		ir.oldInfraInfo = infra
 		ir.newInfraInfo = infra

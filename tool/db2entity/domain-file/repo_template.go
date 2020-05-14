@@ -2,7 +2,7 @@ package domain_file
 
 import "github.com/jukylin/esim/pkg"
 
-type repoTpl struct {
+type RepoTpl struct {
 	Imports pkg.Imports
 
 	StructName string
@@ -60,8 +60,8 @@ func provide{{.EntityName}}Repo(esim *container.Esim) repo.{{.EntityName}}Repo {
 	return repo.New{{.StructName}}(esim.Logger)
 }`
 
-func NewRepoTpl(entityName string) *repoTpl {
-	rt := &repoTpl{}
+func NewRepoTpl(entityName string) *RepoTpl {
+	rt := &RepoTpl{}
 
 	rt.EntityName = entityName
 	rt.StructName = "Db" + entityName + "Repo"

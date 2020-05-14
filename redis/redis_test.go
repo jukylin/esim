@@ -12,7 +12,7 @@ import (
 	"github.com/ory/dockertest/v3"
 	dc "github.com/ory/dockertest/v3/docker"
 	"github.com/prometheus/client_golang/prometheus"
-	io_prometheus_client "github.com/prometheus/client_model/go"
+	"github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -135,7 +135,7 @@ func TestMulLevelProxy_Do(t *testing.T) {
 	memConfig := config.NewMemConfig()
 	memConfig.Set("debug", true)
 
-	spyProxy := NewSpyProxy(log.NewLogger(), "spyProxy")
+	spyProxy := newSpyProxy(log.NewLogger(), "spyProxy")
 
 	redisClent := NewClient(
 		redisClientOptions.WithConf(memConfig),
@@ -173,7 +173,7 @@ func TestMulGo_Do(t *testing.T) {
 		redisClientOptions.WithConf(memConfig),
 		redisClientOptions.WithProxy(
 			func() interface{} {
-				return NewStubsProxy(log.NewLogger(), "stubsProxy")
+				return newStubsProxy(log.NewLogger(), "stubsProxy")
 			},
 		),
 	)

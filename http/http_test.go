@@ -11,7 +11,7 @@ import (
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
 	"github.com/prometheus/client_golang/prometheus"
-	io_prometheus_client "github.com/prometheus/client_model/go"
+	"github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -33,14 +33,14 @@ func TestMulLevelRoundTrip(t *testing.T) {
 		clientOptions.WithLogger(logger),
 		clientOptions.WithProxy(
 			func() interface{} {
-				return NewSpyProxy(logger, "spyProxy1")
+				return newSpyProxy(logger, "spyProxy1")
 			},
 			func() interface{} {
-				return NewSpyProxy(logger, "spyProxy2")
+				return newSpyProxy(logger, "spyProxy2")
 			},
 			func() interface{} {
 				stubsProxyOptions := StubsProxyOptions{}
-				stubsProxy := NewStubsProxy(
+				stubsProxy := newStubsProxy(
 					stubsProxyOptions.WithRespFunc(func(request *http.Request) *http.Response {
 						resp := &http.Response{}
 						if request.URL.String() == "127.0.0.1" {
@@ -102,7 +102,7 @@ func TestMonitorProxy(t *testing.T) {
 			},
 			func() interface{} {
 				stubsProxyOptions := StubsProxyOptions{}
-				stubsProxy := NewStubsProxy(
+				stubsProxy := newStubsProxy(
 					stubsProxyOptions.WithRespFunc(func(request *http.Request) *http.Response {
 						resp := &http.Response{}
 						if request.URL.String() == "127.0.0.1" {
@@ -162,11 +162,11 @@ func TestTimeoutProxy(t *testing.T) {
 					monitorProxyOptions.WithLogger(logger))
 			},
 			func() interface{} {
-				return NewSlowProxy(logger, "slowProxy")
+				return newSlowProxy(logger, "slowProxy")
 			},
 			func() interface{} {
 				stubsProxyOptions := StubsProxyOptions{}
-				stubsProxy := NewStubsProxy(
+				stubsProxy := newStubsProxy(
 					stubsProxyOptions.WithRespFunc(func(request *http.Request) *http.Response {
 						resp := &http.Response{}
 						if request.URL.String() == "127.0.0.1" {

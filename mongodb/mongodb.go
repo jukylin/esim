@@ -25,7 +25,7 @@ type Client struct {
 
 	logger log.Logger
 
-	monitorEvents []func() MonitorEvent
+	mgoEvents []func() MgoEvent
 
 	mgoConfig []MgoConfig
 
@@ -84,9 +84,9 @@ func (ClientOptions) WithDbConfig(dbConfigs []MgoConfig) Option {
 	}
 }
 
-func (ClientOptions) WithMonitorEvent(mongoEvent ...func() MonitorEvent) Option {
+func (ClientOptions) WithMonitorEvent(mongoEvent ...func() MgoEvent) Option {
 	return func(m *Client) {
-		m.monitorEvents = mongoEvent
+		m.mgoEvents = mongoEvent
 	}
 }
 
@@ -112,7 +112,7 @@ func (c *Client) init() {
 		clientOptions := options.Client()
 		clientOptions.ApplyURI(mgo.URI)
 
-		if c.monitorEvents != nil {
+		if c.mgoEvents != nil {
 			firstEvent := c.initMonitorMulLevelEvent(mgo.Db)
 			//事件监控
 			eventComMon := &event.CommandMonitor{
@@ -188,12 +188,12 @@ func (c *Client) init() {
 	}
 }
 
-func (c *Client) initMonitorMulLevelEvent(dbName string) MonitorEvent {
-	eventNum := len(c.monitorEvents)
-	var firstProxy MonitorEvent
-	proxyInses := make([]MonitorEvent, eventNum)
-	for k, proxyFunc := range c.monitorEvents {
-		if _, ok := proxyFunc().(MonitorEvent); !ok {
+func (c *Client) initMonitorMulLevelEvent(dbName string) MgoEvent {
+	eventNum := len(c.mgoEvents)
+	var firstProxy MgoEvent
+	proxyInses := make([]MgoEvent, eventNum)
+	for k, proxyFunc := range c.mgoEvents {
+		if _, ok := proxyFunc().(MgoEvent); !ok {
 			c.logger.Panicf("[mongodb] not implement MonitorEvent interface")
 		} else {
 			proxyInses[k] = proxyFunc()
@@ -203,14 +203,14 @@ func (c *Client) initMonitorMulLevelEvent(dbName string) MonitorEvent {
 	for k, proxyIns := range proxyInses {
 		//first proxy
 		if k == 0 {
-			firstProxy = proxyIns.(MonitorEvent)
+			firstProxy = proxyIns.(MgoEvent)
 		}
 
 		if k+1 != eventNum {
-			proxyIns.(MonitorEvent).NextEvent(proxyInses[k+1])
+			proxyIns.(MgoEvent).NextEvent(proxyInses[k+1])
 		}
 
-		c.logger.Infof("[mongodb] %s init %s [%p]", dbName, proxyIns.(MonitorEvent).EventName(), proxyIns)
+		c.logger.Infof("[mongodb] %s init %s [%p]", dbName, proxyIns.(MgoEvent).EventName(), proxyIns)
 	}
 
 	return firstProxy

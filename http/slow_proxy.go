@@ -17,7 +17,7 @@ type slowProxy struct {
 	nextTransport http.RoundTripper
 }
 
-func NewSlowProxy(logger log.Logger, name string) *slowProxy {
+func newSlowProxy(logger log.Logger, name string) *slowProxy {
 	slowProxy := &slowProxy{}
 
 	if logger == nil {

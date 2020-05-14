@@ -66,7 +66,7 @@ func (p *protocer) bindInput(v *viper.Viper) bool {
 		p.logger.Fatalf(err.Error())
 	}
 
-	if ex == false {
+	if !ex {
 		p.logger.Fatalf("Dir not exists %s", target)
 	}
 	if target != "/" {

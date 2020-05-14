@@ -13,7 +13,7 @@ var newCmd = &cobra.Command{
 	Short: "create a new project",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		new.NewProject(
+		new.InitProject(
 			new.WithProjectLogger(logger),
 			new.WithProjectWriter(file_dir.NewEsimWriter()),
 			new.WithProjectTpl(templates.NewTextTpl()),

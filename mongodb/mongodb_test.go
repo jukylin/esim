@@ -151,7 +151,7 @@ func TestMulEvent(t *testing.T) {
 		mgoClientOptions.WithLogger(logger),
 		mgoClientOptions.WithConf(conf),
 		mgoClientOptions.WithMonitorEvent(
-			func() MonitorEvent {
+			func() MgoEvent {
 				monitorEventOptions := MonitorEventOptions{}
 				return NewMonitorEvent(
 					monitorEventOptions.WithConf(conf),
@@ -159,7 +159,7 @@ func TestMulEvent(t *testing.T) {
 				)
 			},
 			func() MonitorEvent {
-				return NewSpyEvent(logger)
+				return newSpyEvent(logger)
 			},
 		),
 		mgoClientOptions.WithDbConfig([]MgoConfig{

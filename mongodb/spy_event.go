@@ -8,7 +8,7 @@ import (
 )
 
 type spyEvent struct {
-	nextEvent MonitorEvent
+	nextEvent MgoEvent
 
 	StartWasCalled bool
 
@@ -19,7 +19,7 @@ type spyEvent struct {
 	logger log.Logger
 }
 
-func NewSpyEvent(logger log.Logger) *spyEvent {
+func newSpyEvent(logger log.Logger) MgoEvent {
 
 	spyEvent := &spyEvent{}
 	spyEvent.logger = logger
@@ -27,7 +27,7 @@ func NewSpyEvent(logger log.Logger) *spyEvent {
 	return spyEvent
 }
 
-func (se *spyEvent) NextEvent(event MonitorEvent) {
+func (se *spyEvent) NextEvent(event MgoEvent) {
 	se.nextEvent = event
 }
 

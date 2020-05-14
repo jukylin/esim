@@ -2,7 +2,7 @@ package domain_file
 
 import "github.com/jukylin/esim/pkg"
 
-type daoTpl struct {
+type DaoTpl struct {
 	Imports pkg.Imports
 
 	StructName string
@@ -116,8 +116,8 @@ func ({{.StructName | shorten}} *{{.StructName}}) Update(ctx context.Context, up
 }
 `
 
-func NewDaoTpl(entityName string) *daoTpl {
-	dt := &daoTpl{}
+func NewDaoTpl(entityName string) *DaoTpl {
+	dt := &DaoTpl{}
 	dt.EntityName = entityName
 	dt.StructName = entityName + "Dao"
 	return dt

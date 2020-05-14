@@ -60,7 +60,7 @@ func TestGetTracerId(t *testing.T) {
 	ctx := opentracing.ContextWithSpan(context.Background(), sp)
 
 	assert.Equal(t, sp.Context().(jaeger.SpanContext).TraceID().String(),
-		log.(*logger).getTracerId(ctx))
+		log.(*logger).getTracerID(ctx))
 }
 
 func TestGetTracerIdEmpty(t *testing.T) {
@@ -70,5 +70,5 @@ func TestGetTracerIdEmpty(t *testing.T) {
 	log := NewLogger(loggerOptions.WithDebug(false))
 
 	ctx := context.Background()
-	assert.Empty(t, log.(*logger).getTracerId(ctx))
+	assert.Empty(t, log.(*logger).getTracerID(ctx))
 }

@@ -16,7 +16,7 @@ type spyProxy struct {
 	nextTransport http.RoundTripper
 }
 
-func NewSpyProxy(logger log.Logger, name string) *spyProxy {
+func newSpyProxy(logger log.Logger, name string) *spyProxy {
 	spyProxy := &spyProxy{}
 
 	if logger == nil {

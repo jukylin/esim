@@ -14,7 +14,7 @@ type stubsProxy struct {
 	log log.Logger
 }
 
-func NewStubsProxy(logger log.Logger, name string) *stubsProxy {
+func newStubsProxy(logger log.Logger, name string) *stubsProxy {
 	stubsProxy := &stubsProxy{}
 
 	if logger == nil {
