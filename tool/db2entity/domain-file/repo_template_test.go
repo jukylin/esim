@@ -20,7 +20,7 @@ func TestRepoTemplate(t *testing.T) {
 	imports = append(imports, pkg.Import{Name: "sync", Path: "sync"})
 
 	var buf bytes.Buffer
-	repoTpl := NewRepoTpl("User")
+	repoTpl := newRepoTpl("User")
 	repoTpl.TableName = "user"
 	repoTpl.Imports = imports
 	repoTpl.DelField = "is_del"

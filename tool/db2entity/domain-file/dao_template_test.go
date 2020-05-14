@@ -20,7 +20,7 @@ func TestDaoTemplate(t *testing.T) {
 	imports = append(imports, pkg.Import{Name: "sync", Path: "sync"})
 
 	var buf bytes.Buffer
-	daoTmp := NewDaoTpl("User")
+	daoTmp := newDaoTpl("User")
 	daoTmp.Imports = imports
 	daoTmp.DataBaseName = "test"
 	daoTmp.TableName = "user"

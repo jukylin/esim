@@ -7,7 +7,7 @@ import (
 
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
-	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	"github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
 	"github.com/spf13/viper"
 )
@@ -104,7 +104,7 @@ func (rdf *repoDomainFile) ParseCloumns(cs Columns, info *ShareInfo) {
 
 	rdf.shareInfo = info
 
-	repoTpl := NewRepoTpl(info.CamelStruct)
+	repoTpl := newRepoTpl(info.CamelStruct)
 
 	if cs.Len() < 1 {
 		return
@@ -160,7 +160,7 @@ func (rdf *repoDomainFile) GetInjectInfo() *InjectInfo {
 		pkg.Import{Path: file_dir.GetGoProPath() + pkg.DirPathToImportPath(rdf.shareInfo.WithRepoTarget)})
 
 	content, err := rdf.tpl.Execute("provide_tpl",
-		ProvideFuncTemplate, NewRepoTpl(rdf.shareInfo.CamelStruct))
+		ProvideFuncTemplate, newRepoTpl(rdf.shareInfo.CamelStruct))
 
 	if err != nil {
 		rdf.logger.Panicf(err.Error())
