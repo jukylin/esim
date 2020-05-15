@@ -12,9 +12,12 @@ import (
 func TestDaoDomainFile(t *testing.T) {
 
 	dir := "example"
-	file_dir.CreateDir(dir)
+	err := file_dir.CreateDir(dir)
+	assert.Nil(t, err)
+
 	defer func() {
-		os.RemoveAll(dir)
+		err := os.RemoveAll(dir)
+		assert.Nil(t, err)
 	}()
 
 	v := viper.New()
@@ -22,7 +25,7 @@ func TestDaoDomainFile(t *testing.T) {
 	v.Set("dao_target", "example")
 	v.Set("table", "test")
 
-	err := testDaoDomainFile.BindInput(v)
+	err = testDaoDomainFile.BindInput(v)
 	assert.Nil(t, err)
 
 	dbConf := NewDbConfig()

@@ -46,7 +46,7 @@ func TestMain(m *testing.M) {
 		logger.Fatalf("Could not start resource: %s", err.Error())
 	}
 
-	resource.Expire(10)
+	err = resource.Expire(10)
 	if err != nil {
 		logger.Fatalf(err.Error())
 	}

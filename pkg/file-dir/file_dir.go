@@ -250,7 +250,10 @@ func EsimWrite(filePath string, content string) error {
 	}
 	defer dst.Close()
 
-	dst.Write([]byte(content))
+	_, err = dst.Write([]byte(content))
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
