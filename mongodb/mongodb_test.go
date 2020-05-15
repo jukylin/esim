@@ -43,10 +43,13 @@ func TestMain(m *testing.M) {
 	})
 
 	if err != nil {
-		logger.Fatalf("Could not start resource: %s", err)
+		logger.Fatalf("Could not start resource: %s", err.Error())
 	}
 
 	resource.Expire(10)
+	if err != nil {
+		logger.Fatalf(err.Error())
+	}
 
 	if err := pool.Retry(func() error {
 		mgoClientOptions := ClientOptions{}

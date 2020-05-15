@@ -14,9 +14,6 @@ import (
 )
 
 type daoDomainFile struct {
-	writeTarget string
-
-	withBoubctx string
 
 	withDaoTarget string
 

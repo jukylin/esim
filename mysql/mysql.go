@@ -30,8 +30,6 @@ type Client struct {
 
 	logger log.Logger
 
-	proxyOptions []interface{}
-
 	dbConfigs []DbConfig
 
 	closeChan chan bool

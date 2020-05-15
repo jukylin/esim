@@ -8,7 +8,6 @@ import (
 )
 
 type NullConfig struct {
-	data map[string]interface{}
 }
 
 func NewNullConfig() *NullConfig {

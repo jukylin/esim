@@ -30,8 +30,6 @@ type Db2Entity struct {
 
 	writer file_dir.IfaceWriter
 
-	hasInfraStruct bool
-
 	execer pkg.Exec
 
 	domainFiles []domain_file.DomainFile

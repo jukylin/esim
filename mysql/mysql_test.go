@@ -64,10 +64,13 @@ func TestMain(m *testing.M) {
 		}
 	})
 	if err != nil {
-		logger.Fatalf("Could not start resource: %s", err)
+		logger.Fatalf("Could not start resource: %s", err.Error())
 	}
 
-	resource.Expire(120)
+	err = resource.Expire(120)
+	if err != nil {
+		logger.Fatalf(err.Error())
+	}
 
 	if err := pool.Retry(func() error {
 		var err error
@@ -371,13 +374,17 @@ func TestClient_GetStats(t *testing.T) {
 	lab := prometheus.Labels{"db": "test_1", "stats": "max_open_conn"}
 	c, _ := mysqlStats.GetMetricWith(lab)
 	metric := &io_prometheus_client.Metric{}
-	c.Write(metric)
+	err := c.Write(metric)
+	assert.Nil(t, err)
+
 	assert.Equal(t, float64(100), metric.Gauge.GetValue())
 
 	labIdle := prometheus.Labels{"db": "test_1", "stats": "idle"}
 	c, _ = mysqlStats.GetMetricWith(labIdle)
 	metric = &io_prometheus_client.Metric{}
-	c.Write(metric)
+	err = c.Write(metric)
+	assert.Nil(t, err)
+
 	assert.Equal(t, float64(1), metric.Gauge.GetValue())
 
 	client.Close()

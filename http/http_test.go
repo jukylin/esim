@@ -140,7 +140,9 @@ func TestMonitorProxy(t *testing.T) {
 	lab := prometheus.Labels{"url": "127.0.0.1", "method": "GET"}
 	c, _ := httpTotal.GetMetricWith(lab)
 	metric := &io_prometheus_client.Metric{}
-	c.Write(metric)
+	err = c.Write(metric)
+	assert.Nil(t, err)
+
 	assert.Equal(t, float64(1), metric.Counter.GetValue())
 }
 

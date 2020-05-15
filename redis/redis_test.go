@@ -34,10 +34,13 @@ func TestMain(m *testing.M) {
 		}
 	})
 	if err != nil {
-		logger.Fatalf("Could not start resource: %s", err)
+		logger.Fatalf("Could not start resource: %s", err.Error())
 	}
 
-	resource.Expire(60)
+	err = resource.Expire(60)
+	if err != nil {
+		logger.Fatalf(err.Error())
+	}
 
 	code := m.Run()
 
@@ -164,11 +167,14 @@ func TestMulLevelProxy_Do(t *testing.T) {
 	ctx := context.Background()
 
 	conn := redisClent.GetCtxRedisConn()
-	conn.Do(ctx, "get", "name")
-	assert.True(t, spyProxy.DoWasCalled)
-	conn.Close()
+	_, err := conn.Do(ctx, "get", "name")
+	assert.Nil(t, err)
 
-	err := redisClent.Close()
+	assert.True(t, spyProxy.DoWasCalled)
+	err = conn.Close()
+	assert.Nil(t, err)
+
+	err = redisClent.Close()
 	assert.Nil(t, err)
 }
 
@@ -292,9 +298,10 @@ func TestRedisClient_Stats(t *testing.T) {
 
 	ctx := context.Background()
 	conn := redisClent.GetCtxRedisConn()
-	conn.Do(ctx, "get", "name")
-
 	_, err := conn.Do(ctx, "get", "name")
+	assert.Nil(t, err)
+
+	_, err = conn.Do(ctx, "get", "name")
 	assert.Nil(t, err)
 
 	_, err = conn.Do(ctx, "get", "name")
@@ -305,7 +312,9 @@ func TestRedisClient_Stats(t *testing.T) {
 	lab := prometheus.Labels{"stats": "active_count"}
 	c, _ := redisStats.GetMetricWith(lab)
 	metric := &io_prometheus_client.Metric{}
-	c.Write(metric)
+	err = c.Write(metric)
+	assert.Nil(t, err)
+
 	assert.True(t, metric.Gauge.GetValue() >= 0)
 
 	err = redisClent.Close()

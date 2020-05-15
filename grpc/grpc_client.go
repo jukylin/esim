@@ -23,13 +23,10 @@ type Client struct {
 
 	logger log.Logger
 
-	conf config.Config
-
 	clientOpts *ClientOptions
 }
 
 type ClientOptions struct {
-	cancel context.CancelFunc
 
 	clientMetrics *ggp.ClientMetrics
 

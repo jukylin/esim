@@ -133,8 +133,13 @@ func newPoolRedis(options ...Option) *Client {
 						return nil, err
 					}
 				}
-				// 选择db
-				c.Do("SELECT", 0)
+
+				// select db
+				_, err = c.Do("SELECT", 0)
+				if err != nil {
+					onceClient.logger.Panicf("Select err: %s", err.Error())
+					return nil, err
+				}
 
 				if onceClient.conf.GetBool("debug") {
 					c = redis.NewLoggingConn(

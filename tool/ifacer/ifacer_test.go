@@ -136,7 +136,8 @@ func TestIfacer_Write(t *testing.T) {
 	err := ifacer.Run(v)
 	assert.Equal(t, Result, ifacer.Content)
 	assert.Nil(t, err)
-	file_dir.RemoveDir("./abc")
+	err = file_dir.RemoveDir("./abc")
+	assert.Nil(t, err)
 }
 
 func TestIfacer_GetUniqueImportName(t *testing.T) {

@@ -14,7 +14,6 @@ import (
 )
 
 type entityDomainFile struct {
-	writeTarget string
 
 	withBoubctx string
 

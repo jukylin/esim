@@ -855,11 +855,6 @@ func (ef *EsimFactory) getFirstPart() {
 
 }
 
-//var
-func (ef *EsimFactory) getSecondPart() {
-	ef.secondPart = ef.oldStructInfo.varStr
-}
-
 func (ef *EsimFactory) Close() {
 	ef.structFieldIface.Close()
 }

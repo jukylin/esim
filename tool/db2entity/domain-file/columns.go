@@ -4,7 +4,6 @@ import (
 	"strconv"
 	"strings"
 
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
 	"github.com/jukylin/esim/log"
 )
@@ -159,27 +158,15 @@ func (c *Column) CheckDelField() string {
 }
 
 func (c *Column) IsTime(goType string) bool {
-	if goType == golangTime {
-		return true
-	}
-
-	return false
+	return goType == golangTime
 }
 
 func (c *Column) IsCurrentTimeStamp() bool {
-	if c.ColumnDefault == "CURRENT_TIMESTAMP" {
-		return true
-	}
-
-	return false
+	return c.ColumnDefault == "CURRENT_TIMESTAMP"
 }
 
 func (c *Column) IsOnUpdate() bool {
-	if c.Extra == "on update CURRENT_TIMESTAMP" {
-		return true
-	}
-
-	return false
+	return c.Extra == "on update CURRENT_TIMESTAMP"
 }
 
 //filterComment filter and escaping speckial string
@@ -193,11 +180,7 @@ func (c *Column) FilterComment() string {
 }
 
 func (c *Column) IsPri() bool {
-	if c.ColumnKey == "PRI" {
-		return true
-	}
-
-	return false
+	return c.ColumnKey == "PRI"
 }
 
 //GetDefCol get default tag

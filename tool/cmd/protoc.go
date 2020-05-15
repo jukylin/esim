@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/jukylin/esim/tool/protoc"
 )
 

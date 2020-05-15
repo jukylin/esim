@@ -4,7 +4,6 @@ import (
 	"github.com/spf13/cobra"
 	"os"
 
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/jukylin/esim/infra"
 	"github.com/jukylin/esim/pkg"
 	"github.com/jukylin/esim/pkg/file-dir"

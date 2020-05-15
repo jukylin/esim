@@ -56,9 +56,8 @@ func (FactoryOptions) WithLogger(log log.Logger) FactoryOption {
 func (pf *Factory) GetFirstInstance(realName string, realInstance interface{}, proxys ...func() interface{}) interface{} {
 
 	var firstProxy interface{}
-	var proxyInses []interface{}
 
-	proxyInses = pf.GetInstances(realName, proxys...)
+	proxyInses := pf.GetInstances(realName, proxys...)
 
 	proxyNum := len(proxyInses)
 	if proxyNum > 0 {

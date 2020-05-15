@@ -15,7 +15,10 @@ limitations under the License.
 */
 package main
 
-import "github.com/jukylin/esim/tool/cmd"
+import (
+	"github.com/jukylin/esim/tool/cmd"
+	_ "github.com/go-sql-driver/mysql"
+)
 
 func main() {
 	cmd.Execute()
