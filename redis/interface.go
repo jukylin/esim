@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type ExecRedisInfo struct {
+type execInfo struct {
 	err error
 
 	commandName string

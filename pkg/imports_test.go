@@ -33,5 +33,5 @@ func TestImports_String(t *testing.T) {
 	imports = append(imports, Import{Name: "sync", Path: "sync", Doc: docs2})
 
 	src := imports.String()
-	assert.Equal(t, result, string(src))
+	assert.Equal(t, result, src)
 }

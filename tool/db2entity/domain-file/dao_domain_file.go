@@ -91,7 +91,7 @@ func (ddf *daoDomainFile) BindInput(v *viper.Viper) error {
 			return errors.New("dao dir not exists")
 		}
 
-		ddf.withDaoTarget = ddf.withDaoTarget + string(filepath.Separator)
+		ddf.withDaoTarget += string(filepath.Separator)
 
 		ddf.logger.Debugf("withDaoTarget %s", ddf.withDaoTarget)
 	}
@@ -112,11 +112,12 @@ func (ddf *daoDomainFile) ParseCloumns(cs Columns, shareInfo *ShareInfo) {
 	daoTpl.TableName = shareInfo.DbConf.Table
 	ddf.tableName = shareInfo.DbConf.Table
 
-	daoTpl.Imports = append(daoTpl.Imports, pkg.Import{Path: "context"})
-	daoTpl.Imports = append(daoTpl.Imports, pkg.Import{Path: "github.com/jinzhu/gorm"})
-	daoTpl.Imports = append(daoTpl.Imports, pkg.Import{Path: "errors"})
-	daoTpl.Imports = append(daoTpl.Imports, pkg.Import{Path: "github.com/jukylin/esim/mysql"})
-	daoTpl.Imports = append(daoTpl.Imports, pkg.Import{Path: file_dir.GetGoProPath() + pkg.DirPathToImportPath(shareInfo.WithEntityTarget)})
+	daoTpl.Imports = append(daoTpl.Imports,
+		pkg.Import{Path: "context"},
+		pkg.Import{Path: "github.com/jinzhu/gorm"},
+		pkg.Import{Path: "errors"},
+		pkg.Import{Path: "github.com/jukylin/esim/mysql"},
+		pkg.Import{Path: file_dir.GetGoProPath() + pkg.DirPathToImportPath(shareInfo.WithEntityTarget)})
 
 	for _, column := range cs {
 		nullable := false

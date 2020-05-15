@@ -1,3 +1,4 @@
+//nolint:unused,deadcode
 package mysql
 
 import (

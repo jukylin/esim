@@ -73,8 +73,8 @@ func (MonitorEventOptions) WithTracer(tracer opentracing2.Tracer) EventOption {
 	}
 }
 
-func (m *MonitorEvent) NextEvent(event MgoEvent) {
-	m.nextEvent = event
+func (m *MonitorEvent) NextEvent(me MgoEvent) {
+	m.nextEvent = me
 }
 
 func (m *MonitorEvent) EventName() string {

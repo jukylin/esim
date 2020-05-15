@@ -30,14 +30,12 @@ func (si StructInfo) String() string {
 	tmpl, err := template.New("struct_template").Parse(StructTemplate)
 	if err != nil {
 		panic(err.Error())
-		return ""
 	}
 
 	var buf bytes.Buffer
 	err = tmpl.Execute(&buf, si)
 	if err != nil {
 		panic(err.Error())
-		return ""
 	}
 
 	return buf.String()

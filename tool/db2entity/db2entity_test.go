@@ -73,7 +73,7 @@ func TestDb2Entity_Run(t *testing.T) {
 		db2EntityOptions.WithTpl(templates.NewTextTpl()),
 		db2EntityOptions.WithDbConf(dbConf),
 		db2EntityOptions.WithInfraer(infra.NewInfraer(
-			infra.WithIfacerInfraInfo(infra.NewInfraInfo()),
+			infra.WithIfacerInfraInfo(infra.NewInfo()),
 			infra.WithIfacerLogger(logger),
 			infra.WithIfacerWriter(writer),
 			infra.WithIfacerExecer(pkg.NewNullExec()),
@@ -152,7 +152,7 @@ func TestDb2Entity_ErrWrite(t *testing.T) {
 		db2EntityOptions.WithTpl(templates.NewTextTpl()),
 		db2EntityOptions.WithDbConf(dbConf),
 		db2EntityOptions.WithInfraer(infra.NewInfraer(
-			infra.WithIfacerInfraInfo(infra.NewInfraInfo()),
+			infra.WithIfacerInfraInfo(infra.NewInfo()),
 			infra.WithIfacerLogger(logger),
 			infra.WithIfacerWriter(file_dir.NewNullWrite()),
 			infra.WithIfacerExecer(pkg.NewNullExec()),

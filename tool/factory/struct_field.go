@@ -61,8 +61,6 @@ type RPCPluginStructField struct {
 
 	Fields []pkg.Field
 
-	oldImport []string
-
 	pluginClient *plugin.Client
 
 	model Model

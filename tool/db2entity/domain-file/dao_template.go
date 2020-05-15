@@ -45,7 +45,8 @@ func ({{.StructName | shorten}} *{{.StructName}}) GetSlaveDb(ctx context.Context
 
 
 //返回 自增id，错误
-func ({{.StructName | shorten}} *{{.StructName}}) Create(ctx context.Context, {{.EntityName| firstToLower}} *entity.{{.EntityName}}) ({{.PriKeyType}}, error){
+func ({{.StructName | shorten}} *{{.StructName}}) Create(ctx context.Context,
+		{{.EntityName| firstToLower}} *entity.{{.EntityName}}) ({{.PriKeyType}}, error){
 	db := {{.StructName | shorten}}.GetDb(ctx).Create({{.EntityName| firstToLower}})
 	if db.Error != nil{
 		return {{.PriKeyType}}(0), db.Error
@@ -55,7 +56,8 @@ func ({{.StructName | shorten}} *{{.StructName}}) Create(ctx context.Context, {{
 }
 
 //ctx, "name = ?", "test"
-func ({{.StructName | shorten}} *{{.StructName}}) Count(ctx context.Context, query interface{}, args ...interface{}) (int64, error){
+func ({{.StructName | shorten}} *{{.StructName}}) Count(ctx context.Context,
+		query interface{}, args ...interface{}) (int64, error){
 	var count int64
 	db := {{.StructName | shorten}}.GetSlaveDb(ctx).Where(query, args...).Count(&count)
 	if db.Error != nil{
@@ -66,7 +68,8 @@ func ({{.StructName | shorten}} *{{.StructName}}) Count(ctx context.Context, que
 }
 
 // ctx, "id,name", "name = ?", "test"
-func ({{.StructName | shorten}} *{{.StructName}}) Find(ctx context.Context, squery , wquery interface{}, args ...interface{}) (entity.{{.EntityName}}, error){
+func ({{.StructName | shorten}} *{{.StructName}}) Find(ctx context.Context, squery,
+		wquery interface{}, args ...interface{}) (entity.{{.EntityName}}, error){
 	var {{.EntityName| snakeToCamelLower | firstToLower}} entity.{{.EntityName}}
 	db := {{.StructName | shorten}}.GetSlaveDb(ctx).Select(squery).
 		Where(wquery, args...).First(&{{.EntityName| snakeToCamelLower | firstToLower}})
@@ -80,7 +83,8 @@ func ({{.StructName | shorten}} *{{.StructName}}) Find(ctx context.Context, sque
 
 // ctx, "id,name", "name = ?", "test"
 //最多取10条
-func ({{.StructName | shorten}} *{{.StructName}}) List(ctx context.Context, squery , wquery interface{}, args ...interface{}) ([]entity.{{.EntityName}}, error){
+func ({{.StructName | shorten}} *{{.StructName}}) List(ctx context.Context, squery,
+		wquery interface{}, args ...interface{}) ([]entity.{{.EntityName}}, error){
 	{{.EntityName| snakeToCamelLower | firstToLower}}s := make([]entity.{{.EntityName}}, 0)
 	db := {{.StructName | shorten}}.GetSlaveDb(ctx).Select(squery).
 		Where(wquery, args...).Limit(10).Find(&{{.EntityName| snakeToCamelLower | firstToLower}}s)
@@ -91,7 +95,8 @@ func ({{.StructName | shorten}} *{{.StructName}}) List(ctx context.Context, sque
 	}
 }
 
-func ({{.StructName | shorten}} *{{.StructName}}) DelById(ctx context.Context, id {{.PriKeyType}}) (bool, error){
+func ({{.StructName | shorten}} *{{.StructName}}) DelById(ctx context.Context,
+		id {{.PriKeyType}}) (bool, error){
 	var del{{.EntityName}} entity.{{.EntityName}}
 
 	if del{{.EntityName}}.DelKey() == ""{
@@ -99,7 +104,8 @@ func ({{.StructName | shorten}} *{{.StructName}}) DelById(ctx context.Context, i
 	}
 
 	del{{.EntityName}}.ID = id
-	db := {{.StructName | shorten}}.GetDb(ctx).Where("id = ?", id).Update(map[string]interface{}{del{{.EntityName}}.DelKey(): 1})
+	db := {{.StructName | shorten}}.GetDb(ctx).Where("id = ?", id)
+		.Update(map[string]interface{}{del{{.EntityName}}.DelKey(): 1})
 	if db.Error != nil{
 		return false, db.Error
 	}else{
@@ -109,7 +115,8 @@ func ({{.StructName | shorten}} *{{.StructName}}) DelById(ctx context.Context, i
 
 //ctx, map[string]interface{}{"name": "hello"}, "name = ?", "test"
 //返回影响数
-func ({{.StructName | shorten}} *{{.StructName}}) Update(ctx context.Context, update map[string]interface{}, query interface{}, args ...interface{}) (int64, error) {
+func ({{.StructName | shorten}} *{{.StructName}}) Update(ctx context.Context,
+		update map[string]interface{}, query interface{}, args ...interface{}) (int64, error) {
 	db := {{.StructName | shorten}}.GetDb(ctx).Where(query, args).
 		Updates(update)
 	return db.RowsAffected, db.Error

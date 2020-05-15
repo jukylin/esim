@@ -28,8 +28,6 @@ type Client struct {
 	mgoEvents []func() MgoEvent
 
 	mgoConfig []MgoConfig
-
-	eventOptions []EventOption
 }
 
 type mongoBackEvent struct {
@@ -42,14 +40,14 @@ type Option func(c *Client)
 
 type ClientOptions struct{}
 
-func NewClient(options ...Option) *Client {
+func NewClient(os ...Option) *Client {
 	clientOnce.Do(func() {
 		onceClient = &Client{
 			Mgos: make(map[string]*mongo.Client),
 		}
 
-		for _, option := range options {
-			option(onceClient)
+		for _, o := range os {
+			o(onceClient)
 		}
 
 		if onceClient.conf == nil {

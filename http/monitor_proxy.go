@@ -28,7 +28,7 @@ type MonitorProxy struct {
 	name string
 }
 
-type afterEvents func(beginTime time.Time, endTime time.Time,
+type afterEvents func(beginTime, endTime time.Time,
 	res *http.Request, resp *http.Response)
 
 type MonitorProxyOption func(c *MonitorProxy)
@@ -146,7 +146,7 @@ func (mp *MonitorProxy) after(beginTime time.Time, res *http.Request, resp *http
 	}
 }
 
-func (mp *MonitorProxy) slowHTTPRequest(beginTime time.Time, endTime time.Time,
+func (mp *MonitorProxy) slowHTTPRequest(beginTime, endTime time.Time,
 	res *http.Request, resp *http.Response) {
 	httpClientSlowTime := mp.conf.GetInt64("http_client_slow_time")
 
@@ -158,14 +158,14 @@ func (mp *MonitorProxy) slowHTTPRequest(beginTime time.Time, endTime time.Time,
 	}
 }
 
-func (mp *MonitorProxy) httpClientMetrice(beginTime time.Time, endTime time.Time,
+func (mp *MonitorProxy) httpClientMetrice(beginTime, endTime time.Time,
 	res *http.Request, resp *http.Response) {
 	lab := prometheus.Labels{"url": res.URL.String(), "method": res.Method}
 	httpTotal.With(lab).Inc()
 	httpDuration.With(lab).Observe(endTime.Sub(beginTime).Seconds())
 }
 
-func (mp *MonitorProxy) debugHTTP(beginTime time.Time, endTime time.Time,
+func (mp *MonitorProxy) debugHTTP(beginTime, endTime time.Time,
 	req *http.Request, resp *http.Response) {
 	mp.logger.Debugf("http [%d] [%s] %s ： %s", resp.StatusCode, endTime.Sub(beginTime).String(),
 		req.Method, req.URL.String())

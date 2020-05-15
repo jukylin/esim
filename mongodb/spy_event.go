@@ -27,8 +27,8 @@ func newSpyEvent(logger log.Logger) MgoEvent {
 	return spyEvent
 }
 
-func (se *spyEvent) NextEvent(event MgoEvent) {
-	se.nextEvent = event
+func (se *spyEvent) NextEvent(me MgoEvent) {
+	se.nextEvent = me
 }
 
 func (se *spyEvent) EventName() string {

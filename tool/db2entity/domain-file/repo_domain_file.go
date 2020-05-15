@@ -91,7 +91,7 @@ func (rdf *repoDomainFile) BindInput(v *viper.Viper) error {
 			return errors.New("repo dir not exists")
 		}
 
-		rdf.withRepoTarget = rdf.withRepoTarget + string(filepath.Separator)
+		rdf.withRepoTarget += string(filepath.Separator)
 
 		rdf.logger.Debugf("withRepoTarget %s", rdf.withRepoTarget)
 	}
@@ -113,10 +113,11 @@ func (rdf *repoDomainFile) ParseCloumns(cs Columns, info *ShareInfo) {
 	repoTpl.TableName = info.DbConf.Table
 	rdf.tableName = info.DbConf.Table
 
-	repoTpl.Imports = append(repoTpl.Imports, pkg.Import{Path: "context"})
-	repoTpl.Imports = append(repoTpl.Imports, pkg.Import{Path: "github.com/jukylin/esim/log"})
-	repoTpl.Imports = append(repoTpl.Imports, pkg.Import{Path: file_dir.GetGoProPath() + pkg.DirPathToImportPath(info.WithEntityTarget)})
-	repoTpl.Imports = append(repoTpl.Imports, pkg.Import{Path: file_dir.GetGoProPath() + pkg.DirPathToImportPath(info.WithDaoTarget)})
+	repoTpl.Imports = append(
+		repoTpl.Imports, pkg.Import{Path: "context"},
+		pkg.Import{Path: "github.com/jukylin/esim/log"},
+		pkg.Import{Path: file_dir.GetGoProPath() + pkg.DirPathToImportPath(info.WithEntityTarget)},
+		pkg.Import{Path: file_dir.GetGoProPath() + pkg.DirPathToImportPath(info.WithDaoTarget)})
 
 	for _, column := range cs {
 		repoTpl.DelField = column.CheckDelField()

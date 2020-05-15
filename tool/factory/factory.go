@@ -29,12 +29,6 @@ type InitFieldsReturn struct {
 	SpecFields []pkg.Field `json:"SpecFields"`
 }
 
-type Var struct {
-	doc  []string
-	val  string
-	name string
-}
-
 //+-----------+-----------+
 //| firstPart |	package	  |
 //|			  |	import	  |
@@ -202,8 +196,6 @@ type structInfo struct {
 	structFileContent string
 
 	vars pkg.Vars
-
-	varBody []string
 
 	varStr string
 
@@ -701,7 +693,6 @@ func With` + ef.StructName + `Conf(conf config.Config) ` + ef.StructName + `Opti
 	}
 }
 `
-
 	}
 
 	if ef.withGenLoggerOption {
@@ -715,16 +706,14 @@ func With` + ef.StructName + `Logger(logger log.Logger) ` + ef.StructName + `Opt
 	}
 }
 
-func (ef *EsimFactory) genPool() bool {
+func (ef *EsimFactory) genPool() {
 
 	ef.incrPoolVar(ef.StructName)
 
-	ef.ReleaseStr = ef.genReleaseStructStr(ef.InitField.Fields)
-
-	return true
+	ef.ReleaseStr = ef.genReleaseStructStr()
 }
 
-func (ef *EsimFactory) genPlural() bool {
+func (ef *EsimFactory) genPlural() {
 
 	ef.incrPoolVar(ef.pluralName)
 
@@ -740,11 +729,9 @@ func (ef *EsimFactory) genPlural() bool {
 	ef.NewPluralStr = plural.NewString()
 
 	ef.ReleasePluralStr = plural.ReleaseString()
-
-	return true
 }
 
-func (ef *EsimFactory) incrPoolVar(StructName string) bool {
+func (ef *EsimFactory) incrPoolVar(StructName string) {
 	poolName := StructName + "Pool"
 	if ef.varNameExists(ef.NewStructInfo.vars, poolName) {
 		ef.logger.Debugf("var is exists : %s", poolName)
@@ -754,8 +741,6 @@ func (ef *EsimFactory) incrPoolVar(StructName string) bool {
 			ef.appendPoolVar(poolName, StructName))
 		ef.appendNewImport("sync")
 	}
-
-	return true
 }
 
 func (ef *EsimFactory) genSpecFieldInitStr() {
@@ -786,7 +771,7 @@ func (ef *EsimFactory) genSpecFieldInitStr() {
 	ef.SpecFieldInitStr = str
 }
 
-func (ef *EsimFactory) genReleaseStructStr(initFields []string) string {
+func (ef *EsimFactory) genReleaseStructStr() string {
 	str := "func (" + templates.Shorten(snaker.SnakeToCamelLower(ef.StructName)) + "  " + ef.NewStructInfo.ReturnVarStr + ") Release() {\n"
 
 	for _, field := range ef.InitField.Fields {
@@ -803,7 +788,7 @@ func (ef *EsimFactory) genReleaseStructStr(initFields []string) string {
 	return str
 }
 
-func (ef *EsimFactory) appendNewImport(importName string) bool {
+func (ef *EsimFactory) appendNewImport(importName string) {
 	var found bool
 	for _, imp := range ef.NewStructInfo.imports {
 		if imp.Path == importName {
@@ -814,16 +799,14 @@ func (ef *EsimFactory) appendNewImport(importName string) bool {
 	if !found {
 		ef.NewStructInfo.imports = append(ef.NewStructInfo.imports, pkg.Import{Path: importName})
 	}
-
-	return true
 }
 
-func (ef *EsimFactory) appendPoolVar(pollVarName, StructName string) pkg.Var {
+func (ef *EsimFactory) appendPoolVar(pollVarName, structName string) pkg.Var {
 	var poolVar pkg.Var
 
 	pooltpl := NewPoolTpl()
 	pooltpl.VarPoolName = pollVarName
-	pooltpl.StructName = StructName
+	pooltpl.StructName = structName
 
 	poolVar.Body = pooltpl.String()
 
@@ -852,7 +835,6 @@ func (ef *EsimFactory) getFirstPart() {
 	}
 
 	ef.firstPart += ef.NewStructInfo.importStr
-
 }
 
 func (ef *EsimFactory) Close() {

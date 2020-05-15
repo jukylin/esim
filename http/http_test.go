@@ -17,6 +17,12 @@ import (
 
 var logger log.Logger
 
+var (
+	host1 = "127.0.0.1"
+	host2 = "127.0.0.2"
+
+)
+
 func TestMain(m *testing.M) {
 	loggerOptions := log.LoggerOptions{}
 	logger = log.NewLogger(loggerOptions.WithDebug(true))
@@ -43,9 +49,9 @@ func TestMulLevelRoundTrip(t *testing.T) {
 				stubsProxy := newStubsProxy(
 					stubsProxyOptions.WithRespFunc(func(request *http.Request) *http.Response {
 						resp := &http.Response{}
-						if request.URL.String() == "127.0.0.1" {
+						if request.URL.String() == host1 {
 							resp.StatusCode = 200
-						} else if request.URL.String() == "127.0.0.2" {
+						} else if request.URL.String() == host2 {
 							resp.StatusCode = 300
 						}
 
@@ -67,8 +73,8 @@ func TestMulLevelRoundTrip(t *testing.T) {
 		url      string
 		result   int
 	}{
-		{"127.0.0.1:200", "127.0.0.1", 200},
-		{"127.0.0.2:300", "127.0.0.2", 300},
+		{"127.0.0.1:200", host1, 200},
+		{"127.0.0.2:300", host2, 300},
 	}
 
 	ctx := context.Background()
@@ -105,9 +111,9 @@ func TestMonitorProxy(t *testing.T) {
 				stubsProxy := newStubsProxy(
 					stubsProxyOptions.WithRespFunc(func(request *http.Request) *http.Response {
 						resp := &http.Response{}
-						if request.URL.String() == "127.0.0.1" {
+						if request.URL.String() == host1 {
 							resp.StatusCode = 200
-						} else if request.URL.String() == "127.0.0.2" {
+						} else if request.URL.String() == host2 {
 							resp.StatusCode = 300
 						}
 
@@ -125,19 +131,19 @@ func TestMonitorProxy(t *testing.T) {
 	)
 
 	ctx := context.Background()
-	resp, err := httpClient.Get(ctx, "127.0.0.1")
+	resp, err := httpClient.Get(ctx, host1)
 	resp.Body.Close()
 
 	assert.Nil(t, err)
 	assert.Equal(t, resp.StatusCode, 200)
 
-	resp, err = httpClient.Get(ctx, "127.0.0.2")
+	resp, err = httpClient.Get(ctx, host2)
 	resp.Body.Close()
 
 	assert.Nil(t, err)
 	assert.Equal(t, resp.StatusCode, 300)
 
-	lab := prometheus.Labels{"url": "127.0.0.1", "method": "GET"}
+	lab := prometheus.Labels{"url": host1, "method": "GET"}
 	c, _ := httpTotal.GetMetricWith(lab)
 	metric := &io_prometheus_client.Metric{}
 	err = c.Write(metric)
@@ -171,9 +177,9 @@ func TestTimeoutProxy(t *testing.T) {
 				stubsProxy := newStubsProxy(
 					stubsProxyOptions.WithRespFunc(func(request *http.Request) *http.Response {
 						resp := &http.Response{}
-						if request.URL.String() == "127.0.0.1" {
+						if request.URL.String() == host1 {
 							resp.StatusCode = 200
-						} else if request.URL.String() == "127.0.0.2" {
+						} else if request.URL.String() == host2 {
 							resp.StatusCode = 300
 						}
 
@@ -191,7 +197,7 @@ func TestTimeoutProxy(t *testing.T) {
 	)
 
 	ctx := context.Background()
-	resp, err := httpClient.Get(ctx, "127.0.0.1")
+	resp, err := httpClient.Get(ctx, host1)
 	resp.Body.Close()
 
 	assert.Nil(t, err)

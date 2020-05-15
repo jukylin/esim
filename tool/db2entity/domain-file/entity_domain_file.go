@@ -108,7 +108,7 @@ func (edf *entityDomainFile) BindInput(v *viper.Viper) error {
 			}
 		}
 
-		edf.withEntityTarget = edf.withEntityTarget + string(filepath.Separator)
+		edf.withEntityTarget += string(filepath.Separator)
 	}
 
 	edf.logger.Debugf("withEntityTarget %s", edf.withEntityTarget)

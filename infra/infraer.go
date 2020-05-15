@@ -24,9 +24,9 @@ type Infraer struct {
 
 	execer pkg.Exec
 
-	oldInfraInfo *InfraInfo
+	oldInfraInfo *Info
 
-	newInfraInfo *InfraInfo
+	newInfraInfo *Info
 
 	injectInfos []*domain_file.InjectInfo
 
@@ -37,7 +37,7 @@ type Infraer struct {
 	withInfraFile string
 }
 
-type InfraInfo struct {
+type Info struct {
 	imports pkg.Imports
 
 	importStr string
@@ -61,8 +61,8 @@ type InfraInfo struct {
 	provideStr string
 }
 
-func NewInfraInfo() *InfraInfo {
-	ifaInfo := &InfraInfo{}
+func NewInfo() *Info {
+	ifaInfo := &Info{}
 
 	ifaInfo.specialStructName = "Infra"
 
@@ -98,7 +98,7 @@ func WithIfacerLogger(logger log.Logger) Option {
 	}
 }
 
-func WithIfacerInfraInfo(infra *InfraInfo) Option {
+func WithIfacerInfraInfo(infra *Info) Option {
 	return func(ir *Infraer) {
 		ir.oldInfraInfo = infra
 		ir.newInfraInfo = infra
@@ -121,7 +121,7 @@ func WithIfacerExecer(execer pkg.Exec) Option {
 func (ir *Infraer) Inject(v *viper.Viper, injectInfos []*domain_file.InjectInfo) bool {
 	var err error
 
-	if len(injectInfos) < 0 {
+	if len(injectInfos) < 1 {
 		ir.logger.Errorf("not need inject")
 		return false
 	}
@@ -271,7 +271,11 @@ func (ir *Infraer) sourceInfraFile() string {
 
 	formatSrc := ir.makeCodeBeautiful(string(src))
 
-	ioutil.WriteFile(ir.withInfraDir+ir.withInfraFile, []byte(formatSrc), 0666)
+	err = ioutil.WriteFile(ir.withInfraDir+ir.withInfraFile, []byte(formatSrc), 0666)
+	if err != nil {
+		ir.logger.Errorf(err.Error())
+		return ""
+	}
 
 	return formatSrc
 }
@@ -282,7 +286,7 @@ func (ir *Infraer) copyInfraInfo() {
 }
 
 //processInfraInfo process newInfraInfo, append import, repo field and wire's provider
-func (ir *Infraer) processNewInfra() bool {
+func (ir *Infraer) processNewInfra() {
 
 	for _, injectInfo := range ir.injectInfos {
 		ir.newInfraInfo.structInfo.Fields = append(ir.newInfraInfo.structInfo.Fields, injectInfo.Fields...)
@@ -293,8 +297,6 @@ func (ir *Infraer) processNewInfra() bool {
 
 		ir.newInfraInfo.provides = append(ir.newInfraInfo.provides, injectInfo.Provides...)
 	}
-
-	return true
 }
 
 func (ir *Infraer) toStringNewInfra() {
@@ -329,7 +331,6 @@ func (ir *Infraer) makeCodeBeautiful(src string) string {
 	result, err := imports.Process("", []byte(src), nil)
 	if err != nil {
 		ir.logger.Panicf("err %s : %s", err.Error(), src)
-		return ""
 	}
 
 	return string(result)
@@ -340,7 +341,7 @@ func (ir *Infraer) writeNewInfra() bool {
 
 	processSrc := ir.makeCodeBeautiful(ir.newInfraInfo.content)
 
-	ir.writer.Write(ir.withInfraDir+ir.withInfraFile, string(processSrc))
+	ir.writer.Write(ir.withInfraDir+ir.withInfraFile, processSrc)
 
 	err := ir.execer.ExecWire(ir.withInfraDir)
 	if err != nil {
@@ -351,9 +352,9 @@ func (ir *Infraer) writeNewInfra() bool {
 	return true
 }
 
-func (ir *Infraer) parseInfraSetArgs(GenDecl *ast.GenDecl, srcStr string) []string {
+func (ir *Infraer) parseInfraSetArgs(genDecl *ast.GenDecl, srcStr string) []string {
 	var args []string
-	for _, specs := range GenDecl.Specs {
+	for _, specs := range genDecl.Specs {
 		if spec, ok := specs.(*ast.ValueSpec); ok {
 			for _, value := range spec.Values {
 				if callExpr, ok := value.(*ast.CallExpr); ok {

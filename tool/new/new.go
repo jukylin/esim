@@ -188,7 +188,7 @@ func (pj *Project) delDir() bool {
 func (pj *Project) getProPath() {
 	currentDir := file_dir.GetGoProPath()
 	if currentDir != "" {
-		currentDir = currentDir + string(filepath.Separator)
+		currentDir += string(filepath.Separator)
 	}
 	pj.ProPath = currentDir
 }

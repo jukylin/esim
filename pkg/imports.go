@@ -47,8 +47,8 @@ func (is Imports) String() string {
 	return buf.String()
 }
 
-func (is *Imports) ParseFromAst(GenDecl *ast.GenDecl) {
-	for _, specs := range GenDecl.Specs {
+func (is *Imports) ParseFromAst(genDecl *ast.GenDecl) {
+	for _, specs := range genDecl.Specs {
 		if spec, ok := specs.(*ast.ImportSpec); ok {
 			imp := Import{}
 			if spec.Name.String() != "<nil>" {

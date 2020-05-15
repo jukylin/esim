@@ -59,8 +59,8 @@ func (fs Fields) String() (string, error) {
 	return buf.String(), nil
 }
 
-func (fs *Fields) ParseFromAst(GenDecl *ast.GenDecl, fileContent string) {
-	for _, specs := range GenDecl.Specs {
+func (fs *Fields) ParseFromAst(genDecl *ast.GenDecl, fileContent string) {
+	for _, specs := range genDecl.Specs {
 		if spec, ok := specs.(*ast.TypeSpec); ok {
 			if structType, ok := spec.Type.(*ast.StructType); ok {
 				for _, astField := range structType.Fields.List {

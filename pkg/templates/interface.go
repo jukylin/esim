@@ -7,11 +7,11 @@ import (
 )
 
 type Tpl interface {
-	//Execute applies a parsed template to the specified data object,
-	Execute(tplName string, text string, data interface{}) (string, error)
+	// Execute applies a parsed template to the specified data object,
+	Execute(tplName, text string, data interface{}) (string, error)
 }
 
-//TextTpl is the representation of the text parsed template
+// TextTpl is the representation of the text parsed template
 type TextTpl struct {
 	template *template.Template
 }
@@ -24,7 +24,7 @@ func NewTextTpl() Tpl {
 	return tt
 }
 
-func (tt TextTpl) Execute(tplName string, text string, data interface{}) (string, error) {
+func (tt TextTpl) Execute(tplName, text string, data interface{}) (string, error) {
 	tmpl, err := tt.template.New(tplName).Funcs(EsimFuncMap()).
 		Parse(text)
 	if err != nil {
@@ -40,7 +40,7 @@ func (tt TextTpl) Execute(tplName string, text string, data interface{}) (string
 	return buf.String(), nil
 }
 
-//HtmlTpl is the representation of the html parsed template
+// HtmlTpl is the representation of the html parsed template
 type HTMLTpl struct {
 	template *htpl.Template
 }
@@ -53,7 +53,7 @@ func NewHTMLTpl() Tpl {
 	return tt
 }
 
-func (ht HTMLTpl) Execute(tplName string, text string, data interface{}) (string, error) {
+func (ht HTMLTpl) Execute(tplName, text string, data interface{}) (string, error) {
 	tmpl, err := ht.template.New(tplName).Funcs(EsimFuncMap()).
 		Parse(text)
 	if err != nil {

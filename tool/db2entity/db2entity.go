@@ -3,9 +3,9 @@ package db2entity
 import (
 	"strings"
 
-	logger "github.com/jukylin/esim/log"
+	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
-	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	"github.com/jukylin/esim/pkg/file-dir"
 
 	"errors"
 	"os"
@@ -13,7 +13,7 @@ import (
 
 	"github.com/jukylin/esim/infra"
 	"github.com/jukylin/esim/pkg/templates"
-	domain_file "github.com/jukylin/esim/tool/db2entity/domain-file"
+	"github.com/jukylin/esim/tool/db2entity/domain-file"
 	"github.com/serenize/snaker"
 	"github.com/spf13/viper"
 	"golang.org/x/tools/imports"
@@ -51,7 +51,7 @@ type Db2Entity struct {
 	//true inject repo to infra
 	withInject bool
 
-	logger logger.Logger
+	logger log.Logger
 
 	withPackage string
 
@@ -83,7 +83,7 @@ func NewDb2Entity(options ...Db2EnOption) *Db2Entity {
 	}
 
 	if d.logger == nil {
-		d.logger = logger.NewNullLogger()
+		d.logger = log.NewNullLogger()
 	}
 
 	d.domainContent = make(map[string]string)
@@ -92,15 +92,15 @@ func NewDb2Entity(options ...Db2EnOption) *Db2Entity {
 	return d
 }
 
-func (Db2EnOptions) WithLogger(logger logger.Logger) Db2EnOption {
+func (Db2EnOptions) WithLogger(logger log.Logger) Db2EnOption {
 	return func(d *Db2Entity) {
 		d.logger = logger
 	}
 }
 
-func (Db2EnOptions) WithColumnsInter(ColumnsRepo domain_file.ColumnsRepo) Db2EnOption {
+func (Db2EnOptions) WithColumnsInter(columnsRepo domain_file.ColumnsRepo) Db2EnOption {
 	return func(d *Db2Entity) {
-		d.ColumnsRepo = ColumnsRepo
+		d.ColumnsRepo = columnsRepo
 	}
 }
 
@@ -168,8 +168,8 @@ func (de *Db2Entity) Run(v *viper.Viper) error {
 
 	de.shareInfo.CamelStruct = de.CamelStruct
 
-	if len(de.domainFiles) < 0 {
-		return errors.New("Have not domain file")
+	if len(de.domainFiles) < 1 {
+		return errors.New("have not domain file")
 	}
 
 	//select table's columns from repository
@@ -179,7 +179,7 @@ func (de *Db2Entity) Run(v *viper.Viper) error {
 	}
 
 	if !cs.IsEntity() {
-		return errors.New("It is not the entity")
+		return errors.New("it is not the entity")
 	}
 
 	err = de.generateDomainFile(v, cs)

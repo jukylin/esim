@@ -4,6 +4,7 @@ import (
 	"github.com/jukylin/esim/pkg"
 )
 
+//nolint:unused,structcheck
 type Test struct {
 	b int64
 

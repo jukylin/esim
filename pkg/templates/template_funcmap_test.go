@@ -7,7 +7,6 @@ import (
 )
 
 func TestCutFirstToLower(t *testing.T) {
-
 	testCases := []struct {
 		caseName string
 		s        string
@@ -26,7 +25,6 @@ func TestCutFirstToLower(t *testing.T) {
 }
 
 func TestFirstToLower(t *testing.T) {
-
 	testCases := []struct {
 		caseName string
 		s        string
