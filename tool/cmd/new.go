@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/jukylin/esim/pkg/file-dir"
+	file_dir "github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
 	"github.com/jukylin/esim/tool/new"
 	"github.com/spf13/cobra"

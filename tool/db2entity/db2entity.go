@@ -5,7 +5,7 @@ import (
 
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
-	"github.com/jukylin/esim/pkg/file-dir"
+	file_dir "github.com/jukylin/esim/pkg/file-dir"
 
 	"errors"
 	"os"
@@ -13,7 +13,7 @@ import (
 
 	"github.com/jukylin/esim/infra"
 	"github.com/jukylin/esim/pkg/templates"
-	"github.com/jukylin/esim/tool/db2entity/domain-file"
+	domain_file "github.com/jukylin/esim/tool/db2entity/domain-file"
 	"github.com/serenize/snaker"
 	"github.com/spf13/viper"
 	"golang.org/x/tools/imports"

@@ -1,15 +1,16 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
 	"os"
+
+	"github.com/spf13/cobra"
 
 	"github.com/jukylin/esim/infra"
 	"github.com/jukylin/esim/pkg"
-	"github.com/jukylin/esim/pkg/file-dir"
+	file_dir "github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
 	"github.com/jukylin/esim/tool/db2entity"
-	"github.com/jukylin/esim/tool/db2entity/domain-file"
+	domain_file "github.com/jukylin/esim/tool/db2entity/domain-file"
 )
 
 var db2entityCmd = &cobra.Command{
