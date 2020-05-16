@@ -81,8 +81,8 @@ func (dc *DBColumnsInter) SelectColumns(dbConf *DbConfig) (Columns, error) {
 	var db *gorm.DB
 	if dbConf.Password != "" {
 		db, err = gorm.Open("mysql", dbConf.User+":"+dbConf.Password+
-			"@tcp("+dbConf.Host+":"+strconv.Itoa(dbConf.Port)+")/" +
-				dbConf.Database + "?&parseTime=True")
+			"@tcp("+dbConf.Host+":"+strconv.Itoa(dbConf.Port)+")/"+
+			dbConf.Database+"?&parseTime=True")
 	} else {
 		db, err = gorm.Open("mysql", dbConf.User+"@tcp("+dbConf.Host+":"+
 			strconv.Itoa(dbConf.Port)+")/"+dbConf.Database+"?&parseTime=True")

@@ -94,7 +94,7 @@ func TestDb2Entity_Run(t *testing.T) {
 
 	err = file_dir.EsimRecoverFile(file_dir.GetCurrentDir() +
 		string(filepath.Separator) + "example" + string(filepath.Separator) + "infra" +
-			string(filepath.Separator) + "infra.go")
+		string(filepath.Separator) + "infra.go")
 	assert.Nil(t, err)
 }
 
@@ -165,6 +165,6 @@ func TestDb2Entity_ErrWrite(t *testing.T) {
 
 	err = file_dir.EsimRecoverFile(file_dir.GetCurrentDir() +
 		string(filepath.Separator) + "example" + string(filepath.Separator) + "infra" +
-			string(filepath.Separator) + "infra.go")
+		string(filepath.Separator) + "infra.go")
 	assert.Nil(t, err)
 }

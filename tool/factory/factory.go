@@ -510,7 +510,7 @@ func (ef *EsimFactory) parseStruct() bool {
 }
 
 func (ef *EsimFactory) parseType(genDecl *ast.GenDecl, src []byte,
-		fileInfo os.FileInfo, f *ast.File) {
+	fileInfo os.FileInfo, f *ast.File) {
 	strSrc := string(src)
 	for _, specs := range genDecl.Specs {
 		if typeSpec, ok := specs.(*ast.TypeSpec); ok {
