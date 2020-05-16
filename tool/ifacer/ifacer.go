@@ -10,7 +10,7 @@ import (
 
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
-	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	"github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
 	"github.com/spf13/viper"
 	"github.com/vektra/mockery/mockery"
@@ -200,15 +200,15 @@ func (f *Ifacer) getUsingImportStr() {
 	f.UsingImportStr = imps.String()
 }
 
-func (f *Ifacer) ManageNoConflictImport(imports []*types.Package) bool {
-	for _, imp := range imports {
+func (f *Ifacer) ManageNoConflictImport(imps []*types.Package) bool {
+	for _, imp := range imps {
 		f.setNoConflictImport(imp.Name(), imp.Path())
 	}
 
 	return true
 }
 
-func (f *Ifacer) setNoConflictImport(importName string, importPath string) bool {
+func (f *Ifacer) setNoConflictImport(importName, importPath string) bool {
 	if impPath, ok := f.pkgNoConflictImport[importName]; ok {
 		if impPath.Path == importPath {
 			return true

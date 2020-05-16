@@ -50,12 +50,14 @@ func (fp *FacadeProxy) Err() (err error) {
 	return
 }
 
-func (fp *FacadeProxy) Do(ctx context.Context, commandName string, args ...interface{}) (reply interface{}, err error) {
+func (fp *FacadeProxy) Do(ctx context.Context, commandName string,
+	args ...interface{}) (reply interface{}, err error) {
 	reply, err = fp.nextConn.Do(commandName, args...)
 	return
 }
 
-func (fp *FacadeProxy) Send(ctx context.Context, commandName string, args ...interface{}) (err error) {
+func (fp *FacadeProxy) Send(ctx context.Context, commandName string,
+	args ...interface{}) (err error) {
 	err = fp.nextConn.Send(commandName, args...)
 	return
 }

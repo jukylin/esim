@@ -231,7 +231,8 @@ func (de *Db2Entity) bindInfra(v *viper.Viper) {
 
 	de.withInfraDir = v.GetString("infra_dir")
 	if de.withInfraDir == "" {
-		de.withInfraDir = "internal" + string(filepath.Separator) + "infra" + string(filepath.Separator)
+		de.withInfraDir = "internal" + string(filepath.Separator) + "infra" +
+			string(filepath.Separator)
 	} else {
 		de.withInfraDir = strings.TrimLeft(de.withInfraDir, ".") + string(filepath.Separator)
 		de.withInfraDir = strings.Trim(de.withInfraDir, "/") + string(filepath.Separator)
@@ -261,7 +262,6 @@ func (de *Db2Entity) injectToInfra(v *viper.Viper) {
 	}
 
 	de.infraer.Inject(v, de.injectInfos)
-
 }
 
 func (de *Db2Entity) makeCodeBeautiful(src string) string {
@@ -303,7 +303,6 @@ func (de *Db2Entity) generateDomainFile(v *viper.Viper, cs domain_file.Columns) 
 			if injectInfo != nil {
 				de.injectInfos = append(de.injectInfos, injectInfo)
 			}
-
 		} else {
 			de.logger.Infof("disabled %s", df.GetName())
 		}

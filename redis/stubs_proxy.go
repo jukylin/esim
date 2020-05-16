@@ -47,7 +47,8 @@ func (sp *stubsProxy) Err() (err error) {
 	return
 }
 
-func (sp *stubsProxy) Do(ctx context.Context, commandName string, args ...interface{}) (reply interface{}, err error) {
+func (sp *stubsProxy) Do(ctx context.Context, commandName string,
+	args ...interface{}) (reply interface{}, err error) {
 	if args[0] == "name" {
 		return "test", nil
 	}
@@ -59,7 +60,8 @@ func (sp *stubsProxy) Do(ctx context.Context, commandName string, args ...interf
 	return
 }
 
-func (sp *stubsProxy) Send(ctx context.Context, commandName string, args ...interface{}) (err error) {
+func (sp *stubsProxy) Send(ctx context.Context, commandName string,
+	args ...interface{}) (err error) {
 	err = sp.nextConn.Send(ctx, commandName, args...)
 
 	return

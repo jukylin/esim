@@ -16,7 +16,8 @@ func TestDaoTemplate(t *testing.T) {
 	assert.Nil(t, err)
 
 	var imports pkg.Imports
-	imports = append(imports, pkg.Import{Name: "time", Path: "time"}, pkg.Import{Name: "sync", Path: "sync"})
+	imports = append(imports, pkg.Import{Name: "time", Path: "time"},
+					pkg.Import{Name: "sync", Path: "sync"})
 
 	var buf bytes.Buffer
 	daoTmp := newDaoTpl("User")

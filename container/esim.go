@@ -57,8 +57,8 @@ var prometheusFunc = func(conf config.Config, logger log.Logger) *prometheus.Pro
 	return prometheus.NewPrometheus(httpAddr, logger)
 }
 
-func SetPrometheusFunc(prometheus func(config.Config, log.Logger) *prometheus.Prometheus) {
-	prometheusFunc = prometheus
+func SetPrometheusFunc(pt func(config.Config, log.Logger) *prometheus.Prometheus) {
+	prometheusFunc = pt
 }
 func providePrometheus(conf config.Config, logger log.Logger) *prometheus.Prometheus {
 	return prometheusFunc(conf, logger)
@@ -73,8 +73,8 @@ var loggerFunc = func(conf config.Config) log.Logger {
 	return logger
 }
 
-func SetLogger(log func(config.Config) log.Logger) {
-	loggerFunc = log
+func SetLogger(logger func(config.Config) log.Logger) {
+	loggerFunc = logger
 }
 func provideLogger(conf config.Config) log.Logger {
 	return loggerFunc(conf)

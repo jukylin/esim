@@ -41,7 +41,8 @@ func NewClient(options ...Option) *Client {
 		Client.client.Transport = http.DefaultTransport
 	} else {
 		Client.client.Transport = proxy.NewProxyFactory().
-			GetFirstInstance("http", http.DefaultTransport, Client.transports...).(http.RoundTripper)
+			GetFirstInstance("http", http.DefaultTransport,
+				Client.transports...).(http.RoundTripper)
 	}
 
 	if Client.client.Timeout <= 0 {
@@ -55,9 +56,9 @@ func NewClient(options ...Option) *Client {
 	return Client
 }
 
-func (ClientOptions) WithProxy(proxy ...func() interface{}) Option {
+func (ClientOptions) WithProxy(proxys ...func() interface{}) Option {
 	return func(hc *Client) {
-		hc.transports = append(hc.transports, proxy...)
+		hc.transports = append(hc.transports, proxys...)
 	}
 }
 
@@ -78,8 +79,8 @@ func (c *Client) Do(ctx context.Context, req *http.Request) (*http.Response, err
 	return resp, err
 }
 
-func (c *Client) Get(ctx context.Context, url string) (resp *http.Response, err error) {
-	req, err := http.NewRequest("GET", url, nil)
+func (c *Client) Get(ctx context.Context, addr string) (resp *http.Response, err error) {
+	req, err := http.NewRequest("GET", addr, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -89,8 +90,9 @@ func (c *Client) Get(ctx context.Context, url string) (resp *http.Response, err 
 	return resp, err
 }
 
-func (c *Client) Post(ctx context.Context, url, contentType string, body io.Reader) (resp *http.Response, err error) {
-	req, err := http.NewRequest("POST", url, body)
+func (c *Client) Post(ctx context.Context, addr, contentType string,
+	body io.Reader) (resp *http.Response, err error) {
+	req, err := http.NewRequest("POST", addr, body)
 	if err != nil {
 		return nil, err
 	}
@@ -99,12 +101,14 @@ func (c *Client) Post(ctx context.Context, url, contentType string, body io.Read
 	return c.Do(ctx, req)
 }
 
-func (c *Client) PostForm(ctx context.Context, url string, data url.Values) (resp *http.Response, err error) {
-	return c.Post(ctx, url, "application/x-www-form-urlencoded", strings.NewReader(data.Encode()))
+func (c *Client) PostForm(ctx context.Context, addr string,
+	data url.Values) (resp *http.Response, err error) {
+	return c.Post(ctx, addr, "application/x-www-form-urlencoded",
+		strings.NewReader(data.Encode()))
 }
 
-func (c *Client) Head(ctx context.Context, url string) (resp *http.Response, err error) {
-	req, err := http.NewRequest("HEAD", url, nil)
+func (c *Client) Head(ctx context.Context, addr string) (resp *http.Response, err error) {
+	req, err := http.NewRequest("HEAD", addr, nil)
 	if err != nil {
 		return nil, err
 	}

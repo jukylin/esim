@@ -75,9 +75,11 @@ func (rdf *repoDomainFile) BindInput(v *viper.Viper) error {
 
 		rdf.withRepoTarget = v.GetString("repo_target")
 		if rdf.withRepoTarget == "" {
-			rdf.withRepoTarget = "internal" + string(filepath.Separator) + "infra" + string(filepath.Separator) + "repo"
+			rdf.withRepoTarget = "internal" + string(filepath.Separator) +
+				"infra" + string(filepath.Separator) + "repo"
 		} else {
-			rdf.withRepoTarget = strings.TrimLeft(rdf.withRepoTarget, ".") + string(filepath.Separator)
+			rdf.withRepoTarget = strings.TrimLeft(rdf.withRepoTarget, ".") +
+				string(filepath.Separator)
 			rdf.withRepoTarget = strings.Trim(rdf.withRepoTarget, "/")
 		}
 
@@ -159,7 +161,8 @@ func (rdf *repoDomainFile) GetInjectInfo() *InjectInfo {
 		"provide"+rdf.shareInfo.CamelStruct+"Repo")
 
 	injectInfo.Imports = append(injectInfo.Imports,
-		pkg.Import{Path: file_dir.GetGoProPath() + pkg.DirPathToImportPath(rdf.shareInfo.WithRepoTarget)})
+		pkg.Import{Path: file_dir.GetGoProPath() +
+			pkg.DirPathToImportPath(rdf.shareInfo.WithRepoTarget)})
 
 	content, err := rdf.tpl.Execute("provide_tpl",
 		ProvideFuncTemplate, newRepoTpl(rdf.shareInfo.CamelStruct))

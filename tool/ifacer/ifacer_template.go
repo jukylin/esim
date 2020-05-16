@@ -1,5 +1,6 @@
 package ifacer
 
+//nolint:lll
 var ifacerTemplate = `package {{.PackageName}}
 
 {{- $StructName := .StructName}}

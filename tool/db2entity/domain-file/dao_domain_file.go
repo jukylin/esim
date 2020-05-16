@@ -74,9 +74,11 @@ func (ddf *daoDomainFile) BindInput(v *viper.Viper) error {
 
 		ddf.withDaoTarget = v.GetString("dao_target")
 		if ddf.withDaoTarget == "" {
-			ddf.withDaoTarget = "internal" + string(filepath.Separator) + "infra " + string(filepath.Separator) + "dao"
+			ddf.withDaoTarget = "internal" + string(filepath.Separator) +
+				"infra " + string(filepath.Separator) + "dao"
 		} else {
-			ddf.withDaoTarget = strings.TrimLeft(ddf.withDaoTarget, ".") + string(filepath.Separator)
+			ddf.withDaoTarget = strings.TrimLeft(ddf.withDaoTarget, ".") +
+				string(filepath.Separator)
 			ddf.withDaoTarget = strings.Trim(ddf.withDaoTarget, "/")
 		}
 
@@ -116,7 +118,8 @@ func (ddf *daoDomainFile) ParseCloumns(cs Columns, shareInfo *ShareInfo) {
 		pkg.Import{Path: "github.com/jinzhu/gorm"},
 		pkg.Import{Path: "errors"},
 		pkg.Import{Path: "github.com/jukylin/esim/mysql"},
-		pkg.Import{Path: file_dir.GetGoProPath() + pkg.DirPathToImportPath(shareInfo.WithEntityTarget)})
+		pkg.Import{Path: file_dir.GetGoProPath() +
+			pkg.DirPathToImportPath(shareInfo.WithEntityTarget)})
 
 	var column Column
 	for _, column = range cs {

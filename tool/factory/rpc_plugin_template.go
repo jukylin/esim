@@ -1,5 +1,6 @@
 package factory
 
+//nolint:lll
 var rpcPluginTemplate = `package main
 
 import (
@@ -55,6 +56,7 @@ func (ModelImp) Sort() string {
 	return string(by)
 
 }
+
 
 func (ModelImp) InitField() string {
 		{{.StructName | tolower}} := {{.StructName}}{}

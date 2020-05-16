@@ -117,7 +117,7 @@ func WithIfacerExecer(execer pkg.Exec) Option {
 	}
 }
 
-//injectToInfra inject repo to infra.go and execute wire command
+// injectToInfra inject repo to infra.go and execute wire command
 func (ir *Infraer) Inject(v *viper.Viper, injectInfos []*domain_file.InjectInfo) bool {
 	var err error
 
@@ -133,8 +133,9 @@ func (ir *Infraer) Inject(v *viper.Viper, injectInfos []*domain_file.InjectInfo)
 
 	ir.injectInfos = injectInfos
 
-	//back up infra.go
-	err = file_dir.EsimBackUpFile(file_dir.GetCurrentDir() + string(filepath.Separator) + ir.withInfraDir + ir.withInfraFile)
+	// back up infra.go
+	err = file_dir.EsimBackUpFile(file_dir.GetCurrentDir() + string(filepath.Separator) +
+		ir.withInfraDir + ir.withInfraFile)
 	if err != nil {
 		ir.logger.Errorf("Back up err : %s", err.Error())
 		return false
@@ -175,7 +176,8 @@ func (ir *Infraer) bindInput(v *viper.Viper) bool {
 
 	ir.withInfraDir = v.GetString("infra_dir")
 	if ir.withInfraDir == "" {
-		ir.withInfraDir = "internal" + string(filepath.Separator) + "infra" + string(filepath.Separator)
+		ir.withInfraDir = "internal" + string(filepath.Separator) + "infra" +
+			string(filepath.Separator)
 	} else {
 		ir.withInfraDir = strings.TrimLeft(ir.withInfraDir, ".") + string(filepath.Separator)
 		ir.withInfraDir = strings.Trim(ir.withInfraDir, "/") + string(filepath.Separator)
@@ -200,7 +202,8 @@ func (ir *Infraer) bindInput(v *viper.Viper) bool {
 	return true
 }
 
-//parseInfra parse infra.go 's content, find "import", "Infra" , "infraSet" and record origin syntax
+// parseInfra parse infra.go 's content,
+// find "import", "Infra" , "infraSet" and record origin syntax
 func (ir *Infraer) parseInfra(srcStr string) bool {
 
 	// positions are relative to fset
@@ -212,40 +215,20 @@ func (ir *Infraer) parseInfra(srcStr string) bool {
 	}
 
 	for _, decl := range f.Decls {
-		if GenDecl, ok := decl.(*ast.GenDecl); ok {
-			if GenDecl.Tok.String() == "import" {
+		if genDecl, ok := decl.(*ast.GenDecl); ok {
+			if genDecl.Tok.String() == "import" {
 				imps := pkg.Imports{}
-				imps.ParseFromAst(GenDecl)
+				imps.ParseFromAst(genDecl)
 				ir.oldInfraInfo.imports = imps
-				ir.oldInfraInfo.importStr = srcStr[GenDecl.Pos()-1 : GenDecl.End()]
+				ir.oldInfraInfo.importStr = srcStr[genDecl.Pos()-1 : genDecl.End()]
 			}
 
-			if GenDecl.Tok.String() == "type" {
-				for _, specs := range GenDecl.Specs {
-					if typeSpec, ok := specs.(*ast.TypeSpec); ok {
-						if typeSpec.Name.String() == ir.oldInfraInfo.specialStructName {
-							ir.hasInfraStruct = true
-							fields := pkg.Fields{}
-							fields.ParseFromAst(GenDecl, srcStr)
-							ir.oldInfraInfo.structInfo.Fields = fields
-							ir.oldInfraInfo.structStr = srcStr[GenDecl.Pos()-1 : GenDecl.End()]
-						}
-					}
-				}
+			if genDecl.Tok.String() == "type" {
+				ir.parseType(genDecl, srcStr)
 			}
 
-			if GenDecl.Tok.String() == "var" {
-				for _, specs := range GenDecl.Specs {
-					if typeSpec, ok := specs.(*ast.ValueSpec); ok {
-						for _, name := range typeSpec.Names {
-							if name.String() == ir.oldInfraInfo.specialVarName {
-								ir.oldInfraInfo.infraSetStr = srcStr[GenDecl.TokPos-1 : GenDecl.End()]
-								ir.oldInfraInfo.infraSetArgs.Args = append(ir.oldInfraInfo.infraSetArgs.Args,
-									ir.parseInfraSetArgs(GenDecl, srcStr)...)
-							}
-						}
-					}
-				}
+			if genDecl.Tok.String() == "var" {
+				ir.parseVar(genDecl, srcStr)
 			}
 		}
 	}
@@ -260,7 +243,35 @@ func (ir *Infraer) parseInfra(srcStr string) bool {
 	return true
 }
 
-//sourceInfraFile Beautify infra.go
+func (ir *Infraer) parseType(genDecl *ast.GenDecl, srcStr string) {
+	for _, specs := range genDecl.Specs {
+		if typeSpec, ok := specs.(*ast.TypeSpec); ok {
+			if typeSpec.Name.String() == ir.oldInfraInfo.specialStructName {
+				ir.hasInfraStruct = true
+				fields := pkg.Fields{}
+				fields.ParseFromAst(genDecl, srcStr)
+				ir.oldInfraInfo.structInfo.Fields = fields
+				ir.oldInfraInfo.structStr = srcStr[genDecl.Pos()-1 : genDecl.End()]
+			}
+		}
+	}
+}
+
+func (ir *Infraer) parseVar(genDecl *ast.GenDecl, srcStr string) {
+	for _, specs := range genDecl.Specs {
+		if typeSpec, ok := specs.(*ast.ValueSpec); ok {
+			for _, name := range typeSpec.Names {
+				if name.String() == ir.oldInfraInfo.specialVarName {
+					ir.oldInfraInfo.infraSetStr = srcStr[genDecl.TokPos-1 : genDecl.End()]
+					ir.oldInfraInfo.infraSetArgs.Args = append(ir.oldInfraInfo.infraSetArgs.Args,
+						ir.parseInfraSetArgs(genDecl, srcStr)...)
+				}
+			}
+		}
+	}
+}
+
+// sourceInfraFile Beautify infra.go
 func (ir *Infraer) sourceInfraFile() string {
 
 	src, err := ioutil.ReadFile(ir.withInfraDir + ir.withInfraFile)
@@ -285,13 +296,15 @@ func (ir *Infraer) copyInfraInfo() {
 	ir.newInfraInfo = &oldContent
 }
 
-//processInfraInfo process newInfraInfo, append import, repo field and wire's provider
+// processInfraInfo process newInfraInfo, append import, repo field and wire's provider
 func (ir *Infraer) processNewInfra() {
 
 	for _, injectInfo := range ir.injectInfos {
-		ir.newInfraInfo.structInfo.Fields = append(ir.newInfraInfo.structInfo.Fields, injectInfo.Fields...)
+		ir.newInfraInfo.structInfo.Fields = append(ir.newInfraInfo.structInfo.Fields,
+			injectInfo.Fields...)
 
-		ir.newInfraInfo.infraSetArgs.Args = append(ir.newInfraInfo.infraSetArgs.Args, injectInfo.InfraSetArgs...)
+		ir.newInfraInfo.infraSetArgs.Args = append(ir.newInfraInfo.infraSetArgs.Args,
+			injectInfo.InfraSetArgs...)
 
 		ir.newInfraInfo.imports = append(ir.newInfraInfo.imports, injectInfo.Imports...)
 
@@ -336,7 +349,7 @@ func (ir *Infraer) makeCodeBeautiful(src string) string {
 	return string(result)
 }
 
-//writeNewInfra cover old infra.go's content
+// writeNewInfra cover old infra.go's content
 func (ir *Infraer) writeNewInfra() bool {
 
 	processSrc := ir.makeCodeBeautiful(ir.newInfraInfo.content)

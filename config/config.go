@@ -122,7 +122,8 @@ func (vc *viperConf) GetStringMapStringSlice(key string) map[string][]string {
 
 func (vc *viperConf) GetSizeInBytes(key string) uint { return vc.Viper.GetSizeInBytes(key) }
 
-func (vc *viperConf) UnmarshalKey(key string, rawVal interface{}, opts ...viper.DecoderConfigOption) error {
+func (vc *viperConf) UnmarshalKey(key string, rawVal interface{},
+		opts ...viper.DecoderConfigOption) error {
 	return vc.Viper.UnmarshalKey(key, rawVal, opts...)
 }
 

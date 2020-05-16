@@ -14,6 +14,7 @@ type repoTpl struct {
 	DelField string
 }
 
+//nolint:lll
 var repoTemplate = `
 package repo
 

@@ -78,7 +78,8 @@ var HandshakeConfig = plugin.HandshakeConfig{
 	MagicCookieValue: "hello",
 }
 
-func NewRPCPluginStructField(writer file_dir.IfaceWriter, logger log2.Logger) *RPCPluginStructField {
+func NewRPCPluginStructField(writer file_dir.IfaceWriter,
+	logger log2.Logger) *RPCPluginStructField {
 	rpcPlugin := &RPCPluginStructField{}
 
 	rpcPlugin.writer = writer
@@ -111,7 +112,8 @@ func (rps *RPCPluginStructField) buildPluginEnv() error {
 
 	for _, name := range rps.filesName {
 		if name == rps.StructFileName {
-			src := reg.ReplaceAll([]byte(rps.StrcutInfo.structFileContent), []byte("package main"))
+			src := reg.ReplaceAll([]byte(rps.StrcutInfo.structFileContent),
+				[]byte("package main"))
 			err = rps.writer.Write(targetDir+string(filepath.Separator)+rps.StructFileName,
 				string(src))
 			if err != nil {
@@ -243,10 +245,12 @@ func (rps *RPCPluginStructField) run() {
 		rps.logger.Panicf("%s is empty", rps.StructName)
 	}
 
+	cmd := exec.Command(rps.structDir + string(filepath.Separator) +
+		"plugin" + string(filepath.Separator) + "plugin")
 	rps.pluginClient = plugin.NewClient(&plugin.ClientConfig{
 		HandshakeConfig: HandshakeConfig,
 		Plugins:         pluginMap,
-		Cmd:             exec.Command(rps.structDir + string(filepath.Separator) + "plugin" + string(filepath.Separator) + "plugin"),
+		Cmd:             cmd,
 		Logger: hclog.New(&hclog.LoggerOptions{
 			Output: hclog.DefaultOutput,
 			Level:  hclog.Error,
@@ -331,7 +335,8 @@ func (rps *RPCPluginStructField) clear() {
 	}
 }
 
-func (rps *RPCPluginStructField) GenInitFieldStr(getType reflect.Type, fieldLink, initName string, specFilds *pkg.Fields) []string {
+func (rps *RPCPluginStructField) GenInitFieldStr(getType reflect.Type, fieldLink,
+	initName string, specFilds *pkg.Fields) []string {
 	typeNum := getType.NumField()
 	var structFields []string
 	var initStr string
@@ -340,21 +345,26 @@ func (rps *RPCPluginStructField) GenInitFieldStr(getType reflect.Type, fieldLink
 	for i := 0; i < typeNum; i++ {
 		switch getType.Field(i).Type.Kind() {
 		case reflect.Array:
-			structFields = append(structFields, "for k, _ := range "+fieldLink+"."+getType.Field(i).Name+" {")
+			structFields = append(structFields, "for k, _ := range " +
+				fieldLink + "."+getType.Field(i).Name+" {")
 			switch getType.Field(i).Type.Elem().Kind() {
 			case reflect.Struct:
 				structFields = append(structFields,
-					rps.GenInitFieldStr(getType.Field(i).Type.Elem(), fieldLink+"."+getType.Field(i).Name,
-						initName+"."+getType.Field(i).Name, nil)...)
+					rps.GenInitFieldStr(getType.Field(i).Type.Elem(),
+						fieldLink + "." + getType.Field(i).Name,
+						initName+"." + getType.Field(i).Name, nil)...)
 			default:
 				initStr = rps.KindToInit(getType.Field(i).Type.Elem())
-				structFields = append(structFields, fieldLink+"."+getType.Field(i).Name+"[k] = "+initStr)
+				structFields = append(structFields, fieldLink+"." +
+					getType.Field(i).Name+"[k] = " + initStr)
 			}
 			structFields = append(structFields, "}")
 			continue
 		case reflect.Map:
-			structFields = append(structFields, "for k, _ := range "+fieldLink+"."+getType.Field(i).Name+" {")
-			structFields = append(structFields, "delete("+fieldLink+"."+getType.Field(i).Name+", k)")
+			structFields = append(structFields, "for k, _ := range " + fieldLink + "." +
+				getType.Field(i).Name+" {")
+			structFields = append(structFields, "delete(" + fieldLink+"." +
+				getType.Field(i).Name + ", k)")
 			structFields = append(structFields, "}")
 			if specFilds != nil {
 				field.Name = initName + "." + getType.Field(i).Name
@@ -368,7 +378,8 @@ func (rps *RPCPluginStructField) GenInitFieldStr(getType reflect.Type, fieldLink
 				initStr = "time.Time{}"
 			} else {
 				structFields = append(structFields, rps.GenInitFieldStr(getType.Field(i).Type,
-					fieldLink+"."+getType.Field(i).Name, initName+"."+getType.Field(i).Name, nil)...)
+					fieldLink + "." + getType.Field(i).Name,
+						initName + "." + getType.Field(i).Name, nil)...)
 				continue
 			}
 		case reflect.Slice:
@@ -378,14 +389,16 @@ func (rps *RPCPluginStructField) GenInitFieldStr(getType reflect.Type, fieldLink
 				field.Type = "slice"
 				*specFilds = append(*specFilds, field)
 			}
-			structFields = append(structFields, fieldLink+"."+getType.Field(i).Name+" = "+fieldLink+"."+getType.Field(i).Name+"[:0]")
+			structFields = append(structFields, fieldLink + "." + getType.Field(i).Name +
+				" = " + fieldLink+"." + getType.Field(i).Name + "[:0]")
 
 			continue
 		default:
 			initStr = rps.KindToInit(getType.Field(i).Type)
 		}
 
-		structFields = append(structFields, fieldLink+"."+getType.Field(i).Name+" = "+initStr)
+		structFields = append(structFields, fieldLink+"." + getType.Field(i).Name +
+			" = " + initStr)
 	}
 
 	return structFields

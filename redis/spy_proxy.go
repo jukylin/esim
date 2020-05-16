@@ -55,14 +55,16 @@ func (sp *spyProxy) Err() (err error) {
 	return
 }
 
-func (sp *spyProxy) Do(ctx context.Context, commandName string, args ...interface{}) (reply interface{}, err error) {
+func (sp *spyProxy) Do(ctx context.Context, commandName string,
+	args ...interface{}) (reply interface{}, err error) {
 	sp.DoWasCalled = true
 	reply, err = sp.nextConn.Do(ctx, commandName, args...)
 
 	return
 }
 
-func (sp *spyProxy) Send(ctx context.Context, commandName string, args ...interface{}) (err error) {
+func (sp *spyProxy) Send(ctx context.Context, commandName string,
+	args ...interface{}) (err error) {
 	sp.SendWasCalled = true
 	err = sp.nextConn.Send(ctx, commandName, args...)
 

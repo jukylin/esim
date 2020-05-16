@@ -16,6 +16,7 @@ type daoTpl struct {
 	PriKeyType string
 }
 
+//nolint:lll
 var daoTemplate = `package dao
 
 {{.Imports.String}}

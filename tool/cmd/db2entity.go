@@ -71,6 +71,7 @@ var db2entityCmd = &cobra.Command{
 	},
 }
 
+//nolint:lll
 func init() {
 	rootCmd.AddCommand(db2entityCmd)
 

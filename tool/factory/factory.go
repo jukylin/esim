@@ -6,10 +6,12 @@ import (
 	"go/parser"
 	"go/token"
 	"io/ioutil"
+	"os"
 	"path"
 	"path/filepath"
 	"strings"
 
+	"fmt"
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
 	"github.com/jukylin/esim/pkg/file-dir"
@@ -480,41 +482,24 @@ func (ef *EsimFactory) parseStruct() bool {
 			}
 
 			for _, decl := range f.Decls {
-				if GenDecl, ok := decl.(*ast.GenDecl); ok {
-					if GenDecl.Tok.String() == "type" {
-						for _, specs := range GenDecl.Specs {
-							if typeSpec, ok := specs.(*ast.TypeSpec); ok {
-								if typeSpec.Name.String() == ef.StructName {
-									ef.oldStructInfo.structFileContent = strSrc
-									ef.structFileName = fileInfo.Name()
-									//found the struct
-									ef.found = true
-
-									ef.packName = f.Name.String()
-									ef.packStr = "package " + strSrc[f.Name.Pos()-1:f.Name.End()]
-
-									fields := pkg.Fields{}
-									fields.ParseFromAst(GenDecl, strSrc)
-									ef.oldStructInfo.Fields = fields
-									ef.oldStructInfo.structStr = string(src[GenDecl.TokPos-1 : typeSpec.Type.(*ast.StructType).Fields.Closing])
-								}
-							}
-						}
+				if genDecl, ok := decl.(*ast.GenDecl); ok {
+					if genDecl.Tok.String() == "type" {
+						ef.parseType(genDecl, src, fileInfo, f)
 					}
 				}
 			}
 
 			for _, decl := range f.Decls {
-				if GenDecl, ok := decl.(*ast.GenDecl); ok {
-					if GenDecl.Tok.String() == "var" && ef.found {
-						ef.oldStructInfo.vars.ParseFromAst(GenDecl, strSrc)
+				if genDecl, ok := decl.(*ast.GenDecl); ok {
+					if genDecl.Tok.String() == "var" && ef.found {
+						ef.oldStructInfo.vars.ParseFromAst(genDecl, strSrc)
 					}
 
-					if GenDecl.Tok.String() == "import" && ef.found {
+					if genDecl.Tok.String() == "import" && ef.found {
 						imps := pkg.Imports{}
-						imps.ParseFromAst(GenDecl)
+						imps.ParseFromAst(genDecl)
 						ef.oldStructInfo.imports = imps
-						ef.oldStructInfo.importStr = strSrc[GenDecl.Pos()-1 : GenDecl.End()]
+						ef.oldStructInfo.importStr = strSrc[genDecl.Pos()-1 : genDecl.End()]
 					}
 				}
 			}
@@ -522,6 +507,31 @@ func (ef *EsimFactory) parseStruct() bool {
 	}
 
 	return ef.found
+}
+
+func (ef *EsimFactory) parseType(genDecl *ast.GenDecl, src []byte,
+		fileInfo os.FileInfo, f *ast.File) {
+	strSrc := string(src)
+	for _, specs := range genDecl.Specs {
+		if typeSpec, ok := specs.(*ast.TypeSpec); ok {
+			if typeSpec.Name.String() == ef.StructName {
+				ef.oldStructInfo.structFileContent = strSrc
+				ef.structFileName = fileInfo.Name()
+				//found the struct
+				ef.found = true
+
+				ef.packName = f.Name.String()
+				ef.packStr = "package " + strSrc[f.Name.Pos()-1:f.Name.End()]
+
+				fields := pkg.Fields{}
+				fields.ParseFromAst(genDecl, strSrc)
+				ef.oldStructInfo.Fields = fields
+				colsePos := typeSpec.Type.(*ast.StructType).Fields.Closing
+				structStr := src[genDecl.TokPos-1 : colsePos]
+				ef.oldStructInfo.structStr = string(structStr)
+			}
+		}
+	}
 }
 
 //extend logger and conf for new struct field
@@ -605,7 +615,7 @@ func (ef *EsimFactory) buildNewStructFileContent() error {
 		ef.NewStructInfo.structFileContent = strings.Replace(ef.oldStructInfo.structFileContent,
 			ef.packStr, ef.firstPart, -1)
 	} else {
-		ef.logger.Panicf("can't build the first part")
+		return errors.New("can't build the first part")
 	}
 
 	structInfo := templates.NewStructInfo()
@@ -619,7 +629,7 @@ func (ef *EsimFactory) buildNewStructFileContent() error {
 
 	src, err := imports.Process("", []byte(ef.NewStructInfo.structFileContent), nil)
 	if err != nil {
-		ef.logger.Panicf("%s : %s", err.Error(), ef.NewStructInfo.structFileContent)
+		return fmt.Errorf("%s : %s", err.Error(), ef.NewStructInfo.structFileContent)
 	}
 
 	ef.NewStructInfo.structFileContent = string(src)
@@ -688,7 +698,8 @@ func (ef *EsimFactory) genOptions() {
 
 		ef.Option4 += `
 func With` + ef.StructName + `Conf(conf config.Config) ` + ef.StructName + `Option {
-	return func(` + templates.Shorten(snaker.SnakeToCamelLower(ef.StructName)) + ` ` + ef.NewStructInfo.ReturnVarStr + `) {
+	return func(` + templates.Shorten(snaker.SnakeToCamelLower(ef.StructName)) +
+			` ` + ef.NewStructInfo.ReturnVarStr + `) {
 	` + templates.Shorten(snaker.SnakeToCamelLower(ef.StructName)) + `.conf = conf
 	}
 }
@@ -698,7 +709,8 @@ func With` + ef.StructName + `Conf(conf config.Config) ` + ef.StructName + `Opti
 	if ef.withGenLoggerOption {
 		ef.Option5 += `
 func With` + ef.StructName + `Logger(logger log.Logger) ` + ef.StructName + `Option {
-	return func(` + templates.Shorten(snaker.SnakeToCamelLower(ef.StructName)) + ` ` + ef.NewStructInfo.ReturnVarStr + `) {
+	return func(` + templates.Shorten(snaker.SnakeToCamelLower(ef.StructName)) +
+			` ` + ef.NewStructInfo.ReturnVarStr + `) {
 		` + templates.Shorten(snaker.SnakeToCamelLower(ef.StructName)) + `.logger = logger
 	}
 }
@@ -731,18 +743,19 @@ func (ef *EsimFactory) genPlural() {
 	ef.ReleasePluralStr = plural.ReleaseString()
 }
 
-func (ef *EsimFactory) incrPoolVar(StructName string) {
-	poolName := StructName + "Pool"
+func (ef *EsimFactory) incrPoolVar(structName string) {
+	poolName := structName + "Pool"
 	if ef.varNameExists(ef.NewStructInfo.vars, poolName) {
 		ef.logger.Debugf("var is exists : %s", poolName)
 	} else {
 
 		ef.NewStructInfo.vars = append(ef.NewStructInfo.vars,
-			ef.appendPoolVar(poolName, StructName))
+			ef.appendPoolVar(poolName, structName))
 		ef.appendNewImport("sync")
 	}
 }
 
+//nolint:goconst
 func (ef *EsimFactory) genSpecFieldInitStr() {
 	var str string
 
@@ -772,7 +785,8 @@ func (ef *EsimFactory) genSpecFieldInitStr() {
 }
 
 func (ef *EsimFactory) genReleaseStructStr() string {
-	str := "func (" + templates.Shorten(snaker.SnakeToCamelLower(ef.StructName)) + "  " + ef.NewStructInfo.ReturnVarStr + ") Release() {\n"
+	str := "func (" + templates.Shorten(snaker.SnakeToCamelLower(ef.StructName)) +
+		"  " + ef.NewStructInfo.ReturnVarStr + ") Release() {\n"
 
 	for _, field := range ef.InitField.Fields {
 		if strings.Contains(field, "time.Time") {

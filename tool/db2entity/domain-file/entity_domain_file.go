@@ -164,7 +164,8 @@ func (edf *entityDomainFile) ParseCloumns(cs Columns, info *ShareInfo) {
 
 		if column.IsOnUpdate() {
 			entityTpl.OnUpdateTimeStamp = append(entityTpl.OnUpdateTimeStamp, fieldName)
-			entityTpl.OnUpdateTimeStampStr = append(entityTpl.OnUpdateTimeStampStr, column.ColumnName)
+			entityTpl.OnUpdateTimeStampStr = append(entityTpl.OnUpdateTimeStampStr,
+				column.ColumnName)
 		}
 
 		doc = column.FilterComment()

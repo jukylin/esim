@@ -32,5 +32,4 @@ func TestNotConfigFile(t *testing.T) {
 	options := ViperConfOptions{}
 
 	NewViperConfig(options.WithConfigType("yaml"))
-
 }

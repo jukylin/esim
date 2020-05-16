@@ -44,9 +44,9 @@ func NewProxyFactory(options ...FactoryOption) *Factory {
 	return proxyFactory
 }
 
-func (FactoryOptions) WithLogger(log log.Logger) FactoryOption {
+func (FactoryOptions) WithLogger(logger log.Logger) FactoryOption {
 	return func(p *Factory) {
-		p.logger = log
+		p.logger = logger
 	}
 }
 

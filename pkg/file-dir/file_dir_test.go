@@ -63,10 +63,10 @@ func TestNotExistsDir(t *testing.T) {
 	exists, err := IsExistsDir(dir)
 	if err != nil {
 		t.Error(err.Error())
-	} else {
-		if exists == true {
-			t.Error("结果错误，目录不存在")
-		}
+	}
+
+	if exists == true {
+		t.Error("结果错误，目录不存在")
 	}
 }
 

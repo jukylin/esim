@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/grpc-ecosystem/go-grpc-middleware"
-	"github.com/grpc-ecosystem/go-grpc-middleware/recovery"
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	ggp "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
 	"github.com/jukylin/esim/config"
@@ -99,7 +99,8 @@ func NewServer(target string, options ...ServerOption) *Server {
 		ggp.EnableHandlingTimeHistogram()
 		serverMetrics := ggp.DefaultServerMetrics
 		serverMetrics.EnableHandlingTimeHistogram(ggp.WithHistogramBuckets(prometheus.DefBuckets))
-		unaryServerInterceptors = append(unaryServerInterceptors, serverMetrics.UnaryServerInterceptor())
+		unaryServerInterceptors = append(unaryServerInterceptors,
+			serverMetrics.UnaryServerInterceptor())
 	}
 
 	if Server.conf.GetBool("grpc_server_check_slow") {
@@ -114,10 +115,12 @@ func NewServer(target string, options ...ServerOption) *Server {
 	opts := []grpc_recovery.Option{
 		grpc_recovery.WithRecoveryHandlerContext(Server.handelPanic()),
 	}
-	unaryServerInterceptors = append(unaryServerInterceptors, grpc_recovery.UnaryServerInterceptor(opts...))
+	unaryServerInterceptors = append(unaryServerInterceptors,
+		grpc_recovery.UnaryServerInterceptor(opts...))
 
 	if len(Server.unaryServerInterceptors) > 0 {
-		unaryServerInterceptors = append(unaryServerInterceptors, Server.unaryServerInterceptors...)
+		unaryServerInterceptors = append(unaryServerInterceptors,
+			Server.unaryServerInterceptors...)
 	}
 
 	if len(unaryServerInterceptors) > 0 {
@@ -203,7 +206,8 @@ func (gs *Server) serverDebug() grpc.UnaryServerInterceptor {
 		resp, err = handler(ctx, req)
 
 		endTime := time.Now()
-		gs.logger.Debugc(ctx, "grpc server end [%v] %s, resp : %s", endTime.Sub(beginTime).String(),
+		gs.logger.Debugc(ctx, "grpc server end [%v] %s, resp : %s",
+			endTime.Sub(beginTime).String(),
 			info.FullMethod, spew.Sdump(resp))
 
 		return resp, err

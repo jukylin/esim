@@ -5,8 +5,8 @@ import (
 	"regexp"
 	"strings"
 
-	logger "github.com/jukylin/esim/log"
-	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	"github.com/jukylin/esim/log"
+	"github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
 	"github.com/spf13/viper"
 	"golang.org/x/tools/imports"
@@ -41,7 +41,7 @@ type Project struct {
 	//"true" or "false"
 	Monitoring string
 
-	logger logger.Logger
+	logger log.Logger
 
 	withGin bool
 
@@ -73,7 +73,7 @@ func InitProject(options ...ProjectOption) *Project {
 	return project
 }
 
-func WithProjectLogger(logger logger.Logger) ProjectOption {
+func WithProjectLogger(logger log.Logger) ProjectOption {
 	return func(pj *Project) {
 		pj.logger = logger
 	}
@@ -105,7 +105,7 @@ func (pj *Project) Run(v *viper.Viper) {
 	pj.build()
 }
 
-func (pj *Project) bindInput(v *viper.Viper) bool {
+func (pj *Project) bindInput(v *viper.Viper) {
 	serverName := v.GetString("server_name")
 	if serverName == "" {
 		pj.logger.Fatalf("The server_name is empty")
@@ -136,8 +136,6 @@ func (pj *Project) bindInput(v *viper.Viper) bool {
 	} else {
 		pj.Monitoring = "false"
 	}
-
-	return true
 }
 
 //checkServerName ServerName only support lowercase ,"_", "-"
@@ -203,19 +201,22 @@ func (pj *Project) initTransport() {
 	if pj.withGin {
 		GinInit()
 		pj.RunTrans = append(pj.RunTrans, "app.RegisterTran(http.NewGinServer(app))")
-		pj.ImportServer = append(pj.ImportServer, pj.ProPath+pj.ServerName+"/internal/transports/http")
+		pj.ImportServer = append(pj.ImportServer,
+			pj.ProPath+pj.ServerName+"/internal/transports/http")
 	}
 
 	if pj.withBeego {
 		BeegoInit()
 		pj.RunTrans = append(pj.RunTrans, "app.RegisterTran(http.NewBeegoServer(app.Esim))")
-		pj.ImportServer = append(pj.ImportServer, pj.ProPath+pj.ServerName+"/internal/transports/http")
+		pj.ImportServer = append(pj.ImportServer,
+			pj.ProPath+pj.ServerName+"/internal/transports/http")
 	}
 
 	if pj.withGrpc {
 		GrpcInit()
 		pj.RunTrans = append(pj.RunTrans, "app.RegisterTran(grpc.NewGrpcServer(app))")
-		pj.ImportServer = append(pj.ImportServer, pj.ProPath+pj.ServerName+"/internal/transports/grpc")
+		pj.ImportServer = append(pj.ImportServer,
+			pj.ProPath+pj.ServerName+"/internal/transports/grpc")
 	}
 }
 

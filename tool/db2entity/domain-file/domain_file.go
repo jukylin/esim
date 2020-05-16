@@ -133,6 +133,10 @@ type InjectInfo struct {
 func NewInjectInfo() *InjectInfo {
 	injectInfo := &InjectInfo{}
 
+	injectInfo.Provides = make(Provides, 0)
+	injectInfo.Imports = make(pkg.Imports, 0)
+	injectInfo.InfraSetArgs = make([]string, 0)
+
 	return injectInfo
 }
 

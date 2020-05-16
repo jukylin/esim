@@ -145,8 +145,10 @@ func (c *Client) init() {
 
 		mgoConnectTimeout := c.conf.GetInt64("mgo_connect_timeout")
 		if mgoConnectTimeout != 0 {
-			clientOptions.SetConnectTimeout(time.Duration(mgoConnectTimeout) * time.Millisecond)
-			clientOptions.SetServerSelectionTimeout(time.Duration(mgoConnectTimeout) * time.Millisecond)
+			clientOptions.SetConnectTimeout(time.Duration(mgoConnectTimeout) *
+				time.Millisecond)
+			clientOptions.SetServerSelectionTimeout(time.Duration(mgoConnectTimeout) *
+				time.Millisecond)
 		}
 
 		mgoMaxConnIdleTime := c.conf.GetInt64("mgo_max_conn_idle_time")
@@ -208,7 +210,8 @@ func (c *Client) initMonitorMulLevelEvent(dbName string) MgoEvent {
 			proxyIns.(MgoEvent).NextEvent(proxyInses[k+1])
 		}
 
-		c.logger.Infof("[mongodb] %s init %s [%p]", dbName, proxyIns.(MgoEvent).EventName(), proxyIns)
+		c.logger.Infof("[mongodb] %s init %s [%p]", dbName, proxyIns.(MgoEvent).EventName(),
+			proxyIns)
 	}
 
 	return firstProxy

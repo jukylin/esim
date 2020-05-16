@@ -48,10 +48,11 @@ func (vs Vars) String() string {
 	return buf.String()
 }
 
-func (vs *Vars) ParseFromAst(GenDecl *ast.GenDecl, src string) {
-	if GenDecl.Tok.String() == "var" {
-		for _, specs := range GenDecl.Specs {
-			if typeSpec, ok := specs.(*ast.ValueSpec); ok {
+func (vs *Vars) ParseFromAst(genDecl *ast.GenDecl, src string) {
+	if genDecl.Tok.String() == "var" {
+		for _, specs := range genDecl.Specs {
+			typeSpec, ok := specs.(*ast.ValueSpec)
+			if ok {
 				varObj := Var{}
 
 				varObj.Body = src[typeSpec.Pos()-1 : typeSpec.End()]

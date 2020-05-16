@@ -88,7 +88,8 @@ func NewClientOptions(options ...ClientOptional) *ClientOptions {
 	}
 
 	if clientOptions.conf.GetBool("grpc_client_tracer") {
-		opts = append(opts, grpc.WithChainUnaryInterceptor(otgrpc.OpenTracingClientInterceptor(clientOptions.tracer)))
+		tracerInterceptor := otgrpc.OpenTracingClientInterceptor(clientOptions.tracer)
+		opts = append(opts, grpc.WithChainUnaryInterceptor(tracerInterceptor))
 	}
 
 	if clientOptions.conf.GetBool("grpc_client_metrics") {
@@ -139,10 +140,9 @@ func (ClientOptionals) WithDialOptions(options ...grpc.DialOption) ClientOptiona
 	}
 }
 
-//NewClient create Client for business.
-//clientOptions clientOptions can not nil
+// NewClient create Client for business.
+// clientOptions clientOptions can not nil
 func NewClient(clientOptions *ClientOptions) *Client {
-
 	Client := &Client{}
 
 	Client.clientOpts = clientOptions
@@ -151,7 +151,6 @@ func NewClient(clientOptions *ClientOptions) *Client {
 }
 
 func (gc *Client) DialContext(ctx context.Context, target string) *grpc.ClientConn {
-
 	var cancel context.CancelFunc
 
 	ClientConnTimeOut := gc.clientOpts.conf.GetInt("grpc_client_conn_time_out")
@@ -218,7 +217,8 @@ func (gc *ClientOptions) clientDebug() func(ctx context.Context,
 }
 
 func ClientStubs(stubsFunc func(ctx context.Context, method string, req, reply interface{},
-	cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error) func(ctx context.Context,
+	cc *grpc.ClientConn, invoker grpc.UnaryInvoker,
+	opts ...grpc.CallOption) error) func(ctx context.Context,
 	method string, req, reply interface{}, cc *grpc.ClientConn,
 	invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 	return func(ctx context.Context, method string, req, reply interface{},
@@ -235,7 +235,8 @@ func slowRequest(ctx context.Context, method string, req, reply interface{}, cc 
 	return err
 }
 
-func timeoutRequest(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn,
+func timeoutRequest(ctx context.Context, method string, req, reply interface{},
+	cc *grpc.ClientConn,
 	invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 	time.Sleep(10 * time.Second)
 	err := invoker(ctx, method, req, reply, cc, opts...)

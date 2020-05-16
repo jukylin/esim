@@ -34,7 +34,7 @@ func (cc *ClientConn) CollectConn(conn *grpc.ClientConn) {
 	cc.conns = append(cc.conns, conn)
 }
 
-//Close unity closes the grpc.ClientConn instances
+// Close unity closes the grpc.ClientConn instances
 func (cc *ClientConn) Close() {
 	var err error
 	for _, conn := range cc.conns {
@@ -45,7 +45,7 @@ func (cc *ClientConn) Close() {
 	}
 }
 
-//State unity show the grpc.ClientConn state
+// State unity show the grpc.ClientConn state
 func (cc *ClientConn) State() []string {
 	var state []string
 	for _, conn := range cc.conns {

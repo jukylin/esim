@@ -5,6 +5,7 @@ func init() {
 }
 
 var (
+	//nolint:lll
 	protoBuffc1 = &FileContent{
 		FileName: "user.pb.go",
 		Dir:      "internal/infra/third_party/protobuf/passport",

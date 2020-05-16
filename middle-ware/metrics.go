@@ -4,6 +4,11 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
+func init() {
+	prometheus.MustRegister(requestTotal)
+	prometheus.MustRegister(requestDuration)
+}
+
 // 初始化 web_reqeust_total
 var requestTotal = prometheus.NewCounterVec(
 	prometheus.CounterOpts{
@@ -23,8 +28,3 @@ var requestDuration = prometheus.NewHistogramVec(
 	},
 	[]string{"method", "endpoint"},
 )
-
-func init() {
-	prometheus.MustRegister(requestTotal)
-	prometheus.MustRegister(requestDuration)
-}

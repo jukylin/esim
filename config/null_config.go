@@ -85,7 +85,8 @@ func (nc *NullConfig) GetSizeInBytes(key string) uint {
 	return 0
 }
 
-func (nc *NullConfig) UnmarshalKey(key string, rawVal interface{}, opts ...viper.DecoderConfigOption) error {
+func (nc *NullConfig) UnmarshalKey(key string, rawVal interface{},
+		opts ...viper.DecoderConfigOption) error {
 	return nil
 }
 

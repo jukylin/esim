@@ -38,6 +38,7 @@ func Execute() {
 	}
 }
 
+//nolint:lll
 func init() {
 	cobra.OnInitialize(initConfig)
 

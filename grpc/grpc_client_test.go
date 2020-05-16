@@ -31,7 +31,7 @@ func TestMain(m *testing.M) {
 
 	logger = log.NewLogger()
 
-	lis, err := net.Listen("tcp", ":50051")
+	lis, err := net.Listen("tcp", "0.0.0.0:50051")
 	if err != nil {
 		logger.Fatalf("failed to listen: %v", err)
 	}
@@ -45,7 +45,8 @@ func TestMain(m *testing.M) {
 		serverOptions.WithServerLogger(logger),
 		serverOptions.WithServerConf(memConfig),
 		serverOptions.WithUnarySrvItcp(
-			ServerStubs(func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+			ServerStubs(func(ctx context.Context, req interface{},
+				info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 				if req.(*pb.HelloRequest).Name == "call_panic" {
 					panic("is a test")
 				} else if req.(*pb.HelloRequest).Name == "call_panic_arr" {

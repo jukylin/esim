@@ -29,8 +29,8 @@ func TestImports_String(t *testing.T) {
 	docs1 := []string{"//time", "//is a test"}
 	docs2 := []string{"//sync", "//is a test"}
 
-	imports = append(imports, Import{Name: "time", Path: "time", Doc: docs1})
-	imports = append(imports, Import{Name: "sync", Path: "sync", Doc: docs2})
+	imports = append(imports, Import{Name: "time", Path: "time", Doc: docs1},
+	Import{Name: "sync", Path: "sync", Doc: docs2})
 
 	src := imports.String()
 	assert.Equal(t, result, src)

@@ -15,7 +15,8 @@ func GinMonitor() gin.HandlerFunc {
 		start := time.Now()
 		c.Next()
 		duration := time.Since(start)
-		requestTotal.With(prometheus.Labels{"method": c.Request.Method, "endpoint": c.Request.Host}).Inc()
+		requestTotal.With(prometheus.Labels{"method": c.Request.Method,
+		"endpoint": c.Request.Host}).Inc()
 		requestDuration.With(prometheus.Labels{"method": c.Request.Method,
 			"endpoint": c.Request.Host}).Observe(duration.Seconds())
 	}

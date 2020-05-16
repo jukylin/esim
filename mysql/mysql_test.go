@@ -308,7 +308,6 @@ func BenchmarkParallelGetDB(b *testing.B) {
 			client.GetCtxDb(ctx, "test_1")
 
 			client.GetCtxDb(ctx, "test_2")
-
 		}
 	})
 

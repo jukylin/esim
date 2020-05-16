@@ -268,7 +268,9 @@ func provideStubsGrpcClient(esim *container.Esim) *grpc.GrpcClient {
 		clientOptional.WithLogger(esim.Logger),
 		clientOptional.WithConf(esim.Conf),
 		clientOptional.WithDialOptions(_grpc.WithUnaryInterceptor(
-			grpc.ClientStubs(func(ctx context.Context, method string, req, reply interface{}, cc *_grpc.ClientConn, invoker _grpc.UnaryInvoker, opts ..._grpc.CallOption) error {
+			grpc.ClientStubs(func(ctx context.Context, method string, req,
+				reply interface{}, cc *_grpc.ClientConn, invoker _grpc.UnaryInvoker,
+				opts ..._grpc.CallOption) error {
 				esim.Logger.Infof(method)
 				err := invoker(ctx, method, req, reply, cc, opts...)
 				return err

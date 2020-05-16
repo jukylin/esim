@@ -10,7 +10,7 @@ import (
 	"regexp"
 	"strings"
 
-	logger "github.com/jukylin/esim/log"
+	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg/file-dir"
 	"github.com/spf13/viper"
 )
@@ -24,7 +24,7 @@ type Protocer struct {
 
 	packageName string
 
-	logger logger.Logger
+	logger log.Logger
 }
 
 type Option func(*Protocer)
@@ -39,7 +39,7 @@ func NewProtocer(options ...Option) *Protocer {
 	return p
 }
 
-func WithProtocLogger(logger logger.Logger) Option {
+func WithProtocLogger(logger log.Logger) Option {
 	return func(p *Protocer) {
 		p.logger = logger
 	}

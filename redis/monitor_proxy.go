@@ -96,7 +96,8 @@ func (mp *MonitorProxy) Err() (err error) {
 	return
 }
 
-func (mp *MonitorProxy) Do(ctx context.Context, commandName string, args ...interface{}) (reply interface{}, err error) {
+func (mp *MonitorProxy) Do(ctx context.Context, commandName string,
+	args ...interface{}) (reply interface{}, err error) {
 	now := time.Now()
 
 	reply, err = mp.nextConn.Do(ctx, commandName, args...)
@@ -113,7 +114,8 @@ func (mp *MonitorProxy) Do(ctx context.Context, commandName string, args ...inte
 	return
 }
 
-func (mp *MonitorProxy) Send(ctx context.Context, commandName string, args ...interface{}) (err error) {
+func (mp *MonitorProxy) Send(ctx context.Context, commandName string,
+	args ...interface{}) (err error) {
 
 	now := time.Now()
 	err = mp.nextConn.Send(ctx, commandName, args...)

@@ -99,9 +99,9 @@ func (ClientOptions) WithDbConfig(dbConfigs []DbConfig) Option {
 	}
 }
 
-func (ClientOptions) WithProxy(proxy ...func() interface{}) Option {
+func (ClientOptions) WithProxy(proxys ...func() interface{}) Option {
 	return func(m *Client) {
-		m.proxy = append(m.proxy, proxy...)
+		m.proxy = append(m.proxy, proxys...)
 	}
 }
 
@@ -166,7 +166,8 @@ func (c *Client) init() {
 				dbSQL = c.db
 			}
 
-			firstProxy := proxy.NewProxyFactory().GetFirstInstance("db_"+dbConfig.Db, dbSQL, c.proxy...)
+			firstProxy := proxy.NewProxyFactory().
+				GetFirstInstance("db_"+dbConfig.Db, dbSQL, c.proxy...)
 
 			DB, err = gorm.Open("mysql", firstProxy)
 			if err != nil {
@@ -195,15 +196,11 @@ func (c *Client) init() {
 	}
 }
 
-func (c *Client) setDb(dbName string, gdb *gorm.DB, db *sql.DB) bool {
+func (c *Client) setDb(dbName string, gdb *gorm.DB, db *sql.DB) {
 	dbName = strings.ToLower(dbName)
 
-	//m.mysqlLock.Lock()
 	c.gdbs[dbName] = gdb
 	c.sqlDbs[dbName] = db
-
-	//m.mysqlLock.Unlock()
-	return true
 }
 
 func (c *Client) GetDb(dbName string) *gorm.DB {
