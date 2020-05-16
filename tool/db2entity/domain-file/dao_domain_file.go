@@ -14,7 +14,6 @@ import (
 )
 
 type daoDomainFile struct {
-
 	withDaoTarget string
 
 	withDisableDao bool

@@ -17,7 +17,7 @@ func TestEntityTemplate(t *testing.T) {
 
 	var imports pkg.Imports
 	imports = append(imports, pkg.Import{Name: "time", Path: "time"},
-			pkg.Import{Name: "sync", Path: "sync"})
+		pkg.Import{Name: "sync", Path: "sync"})
 
 	Field1 := pkg.Field{}
 	Field1.Name = "id"

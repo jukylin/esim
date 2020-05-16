@@ -14,7 +14,6 @@ import (
 )
 
 type entityDomainFile struct {
-
 	withBoubctx string
 
 	withEntityTarget string

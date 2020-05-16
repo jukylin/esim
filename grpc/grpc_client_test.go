@@ -3,9 +3,9 @@ package grpc
 import (
 	"context"
 	"net"
+	"os"
 	"testing"
 	"time"
-	"os"
 
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"

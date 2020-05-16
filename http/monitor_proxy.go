@@ -151,7 +151,7 @@ func (mp *MonitorProxy) slowHTTPRequest(beginTime, endTime time.Time,
 	httpClientSlowTime := mp.conf.GetInt64("http_client_slow_time")
 
 	if httpClientSlowTime != 0 {
-		if endTime.Sub(beginTime) > time.Duration(httpClientSlowTime) * time.Millisecond {
+		if endTime.Sub(beginTime) > time.Duration(httpClientSlowTime)*time.Millisecond {
 			mp.logger.Warnf("slow http request [%s] ：%s", endTime.Sub(beginTime).String(),
 				res.RequestURI)
 		}

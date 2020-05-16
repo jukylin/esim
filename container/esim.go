@@ -99,7 +99,6 @@ func provideTracer(conf config.Config, logger log.Logger) opentracing.Tracer {
 
 //esim init end
 
-
 func NewEsim() *Esim {
 	esimOnce.Do(func() {
 		onceEsim = initEsim()

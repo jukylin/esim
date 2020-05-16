@@ -3,7 +3,6 @@ package log
 import "context"
 
 type Logger interface {
-
 	Error(msg string)
 
 	Debugf(string, ...interface{})

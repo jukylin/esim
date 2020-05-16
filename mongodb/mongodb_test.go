@@ -3,8 +3,8 @@ package mongodb
 import (
 	"context"
 	"os"
-	"testing"
 	"sync"
+	"testing"
 
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"

@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
 	"github.com/jukylin/esim/tool/protoc"
+	"github.com/spf13/cobra"
 )
 
 var protocCmd = &cobra.Command{

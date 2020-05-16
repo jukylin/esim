@@ -1,8 +1,8 @@
 package mysql
 
 import (
-	"database/sql"
 	"context"
+	"database/sql"
 
 	"github.com/jukylin/esim/log"
 )

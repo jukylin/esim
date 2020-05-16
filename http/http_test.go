@@ -5,8 +5,8 @@ import (
 	"context"
 	"io/ioutil"
 	"net/http"
-	"testing"
 	"os"
+	"testing"
 
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
@@ -20,7 +20,6 @@ var logger log.Logger
 var (
 	host1 = "127.0.0.1"
 	host2 = "127.0.0.2"
-
 )
 
 func TestMain(m *testing.M) {

@@ -48,7 +48,6 @@ func (cs Columns) Len() int {
 	return len(cs)
 }
 
-
 func (cs Columns) IsEntity() bool {
 	var cl Column
 	for _, cl = range cs {
@@ -59,7 +58,6 @@ func (cs Columns) IsEntity() bool {
 
 	return false
 }
-
 
 type AutoTime struct {
 	CurTimeStamp      []string

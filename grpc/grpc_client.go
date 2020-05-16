@@ -27,7 +27,6 @@ type Client struct {
 }
 
 type ClientOptions struct {
-
 	clientMetrics *ggp.ClientMetrics
 
 	tracer opentracing2.Tracer

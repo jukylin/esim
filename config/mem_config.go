@@ -21,7 +21,7 @@ func (mc *MemConfig) Get(key string) interface{} {
 	if val, ok := mc.data[key]; ok {
 		return val
 	}
-	
+
 	return nil
 }
 

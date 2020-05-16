@@ -67,7 +67,7 @@ func (fp *cacheProxy) ProxyName() string {
 	return "cache_proxy"
 }
 
-type realDb struct {}
+type realDb struct{}
 
 func newRealDb() *realDb {
 	return &realDb{}

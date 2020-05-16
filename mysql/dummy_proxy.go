@@ -2,8 +2,8 @@
 package mysql
 
 import (
-	"database/sql"
 	"context"
+	"database/sql"
 
 	"github.com/jukylin/esim/log"
 )
@@ -74,7 +74,6 @@ func (dp *dummySQLResult) LastInsertId() (int64, error) {
 func (dp *dummySQLResult) RowsAffected() (int64, error) {
 	return 0, nil
 }
-
 
 func (dp *dummyProxy) Begin() (*sql.Tx, error) {
 	return dp.nextProxy.Begin()

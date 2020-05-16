@@ -5,15 +5,14 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/jukylin/esim/log"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
-	"github.com/jukylin/esim/log"
 )
 
 var cfgFile string
 var v = viper.New()
 var logger = log.NewLogger()
-
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
