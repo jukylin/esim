@@ -16,8 +16,8 @@ func TestEntityTemplate(t *testing.T) {
 	assert.Nil(t, err)
 
 	var imports pkg.Imports
-	imports = append(imports, pkg.Import{Name: "time", Path: "time"})
-	imports = append(imports, pkg.Import{Name: "sync", Path: "sync"})
+	imports = append(imports, pkg.Import{Name: "time", Path: "time"},
+			pkg.Import{Name: "sync", Path: "sync"})
 
 	Field1 := pkg.Field{}
 	Field1.Name = "id"
@@ -33,13 +33,12 @@ func TestEntityTemplate(t *testing.T) {
 	var buf bytes.Buffer
 	entityTpl := entityTpl{}
 	entityTpl.StructName = "Entity"
-	entityTpl.CurTimeStamp = append(entityTpl.CurTimeStamp, "CreateTime1")
-	entityTpl.CurTimeStamp = append(entityTpl.CurTimeStamp, "CreateTime2")
+	entityTpl.CurTimeStamp = append(entityTpl.CurTimeStamp, "CreateTime1", "CreateTime2")
 
 	entityTpl.OnUpdateTimeStamp = append(entityTpl.OnUpdateTimeStamp, "LastUpdateTime")
 
-	entityTpl.OnUpdateTimeStampStr = append(entityTpl.OnUpdateTimeStampStr, "last_update_time1")
-	entityTpl.OnUpdateTimeStampStr = append(entityTpl.OnUpdateTimeStampStr, "last_update_time2")
+	entityTpl.OnUpdateTimeStampStr = append(entityTpl.OnUpdateTimeStampStr,
+		"last_update_time1", "last_update_time2")
 
 	entityTpl.Imports = imports
 	entityTpl.DelField = "is_del"

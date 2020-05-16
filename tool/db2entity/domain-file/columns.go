@@ -9,6 +9,7 @@ import (
 )
 
 // Constants for return types of golang
+//nolint:deadcode,varcheck
 const (
 	golangByteArray  = "[]byte"
 	gureguNullInt    = "null.Int"
@@ -49,8 +50,8 @@ func (cs Columns) Len() int {
 
 
 func (cs Columns) IsEntity() bool {
-
-	for _, cl := range cs {
+	var cl Column
+	for _, cl = range cs {
 		if cl.IsPri() {
 			return true
 		}

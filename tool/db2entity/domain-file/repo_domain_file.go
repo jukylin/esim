@@ -119,7 +119,8 @@ func (rdf *repoDomainFile) ParseCloumns(cs Columns, info *ShareInfo) {
 		pkg.Import{Path: file_dir.GetGoProPath() + pkg.DirPathToImportPath(info.WithEntityTarget)},
 		pkg.Import{Path: file_dir.GetGoProPath() + pkg.DirPathToImportPath(info.WithDaoTarget)})
 
-	for _, column := range cs {
+	var column Column
+	for _, column = range cs {
 		repoTpl.DelField = column.CheckDelField()
 	}
 

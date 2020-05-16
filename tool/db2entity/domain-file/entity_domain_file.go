@@ -138,8 +138,9 @@ func (edf *entityDomainFile) ParseCloumns(cs Columns, info *ShareInfo) {
 	var doc string
 	var nullable bool
 	var fieldName string
+	var column Column
 
-	for _, column := range cs {
+	for _, column = range cs {
 
 		field := pkg.Field{}
 

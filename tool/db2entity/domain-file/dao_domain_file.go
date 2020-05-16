@@ -119,7 +119,8 @@ func (ddf *daoDomainFile) ParseCloumns(cs Columns, shareInfo *ShareInfo) {
 		pkg.Import{Path: "github.com/jukylin/esim/mysql"},
 		pkg.Import{Path: file_dir.GetGoProPath() + pkg.DirPathToImportPath(shareInfo.WithEntityTarget)})
 
-	for _, column := range cs {
+	var column Column
+	for _, column = range cs {
 		nullable := false
 		if column.IsNullAble == "YES" {
 			nullable = true

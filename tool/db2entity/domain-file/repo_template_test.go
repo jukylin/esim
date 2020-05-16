@@ -16,8 +16,7 @@ func TestRepoTemplate(t *testing.T) {
 	assert.Nil(t, err)
 
 	var imports pkg.Imports
-	imports = append(imports, pkg.Import{Name: "time", Path: "time"})
-	imports = append(imports, pkg.Import{Name: "sync", Path: "sync"})
+	imports = append(imports, pkg.Import{Name: "time", Path: "time"}, pkg.Import{Name: "sync", Path: "sync"})
 
 	var buf bytes.Buffer
 	repoTpl := newRepoTpl("User")
