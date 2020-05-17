@@ -36,7 +36,7 @@ type Client struct {
 
 	stateTicker time.Duration
 
-	//for integration tests
+	// for integration tests
 	db *sql.DB
 }
 
@@ -119,7 +119,6 @@ func (ClientOptions) WithDB(db *sql.DB) Option {
 
 // initializes Client.
 func (c *Client) init() {
-
 	dbConfigs := make([]DbConfig, 0)
 	err := c.conf.UnmarshalKey("dbs", &dbConfigs)
 	if err != nil {
@@ -191,7 +190,6 @@ func (c *Client) init() {
 		}
 
 		go c.Stats()
-		//DB.SetLogger(log.L)
 		c.logger.Infof("[mysql] %s init success", dbConfig.Db)
 	}
 }
@@ -215,6 +213,7 @@ func (c *Client) getDb(ctx context.Context, dbName string) *gorm.DB {
 	}
 
 	c.logger.Errorf("[db] %s not found", dbName)
+
 	return nil
 }
 
@@ -231,6 +230,7 @@ func (c *Client) Ping() []error {
 			errs = append(errs, err)
 		}
 	}
+
 	return errs
 }
 
@@ -242,12 +242,9 @@ func (c *Client) Close() {
 			c.logger.Errorf(err.Error())
 		}
 	}
-
-	//c.closeChan <- true
 }
 
 func (c *Client) Stats() {
-
 	defer func() {
 		if err := recover(); err != nil {
 			c.logger.Infof(err.(error).Error())

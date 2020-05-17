@@ -27,7 +27,6 @@ var ifacerCmd = &cobra.Command{
 
 //nolint
 func init() {
-
 	rootCmd.AddCommand(ifacerCmd)
 
 	ifacerCmd.Flags().StringP("iname", "", "", "接口名称")

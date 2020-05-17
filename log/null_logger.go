@@ -7,7 +7,6 @@ import (
 type nullLogger struct{}
 
 func NewNullLogger() Logger {
-
 	logger := &nullLogger{}
 
 	Log = logger

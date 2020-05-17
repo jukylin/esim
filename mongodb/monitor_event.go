@@ -31,7 +31,6 @@ type MonitorEventOptions struct{}
 type EventOption func(c *MonitorEvent)
 
 func NewMonitorEvent(options ...EventOption) MgoEvent {
-
 	m := &MonitorEvent{}
 
 	for _, option := range options {
@@ -107,7 +106,6 @@ func (m *MonitorEvent) SucceededEvent(ctx context.Context,
 }
 
 func (m *MonitorEvent) FailedEvent(ctx context.Context, failedEvent *event.CommandFailedEvent) {
-
 	var beginTime time.Time
 	monBackEvent := &mongoBackEvent{}
 	endTime := time.Now()
@@ -190,7 +188,6 @@ func (m *MonitorEvent) withTracer(ctx context.Context, backEvent *mongoBackEvent
 			span.FinishWithOptions(opentracing2.FinishOptions{FinishTime: endTime})
 		}
 	}
-
 }
 
 func (m *MonitorEvent) withMetrics(ctx context.Context, backEvent *mongoBackEvent,

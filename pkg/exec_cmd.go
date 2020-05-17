@@ -20,7 +20,6 @@ func NewCmdExec() Exec {
 }
 
 func (ce *CmdExec) ExecWire(dir string, args ...string) error {
-
 	cmd := exec.Command("wire", args...)
 	cmd.Dir = dir
 

@@ -49,9 +49,8 @@ func (cs Columns) Len() int {
 }
 
 func (cs Columns) IsEntity() bool {
-	var cl Column
-	for _, cl = range cs {
-		if cl.IsPri() {
+	for i := range cs {
+		if (&cs[i]).IsPri() {
 			return true
 		}
 	}
@@ -76,7 +75,6 @@ func NewDBColumnsInter(logger log.Logger) ColumnsRepo {
 
 // SelectColumns Select column details
 func (dc *DBColumnsInter) SelectColumns(dbConf *DbConfig) (Columns, error) {
-
 	var err error
 	var db *gorm.DB
 	if dbConf.Password != "" {

@@ -9,6 +9,7 @@ import (
 	"github.com/jukylin/esim/pkg/templates"
 	"github.com/ory/dockertest/v3"
 	dc "github.com/ory/dockertest/v3/docker"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 var (
@@ -60,7 +61,7 @@ func TestMain(m *testing.M) {
 		logger.Fatalf("Could not start resource: %s", err)
 	}
 
-	err = resource.Expire(10)
+	err = resource.Expire(100)
 	if err != nil {
 		logger.Fatalf(err.Error())
 	}

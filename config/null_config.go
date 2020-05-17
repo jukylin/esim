@@ -7,8 +7,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-type NullConfig struct {
-}
+type NullConfig struct {}
 
 func NewNullConfig() *NullConfig {
 	return &NullConfig{}
@@ -62,7 +61,7 @@ func (nc *NullConfig) GetDuration(key string) time.Duration {
 	return cast.ToDuration(0)
 }
 
-//func (nc *NullConfig) GetIntSlice(key string) []int { return viper.GetIntSlice(key) }
+// func (nc *NullConfig) GetIntSlice(key string) []int { return viper.GetIntSlice(key) }
 
 func (nc *NullConfig) GetStringSlice(key string) []string {
 	return []string{}
@@ -80,7 +79,7 @@ func (nc *NullConfig) GetStringMapStringSlice(key string) map[string][]string {
 	return map[string][]string{}
 }
 
-//TODO 还没实现
+// TODO 还没实现
 func (nc *NullConfig) GetSizeInBytes(key string) uint {
 	return 0
 }

@@ -26,7 +26,6 @@ type LoggerOptions struct{}
 type Option func(c *logger)
 
 func NewLogger(options ...Option) Logger {
-
 	logger := &logger{}
 
 	for _, option := range options {
@@ -167,7 +166,7 @@ func (log *logger) standardTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEn
 	enc.AppendString(t.Format("2006-01-02 15:04:05"))
 }
 
-//get  tracer_id from opentracing
+// getTracerID get tracer_id from opentracing
 func (log *logger) getTracerID(ctx context.Context) string {
 	sp := opentracing.SpanFromContext(ctx)
 	if sp != nil {

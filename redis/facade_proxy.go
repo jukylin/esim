@@ -68,7 +68,6 @@ func (fp *FacadeProxy) Flush(ctx context.Context) (err error) {
 }
 
 func (fp *FacadeProxy) Receive(ctx context.Context) (reply interface{}, err error) {
-
 	reply, err = fp.nextConn.Receive()
 
 	return

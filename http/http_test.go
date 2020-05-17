@@ -32,7 +32,6 @@ func TestMain(m *testing.M) {
 }
 
 func TestMulLevelRoundTrip(t *testing.T) {
-
 	clientOptions := ClientOptions{}
 	httpClient := NewClient(
 		clientOptions.WithLogger(logger),

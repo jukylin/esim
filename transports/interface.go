@@ -1,9 +1,9 @@
 package transports
 
 type Transports interface {
-	//start server
+	// start server
 	Start()
 
-	//graceful shutdown server
+	// graceful shutdown server
 	GracefulShutDown()
 }

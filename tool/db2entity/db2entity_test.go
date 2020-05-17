@@ -16,7 +16,6 @@ import (
 )
 
 func TestDb2Entity_Run(t *testing.T) {
-
 	v := viper.New()
 	v.Set("entity_target", "./example/entity")
 	v.Set("dao_target", "./example/dao")
@@ -99,7 +98,6 @@ func TestDb2Entity_Run(t *testing.T) {
 }
 
 func TestDb2Entity_ErrWrite(t *testing.T) {
-
 	v := viper.New()
 	v.Set("entity_target", "./example/entity")
 	v.Set("dao_target", "./example/dao")

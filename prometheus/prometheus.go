@@ -11,7 +11,6 @@ import (
 type Prometheus struct{}
 
 func NewPrometheus(httpAddr string, logger log.Logger) *Prometheus {
-
 	prometheus := &Prometheus{}
 
 	in := strings.Index(httpAddr, ":")
@@ -28,7 +27,6 @@ func NewPrometheus(httpAddr string, logger log.Logger) *Prometheus {
 }
 
 func NewNullProme() *Prometheus {
-
 	prome := &Prometheus{}
 
 	return prome

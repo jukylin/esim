@@ -208,10 +208,10 @@ func (f *Ifacer) ManageNoConflictImport(imps []*types.Package) bool {
 	return true
 }
 
-func (f *Ifacer) setNoConflictImport(importName, importPath string) bool {
+func (f *Ifacer) setNoConflictImport(importName, importPath string) {
 	if impPath, ok := f.pkgNoConflictImport[importName]; ok {
 		if impPath.Path == importPath {
-			return true
+			return
 		}
 
 		//package name repeat
@@ -236,8 +236,6 @@ func (f *Ifacer) setNoConflictImport(importName, importPath string) bool {
 		imp.Path = importPath
 		f.pkgNoConflictImport[importName] = imp
 	}
-
-	return true
 }
 
 //github.com/jukylin/esim/redis

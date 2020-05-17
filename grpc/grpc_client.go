@@ -235,6 +235,7 @@ func slowRequest(ctx context.Context, method string, req, reply interface{}, cc 
 	return err
 }
 
+//nolint:deadcode,unused
 func timeoutRequest(ctx context.Context, method string, req, reply interface{},
 	cc *grpc.ClientConn,
 	invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {

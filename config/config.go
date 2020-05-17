@@ -23,7 +23,6 @@ type ViperConfOptions struct{}
 type Option func(c *viperConf)
 
 func NewViperConfig(options ...Option) Config {
-
 	viperConf := &viperConf{}
 
 	for _, option := range options {
@@ -104,7 +103,7 @@ func (vc *viperConf) GetTime(key string) time.Time { return vc.Viper.GetTime(key
 
 func (vc *viperConf) GetDuration(key string) time.Duration { return vc.Viper.GetDuration(key) }
 
-//func GetIntSlice(key string) []int { return config.GetIntSlice(key) }
+// func GetIntSlice(key string) []int { return config.GetIntSlice(key) }
 
 func (vc *viperConf) GetStringSlice(key string) []string { return vc.Viper.GetStringSlice(key) }
 

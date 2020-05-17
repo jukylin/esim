@@ -69,7 +69,7 @@ func (mc *MemConfig) GetDuration(key string) time.Duration {
 	return cast.ToDuration(mc.Get(key))
 }
 
-//func (mc *MemConfig) GetIntSlice(key string) []int { return viper.GetIntSlice(key) }
+// func (mc *MemConfig) GetIntSlice(key string) []int { return viper.GetIntSlice(key) }
 
 func (mc *MemConfig) GetStringSlice(key string) []string {
 	return cast.ToStringSlice(mc.Get(key))
@@ -87,7 +87,7 @@ func (mc *MemConfig) GetStringMapStringSlice(key string) map[string][]string {
 	return cast.ToStringMapStringSlice(mc.Get(key))
 }
 
-//TODO 还没实现
+// TODO 还没实现
 func (mc *MemConfig) GetSizeInBytes(key string) uint {
 	return 0
 }

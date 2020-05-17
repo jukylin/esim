@@ -82,7 +82,6 @@ func TestMain(m *testing.M) {
 }
 
 func TestGetColl(t *testing.T) {
-
 	conf := config.NewMemConfig()
 
 	mgoClientOptions := ClientOptions{}

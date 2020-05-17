@@ -21,5 +21,14 @@ func TestDBColumnsInter_GetColumns(t *testing.T) {
 	}
 	_, err := dbcColumns.SelectColumns(dbConf)
 	assert.Nil(t, err)
-	//spew.Dump(columns)
+	// spew.Dump(columns)
+}
+
+func TestColumns_IsEntity(t *testing.T) {
+	cs := Columns{}
+
+	assert.False(t, cs.IsEntity())
+
+	cs = append(cs, Column{ColumnKey : "PRI"})
+	assert.True(t, cs.IsEntity())
 }

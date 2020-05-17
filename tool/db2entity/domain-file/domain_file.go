@@ -10,12 +10,11 @@ import (
 )
 
 const (
-	DOMAIN_FILE_EXT = ".go"
+	DomainFileExt = ".go"
 )
 
 //DomainFile
 type DomainFile interface {
-
 	//if true not need this domain file
 	Disabled() bool
 

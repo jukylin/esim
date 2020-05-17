@@ -23,7 +23,6 @@ func initJaeger() (opentracing.Tracer, error) {
 }
 
 func TestLog(t *testing.T) {
-
 	loggerOptions := LoggerOptions{}
 
 	logger := NewLogger(loggerOptions.WithDebug(false))
@@ -48,7 +47,6 @@ func TestLog(t *testing.T) {
 }
 
 func TestGetTracerId(t *testing.T) {
-
 	loggerOptions := LoggerOptions{}
 
 	log := NewLogger(loggerOptions.WithDebug(false))
@@ -64,7 +62,6 @@ func TestGetTracerId(t *testing.T) {
 }
 
 func TestGetTracerIdEmpty(t *testing.T) {
-
 	loggerOptions := LoggerOptions{}
 
 	log := NewLogger(loggerOptions.WithDebug(false))

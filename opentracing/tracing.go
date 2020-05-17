@@ -10,7 +10,6 @@ import (
 )
 
 func NewTracer(serviceName string, logger log.Logger) opentracing.Tracer {
-
 	var tracer opentracing.Tracer
 
 	cfg, err := jaegerconfig.FromEnv()

@@ -43,7 +43,6 @@ type InitFieldsReturn struct {
 //|			  |	funcBody  |
 //|	----------|	----------|
 type EsimFactory struct {
-
 	//struct name which be search
 	StructName string
 
@@ -195,7 +194,6 @@ type structInfo struct {
 
 	structStr string
 
-	//
 	structFileContent string
 
 	vars pkg.Vars
@@ -223,7 +221,6 @@ func (ef *EsimFactory) getPluralForm(word string) string {
 }
 
 func (ef *EsimFactory) Run(v *viper.Viper) error {
-
 	err := ef.bindInput(v)
 	if err != nil {
 		ef.logger.Panicf(err.Error())
@@ -303,7 +300,6 @@ func (ef *EsimFactory) assignStructTpl() {
 }
 
 func (ef *EsimFactory) executeNewTmpl() {
-
 	content, err := ef.tpl.Execute("factory", newTemplate, ef)
 	if err != nil {
 		ef.logger.Panicf(err.Error())
@@ -312,7 +308,7 @@ func (ef *EsimFactory) executeNewTmpl() {
 	ef.NewStructInfo.structStr = content
 }
 
-//replaceOriginContent gen a new struct file content
+// replaceOriginContent gen a new struct file content
 func (ef *EsimFactory) replaceOriginContent() string {
 	var newContent string
 	originContent := ef.oldStructInfo.structFileContent
@@ -333,7 +329,7 @@ func (ef *EsimFactory) replaceOriginContent() string {
 	return newContent
 }
 
-//printResult println file content to terminal
+// printResult println file content to terminal
 func (ef *EsimFactory) printResult() {
 	src := ef.firstPart + "\n"
 	src += ef.secondPart + "\n"
@@ -347,7 +343,7 @@ func (ef *EsimFactory) printResult() {
 	}
 }
 
-//organizePart  organize pack, import, var, struct
+// organizePart  organize pack, import, var, struct
 func (ef *EsimFactory) organizePart() {
 	ef.firstPart = ef.packStr + "\n"
 	ef.firstPart += ef.NewStructInfo.importStr + "\n"
@@ -362,7 +358,7 @@ func (ef *EsimFactory) organizePart() {
 	ef.thirdPart = ef.NewStructInfo.structStr
 }
 
-//copy oldStructInfo to NewStructInfo
+// copy oldStructInfo to NewStructInfo
 func (ef *EsimFactory) copyOldStructInfo() {
 	copyStructInfo := *ef.oldStructInfo
 	ef.NewStructInfo = &copyStructInfo
@@ -414,7 +410,6 @@ func (ef *EsimFactory) bindInput(v *viper.Viper) error {
 }
 
 func (ef *EsimFactory) genStr() {
-
 	ef.genReturnVarStr()
 	ef.genStructInitStr()
 	ef.genSpecFieldInitStr()
@@ -436,10 +431,9 @@ func (ef *EsimFactory) genStr() {
 	ef.NewStructInfo.varStr = ef.NewStructInfo.vars.String()
 }
 
-//@ find struct
-//@ parse struct
+// find struct
+// parse struct
 func (ef *EsimFactory) parseStruct() bool {
-
 	exists, err := file_dir.IsExistsDir(ef.structDir)
 	if err != nil {
 		ef.logger.Panicf(err.Error())
@@ -487,20 +481,13 @@ func (ef *EsimFactory) parseStruct() bool {
 					if genDecl.Tok.String() == "type" {
 						ef.parseType(genDecl, src, fileInfo, f)
 					}
-				}
-			}
 
-			for _, decl := range f.Decls {
-				if genDecl, ok := decl.(*ast.GenDecl); ok {
 					if genDecl.Tok.String() == "var" && ef.found {
 						ef.oldStructInfo.vars.ParseFromAst(genDecl, strSrc)
 					}
 
 					if genDecl.Tok.String() == "import" && ef.found {
-						imps := pkg.Imports{}
-						imps.ParseFromAst(genDecl)
-						ef.oldStructInfo.imports = imps
-						ef.oldStructInfo.importStr = strSrc[genDecl.Pos()-1 : genDecl.End()]
+						ef.parseImport(genDecl, src)
 					}
 				}
 			}
@@ -535,76 +522,90 @@ func (ef *EsimFactory) parseType(genDecl *ast.GenDecl, src []byte,
 	}
 }
 
-//extend logger and conf for new struct field
-func (ef *EsimFactory) extendField() bool {
+func (ef *EsimFactory) parseImport(genDecl *ast.GenDecl, src []byte) {
+	strSrc := string(src)
+	imps := pkg.Imports{}
+	imps.ParseFromAst(genDecl)
+	ef.oldStructInfo.imports = imps
+	ef.oldStructInfo.importStr = strSrc[genDecl.Pos()-1 : genDecl.End()]
+}
 
+// extend logger and conf for new struct field
+func (ef *EsimFactory) extendField() bool {
 	var HasExtend bool
 	if ef.withOption {
 		if ef.withGenLoggerOption {
 			HasExtend = true
-			var foundLogField bool
-			for _, field := range ef.NewStructInfo.Fields {
-				if strings.Contains(field.Field, "log.Logger") && !foundLogField {
-					foundLogField = true
-				}
-			}
-
-			if !foundLogField || len(ef.NewStructInfo.Fields) == 0 {
-				fld := pkg.Field{}
-				fld.Field = "logger log.Logger"
-				fld.Name = "logger"
-				ef.NewStructInfo.Fields = append(ef.NewStructInfo.Fields, fld)
-			}
-
-			var foundLogImport bool
-			for _, oim := range ef.NewStructInfo.imports {
-				if oim.Path == "github.com/jukylin/esim/log" {
-					foundLogImport = true
-				}
-			}
-
-			if !foundLogImport {
-				ef.appendNewImport("github.com/jukylin/esim/log")
-			}
+			ef.extendLog()
 		}
 
 		if ef.withGenConfOption {
 			HasExtend = true
-
-			var foundConfField bool
-			for _, field := range ef.NewStructInfo.Fields {
-				if strings.Contains(field.Field, "config.Config") && !foundConfField {
-					foundConfField = true
-				}
-			}
-
-			if !foundConfField || len(ef.NewStructInfo.Fields) == 0 {
-				fld := pkg.Field{}
-				fld.Field = "conf config.Config"
-				fld.Name = "conf"
-				ef.NewStructInfo.Fields = append(ef.NewStructInfo.Fields, fld)
-			}
-
-			var foundConfImport bool
-			for _, oim := range ef.NewStructInfo.imports {
-				if oim.Path == "github.com/jukylin/esim/config" {
-					foundConfImport = true
-				}
-			}
-
-			if !foundConfImport {
-				ef.appendNewImport("github.com/jukylin/esim/config")
-			}
+			ef.extendConf()
 		}
 	}
 
 	return HasExtend
 }
 
-//if struct field had extend logger or conf
+func (ef *EsimFactory) extendLog()  {
+	var foundLogField bool
+	for _, field := range ef.NewStructInfo.Fields {
+		if strings.Contains(field.Field, "log.Logger") && !foundLogField {
+			foundLogField = true
+		}
+	}
+
+	if !foundLogField || len(ef.NewStructInfo.Fields) == 0 {
+		fld := pkg.Field{}
+		fld.Field = "logger log.Logger"
+		fld.Name = "logger"
+		ef.NewStructInfo.Fields = append(ef.NewStructInfo.Fields, fld)
+	}
+
+	var foundLogImport bool
+	for _, oim := range ef.NewStructInfo.imports {
+		if oim.Path == "github.com/jukylin/esim/log" {
+			foundLogImport = true
+		}
+	}
+
+	if !foundLogImport {
+		ef.appendNewImport("github.com/jukylin/esim/log")
+	}
+}
+
+
+func (ef *EsimFactory) extendConf()  {
+	var foundConfField bool
+	for _, field := range ef.NewStructInfo.Fields {
+		if strings.Contains(field.Field, "config.Config") && !foundConfField {
+			foundConfField = true
+		}
+	}
+
+	if !foundConfField || len(ef.NewStructInfo.Fields) == 0 {
+		fld := pkg.Field{}
+		fld.Field = "conf config.Config"
+		fld.Name = "conf"
+		ef.NewStructInfo.Fields = append(ef.NewStructInfo.Fields, fld)
+	}
+
+	var foundConfImport bool
+	for _, oim := range ef.NewStructInfo.imports {
+		if oim.Path == "github.com/jukylin/esim/config" {
+			foundConfImport = true
+		}
+	}
+
+	if !foundConfImport {
+		ef.appendNewImport("github.com/jukylin/esim/config")
+	}
+}
+
+// if struct field had extend logger or conf
 // so build a new struct
 func (ef *EsimFactory) buildNewStructFileContent() error {
-
 	ef.NewStructInfo.importStr = ef.NewStructInfo.imports.String()
 
 	if ef.oldStructInfo.importStr != "" {
@@ -652,7 +653,7 @@ func (ef *EsimFactory) genReturnVarStr() {
 	}
 }
 
-//type Option func(c *{{.OptionParam}})
+// type Option func(c *{{.OptionParam}})
 func (ef *EsimFactory) genOptionParam() {
 	if ef.withPool || ef.withStar {
 		ef.OptionParam = "*" + ef.StructName
@@ -679,13 +680,12 @@ func (ef *EsimFactory) genStructInitStr() {
 	ef.NewStructInfo.StructInitStr = structInitStr
 }
 
-//return {{.ReturnStr}}
+// return {{.ReturnStr}}
 func (ef *EsimFactory) genReturnStr() {
 	ef.ReturnStr = templates.Shorten(snaker.SnakeToCamelLower(ef.StructName))
 }
 
 func (ef *EsimFactory) genOptions() {
-
 	ef.Option1 = `type ` + ef.StructName + `Option func(` + ef.OptionParam + `)`
 
 	ef.Option2 = `options ...` + ef.StructName + `Option`
@@ -720,14 +720,12 @@ func With` + ef.StructName + `Logger(logger log.Logger) ` + ef.StructName + `Opt
 }
 
 func (ef *EsimFactory) genPool() {
-
 	ef.incrPoolVar(ef.StructName)
 
 	ef.ReleaseStr = ef.genReleaseStructStr()
 }
 
 func (ef *EsimFactory) genPlural() {
-
 	ef.incrPoolVar(ef.pluralName)
 
 	plural := NewPlural()
@@ -829,7 +827,7 @@ func (ef *EsimFactory) appendPoolVar(pollVarName, structName string) pkg.Var {
 	return poolVar
 }
 
-//变量是否存在
+// 变量是否存在
 func (ef *EsimFactory) varNameExists(vars pkg.Vars, poolVarName string) bool {
 	for _, varInfo := range vars {
 		for _, varName := range varInfo.Name {
@@ -842,9 +840,8 @@ func (ef *EsimFactory) varNameExists(vars pkg.Vars, poolVarName string) bool {
 	return false
 }
 
-//package + import
+// package + import
 func (ef *EsimFactory) getFirstPart() {
-
 	if ef.oldStructInfo.importStr == "" {
 		ef.firstPart += ef.packStr + "\n\n"
 	}

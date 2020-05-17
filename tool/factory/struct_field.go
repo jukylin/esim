@@ -15,7 +15,7 @@ import (
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
-	log2 "github.com/jukylin/esim/log"
+	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
 	file_dir "github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
@@ -43,7 +43,7 @@ type StructFieldIface interface {
 }
 
 type RPCPluginStructField struct {
-	logger log2.Logger
+	logger log.Logger
 
 	structDir string
 
@@ -79,7 +79,7 @@ var HandshakeConfig = plugin.HandshakeConfig{
 }
 
 func NewRPCPluginStructField(writer file_dir.IfaceWriter,
-	logger log2.Logger) *RPCPluginStructField {
+	logger log.Logger) *RPCPluginStructField {
 	rpcPlugin := &RPCPluginStructField{}
 
 	rpcPlugin.writer = writer
@@ -173,7 +173,6 @@ func (rps *RPCPluginStructField) copyFile(dstName, srcName string, reg *regexp.R
 
 // gen modelName_plugin.go
 func (rps *RPCPluginStructField) genStructPlugin(dir string) {
-
 	tmpl, err := template.New("rpc_plugin").Funcs(templates.EsimFuncMap()).
 		Parse(rpcPluginTemplate)
 	if err != nil {
@@ -236,7 +235,6 @@ func (rps *RPCPluginStructField) dispense() {
 }
 
 func (rps *RPCPluginStructField) run() {
-
 	if rps.structDir == "" {
 		rps.logger.Panicf("%s is empty", rps.structDir)
 	}
@@ -267,7 +265,6 @@ func (rps *RPCPluginStructField) run() {
 }
 
 func (rps *RPCPluginStructField) SortField(fields []pkg.Field) *SortReturn {
-
 	rps.Fields = fields
 
 	if rps.model == nil {
@@ -362,10 +359,10 @@ func (rps *RPCPluginStructField) GenInitFieldStr(getType reflect.Type, fieldLink
 			continue
 		case reflect.Map:
 			structFields = append(structFields, "for k, _ := range "+fieldLink+"."+
-				getType.Field(i).Name+" {")
-			structFields = append(structFields, "delete("+fieldLink+"."+
-				getType.Field(i).Name+", k)")
-			structFields = append(structFields, "}")
+				getType.Field(i).Name+" {",
+				"delete("+fieldLink+"."+
+					getType.Field(i).Name+", k)",
+				"}")
 			if specFilds != nil {
 				field.Name = initName + "." + getType.Field(i).Name
 				field.Type = "map"

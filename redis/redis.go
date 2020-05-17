@@ -138,11 +138,11 @@ func NewClient(options ...Option) *Client {
 
 		go onceClient.Stats()
 
-		onceClient.logger.Infof("[redis] init success %s : %s", onceClient.redisHost, onceClient.redisPort)
+		onceClient.logger.Infof("[redis] init success %s : %s",
+			onceClient.redisHost, onceClient.redisPort)
 	})
 
 	return onceClient
-
 }
 
 func (ClientOptions) WithConf(conf config.Config) Option {
@@ -213,7 +213,6 @@ func (c *Client) initPool() {
 
 //使用原生redisgo
 func (c *Client) GetRedisConn() redis.Conn {
-
 	rc := c.client.Get()
 
 	return rc
@@ -221,7 +220,6 @@ func (c *Client) GetRedisConn() redis.Conn {
 
 //Recommended
 func (c *Client) GetCtxRedisConn() ContextConn {
-
 	rc := c.client.Get()
 
 	facadeProxy := NewFacadeProxy()
@@ -241,11 +239,13 @@ func (c *Client) GetCtxRedisConn() ContextConn {
 func (c *Client) Close() error {
 	err := c.client.Close()
 	c.closeChan <- true
+
 	return err
 }
 
 func (c *Client) Ping() error {
 	conn := c.client.Get()
+
 	return conn.Err()
 }
 

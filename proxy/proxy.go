@@ -27,9 +27,7 @@ type FactoryOption func(c *Factory)
 type FactoryOptions struct{}
 
 func NewProxyFactory(options ...FactoryOption) *Factory {
-
 	factoryOnce.Do(func() {
-
 		proxyFactory = &Factory{}
 
 		for _, option := range options {
@@ -53,8 +51,8 @@ func (FactoryOptions) WithLogger(logger log.Logger) FactoryOption {
 // GetFirstInstance implement init mul level proxy,
 // RealInstance and proxys make sure both implement the same interface
 // return firstProxy | realInstance
-func (pf *Factory) GetFirstInstance(realName string, realInstance interface{}, proxys ...func() interface{}) interface{} {
-
+func (pf *Factory) GetFirstInstance(realName string, realInstance interface{},
+	proxys ...func() interface{}) interface{} {
 	var firstProxy interface{}
 
 	proxyInses := pf.GetInstances(realName, proxys...)
@@ -74,7 +72,6 @@ func (pf *Factory) GetFirstInstance(realName string, realInstance interface{}, p
 }
 
 func (pf *Factory) GetInstances(realName string, proxys ...func() interface{}) []interface{} {
-
 	proxyNum := len(proxys)
 	var proxyInses []interface{}
 	if proxyNum > 0 {
@@ -90,10 +87,12 @@ func (pf *Factory) GetInstances(realName string, proxys ...func() interface{}) [
 		for k, proxyIns := range proxyInses {
 			if proxyNum == 1 {
 				proxyIns.(Proxy).NextProxy(proxyInses[k])
-				pf.logger.Infof("[%s] %s init [%p]", realName, proxyIns.(Proxy).ProxyName(), proxyIns)
+				pf.logger.Infof("[%s] %s init [%p]", realName, proxyIns.(Proxy).ProxyName(),
+					proxyIns)
 			} else if k+1 < proxyNum {
 				proxyIns.(Proxy).NextProxy(proxyInses[k+1])
-				pf.logger.Infof("[%s] %s init [%p]", realName, proxyIns.(Proxy).ProxyName(), proxyIns)
+				pf.logger.Infof("[%s] %s init [%p]", realName, proxyIns.(Proxy).ProxyName(),
+					proxyIns)
 			} else {
 				continue
 			}

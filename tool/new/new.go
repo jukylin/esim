@@ -57,7 +57,6 @@ type Project struct {
 type ProjectOption func(*Project)
 
 func InitProject(options ...ProjectOption) *Project {
-
 	project := &Project{}
 
 	for _, option := range options {

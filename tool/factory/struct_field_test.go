@@ -11,7 +11,6 @@ import (
 )
 
 func TestRpcPluginStructField_SortField(t *testing.T) {
-
 	writer := file_dir.NewEsimWriter()
 
 	rpcPlugin := NewRPCPluginStructField(writer, log.NewLogger())

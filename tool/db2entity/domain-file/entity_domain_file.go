@@ -37,7 +37,6 @@ type entityDomainFile struct {
 type EntityDomainFileOption func(*entityDomainFile)
 
 func NewEntityDomainFile(options ...EntityDomainFileOption) DomainFile {
-
 	e := &entityDomainFile{}
 
 	for _, option := range options {
@@ -71,7 +70,6 @@ func (edf *entityDomainFile) Disabled() bool {
 
 //bindInput implements DomainFile.
 func (edf *entityDomainFile) BindInput(v *viper.Viper) error {
-
 	boubctx := v.GetString("boubctx")
 	if boubctx != "" {
 		edf.withBoubctx = boubctx + string(filepath.Separator)
@@ -117,7 +115,6 @@ func (edf *entityDomainFile) BindInput(v *viper.Viper) error {
 
 //parseCloumns implements DomainFile.
 func (edf *entityDomainFile) ParseCloumns(cs Columns, info *ShareInfo) {
-
 	entityTpl := entityTpl{}
 
 	if cs.Len() < 1 {
@@ -137,9 +134,9 @@ func (edf *entityDomainFile) ParseCloumns(cs Columns, info *ShareInfo) {
 	var doc string
 	var nullable bool
 	var fieldName string
-	var column Column
 
-	for _, column = range cs {
+	for i := range cs {
+		column := (&cs[i])
 
 		field := pkg.Field{}
 
@@ -212,7 +209,7 @@ func (edf *entityDomainFile) Execute() string {
 
 //getSavePath implements DomainFile.
 func (edf *entityDomainFile) GetSavePath() string {
-	return edf.withEntityTarget + edf.tableName + DOMAIN_FILE_EXT
+	return edf.withEntityTarget + edf.tableName + DomainFileExt
 }
 
 func (edf *entityDomainFile) GetName() string {

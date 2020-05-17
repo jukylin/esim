@@ -11,7 +11,6 @@ import (
 )
 
 func TestInfraer_BuildNewInfraContent(t *testing.T) {
-
 	expected := `package infra
 
 import (

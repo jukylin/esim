@@ -125,7 +125,6 @@ func (mp *MonitorProxy) RoundTrip(req *http.Request) (*http.Response, error) {
 }
 
 func (mp *MonitorProxy) registerAfterEvent() {
-
 	if mp.conf.GetBool("http_client_check_slow") {
 		mp.afterEvents = append(mp.afterEvents, mp.slowHTTPRequest)
 	}

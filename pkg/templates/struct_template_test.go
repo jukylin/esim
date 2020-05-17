@@ -33,5 +33,5 @@ func TestStructTemplate(t *testing.T) {
 
 	err = tmpl.Execute(&buf, structInfo)
 	assert.Nil(t, err)
-	//println(buf.String())
+	// println(buf.String())
 }

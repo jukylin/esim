@@ -52,7 +52,7 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-//使用 proxyConn 代理请求
+// 使用 proxyConn 代理请求
 func TestGetProxyConn(t *testing.T) {
 	poolOnce = sync.Once{}
 
@@ -205,7 +205,6 @@ func TestMulGo_Do(t *testing.T) {
 	assert.Nil(t, err)
 
 	wg := sync.WaitGroup{}
-	//ctx := context.Background()
 	wg.Add(2)
 
 	go func() {

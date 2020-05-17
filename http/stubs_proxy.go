@@ -20,6 +20,8 @@ type StubsProxyOption func(c *stubsProxy)
 
 type StubsProxyOptions struct{}
 
+type RespFunc func(*http.Request) *http.Response
+
 func newStubsProxy(options ...StubsProxyOption) *stubsProxy {
 	stubsProxy := &stubsProxy{}
 
@@ -30,7 +32,7 @@ func newStubsProxy(options ...StubsProxyOption) *stubsProxy {
 	return stubsProxy
 }
 
-func (StubsProxyOptions) WithRespFunc(respFunc func(*http.Request) *http.Response) StubsProxyOption {
+func (StubsProxyOptions) WithRespFunc(respFunc RespFunc) StubsProxyOption {
 	return func(s *stubsProxy) {
 		s.respFunc = respFunc
 	}

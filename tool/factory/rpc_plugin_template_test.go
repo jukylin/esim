@@ -8,8 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestExecuteRpcPluginTemplate(t *testing.T) {
-
+func TestExecuteRPCPluginTemplate(t *testing.T) {
 	Field1 := pkg.Field{}
 	Field1.Field = "a int"
 

@@ -74,7 +74,8 @@ func TestMain(m *testing.M) {
 
 	if err := pool.Retry(func() error {
 		var err error
-		db, err = sql.Open("mysql", "root:123456@tcp(localhost:3306)/mysql?charset=utf8&parseTime=True&loc=Local")
+		db, err = sql.Open("mysql",
+			"root:123456@tcp(localhost:3306)/mysql?charset=utf8&parseTime=True&loc=Local")
 		if err != nil {
 			return err
 		}
@@ -120,7 +121,6 @@ func TestMain(m *testing.M) {
 }
 
 func TestInitAndSingleInstance(t *testing.T) {
-
 	ClientOptions := ClientOptions{}
 
 	client := NewClient(
@@ -146,7 +146,7 @@ func TestProxyPatternWithTwoInstance(t *testing.T) {
 	ClientOptions := ClientOptions{}
 	monitorProxyOptions := MonitorProxyOptions{}
 	memConfig := config.NewMemConfig()
-	//memConfig.Set("debug", true)
+	// memConfig.Set("debug", true)
 
 	client := NewClient(
 		ClientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
@@ -185,7 +185,7 @@ func TestMulProxyPatternWithOneInstance(t *testing.T) {
 	ClientOptions := ClientOptions{}
 	monitorProxyOptions := MonitorProxyOptions{}
 	memConfig := config.NewMemConfig()
-	//memConfig.Set("debug", true)
+	// memConfig.Set("debug", true)
 
 	spyProxy1 := newSpyProxy(log.NewLogger(), "spyProxy1")
 	spyProxy2 := newSpyProxy(log.NewLogger(), "spyProxy2")
@@ -236,7 +236,7 @@ func TestMulProxyPatternWithTwoInstance(t *testing.T) {
 
 	ClientOptions := ClientOptions{}
 	memConfig := config.NewMemConfig()
-	//memConfig.Set("debug", true)
+	// memConfig.Set("debug", true)
 
 	client := NewClient(
 		ClientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
@@ -321,7 +321,7 @@ func TestDummyProxy_Exec(t *testing.T) {
 
 	ClientOptions := ClientOptions{}
 	memConfig := config.NewMemConfig()
-	//memConfig.Set("debug", true)
+	// memConfig.Set("debug", true)
 
 	client := NewClient(
 		ClientOptions.WithDbConfig([]DbConfig{test1Config}),
@@ -330,9 +330,9 @@ func TestDummyProxy_Exec(t *testing.T) {
 			func() interface{} {
 				return newSpyProxy(log.NewLogger(), "spyProxy")
 			},
-		//func() interface{} {
+		// func() interface{} {
 		//	return newDummyProxy(log.NewLogger(), "dummyProxy")
-		//},
+		// },
 		),
 	)
 	ctx := context.Background()

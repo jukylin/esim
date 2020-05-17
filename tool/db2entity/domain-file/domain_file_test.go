@@ -7,7 +7,6 @@ import (
 )
 
 func TestProvides_String(t *testing.T) {
-
 	provide1 := Provide{}
 	provide1.Content = "func () {}"
 

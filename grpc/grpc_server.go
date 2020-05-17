@@ -44,7 +44,6 @@ type ServerOption func(c *Server)
 type ServerOptions struct{}
 
 func NewServer(target string, options ...ServerOption) *Server {
-
 	Server := &Server{}
 
 	Server.target = target
@@ -221,6 +220,7 @@ func (gs *Server) handelPanic() grpc_recovery.RecoveryHandlerFuncContext {
 	}
 }
 
+//nolint:deadcode,unused
 func nilResp() grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
@@ -271,7 +271,6 @@ func ServerStubs(stubsFunc func(
 }
 
 func (gs *Server) Start() {
-
 	lis, err := net.Listen("tcp", gs.target)
 	if err != nil {
 		gs.logger.Panicf("failed to listen: %s", err.Error())

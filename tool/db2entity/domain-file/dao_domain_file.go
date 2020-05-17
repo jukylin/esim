@@ -35,7 +35,6 @@ type daoDomainFile struct {
 type DaoDomainFileOption func(*daoDomainFile)
 
 func NewDaoDomainFile(options ...DaoDomainFileOption) DomainFile {
-
 	e := &daoDomainFile{}
 
 	for _, option := range options {
@@ -68,7 +67,6 @@ func (ddf *daoDomainFile) Disabled() bool {
 
 //BindInput implements DomainFile.
 func (ddf *daoDomainFile) BindInput(v *viper.Viper) error {
-
 	ddf.withDisableDao = v.GetBool("disable_dao")
 	if !ddf.withDisableDao {
 
@@ -102,7 +100,6 @@ func (ddf *daoDomainFile) BindInput(v *viper.Viper) error {
 
 //ParseCloumns implements DomainFile.
 func (ddf *daoDomainFile) ParseCloumns(cs Columns, shareInfo *ShareInfo) {
-
 	daoTpl := newDaoTpl(shareInfo.CamelStruct)
 
 	if cs.Len() < 1 {
@@ -121,8 +118,8 @@ func (ddf *daoDomainFile) ParseCloumns(cs Columns, shareInfo *ShareInfo) {
 		pkg.Import{Path: file_dir.GetGoProPath() +
 			pkg.DirPathToImportPath(shareInfo.WithEntityTarget)})
 
-	var column Column
-	for _, column = range cs {
+	for i := range cs {
+		column := (&cs[i])
 		nullable := false
 		if column.IsNullAble == "YES" {
 			nullable = true
@@ -149,7 +146,7 @@ func (ddf *daoDomainFile) Execute() string {
 
 //GetSavePath implements DomainFile.
 func (ddf *daoDomainFile) GetSavePath() string {
-	return ddf.withDaoTarget + ddf.tableName + DOMAIN_FILE_EXT
+	return ddf.withDaoTarget + ddf.tableName + DomainFileExt
 }
 
 func (ddf *daoDomainFile) GetName() string {

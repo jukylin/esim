@@ -94,7 +94,6 @@ type MgoConfig struct {
 }
 
 func (c *Client) init() {
-
 	mgoConfigs := make([]MgoConfig, 0)
 	err := c.conf.UnmarshalKey("mgos", &mgoConfigs)
 	if err != nil {

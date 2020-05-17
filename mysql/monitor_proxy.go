@@ -13,7 +13,7 @@ import (
 )
 
 type MonitorProxy struct {
-	//proxy name
+	// proxy name
 	name string
 
 	nextProxy SQLCommon
@@ -77,12 +77,12 @@ func (MonitorProxyOptions) WithTracer(tracer opentracing2.Tracer) MonitorProxyOp
 	}
 }
 
-//implement Proxy interface
+// implement Proxy interface
 func (mp *MonitorProxy) NextProxy(db interface{}) {
 	mp.nextProxy = db.(SQLCommon)
 }
 
-//implement Proxy interface
+// implement Proxy interface
 func (mp *MonitorProxy) ProxyName() string {
 	return mp.name
 }

@@ -11,7 +11,7 @@ var fieldTpl = `{{ range .Fields }}
 {{end}}{{.Field}} {{.Tag}}
 {{end}}`
 
-//struct field
+// struct field
 type Field struct {
 	Name string
 
@@ -19,7 +19,7 @@ type Field struct {
 
 	TypeName string
 
-	//Name + type or type
+	// Name + type or type
 	Field string
 
 	Size int
@@ -40,7 +40,6 @@ func (fs Fields) Less(i, j int) bool {
 func (fs Fields) Swap(i, j int) { fs[i], fs[j] = fs[j], fs[i] }
 
 func (fs Fields) String() (string, error) {
-
 	if fs.Len() < 0 {
 		return "", nil
 	}

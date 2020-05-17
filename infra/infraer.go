@@ -82,7 +82,6 @@ func NewInfo() *Info {
 type Option func(*Infraer)
 
 func NewInfraer(options ...Option) *Infraer {
-
 	infraer := &Infraer{}
 
 	for _, option := range options {
@@ -161,7 +160,6 @@ func (ir *Infraer) Inject(v *viper.Viper, injectInfos []*domain_file.InjectInfo)
 		ir.buildNewInfraContent()
 
 		ir.writeNewInfra()
-
 	} else {
 		ir.logger.Errorf("not found the %s", ir.oldInfraInfo.specialStructName)
 		return false
@@ -173,7 +171,6 @@ func (ir *Infraer) Inject(v *viper.Viper, injectInfos []*domain_file.InjectInfo)
 }
 
 func (ir *Infraer) bindInput(v *viper.Viper) bool {
-
 	ir.withInfraDir = v.GetString("infra_dir")
 	if ir.withInfraDir == "" {
 		ir.withInfraDir = "internal" + string(filepath.Separator) + "infra" +
@@ -205,7 +202,6 @@ func (ir *Infraer) bindInput(v *viper.Viper) bool {
 // parseInfra parse infra.go 's content,
 // find "import", "Infra" , "infraSet" and record origin syntax
 func (ir *Infraer) parseInfra(srcStr string) bool {
-
 	// positions are relative to fset
 	fset := token.NewFileSet()
 	f, err := parser.ParseFile(fset, "", srcStr, parser.ParseComments)
@@ -273,7 +269,6 @@ func (ir *Infraer) parseVar(genDecl *ast.GenDecl, srcStr string) {
 
 // sourceInfraFile Beautify infra.go
 func (ir *Infraer) sourceInfraFile() string {
-
 	src, err := ioutil.ReadFile(ir.withInfraDir + ir.withInfraFile)
 	if err != nil {
 		ir.logger.Errorf(err.Error())
@@ -298,7 +293,6 @@ func (ir *Infraer) copyInfraInfo() {
 
 // processInfraInfo process newInfraInfo, append import, repo field and wire's provider
 func (ir *Infraer) processNewInfra() {
-
 	for _, injectInfo := range ir.injectInfos {
 		ir.newInfraInfo.structInfo.Fields = append(ir.newInfraInfo.structInfo.Fields,
 			injectInfo.Fields...)
@@ -313,7 +307,6 @@ func (ir *Infraer) processNewInfra() {
 }
 
 func (ir *Infraer) toStringNewInfra() {
-
 	ir.newInfraInfo.importStr = ir.newInfraInfo.imports.String()
 
 	ir.newInfraInfo.structStr = ir.newInfraInfo.structInfo.String()
@@ -324,7 +317,6 @@ func (ir *Infraer) toStringNewInfra() {
 }
 
 func (ir *Infraer) buildNewInfraContent() {
-
 	oldContent := ir.oldInfraInfo.content
 
 	oldContent = strings.Replace(oldContent,
@@ -340,7 +332,6 @@ func (ir *Infraer) buildNewInfraContent() {
 }
 
 func (ir *Infraer) makeCodeBeautiful(src string) string {
-
 	result, err := imports.Process("", []byte(src), nil)
 	if err != nil {
 		ir.logger.Panicf("err %s : %s", err.Error(), src)
@@ -351,12 +342,15 @@ func (ir *Infraer) makeCodeBeautiful(src string) string {
 
 // writeNewInfra cover old infra.go's content
 func (ir *Infraer) writeNewInfra() bool {
-
 	processSrc := ir.makeCodeBeautiful(ir.newInfraInfo.content)
 
-	ir.writer.Write(ir.withInfraDir+ir.withInfraFile, processSrc)
+	err := ir.writer.Write(ir.withInfraDir+ir.withInfraFile, processSrc)
+	if err != nil {
+		ir.logger.Errorf(err.Error())
+		return false
+	}
 
-	err := ir.execer.ExecWire(ir.withInfraDir)
+	err = ir.execer.ExecWire(ir.withInfraDir)
 	if err != nil {
 		ir.logger.Errorf(err.Error())
 		return false

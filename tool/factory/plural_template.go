@@ -46,7 +46,6 @@ func (pl Plural) NewString() string {
 }
 
 func (pl Plural) ReleaseString() string {
-
 	result, err := pl.tpl.Execute("plural_release_template", pluralreleaseTemplate, pl)
 	if err != nil {
 		panic(err.Error())
@@ -56,7 +55,6 @@ func (pl Plural) ReleaseString() string {
 }
 
 func (pl Plural) TypeString() string {
-
 	result, err := pl.tpl.Execute("plural_type_template", pluralTypeTemplate, pl)
 	if err != nil {
 		panic(err.Error())

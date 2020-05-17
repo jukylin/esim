@@ -25,7 +25,6 @@ type Option func(c *Client)
 type ClientOptions struct{}
 
 func NewClient(options ...Option) *Client {
-
 	Client := &Client{
 		transports: make([]func() interface{}, 0),
 	}

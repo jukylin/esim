@@ -20,7 +20,6 @@ type spyEvent struct {
 }
 
 func newSpyEvent(logger log.Logger) MgoEvent {
-
 	spyEvent := &spyEvent{}
 	spyEvent.logger = logger
 
@@ -50,7 +49,6 @@ func (se *spyEvent) SucceededEvent(ctx context.Context,
 	if se.nextEvent != nil {
 		se.nextEvent.SucceededEvent(ctx, succEvent)
 	}
-
 }
 
 func (se *spyEvent) FailedEvent(ctx context.Context, failedEvent *event.CommandFailedEvent) {

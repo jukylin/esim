@@ -28,7 +28,6 @@ func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloRe
 }
 
 func TestMain(m *testing.M) {
-
 	logger = log.NewLogger()
 
 	lis, err := net.Listen("tcp", "0.0.0.0:50051")
@@ -77,7 +76,6 @@ func TestMain(m *testing.M) {
 }
 
 func TestNewGrpcClient(t *testing.T) {
-
 	memConfig := config.NewMemConfig()
 	memConfig.Set("debug", true)
 	memConfig.Set("grpc_client_debug", true)
@@ -106,7 +104,6 @@ func TestNewGrpcClient(t *testing.T) {
 }
 
 func TestSlowClient(t *testing.T) {
-
 	memConfig := config.NewMemConfig()
 	memConfig.Set("debug", true)
 	memConfig.Set("grpc_client_debug", true)
@@ -141,7 +138,6 @@ func TestSlowClient(t *testing.T) {
 }
 
 func TestServerPanic(t *testing.T) {
-
 	svr.unaryServerInterceptors = append(svr.unaryServerInterceptors, panicResp())
 
 	memConfig := config.NewMemConfig()
@@ -169,7 +165,6 @@ func TestServerPanic(t *testing.T) {
 }
 
 func TestServerPanicArr(t *testing.T) {
-
 	memConfig := config.NewMemConfig()
 	memConfig.Set("debug", true)
 	memConfig.Set("grpc_client_debug", true)
@@ -195,7 +190,6 @@ func TestServerPanicArr(t *testing.T) {
 }
 
 func TestSubsReply(t *testing.T) {
-
 	memConfig := config.NewMemConfig()
 	memConfig.Set("debug", true)
 	memConfig.Set("grpc_client_debug", true)

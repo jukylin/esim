@@ -28,7 +28,6 @@ func TestGetString(t *testing.T) {
 }
 
 func TestGetBool(t *testing.T) {
-
 	memConfig := NewMemConfig()
 
 	memConfig.Set("test", true)
@@ -40,7 +39,6 @@ func TestGetBool(t *testing.T) {
 }
 
 func TestGetInt(t *testing.T) {
-
 	memConfig := NewMemConfig()
 
 	memConfig.Set("test", 100)
@@ -85,7 +83,6 @@ func TestGetUint(t *testing.T) {
 }
 
 func TestGetUint32(t *testing.T) {
-
 	memConfig := NewMemConfig()
 
 	memConfig.Set("test", 100)
@@ -97,7 +94,6 @@ func TestGetUint32(t *testing.T) {
 }
 
 func TestGetUint64(t *testing.T) {
-
 	memConfig := NewMemConfig()
 
 	memConfig.Set("test", 100)
@@ -120,7 +116,6 @@ func TestGetFloat64(t *testing.T) {
 }
 
 func TestGetTime(t *testing.T) {
-
 	memConfig := NewMemConfig()
 
 	now := time.Now()
@@ -133,7 +128,6 @@ func TestGetTime(t *testing.T) {
 }
 
 func TestGetDuration(t *testing.T) {
-
 	memConfig := NewMemConfig()
 	memConfig.Set("test", time.Duration(100))
 
@@ -144,7 +138,6 @@ func TestGetDuration(t *testing.T) {
 }
 
 func TestGetStringSlice(t *testing.T) {
-
 	memConfig := NewMemConfig()
 	memConfig.Set("test", []string{"config", "test"})
 
@@ -155,7 +148,6 @@ func TestGetStringSlice(t *testing.T) {
 }
 
 func TestGetStringMap(t *testing.T) {
-
 	memConfig := NewMemConfig()
 	memConfig.Set("test", map[string]interface{}{"config": 1000})
 
@@ -187,7 +179,6 @@ func TestGetStringMapString(t *testing.T) {
 	if str != "test" {
 		t.Errorf("结果错误，应该是 test, 实际 %s", str)
 	}
-
 }
 
 func TestGetStringMapStringSlice(t *testing.T) {

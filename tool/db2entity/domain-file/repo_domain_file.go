@@ -36,7 +36,6 @@ type repoDomainFile struct {
 type RepoDomainFileOption func(*repoDomainFile)
 
 func NewRepoDomainFile(options ...RepoDomainFileOption) DomainFile {
-
 	e := &repoDomainFile{}
 
 	for _, option := range options {
@@ -69,7 +68,6 @@ func (rdf *repoDomainFile) Disabled() bool {
 
 //BindInput implements DomainFile.
 func (rdf *repoDomainFile) BindInput(v *viper.Viper) error {
-
 	rdf.withDisableRepo = v.GetBool("disable_repo")
 	if !rdf.withDisableRepo {
 
@@ -103,7 +101,6 @@ func (rdf *repoDomainFile) BindInput(v *viper.Viper) error {
 
 //ParseCloumns implements DomainFile.
 func (rdf *repoDomainFile) ParseCloumns(cs Columns, info *ShareInfo) {
-
 	rdf.shareInfo = info
 
 	repoTpl := newRepoTpl(info.CamelStruct)
@@ -121,8 +118,9 @@ func (rdf *repoDomainFile) ParseCloumns(cs Columns, info *ShareInfo) {
 		pkg.Import{Path: file_dir.GetGoProPath() + pkg.DirPathToImportPath(info.WithEntityTarget)},
 		pkg.Import{Path: file_dir.GetGoProPath() + pkg.DirPathToImportPath(info.WithDaoTarget)})
 
-	var column Column
-	for _, column = range cs {
+	for i := range cs {
+		column := (&cs[i])
+
 		repoTpl.DelField = column.CheckDelField()
 	}
 
@@ -141,7 +139,7 @@ func (rdf *repoDomainFile) Execute() string {
 
 //GetSavePath implements DomainFile.
 func (rdf *repoDomainFile) GetSavePath() string {
-	return rdf.withRepoTarget + rdf.tableName + DOMAIN_FILE_EXT
+	return rdf.withRepoTarget + rdf.tableName + DomainFileExt
 }
 
 func (rdf *repoDomainFile) GetName() string {

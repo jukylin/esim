@@ -9,7 +9,6 @@ import (
 )
 
 func TestIsEmptyDir(t *testing.T) {
-
 	empty, err := IsEmptyDir(".")
 	if err != nil {
 		t.Error(err.Error())
@@ -21,7 +20,6 @@ func TestIsEmptyDir(t *testing.T) {
 }
 
 func TestIsEmptyDir2(t *testing.T) {
-
 	dir := "./test_dir"
 	err := CreateDir(dir)
 	if err != nil {

@@ -18,7 +18,6 @@ var db2entityCmd = &cobra.Command{
 	Short: "table's fields to entity",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-
 		dbConf := domain_file.NewDbConfig()
 		dbConf.ParseConfig(v, logger)
 

@@ -32,7 +32,6 @@ type MonitorProxyOption func(c *MonitorProxy)
 type MonitorProxyOptions struct{}
 
 func NewMonitorProxy(options ...MonitorProxyOption) *MonitorProxy {
-
 	monitorProxy := &MonitorProxy{}
 	for _, option := range options {
 		option(monitorProxy)
@@ -116,7 +115,6 @@ func (mp *MonitorProxy) Do(ctx context.Context, commandName string,
 
 func (mp *MonitorProxy) Send(ctx context.Context, commandName string,
 	args ...interface{}) (err error) {
-
 	now := time.Now()
 	err = mp.nextConn.Send(ctx, commandName, args...)
 
@@ -133,7 +131,6 @@ func (mp *MonitorProxy) Send(ctx context.Context, commandName string,
 }
 
 func (mp *MonitorProxy) Flush(ctx context.Context) (err error) {
-
 	now := time.Now()
 	err = mp.nextConn.Flush(ctx)
 
@@ -149,7 +146,6 @@ func (mp *MonitorProxy) Flush(ctx context.Context) (err error) {
 }
 
 func (mp *MonitorProxy) Receive(ctx context.Context) (reply interface{}, err error) {
-
 	now := time.Now()
 	reply, err = mp.nextConn.Receive(ctx)
 

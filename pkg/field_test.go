@@ -14,7 +14,6 @@ func TestFields_EmptyString(t *testing.T) {
 }
 
 func TestFields_String(t *testing.T) {
-
 	fields := Fields{}
 
 	field1 := Field{}

@@ -20,7 +20,6 @@ import (
 )
 
 type Db2Entity struct {
-
 	//Camel Form
 	CamelStruct string
 
@@ -67,7 +66,6 @@ type Db2EnOption func(*Db2Entity)
 type Db2EnOptions struct{}
 
 func NewDb2Entity(options ...Db2EnOption) *Db2Entity {
-
 	d := &Db2Entity{}
 
 	for _, option := range options {
@@ -147,7 +145,6 @@ func (Db2EnOptions) WithInfraer(infraer *infra.Infraer) Db2EnOption {
 }
 
 func (de *Db2Entity) Run(v *viper.Viper) error {
-
 	defer func() {
 		if err := recover(); err != nil {
 			de.logger.Errorf("A panic occurred : %s", err)
@@ -205,7 +202,6 @@ func (de *Db2Entity) Run(v *viper.Viper) error {
 }
 
 func (de *Db2Entity) bindInput(v *viper.Viper) {
-
 	de.DbConf.ParseConfig(v, de.logger)
 
 	packageName := v.GetString("package")
@@ -255,7 +251,6 @@ func (de *Db2Entity) bindInfra(v *viper.Viper) {
 
 //injectToInfra inject repo to infra.go and execute wire command
 func (de *Db2Entity) injectToInfra(v *viper.Viper) {
-
 	if !de.withInject {
 		de.logger.Infof("disable inject")
 		return
@@ -265,7 +260,6 @@ func (de *Db2Entity) injectToInfra(v *viper.Viper) {
 }
 
 func (de *Db2Entity) makeCodeBeautiful(src string) string {
-
 	result, err := imports.Process("", []byte(src), nil)
 	if err != nil {
 		de.logger.Panicf("err %s : %s", err.Error(), src)

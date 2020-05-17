@@ -28,7 +28,6 @@ func (is Imports) Len() int {
 }
 
 func (is Imports) String() string {
-
 	if is.Len() < 0 {
 		return ""
 	}

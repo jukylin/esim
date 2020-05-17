@@ -10,7 +10,6 @@ import (
 )
 
 func TestDaoDomainFile(t *testing.T) {
-
 	dir := "example"
 	err := file_dir.CreateDir(dir)
 	assert.Nil(t, err)
