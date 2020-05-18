@@ -201,7 +201,6 @@ func (gc *ClientOptions) clientDebug() func(ctx context.Context,
 	invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 	return func(ctx context.Context, method string, req, reply interface{},
 		cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-
 		beginTime := time.Now()
 		gc.logger.Debugc(ctx, "grpc client start %s : %s, req : %s",
 			cc.Target(), method, spew.Sdump(req))

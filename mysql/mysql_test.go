@@ -146,7 +146,6 @@ func TestProxyPatternWithTwoInstance(t *testing.T) {
 	ClientOptions := ClientOptions{}
 	monitorProxyOptions := MonitorProxyOptions{}
 	memConfig := config.NewMemConfig()
-	// memConfig.Set("debug", true)
 
 	client := NewClient(
 		ClientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
