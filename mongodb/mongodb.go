@@ -113,7 +113,6 @@ func (c *Client) init() {
 	}
 
 	for _, mgo := range mgoConfigs {
-
 		clientOptions := options.Client()
 		clientOptions.ApplyURI(mgo.URI)
 
@@ -142,7 +141,7 @@ func (c *Client) init() {
 			clientOptions.SetMonitor(eventComMon)
 		}
 
-		//池子监控
+		// 池子监控
 		poolMon := &event.PoolMonitor{
 			Event: func(pev *event.PoolEvent) {
 				c.poolEvent(pev)
@@ -208,7 +207,7 @@ func (c *Client) initMonitorMulLevelEvent(dbName string) MgoEvent {
 	}
 
 	for k, proxyIns := range proxyInses {
-		//first proxy
+		// first proxy
 		if k == 0 {
 			firstProxy = proxyIns.(MgoEvent)
 		}

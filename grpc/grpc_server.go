@@ -233,6 +233,7 @@ func nilResp() grpc.UnaryServerInterceptor {
 	}
 }
 
+//nolint:goconst
 func panicResp() grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,

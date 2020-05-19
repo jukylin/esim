@@ -80,7 +80,7 @@ func (ddf *daoDomainFile) BindInput(v *viper.Viper) error {
 			ddf.withDaoTarget = strings.Trim(ddf.withDaoTarget, "/")
 		}
 
-		//check dao dir
+		// check dao dir
 		existsdao, err := file_dir.IsExistsDir(ddf.withDaoTarget)
 		if err != nil {
 			return err
@@ -121,7 +121,7 @@ func (ddf *daoDomainFile) ParseCloumns(cs Columns, shareInfo *ShareInfo) {
 	for i := range cs {
 		column := (&cs[i])
 		nullable := false
-		if column.IsNullAble == "YES" {
+		if column.IsNullAble == yesNull {
 			nullable = true
 		}
 

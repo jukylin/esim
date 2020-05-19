@@ -14,10 +14,10 @@ var onceInfra *Infra
 
 type Infra struct {
 
-	//Esim
+	// Esim
 	*container.Esim
 
-	//redis
+	// redis
 	Redis *redis.Client
 }
 

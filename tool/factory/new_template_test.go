@@ -21,7 +21,7 @@ func TestExecuteFactoryTemplate(t *testing.T) {
 	Field2.Field = "b string"
 	Field2.Doc = []string{"//b", "//string"}
 
-	//fields := []db2entity.Field{}
+	// fields := []db2entity.Field{}
 	s.Fields = append(s.Fields, Field1, Field2)
 
 	factory.NewStructInfo = s

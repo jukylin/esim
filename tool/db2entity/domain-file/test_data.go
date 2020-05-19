@@ -27,7 +27,7 @@ func init() {
 	col1 := Column{
 		ColumnName:    "user_name",
 		DataType:      "varchar",
-		IsNullAble:    "YES",
+		IsNullAble:    yesNull,
 		ColumnComment: "user name",
 	}
 	Cols = append(Cols, col1)
@@ -36,14 +36,14 @@ func init() {
 		ColumnName: "id",
 		ColumnKey:  pri,
 		DataType:   "int",
-		IsNullAble: "NO",
+		IsNullAble: noNull,
 	}
 	Cols = append(Cols, col2)
 
 	col3 := Column{
 		ColumnName: "update_time",
 		DataType:   "timestamp",
-		IsNullAble: "NO",
+		IsNullAble: noNull,
 		Extra:      upCurrentTimestamp,
 	}
 	Cols = append(Cols, col3)

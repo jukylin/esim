@@ -88,7 +88,6 @@ func (m *MonitorEvent) Start(ctx context.Context, starEv *event.CommandStartedEv
 
 func (m *MonitorEvent) SucceededEvent(ctx context.Context,
 	succEvent *event.CommandSucceededEvent) {
-
 	var beginTime time.Time
 	monBackEvent := &mongoBackEvent{}
 	endTime := time.Now()
@@ -140,9 +139,9 @@ func (m *MonitorEvent) registerAfterEvent() {
 	}
 }
 
-//执行慢的命令
+// 执行慢的命令
 // dur_nan 纳秒
-//执行的命令
+// 执行的命令
 func (m *MonitorEvent) withSlowCommand(ctx context.Context, backEvent *mongoBackEvent,
 	beginTime, endTime time.Time) {
 	mgoSlowTime := m.conf.GetInt64("mgo_slow_time")
@@ -192,7 +191,6 @@ func (m *MonitorEvent) withTracer(ctx context.Context, backEvent *mongoBackEvent
 
 func (m *MonitorEvent) withMetrics(ctx context.Context, backEvent *mongoBackEvent,
 	beginTime, endTime time.Time) {
-
 	var commandName string
 
 	if backEvent.succEvent != nil {

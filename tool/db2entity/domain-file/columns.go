@@ -33,6 +33,10 @@ const (
 	currentTimestamp = "CURRENT_TIMESTAMP"
 
 	upCurrentTimestamp = "on update CURRENT_TIMESTAMP"
+
+	yesNull = "YES"
+
+	noNull = "NO"
 )
 
 type ColumnsRepo interface {
@@ -118,6 +122,7 @@ func (dc *DBColumnsInter) SelectColumns(dbConf *DbConfig) (Columns, error) {
 	return cs, nil
 }
 
+//nolint:goconst
 func (c *Column) GetGoType(nullable bool) string {
 	switch c.DataType {
 	case "tinyint", "int", "smallint", "mediumint":
@@ -175,7 +180,7 @@ func (c *Column) IsOnUpdate() bool {
 	return c.Extra == upCurrentTimestamp
 }
 
-//filterComment filter and escaping speckial string
+// filterComment filter and escaping speckial string
 func (c *Column) FilterComment() string {
 	if c.ColumnComment != "" {
 		c.ColumnComment = strings.Replace(c.ColumnComment, "\r", "\\r", -1)
@@ -189,7 +194,7 @@ func (c *Column) IsPri() bool {
 	return c.ColumnKey == pri
 }
 
-//GetDefCol get default tag
+// GetDefCol get default tag
 func (c *Column) GetDefCol() string {
 	if c.ColumnDefault != currentTimestamp && c.ColumnDefault != "" {
 		return ";default:'" + c.ColumnDefault + "'"

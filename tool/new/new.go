@@ -22,7 +22,7 @@ type FileContent struct {
 	Content  string `json:"context"`
 }
 
-//Project
+// Project
 type Project struct {
 	ServerName string
 
@@ -38,7 +38,7 @@ type Project struct {
 
 	withMonitoring bool
 
-	//"true" or "false"
+	// "true" or "false"
 	Monitoring string
 
 	logger log.Logger
@@ -137,7 +137,7 @@ func (pj *Project) bindInput(v *viper.Viper) {
 	}
 }
 
-//checkServerName ServerName only support lowercase ,"_", "-"
+// checkServerName ServerName only support lowercase ,"_", "-"
 func (pj *Project) checkServerName() bool {
 	match, err := regexp.MatchString("^[a-z_-]+$", pj.ServerName)
 	if err != nil {
@@ -190,12 +190,12 @@ func (pj *Project) getProPath() {
 	pj.ProPath = currentDir
 }
 
-//getPackName in most cases,  ServerName eq PackageName
+// getPackName in most cases,  ServerName eq PackageName
 func (pj *Project) getPackName() {
 	pj.PackageName = strings.Replace(pj.ServerName, "-", "_", -1)
 }
 
-//initTransport initialization Transport mode
+// initTransport initialization Transport mode
 func (pj *Project) initTransport() {
 	if pj.withGin {
 		GinInit()
@@ -219,8 +219,8 @@ func (pj *Project) initTransport() {
 	}
 }
 
-//build create a new project locally
-//if an error occurred, remove the project
+// build create a new project locally
+// if an error occurred, remove the project
 func (pj *Project) build() bool {
 
 	pj.logger.Infof("starting create %s, package name %s", pj.ServerName, pj.PackageName)

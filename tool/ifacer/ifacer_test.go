@@ -169,7 +169,6 @@ func TestIfacer_GetUniqueImportName(t *testing.T) {
 }
 
 func TestIfacer_SetNoConflictImport(t *testing.T) {
-
 	testCases := []struct {
 		caseName   string
 		importName string

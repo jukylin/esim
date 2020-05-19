@@ -14,12 +14,12 @@ var varTpl = `var ({{ range .Vars }}
 type Var struct {
 	Doc []string
 
-	//name and val
+	// name and val
 	Body string
 
 	Name []string
 
-	//now is empty
+	// now is empty
 	Val []string
 }
 

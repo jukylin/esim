@@ -211,7 +211,7 @@ func (f *Ifacer) setNoConflictImport(importName, importPath string) {
 			return
 		}
 
-		//package name repeat
+		// package name repeat
 		level := 1
 		flag := true
 		for flag {

@@ -13,21 +13,21 @@ const (
 	DomainFileExt = ".go"
 )
 
-//DomainFile
+// DomainFile
 type DomainFile interface {
-	//if true not need this domain file
+	// if true not need this domain file
 	Disabled() bool
 
 	BindInput(*viper.Viper) error
 
-	//parse columns information for domain file object
+	// parse columns information for domain file object
 	ParseCloumns(Columns, *ShareInfo)
 
-	//applies a parsed template to the domain file object
-	//return Parsed content
+	// applies a parsed template to the domain file object
+	// return Parsed content
 	Execute() string
 
-	//save the domain file content path
+	// save the domain file content path
 	GetSavePath() string
 
 	GetName() string
@@ -89,10 +89,10 @@ func (dc *DbConfig) ParseConfig(v *viper.Viper, logger log.Logger) {
 	dc.Table = table
 }
 
-//Share information for all domain files
-//avoid import cycle not allowed
+// Share information for all domain files
+// avoid import cycle not allowed
 type ShareInfo struct {
-	//Camel Form
+	// Camel Form
 	CamelStruct string
 
 	DbConf *DbConfig

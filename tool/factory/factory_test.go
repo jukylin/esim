@@ -70,6 +70,7 @@ func TestEsimFactory_InputBind(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+//nolint:goconst
 func TestCopyOldStructInfo(t *testing.T) {
 	esimfactory.oldStructInfo.imports = esimfactory.oldStructInfo.imports[:0]
 	esimfactory.oldStructInfo.imports = append(esimfactory.oldStructInfo.imports,

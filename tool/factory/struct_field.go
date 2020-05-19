@@ -401,6 +401,7 @@ func (rps *RPCPluginStructField) GenInitFieldStr(getType reflect.Type, fieldLink
 	return structFields
 }
 
+//nolint:goconst
 func (rps *RPCPluginStructField) KindToInit(refType reflect.Type) string {
 	var initStr string
 
