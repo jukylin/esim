@@ -11,13 +11,12 @@ import (
 )
 
 func TestRepoDomainFile(t *testing.T) {
-	dir := "example"
-	err := file_dir.CreateDir(dir)
+	err := file_dir.CreateDir(target)
 	assert.Nil(t, err)
 
 	v := viper.New()
-	v.Set("repo_target", "example")
-	v.Set("table", "test")
+	v.Set("repo_target", target)
+	v.Set("table", testTable)
 
 	err = testRepoDomainFile.BindInput(v)
 	assert.Nil(t, err)
@@ -26,7 +25,7 @@ func TestRepoDomainFile(t *testing.T) {
 	dbConf.ParseConfig(v, log.NewNullLogger())
 
 	shareInfo := NewShareInfo()
-	shareInfo.CamelStruct = "Test"
+	shareInfo.CamelStruct = testStructName
 	shareInfo.DbConf = dbConf
 
 	testRepoDomainFile.ParseCloumns(Cols, shareInfo)
@@ -35,6 +34,6 @@ func TestRepoDomainFile(t *testing.T) {
 
 	savePath := testRepoDomainFile.GetSavePath()
 	assert.Equal(t, "example/test.go", savePath)
-	err = os.RemoveAll(dir)
+	err = os.RemoveAll(target)
 	assert.Nil(t, err)
 }

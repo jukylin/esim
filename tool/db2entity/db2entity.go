@@ -20,7 +20,7 @@ import (
 )
 
 type Db2Entity struct {
-	//Camel Form
+	// Camel Form
 	CamelStruct string
 
 	ColumnsRepo domain_file.ColumnsRepo
@@ -33,10 +33,10 @@ type Db2Entity struct {
 
 	domainFiles []domain_file.DomainFile
 
-	//parsed content
+	// parsed content
 	domainContent map[string]string
 
-	//record wrote content, if an error occurred roll back the file
+	// record wrote content, if an error occurred rollback the file
 	wroteContent map[string]string
 
 	tpl templates.Tpl
@@ -47,7 +47,7 @@ type Db2Entity struct {
 
 	infraer *infra.Infraer
 
-	//true inject repo to infra
+	// if true inject repo to infra
 	withInject bool
 
 	logger log.Logger

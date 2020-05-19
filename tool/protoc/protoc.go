@@ -128,8 +128,8 @@ func (p *Protocer) execCmd() bool {
 	return true
 }
 
-//parsePkgName parse the package name from protoc file
-//if not found stop the run
+// parsePkgName parse the package name from protoc file
+// if not found stop the run
 func (p *Protocer) parsePkgName(protoFile string) (string, error) {
 	if filepath.Ext(protoFile) != ".proto" {
 		return "", fmt.Errorf("it is not the proto file : %s", protoFile)
@@ -148,13 +148,10 @@ func (p *Protocer) parsePkgName(protoFile string) (string, error) {
 		if err != nil || io.EOF == err {
 			break
 		}
-		reg, err := regexp.Compile("^package")
-		if err != nil {
-			return "", nil
-		}
+		reg := regexp.MustCompile("^package")
 
 		if reg.FindString(line) != "" {
-			reg, err := regexp.Compile(`\w+`)
+			reg := regexp.MustCompile(`\w+`)
 			if err != nil {
 				return "", err
 			}

@@ -21,9 +21,9 @@ func TestRepoTemplate(t *testing.T) {
 
 	var buf bytes.Buffer
 	repoTpl := newRepoTpl("User")
-	repoTpl.TableName = "user"
+	repoTpl.TableName = userTable
 	repoTpl.Imports = imports
-	repoTpl.DelField = "is_del"
+	repoTpl.DelField = delField
 
 	err = tmpl.Execute(&buf, repoTpl)
 	if err != nil {

@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-type NullConfig struct {}
+type NullConfig struct{}
 
 func NewNullConfig() *NullConfig {
 	return &NullConfig{}

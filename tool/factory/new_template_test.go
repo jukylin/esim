@@ -10,7 +10,7 @@ import (
 
 func TestExecuteFactoryTemplate(t *testing.T) {
 	factory := EsimFactory{}
-	factory.StructName = "Test"
+	factory.StructName = testStructName
 	s := &structInfo{}
 
 	Field1 := pkg.Field{}
@@ -34,7 +34,6 @@ func TestExecuteFactoryTemplate(t *testing.T) {
 
 	tpl := templates.NewTextTpl()
 	tmpl, err := tpl.Execute("factory", newTemplate, factory)
-	//println(tmpl)
 	assert.Nil(t, err)
 	assert.NotEmpty(t, tmpl)
 }

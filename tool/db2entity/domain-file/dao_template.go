@@ -34,18 +34,18 @@ func New{{.StructName}}() *{{.StructName}} {
 }
 
 
-//主库
+// master
 func ({{.StructName | shorten}} *{{.StructName}}) GetDb(ctx context.Context) *gorm.DB  {
 	return {{.StructName | shorten}}.mysql.GetCtxDb(ctx, "{{.DataBaseName}}").Table("{{.TableName}}")
 }
 
-//从库
+// slave
 func ({{.StructName | shorten}} *{{.StructName}}) GetSlaveDb(ctx context.Context) *gorm.DB  {
 	return {{.StructName | shorten}}.mysql.GetCtxDb(ctx, "{{.DataBaseName}}_slave").Table("{{.TableName}}")
 }
 
 
-//返回 自增id，错误
+// primary key，error
 func ({{.StructName | shorten}} *{{.StructName}}) Create(ctx context.Context,
 		{{.EntityName| firstToLower}} *entity.{{.EntityName}}) ({{.PriKeyType}}, error){
 	db := {{.StructName | shorten}}.GetDb(ctx).Create({{.EntityName| firstToLower}})
@@ -56,7 +56,7 @@ func ({{.StructName | shorten}} *{{.StructName}}) Create(ctx context.Context,
 	}
 }
 
-//ctx, "name = ?", "test"
+// ctx, "name = ?", "test"
 func ({{.StructName | shorten}} *{{.StructName}}) Count(ctx context.Context,
 		query interface{}, args ...interface{}) (int64, error){
 	var count int64
@@ -83,7 +83,7 @@ func ({{.StructName | shorten}} *{{.StructName}}) Find(ctx context.Context, sque
 
 
 // ctx, "id,name", "name = ?", "test"
-//最多取10条
+// return a max of 10 pieces of data
 func ({{.StructName | shorten}} *{{.StructName}}) List(ctx context.Context, squery,
 		wquery interface{}, args ...interface{}) ([]entity.{{.EntityName}}, error){
 	{{.EntityName| snakeToCamelLower | firstToLower}}s := make([]entity.{{.EntityName}}, 0)
@@ -114,8 +114,8 @@ func ({{.StructName | shorten}} *{{.StructName}}) DelById(ctx context.Context,
 	}
 }
 
-//ctx, map[string]interface{}{"name": "hello"}, "name = ?", "test"
-//返回影响数
+// ctx, map[string]interface{}{"name": "hello"}, "name = ?", "test"
+// return RowsAffected, error
 func ({{.StructName | shorten}} *{{.StructName}}) Update(ctx context.Context,
 		update map[string]interface{}, query interface{}, args ...interface{}) (int64, error) {
 	db := {{.StructName | shorten}}.GetDb(ctx).Where(query, args).

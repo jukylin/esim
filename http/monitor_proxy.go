@@ -20,7 +20,7 @@ type MonitorProxy struct {
 
 	conf config.Config
 
-	//use nethttp.Tracer
+	// use nethttp.Tracer
 	tracer opentracing2.Tracer
 
 	afterEvents []afterEvents
@@ -36,7 +36,6 @@ type MonitorProxyOption func(c *MonitorProxy)
 type MonitorProxyOptions struct{}
 
 func NewMonitorProxy(options ...MonitorProxyOption) *MonitorProxy {
-
 	MonitorProxy := &MonitorProxy{}
 
 	for _, option := range options {
@@ -75,7 +74,7 @@ func (MonitorProxyOptions) WithLogger(logger log.Logger) MonitorProxyOption {
 	}
 }
 
-//use nethttp.Tracer
+// use nethttp.Tracer
 func (MonitorProxyOptions) WithTracer(tracer opentracing2.Tracer) MonitorProxyOption {
 	return func(c *MonitorProxy) {
 		c.tracer = tracer

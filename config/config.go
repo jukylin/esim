@@ -37,7 +37,6 @@ func NewViperConfig(options ...Option) Config {
 	v.SetConfigType(viperConf.configType)
 
 	for k, configFile := range viperConf.configFile {
-
 		if k == 0 {
 			content, err := ioutil.ReadFile(configFile)
 			if err != nil {

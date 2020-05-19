@@ -17,7 +17,7 @@ func TestDBColumnsInter_GetColumns(t *testing.T) {
 		User:     "root",
 		Password: "123456",
 		Database: "test_1",
-		Table:    "test",
+		Table:    testTable,
 	}
 	_, err := dbcColumns.SelectColumns(dbConf)
 	assert.Nil(t, err)
@@ -29,6 +29,6 @@ func TestColumns_IsEntity(t *testing.T) {
 
 	assert.False(t, cs.IsEntity())
 
-	cs = append(cs, Column{ColumnKey : "PRI"})
+	cs = append(cs, Column{ColumnKey: pri})
 	assert.True(t, cs.IsEntity())
 }

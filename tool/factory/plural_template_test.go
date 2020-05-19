@@ -11,7 +11,7 @@ func TestPlural_String(t *testing.T) {
 
 	plural := NewPlural()
 	plural.PluralName = "tests"
-	plural.StructName = "Test"
+	plural.StructName = testStructName
 
 	src = plural.NewString()
 	assert.NotEmpty(t, src)

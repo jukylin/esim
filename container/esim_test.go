@@ -2,9 +2,9 @@ package container
 
 import (
 	"testing"
+
 	"github.com/stretchr/testify/assert"
 )
-
 
 func TestNewEsim(t *testing.T) {
 	esim := NewEsim()

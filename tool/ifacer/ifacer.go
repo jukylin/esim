@@ -55,7 +55,6 @@ type Ifacer struct {
 type Option func(*Ifacer)
 
 func NewIfacer(options ...Option) *Ifacer {
-
 	ifacer := &Ifacer{}
 
 	for _, option := range options {
@@ -104,7 +103,6 @@ type Method struct {
 }
 
 func (f *Ifacer) Run(v *viper.Viper) error {
-
 	err := f.bindInput(v)
 	if err != nil {
 		return err
@@ -148,7 +146,6 @@ func (f *Ifacer) Run(v *viper.Viper) error {
 }
 
 func (f *Ifacer) bindInput(v *viper.Viper) error {
-
 	name := v.GetString("iname")
 	if name == "" {
 		return errors.New("iname is empty")
@@ -238,8 +235,8 @@ func (f *Ifacer) setNoConflictImport(importName, importPath string) {
 	}
 }
 
-//github.com/jukylin/esim/redis
-//level
+// github.com/jukylin/esim/redis
+// level
 //		0 redis
 //		1 esimredis
 //		2 jukylinesimredis
@@ -290,7 +287,6 @@ func (f *Ifacer) parseVar(varObj *types.Var, variadic bool) string {
 }
 
 func (f *Ifacer) parseVarType(typ types.Type, variadic bool) string {
-
 	var varType string
 
 	switch t := typ.(type) {
@@ -377,7 +373,7 @@ func (f *Ifacer) getReturnStr(tuple *types.Tuple, m *Method) {
 	}
 }
 
-//Process parsed template and formats and adjusts imports for the parsed content
+// Process parsed template and formats and adjusts imports for the parsed content
 func (f *Ifacer) Process() error {
 	content, err := f.tpl.Execute("ifacer", ifacerTemplate, f)
 	if err != nil {

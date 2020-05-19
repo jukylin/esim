@@ -41,7 +41,7 @@ func TestEntityTemplate(t *testing.T) {
 		"last_update_time1", "last_update_time2")
 
 	entityTpl.Imports = imports
-	entityTpl.DelField = "is_del"
+	entityTpl.DelField = delField
 
 	structInfo := templates.StructInfo{}
 	structInfo.StructName = entityTpl.StructName

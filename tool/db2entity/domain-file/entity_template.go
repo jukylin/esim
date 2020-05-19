@@ -13,7 +13,7 @@ type entityTpl struct {
 	// CURRENT_TIMESTAMP
 	CurTimeStamp []string
 
-	//on update CURRENT_TIMESTAMP
+	// on update CURRENT_TIMESTAMP
 	OnUpdateTimeStamp []string
 
 	OnUpdateTimeStampStr []string

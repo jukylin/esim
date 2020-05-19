@@ -1,5 +1,24 @@
 package domain_file
 
+const (
+	target = "example"
+
+	database = "test"
+
+	testStructName = "Test"
+
+	testTable = "test"
+
+	userStructName = "User"
+
+	userTable = "user"
+
+	boubctx = "boubctx"
+
+	delField = "is_del"
+
+)
+
 var (
 	Cols = make([]Column, 0)
 )
@@ -15,7 +34,7 @@ func init() {
 
 	col2 := Column{
 		ColumnName: "id",
-		ColumnKey:  "PRI",
+		ColumnKey:  pri,
 		DataType:   "int",
 		IsNullAble: "NO",
 	}
@@ -25,7 +44,7 @@ func init() {
 		ColumnName: "update_time",
 		DataType:   "timestamp",
 		IsNullAble: "NO",
-		Extra:      "on update CURRENT_TIMESTAMP",
+		Extra:      upCurrentTimestamp,
 	}
 	Cols = append(Cols, col3)
 }

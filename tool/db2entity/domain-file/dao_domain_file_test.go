@@ -10,29 +10,28 @@ import (
 )
 
 func TestDaoDomainFile(t *testing.T) {
-	dir := "example"
-	err := file_dir.CreateDir(dir)
+	err := file_dir.CreateDir(target)
 	assert.Nil(t, err)
 
 	defer func() {
-		err := os.RemoveAll(dir)
+		err := os.RemoveAll(target)
 		assert.Nil(t, err)
 	}()
 
 	v := viper.New()
 	v.Set("disable_dao", false)
-	v.Set("dao_target", "example")
-	v.Set("table", "test")
+	v.Set("dao_target", target)
+	v.Set("table", testTable)
 
 	err = testDaoDomainFile.BindInput(v)
 	assert.Nil(t, err)
 
 	dbConf := NewDbConfig()
-	dbConf.Database = "test"
-	dbConf.Table = "test"
+	dbConf.Database = database
+	dbConf.Table = testTable
 
 	shareInfo := NewShareInfo()
-	shareInfo.CamelStruct = "Test"
+	shareInfo.CamelStruct = testStructName
 	shareInfo.DbConf = dbConf
 
 	testDaoDomainFile.ParseCloumns(Cols, shareInfo)

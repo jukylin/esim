@@ -62,13 +62,13 @@ func WithEntityDomainFileTpl(tpl templates.Tpl) EntityDomainFileOption {
 	}
 }
 
-//Disabled implements DomainFile.
-//EntityDomainFile never disable
+// Disabled implements DomainFile.
+// EntityDomainFile never disable
 func (edf *entityDomainFile) Disabled() bool {
 	return edf.withDisbleEntity
 }
 
-//bindInput implements DomainFile.
+// bindInput implements DomainFile.
 func (edf *entityDomainFile) BindInput(v *viper.Viper) error {
 	boubctx := v.GetString("boubctx")
 	if boubctx != "" {
@@ -113,11 +113,11 @@ func (edf *entityDomainFile) BindInput(v *viper.Viper) error {
 	return nil
 }
 
-//parseCloumns implements DomainFile.
+// parseCloumns implements DomainFile.
 func (edf *entityDomainFile) ParseCloumns(cs Columns, info *ShareInfo) {
 	entityTpl := entityTpl{}
 
-	if cs.Len() < 1 {
+	if cs.Len() == 0 {
 		return
 	}
 
@@ -197,7 +197,7 @@ func (edf *entityDomainFile) ParseCloumns(cs Columns, info *ShareInfo) {
 	edf.data = entityTpl
 }
 
-//execute implements DomainFile.
+// execute implements DomainFile.
 func (edf *entityDomainFile) Execute() string {
 	content, err := edf.tpl.Execute(edf.name, edf.template, edf.data)
 	if err != nil {
@@ -207,7 +207,7 @@ func (edf *entityDomainFile) Execute() string {
 	return content
 }
 
-//getSavePath implements DomainFile.
+// getSavePath implements DomainFile.
 func (edf *entityDomainFile) GetSavePath() string {
 	return edf.withEntityTarget + edf.tableName + DomainFileExt
 }

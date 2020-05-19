@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestRpcPluginStructField_SortField(t *testing.T) {
+func TestRPCPluginStructField_SortField(t *testing.T) {
 	writer := file_dir.NewEsimWriter()
 
 	rpcPlugin := NewRPCPluginStructField(writer, log.NewLogger())

@@ -16,7 +16,7 @@ func TestPoolTpl_String(t *testing.T) {
 
 	poolTpl := NewPoolTpl()
 	poolTpl.VarPoolName = "test"
-	poolTpl.StructName = "Test"
+	poolTpl.StructName = testStructName
 
 	src := poolTpl.String()
 	assert.Equal(t, result, src)

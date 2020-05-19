@@ -15,6 +15,14 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
+type mgoCtxKey int
+
+const (
+	commandNamePing = "ping"
+
+	keyCtx mgoCtxKey = iota + 1
+)
+
 var clientOnce sync.Once
 var onceClient *Client
 
@@ -111,22 +119,22 @@ func (c *Client) init() {
 
 		if c.mgoEvents != nil {
 			firstEvent := c.initMonitorMulLevelEvent(mgo.Db)
-			//事件监控
+			// 事件监控
 			eventComMon := &event.CommandMonitor{
 				Started: func(ctx context.Context, startEvent *event.CommandStartedEvent) {
-					execCommand, ok := ctx.Value("command").(*string)
+					execCommand, ok := ctx.Value(keyCtx).(*string)
 					if ok {
 						*execCommand = startEvent.Command.String()
 					}
 					firstEvent.Start(ctx, startEvent)
 				},
 				Succeeded: func(ctx context.Context, succEvent *event.CommandSucceededEvent) {
-					if succEvent.CommandName != "ping" {
+					if succEvent.CommandName != commandNamePing {
 						firstEvent.SucceededEvent(ctx, succEvent)
 					}
 				},
 				Failed: func(ctx context.Context, failedEvent *event.CommandFailedEvent) {
-					if failedEvent.CommandName != "ping" {
+					if failedEvent.CommandName != commandNamePing {
 						firstEvent.FailedEvent(ctx, failedEvent)
 					}
 				},
@@ -228,7 +236,7 @@ func (c *Client) GetColl(dataBase, coll string) *mongo.Collection {
 		return mgo.Database(dataBase).Collection(coll)
 	}
 
-	c.logger.Errorf("[db] %s not found", dataBase)
+	c.logger.Errorf("[mongodb] %s not found", dataBase)
 	return nil
 }
 
@@ -237,6 +245,7 @@ func (c *Client) poolEvent(pev *event.PoolEvent) {
 	mongodbPoolTypes.With(lab).Inc()
 }
 
+// Close ping all connection
 func (c *Client) Ping() []error {
 	ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
 
@@ -252,6 +261,7 @@ func (c *Client) Ping() []error {
 	return errs
 }
 
+// Close close all connection
 func (c *Client) Close() {
 	var err error
 	ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
@@ -264,8 +274,7 @@ func (c *Client) Close() {
 	}
 }
 
-//mongodb 的上下文
 func (c *Client) GetCtx(ctx context.Context) context.Context {
 	var command string
-	return context.WithValue(ctx, "command", &command)
+	return context.WithValue(ctx, keyCtx, &command)
 }

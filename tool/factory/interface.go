@@ -6,6 +6,10 @@ import (
 	"github.com/hashicorp/go-plugin"
 )
 
+const (
+	testStructName = "Test"
+)
+
 // Model is the interface that we're exposing as a plugin.
 type Model interface {
 	Sort() string

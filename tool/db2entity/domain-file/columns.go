@@ -27,6 +27,14 @@ const (
 	golangTime       = "time.Time"
 )
 
+const (
+	pri = "PRI"
+
+	currentTimestamp = "CURRENT_TIMESTAMP"
+
+	upCurrentTimestamp = "on update CURRENT_TIMESTAMP"
+)
+
 type ColumnsRepo interface {
 	SelectColumns(dbConf *DbConfig) (Columns, error)
 }
@@ -160,11 +168,11 @@ func (c *Column) IsTime(goType string) bool {
 }
 
 func (c *Column) IsCurrentTimeStamp() bool {
-	return c.ColumnDefault == "CURRENT_TIMESTAMP"
+	return c.ColumnDefault == currentTimestamp
 }
 
 func (c *Column) IsOnUpdate() bool {
-	return c.Extra == "on update CURRENT_TIMESTAMP"
+	return c.Extra == upCurrentTimestamp
 }
 
 //filterComment filter and escaping speckial string
@@ -178,12 +186,12 @@ func (c *Column) FilterComment() string {
 }
 
 func (c *Column) IsPri() bool {
-	return c.ColumnKey == "PRI"
+	return c.ColumnKey == pri
 }
 
 //GetDefCol get default tag
 func (c *Column) GetDefCol() string {
-	if c.ColumnDefault != "CURRENT_TIMESTAMP" && c.ColumnDefault != "" {
+	if c.ColumnDefault != currentTimestamp && c.ColumnDefault != "" {
 		return ";default:'" + c.ColumnDefault + "'"
 	}
 

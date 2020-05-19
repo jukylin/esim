@@ -32,42 +32,42 @@ type InitFieldsReturn struct {
 	SpecFields []pkg.Field `json:"SpecFields"`
 }
 
-//+-----------+-----------+
-//| firstPart |	package	  |
-//|			  |	import	  |
-//|	----------|	----------|
-//| secondPart| var		  |
-//|			  |	     	  |
-//|	----------|	----------|
-//| thirdPart | struct	  |
-//|			  |	funcBody  |
-//|	----------|	----------|
+// +-----------+-----------+
+// | firstPart |	package	  |
+// |			  |	import	  |
+// |	----------|	----------|
+// | secondPart| var		  |
+// |			  |	     	  |
+// |	----------|	----------|
+// | thirdPart | struct	  |
+// |			  |	funcBody  |
+// |	----------|	----------|
 type EsimFactory struct {
-	//struct name which be search
+	// struct name which be search
 	StructName string
 
-	//struct Absolute path
+	// struct Absolute path
 	structDir string
 
 	filesName []string
 
-	//package {{.packName}}
+	// package {{.packName}}
 	packName string
 
-	//package main => {{.packStr}}
+	// package main => {{.packStr}}
 	packStr string
 
-	//File where the Struct is located
+	// File where the Struct is located
 	structFileName string
 
-	//Found Struct
+	// Found Struct
 	oldStructInfo *structInfo
 
-	//Struct will be create
+	// Struct will be create
 	NewStructInfo *structInfo
 
-	//true if find the StructName
-	//false if not
+	// true if find the StructName
+	// false if not
 	found bool
 
 	withPlural bool
@@ -92,7 +92,7 @@ type EsimFactory struct {
 
 	InitField *InitFieldsReturn
 
-	//Struct plural form
+	// Struct plural form
 	pluralName string
 
 	NewPluralStr string
@@ -101,7 +101,7 @@ type EsimFactory struct {
 
 	TypePluralStr string
 
-	//option start
+	// option start
 	Option1 string
 
 	Option2 string
@@ -112,7 +112,7 @@ type EsimFactory struct {
 
 	Option5 string
 
-	//option end
+	// option end
 
 	OptionParam string
 
@@ -209,8 +209,8 @@ type structInfo struct {
 	StructInitStr string
 }
 
-//getPluralWord Struct plural form
-//If plural is not obtained, add "s" at the end of the word
+// getPluralWord Struct plural form
+// If plural is not obtained, add "s" at the end of the word
 func (ef *EsimFactory) getPluralForm(word string) string {
 	newWord := inflect.Pluralize(word)
 	if newWord == word || newWord == "" {
@@ -351,7 +351,7 @@ func (ef *EsimFactory) organizePart() {
 	if ef.oldStructInfo.varStr != "" {
 		ef.secondPart = ef.NewStructInfo.varStr
 	} else {
-		//merge firstPart and secondPart
+		// merge firstPart and secondPart
 		ef.firstPart += ef.NewStructInfo.varStr
 	}
 
@@ -449,7 +449,6 @@ func (ef *EsimFactory) parseStruct() bool {
 	}
 
 	for _, fileInfo := range files {
-
 		ext := path.Ext(fileInfo.Name())
 		if ext != ".go" {
 			continue
@@ -548,7 +547,7 @@ func (ef *EsimFactory) extendField() bool {
 	return HasExtend
 }
 
-func (ef *EsimFactory) extendLog()  {
+func (ef *EsimFactory) extendLog() {
 	var foundLogField bool
 	for _, field := range ef.NewStructInfo.Fields {
 		if strings.Contains(field.Field, "log.Logger") && !foundLogField {
@@ -575,8 +574,7 @@ func (ef *EsimFactory) extendLog()  {
 	}
 }
 
-
-func (ef *EsimFactory) extendConf()  {
+func (ef *EsimFactory) extendConf() {
 	var foundConfField bool
 	for _, field := range ef.NewStructInfo.Fields {
 		if strings.Contains(field.Field, "config.Config") && !foundConfField {

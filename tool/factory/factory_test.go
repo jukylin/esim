@@ -36,7 +36,7 @@ func setUp() {
 
 func TestEsimFactory_Run(t *testing.T) {
 	v := viper.New()
-	v.Set("sname", "Test")
+	v.Set("sname", testStructName)
 	v.Set("option", true)
 	v.Set("sort", true)
 	v.Set("gen_logger_option", true)
@@ -58,7 +58,7 @@ func TestEsimFactory_Run(t *testing.T) {
 
 func TestEsimFactory_InputBind(t *testing.T) {
 	v := viper.New()
-	v.Set("sname", "Test")
+	v.Set("sname", testStructName)
 	v.Set("option", true)
 	v.Set("sort", true)
 	v.Set("gen_logger_option", true)
@@ -100,6 +100,7 @@ type test struct {
 }
 `
 
+//nolint:goconst
 func TestExtendFieldAndReplaceStructContent(t *testing.T) {
 	loggerOptions := log.LoggerOptions{}
 	logger := log.NewLogger(loggerOptions.WithDebug(true))

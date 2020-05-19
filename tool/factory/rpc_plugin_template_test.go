@@ -22,7 +22,7 @@ func TestExecuteRPCPluginTemplate(t *testing.T) {
 		StructName string
 		Fields     []pkg.Field
 	}{
-		"Test",
+		testStructName,
 		fields,
 	}
 

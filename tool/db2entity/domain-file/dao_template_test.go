@@ -20,10 +20,10 @@ func TestDaoTemplate(t *testing.T) {
 		pkg.Import{Name: "sync", Path: "sync"})
 
 	var buf bytes.Buffer
-	daoTmp := newDaoTpl("User")
+	daoTmp := newDaoTpl(userStructName)
 	daoTmp.Imports = imports
-	daoTmp.DataBaseName = "test"
-	daoTmp.TableName = "user"
+	daoTmp.DataBaseName = database
+	daoTmp.TableName = userTable
 	daoTmp.PriKeyType = "int"
 
 	err = tmpl.Execute(&buf, daoTmp)

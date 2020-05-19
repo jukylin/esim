@@ -167,7 +167,7 @@ func (mp *MonitorProxy) withMysqlMetrics(query string, beginTime, endTime time.T
 	mysqlDuration.With(lab).Observe(endTime.Sub(beginTime).Seconds())
 }
 
-//要等2.0
+// 要等2.0
 func (mp *MonitorProxy) withMysqlTracer(query string, beginTime, endTime time.Time) {
 	//span := opentracing.GetSpan(ctx, m.tracer,
 	//	query, beginTime)

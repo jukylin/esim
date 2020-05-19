@@ -61,12 +61,12 @@ func WithRepoDomainFileTpl(tpl templates.Tpl) RepoDomainFileOption {
 	}
 }
 
-//Disabled implements DomainFile.
+// Disabled implements DomainFile.
 func (rdf *repoDomainFile) Disabled() bool {
 	return rdf.withDisableRepo
 }
 
-//BindInput implements DomainFile.
+// BindInput implements DomainFile.
 func (rdf *repoDomainFile) BindInput(v *viper.Viper) error {
 	rdf.withDisableRepo = v.GetBool("disable_repo")
 	if !rdf.withDisableRepo {
@@ -81,7 +81,7 @@ func (rdf *repoDomainFile) BindInput(v *viper.Viper) error {
 			rdf.withRepoTarget = strings.Trim(rdf.withRepoTarget, "/")
 		}
 
-		//check repo dir
+		// check repo dir
 		existsRepo, err := file_dir.IsExistsDir(rdf.withRepoTarget)
 		if err != nil {
 			return err
@@ -99,13 +99,13 @@ func (rdf *repoDomainFile) BindInput(v *viper.Viper) error {
 	return nil
 }
 
-//ParseCloumns implements DomainFile.
+// ParseCloumns implements DomainFile.
 func (rdf *repoDomainFile) ParseCloumns(cs Columns, info *ShareInfo) {
 	rdf.shareInfo = info
 
 	repoTpl := newRepoTpl(info.CamelStruct)
 
-	if cs.Len() < 1 {
+	if cs.Len() == 0 {
 		return
 	}
 
@@ -127,7 +127,7 @@ func (rdf *repoDomainFile) ParseCloumns(cs Columns, info *ShareInfo) {
 	rdf.data = repoTpl
 }
 
-//Execute implements DomainFile.
+// Execute implements DomainFile.
 func (rdf *repoDomainFile) Execute() string {
 	content, err := rdf.tpl.Execute(rdf.name, rdf.template, rdf.data)
 	if err != nil {
@@ -137,7 +137,7 @@ func (rdf *repoDomainFile) Execute() string {
 	return content
 }
 
-//GetSavePath implements DomainFile.
+// GetSavePath implements DomainFile.
 func (rdf *repoDomainFile) GetSavePath() string {
 	return rdf.withRepoTarget + rdf.tableName + DomainFileExt
 }

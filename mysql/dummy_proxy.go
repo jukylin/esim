@@ -8,7 +8,7 @@ import (
 	"github.com/jukylin/esim/log"
 )
 
-//last proxy
+// last proxy
 type dummyProxy struct {
 	nextProxy SQLCommon
 
@@ -26,12 +26,12 @@ func newDummyProxy(logger log.Logger, name string) SQLCommon {
 	return dummyProxy
 }
 
-//implement Proxy interface
+// implement Proxy interface
 func (dp *dummyProxy) NextProxy(db interface{}) {
 	dp.nextProxy = db.(SQLCommon)
 }
 
-//implement Proxy interface
+// implement Proxy interface
 func (dp *dummyProxy) ProxyName() string {
 	return dp.name
 }

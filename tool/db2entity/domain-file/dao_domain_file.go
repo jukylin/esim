@@ -60,12 +60,12 @@ func WithDaoDomainFileTpl(tpl templates.Tpl) DaoDomainFileOption {
 	}
 }
 
-//Disabled implements DomainFile.
+// Disabled implements DomainFile.
 func (ddf *daoDomainFile) Disabled() bool {
 	return ddf.withDisableDao
 }
 
-//BindInput implements DomainFile.
+// BindInput implements DomainFile.
 func (ddf *daoDomainFile) BindInput(v *viper.Viper) error {
 	ddf.withDisableDao = v.GetBool("disable_dao")
 	if !ddf.withDisableDao {
@@ -98,11 +98,11 @@ func (ddf *daoDomainFile) BindInput(v *viper.Viper) error {
 	return nil
 }
 
-//ParseCloumns implements DomainFile.
+// ParseCloumns implements DomainFile.
 func (ddf *daoDomainFile) ParseCloumns(cs Columns, shareInfo *ShareInfo) {
 	daoTpl := newDaoTpl(shareInfo.CamelStruct)
 
-	if cs.Len() < 1 {
+	if cs.Len() == 0 {
 		return
 	}
 
@@ -125,7 +125,7 @@ func (ddf *daoDomainFile) ParseCloumns(cs Columns, shareInfo *ShareInfo) {
 			nullable = true
 		}
 
-		if column.ColumnKey == "PRI" {
+		if column.ColumnKey == pri {
 			daoTpl.PriKeyType = column.GetGoType(nullable)
 			break
 		}
@@ -134,7 +134,7 @@ func (ddf *daoDomainFile) ParseCloumns(cs Columns, shareInfo *ShareInfo) {
 	ddf.data = daoTpl
 }
 
-//Execute implements DomainFile.
+// Execute implements DomainFile.
 func (ddf *daoDomainFile) Execute() string {
 	content, err := ddf.tpl.Execute(ddf.name, ddf.template, ddf.data)
 	if err != nil {
@@ -144,7 +144,7 @@ func (ddf *daoDomainFile) Execute() string {
 	return content
 }
 
-//GetSavePath implements DomainFile.
+// GetSavePath implements DomainFile.
 func (ddf *daoDomainFile) GetSavePath() string {
 	return ddf.withDaoTarget + ddf.tableName + DomainFileExt
 }
