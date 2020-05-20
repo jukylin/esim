@@ -81,11 +81,11 @@ func NewGrpcServer(app *{{.PackageName}}.App) *grpc.Server {
 	serverOptions := grpc.ServerOptions{}
 
 	//grpc服务初始化
-	grpcServer :=  grpc.NewGrpcServer(target,
+	grpcServer :=  grpc.NewServer(target,
 		serverOptions.WithServerConf(app.Conf),
 		serverOptions.WithServerLogger(app.Logger),
 		serverOptions.WithUnarySrvItcp(),
-		serverOptions.WithGrpcServerOption(),
+		serverOptions.WithServerOption(),
 		serverOptions.WithTracer(app.Tracer),
 	)
 
