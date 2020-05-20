@@ -388,7 +388,7 @@ func TestMain(m *testing.M) {
 }
 
 
-func provideStubsGrpcClient(esim *container.Esim) *grpc.GrpcClient {
+func provideStubsGrpcClient(esim *container.Esim) *grpc.Client {
 	clientOptional := grpc.ClientOptionals{}
 	clientOptions := grpc.NewClientOptions(
 		clientOptional.WithLogger(esim.Logger),

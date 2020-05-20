@@ -69,7 +69,7 @@ import (
 	"{{.ProPath}}{{.ServerName}}/internal/transports/grpc/controllers"
 )
 
-func NewGrpcServer(app *{{.PackageName}}.App) *grpc.GrpcServer {
+func NewGrpcServer(app *{{.PackageName}}.App) *grpc.Server {
 
 	target := app.Conf.GetString("grpc_server_tcp")
 
@@ -287,7 +287,7 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func provideStubsGrpcClient(esim *container.Esim) *egrpc.GrpcClient {
+func provideStubsGrpcClient(esim *container.Esim) *egrpc.Client {
 	clientOptional := egrpc.ClientOptionals{}
 	clientOptions := egrpc.NewClientOptions(
 		clientOptional.WithLogger(esim.Logger),
