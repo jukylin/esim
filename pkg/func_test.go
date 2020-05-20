@@ -8,4 +8,6 @@ import (
 
 func TestDirPathToImportPath(t *testing.T) {
 	assert.Equal(t, "/a/b/c", DirPathToImportPath("/a/b/c"))
+	assert.Equal(t, "/a/b/c", DirPathToImportPath("./a/b/c"))
+
 }

@@ -55,7 +55,7 @@ var db2entityCmd = &cobra.Command{
 			db2EntityOptions.WithShareInfo(shareInfo),
 
 			db2EntityOptions.WithExecer(pkg.NewCmdExec()),
-			db2EntityOptions.WithDomainFile(daoDomainFile, entityDomainFile, repoDomainFile),
+			db2EntityOptions.WithDomainFile(entityDomainFile, daoDomainFile, repoDomainFile),
 			db2EntityOptions.WithInfraer(infra.NewInfraer(
 				infra.WithIfacerInfraInfo(infra.NewInfo()),
 				infra.WithIfacerLogger(logger),

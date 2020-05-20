@@ -165,7 +165,7 @@ func (de *Db2Entity) Run(v *viper.Viper) error {
 
 	de.shareInfo.CamelStruct = de.CamelStruct
 
-	if len(de.domainFiles) < 1 {
+	if len(de.domainFiles) == 0 {
 		return errors.New("have not domain file")
 	}
 

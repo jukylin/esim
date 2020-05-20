@@ -8,8 +8,13 @@ import (
 // ./a/b/c/ => /a/b/c
 func DirPathToImportPath(dirPath string) string {
 	var path string
-	path = strings.TrimLeft(dirPath, ".")
-	path = strings.Trim(dirPath, "/")
+	if string([]rune(dirPath)[0]) == "." {
+		path = string([]rune(dirPath)[1:])
+	} else {
+		path = dirPath
+	}
+
+	path = strings.Trim(path, "/")
 	path = string(filepath.Separator) + path
 	return path
 }
