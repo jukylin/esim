@@ -7,10 +7,10 @@ import (
 )
 
 type Proxy interface {
-	//set next proxy
+	// set next proxy
 	NextProxy(proxy interface{})
 
-	//get proxy name
+	// get proxy name
 	ProxyName() string
 }
 

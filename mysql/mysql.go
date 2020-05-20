@@ -54,7 +54,6 @@ type DbConfig struct {
 
 func NewClient(options ...Option) *Client {
 	clientOnce.Do(func() {
-
 		onceClient = &Client{
 			gdbs:        make(map[string]*gorm.DB),
 			sqlDbs:      make(map[string]*sql.DB),

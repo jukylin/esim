@@ -18,8 +18,8 @@ func NewTracer(serviceName string, logger log.Logger) opentracing.Tracer {
 	}
 
 	cfg.ServiceName = serviceName
-	//cfg.Sampler.Type = "const"
-	//cfg.Sampler.Param = 1
+	// cfg.Sampler.Type = "const"
+	// cfg.Sampler.Param = 1
 	tracer, _, err = cfg.NewTracer(jaegerconfig.Logger(logger))
 	if err != nil {
 		logger.Panicf(err.Error())
@@ -30,7 +30,6 @@ func NewTracer(serviceName string, logger log.Logger) opentracing.Tracer {
 
 func GetSpan(ctx context.Context, tracer opentracing.Tracer,
 	operationName string, beginTime time.Time) opentracing.Span {
-
 	if parSpan := opentracing.SpanFromContext(ctx); parSpan != nil {
 		spanOption := opentracing.StartSpanOptions{}
 		spanOption.StartTime = beginTime
@@ -44,7 +43,6 @@ func GetSpan(ctx context.Context, tracer opentracing.Tracer,
 
 func FinishWithOptions(ctx context.Context, tracer opentracing.Tracer, operationName string,
 	beginTime time.Time) opentracing.Span {
-
 	if parSpan := opentracing.SpanFromContext(ctx); parSpan != nil {
 		spanOption := opentracing.StartSpanOptions{}
 		spanOption.StartTime = beginTime

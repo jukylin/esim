@@ -454,7 +454,7 @@ func (ef *EsimFactory) parseStruct() bool {
 			continue
 		}
 
-		//不复制测试文件
+		// 不复制测试文件
 		if strings.Contains(fileInfo.Name(), "_test") {
 			continue
 		}
@@ -462,7 +462,6 @@ func (ef *EsimFactory) parseStruct() bool {
 		ef.filesName = append(ef.filesName, fileInfo.Name())
 
 		if !fileInfo.IsDir() && !ef.found {
-
 			src, err := ioutil.ReadFile(ef.structDir + "/" + fileInfo.Name())
 			if err != nil {
 				ef.logger.Panicf(err.Error())
@@ -610,7 +609,7 @@ func (ef *EsimFactory) buildNewStructFileContent() error {
 		ef.NewStructInfo.structFileContent = strings.Replace(ef.oldStructInfo.structFileContent,
 			ef.oldStructInfo.importStr, ef.NewStructInfo.importStr, -1)
 	} else if ef.packStr != "" {
-		//not find import
+		// not find import
 		ef.getFirstPart()
 		ef.NewStructInfo.structFileContent = strings.Replace(ef.oldStructInfo.structFileContent,
 			ef.packStr, ef.firstPart, -1)
@@ -694,7 +693,6 @@ func (ef *EsimFactory) genOptions() {
 	}`
 
 	if ef.withGenConfOption {
-
 		ef.Option4 += `
 func With` + ef.StructName + `Conf(conf config.Config) ` + ef.StructName + `Option {
 	return func(` + templates.Shorten(snaker.SnakeToCamelLower(ef.StructName)) +
@@ -745,7 +743,6 @@ func (ef *EsimFactory) incrPoolVar(structName string) {
 	if ef.varNameExists(ef.NewStructInfo.vars, poolName) {
 		ef.logger.Debugf("var is exists : %s", poolName)
 	} else {
-
 		ef.NewStructInfo.vars = append(ef.NewStructInfo.vars,
 			ef.appendPoolVar(poolName, structName))
 		ef.appendNewImport("sync")

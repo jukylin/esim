@@ -287,7 +287,7 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func provideStubsGrpcClient(esim *container.Esim) *egrpc.GrpcClient {
+func provideStubsGrpcClient(esim *container.Esim) *egrpc.Client {
 	clientOptional := egrpc.ClientOptionals{}
 	clientOptions := egrpc.NewClientOptions(
 		clientOptional.WithLogger(esim.Logger),

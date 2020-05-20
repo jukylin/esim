@@ -33,7 +33,7 @@ type Infra struct {
 
 	DB *mysql.Client
 
-	GrpcClient *grpc.GrpcClient
+	GrpcClient *grpc.Client
 
 	UserRepo repo.UserRepo
 }
@@ -54,7 +54,7 @@ func NewInfra() *Infra {
 	return onceInfra
 }
 
-func NewStubsInfra(grpcClient *grpc.GrpcClient) *Infra {
+func NewStubsInfra(grpcClient *grpc.Client) *Infra {
 	infraOnce.Do(func() {
 		esim  := container.NewEsim()
 		onceInfra = initInfra(esim, grpcClient)
@@ -109,7 +109,7 @@ func provideUserRepo(esim *container.Esim) repo.UserRepo {
 }
 
 
-func provideGrpcClient(esim *container.Esim) *grpc.GrpcClient {
+func provideGrpcClient(esim *container.Esim) *grpc.Client {
 	clientOptional := grpc.ClientOptionals{}
 	clientOptions := grpc.NewClientOptions(
 		clientOptional.WithLogger(esim.Logger),
@@ -138,7 +138,7 @@ import (
 )
 
 
-func initInfra(esim *container.Esim,grpc *grpc.GrpcClient) *Infra {
+func initInfra(esim *container.Esim,grpc *grpc.Client) *Infra {
 	wire.Build(infraSet)
 	return nil
 }
@@ -162,7 +162,7 @@ import (
 
 // Injectors from wire.go:
 
-func initInfra(esim *container.Esim, grpc2 *grpc.GrpcClient) *Infra {
+func initInfra(esim *container.Esim, grpc2 *grpc.Client) *Infra {
 	mysqlClient := provideDb(esim)
 	userRepo := provideUserRepo(esim)
 	infra := &Infra{
