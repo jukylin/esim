@@ -69,7 +69,7 @@ import (
 	"{{.ProPath}}{{.ServerName}}/internal/transports/grpc/controllers"
 )
 
-func NewGrpcServer(app *{{.PackageName}}.App) *grpc.GrpcServer {
+func NewGrpcServer(app *{{.PackageName}}.App) *grpc.Server {
 
 	target := app.Conf.GetString("grpc_server_tcp")
 
@@ -81,11 +81,11 @@ func NewGrpcServer(app *{{.PackageName}}.App) *grpc.GrpcServer {
 	serverOptions := grpc.ServerOptions{}
 
 	//grpc服务初始化
-	grpcServer :=  grpc.NewGrpcServer(target,
+	grpcServer :=  grpc.NewServer(target,
 		serverOptions.WithServerConf(app.Conf),
 		serverOptions.WithServerLogger(app.Logger),
 		serverOptions.WithUnarySrvItcp(),
-		serverOptions.WithGrpcServerOption(),
+		serverOptions.WithServerOption(),
 		serverOptions.WithTracer(app.Tracer),
 	)
 
