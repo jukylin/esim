@@ -13,12 +13,14 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	io_prometheus_client "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
+	"fmt"
 )
 
 var logger log.Logger
 
-var (
+const (
 	host1 = "127.0.0.1"
+
 	host2 = "127.0.0.2"
 )
 
@@ -48,9 +50,9 @@ func TestMulLevelRoundTrip(t *testing.T) {
 					stubsProxyOptions.WithRespFunc(func(request *http.Request) *http.Response {
 						resp := &http.Response{}
 						if request.URL.String() == host1 {
-							resp.StatusCode = 200
+							resp.StatusCode = http.StatusOK
 						} else if request.URL.String() == host2 {
-							resp.StatusCode = 300
+							resp.StatusCode = http.StatusMultipleChoices
 						}
 
 						resp.Body = ioutil.NopCloser(bytes.NewReader([]byte{}))
@@ -71,15 +73,16 @@ func TestMulLevelRoundTrip(t *testing.T) {
 		url      string
 		result   int
 	}{
-		{"127.0.0.1:200", host1, 200},
-		{"127.0.0.2:300", host2, 300},
+		{fmt.Sprintf("%s:%d", host1, http.StatusOK), host1, http.StatusOK},
+		{fmt.Sprintf("%s:%d", host2, http.StatusMultipleChoices), host2, http.StatusMultipleChoices},
 	}
 
 	ctx := context.Background()
-
+	var err error
+	var resp *http.Response
 	for _, test := range testCases {
 		t.Run(test.behavior, func(t *testing.T) {
-			resp, err := httpClient.Get(ctx, test.url)
+			resp, err = httpClient.Get(ctx, test.url)
 			resp.Body.Close()
 
 			assert.Nil(t, err)
@@ -110,9 +113,9 @@ func TestMonitorProxy(t *testing.T) {
 					stubsProxyOptions.WithRespFunc(func(request *http.Request) *http.Response {
 						resp := &http.Response{}
 						if request.URL.String() == host1 {
-							resp.StatusCode = 200
+							resp.StatusCode = http.StatusOK
 						} else if request.URL.String() == host2 {
-							resp.StatusCode = 300
+							resp.StatusCode = http.StatusMultipleChoices
 						}
 
 						resp.Body = ioutil.NopCloser(bytes.NewReader([]byte{}))
@@ -133,15 +136,15 @@ func TestMonitorProxy(t *testing.T) {
 	resp.Body.Close()
 
 	assert.Nil(t, err)
-	assert.Equal(t, resp.StatusCode, 200)
+	assert.Equal(t, resp.StatusCode, http.StatusOK)
 
 	resp, err = httpClient.Get(ctx, host2)
 	resp.Body.Close()
 
 	assert.Nil(t, err)
-	assert.Equal(t, resp.StatusCode, 300)
+	assert.Equal(t, resp.StatusCode, http.StatusMultipleChoices)
 
-	lab := prometheus.Labels{"url": host1, "method": "GET"}
+	lab := prometheus.Labels{"url": host1, "method": http.MethodGet}
 	c, _ := httpTotal.GetMetricWith(lab)
 	metric := &io_prometheus_client.Metric{}
 	err = c.Write(metric)
@@ -176,9 +179,9 @@ func TestTimeoutProxy(t *testing.T) {
 					stubsProxyOptions.WithRespFunc(func(request *http.Request) *http.Response {
 						resp := &http.Response{}
 						if request.URL.String() == host1 {
-							resp.StatusCode = 200
+							resp.StatusCode = http.StatusOK
 						} else if request.URL.String() == host2 {
-							resp.StatusCode = 300
+							resp.StatusCode = http.StatusMultipleChoices
 						}
 
 						resp.Body = ioutil.NopCloser(bytes.NewReader([]byte{}))
@@ -199,5 +202,5 @@ func TestTimeoutProxy(t *testing.T) {
 	resp.Body.Close()
 
 	assert.Nil(t, err)
-	assert.Equal(t, resp.StatusCode, 200)
+	assert.Equal(t, resp.StatusCode, http.StatusOK)
 }

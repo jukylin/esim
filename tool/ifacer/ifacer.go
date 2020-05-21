@@ -32,17 +32,17 @@ type Ifacer struct {
 
 	Methods []Method
 
-	//implements interface context
+	// implements interface context
 	Content string
 
 	Star string
 
 	OutFile string
 
-	//import from interface file
+	// import from interface file
 	pkgNoConflictImport map[string]pkg.Import
 
-	//import in the interface
+	// import in the interface
 	ifaceUsingIngImport map[string]string
 
 	writer file_dir.IfaceWriter

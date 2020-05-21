@@ -280,7 +280,6 @@ func (de *Db2Entity) generateDomainFile(v *viper.Viper, cs domain_file.Columns) 
 		}
 
 		if !df.Disabled() {
-
 			de.shareInfo.ParseInfo(df)
 
 			df.ParseCloumns(cs, de.shareInfo)

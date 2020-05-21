@@ -27,12 +27,12 @@ func NewFacadeProxy(options ...FacadeProxyOption) *FacadeProxy {
 	return FacadeProxy
 }
 
-//implement Proxy interface
+// implement Proxy interface
 func (fp *FacadeProxy) NextProxy(conn interface{}) {
 	fp.nextConn = conn.(redis.Conn)
 }
 
-//implement Proxy interface
+// implement Proxy interface
 func (fp *FacadeProxy) ProxyName() string {
 	return fp.name
 }

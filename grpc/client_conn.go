@@ -12,14 +12,11 @@ type ClientConn struct {
 	logger log.Logger
 }
 
-type ClientState struct {
-	stats []string
-}
-
 func NewClientConn(logger log.Logger) *ClientConn {
 	connClose := &ClientConn{
 		logger: logger,
 	}
+
 	return connClose
 }
 

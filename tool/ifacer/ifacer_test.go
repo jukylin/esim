@@ -168,6 +168,8 @@ func TestIfacer_GetUniqueImportName(t *testing.T) {
 	assert.True(t, shouldPanic)
 }
 
+// false positives
+//nolint:scopelint
 func TestIfacer_SetNoConflictImport(t *testing.T) {
 	testCases := []struct {
 		caseName   string

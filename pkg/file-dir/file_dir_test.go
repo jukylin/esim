@@ -8,6 +8,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	file = "./test/esim.txt"
+
+	dir = "./test_dir"
+)
+
 func TestIsEmptyDir(t *testing.T) {
 	empty, err := IsEmptyDir(".")
 	if err != nil {
@@ -20,7 +26,6 @@ func TestIsEmptyDir(t *testing.T) {
 }
 
 func TestIsEmptyDir2(t *testing.T) {
-	dir := "./test_dir"
 	err := CreateDir(dir)
 	if err != nil {
 		t.Error(err.Error())
@@ -38,7 +43,6 @@ func TestIsEmptyDir2(t *testing.T) {
 }
 
 func TestCreateDir(t *testing.T) {
-	dir := "./test_dir"
 	err := CreateDir(dir)
 	if err != nil {
 		t.Error(err.Error())
@@ -98,14 +102,14 @@ func TestGetParDir(t *testing.T) {
 
 func TestBackUpFile(t *testing.T) {
 	log.NewLogger()
-	err := EsimBackUpFile("./test/esim.txt")
+	err := EsimBackUpFile(file)
 	assert.NoError(t, err)
 }
 
 func TestEsimRecoverFile(t *testing.T) {
 	log.NewLogger()
-	err := EsimBackUpFile("./test/esim.txt")
+	err := EsimBackUpFile(file)
 	assert.NoError(t, err)
-	err = EsimRecoverFile("./test/esim.txt")
+	err = EsimRecoverFile(file)
 	assert.NoError(t, err)
 }

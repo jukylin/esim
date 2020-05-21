@@ -168,7 +168,7 @@ func EsimBackUpFile(backFile string) error {
 		return err
 	}
 
-	err = ioutil.WriteFile(backUpPath+relativePath, input, 0644)
+	err = ioutil.WriteFile(backUpPath+relativePath, input, 0600)
 	if err != nil {
 		return err
 	}

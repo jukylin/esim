@@ -58,7 +58,6 @@ type ClientOptions struct{}
 
 func NewClient(options ...Option) *Client {
 	poolOnce.Do(func() {
-
 		onceClient = &Client{
 			proxyConn:   make([]func() interface{}, 0),
 			stateTicker: 10 * time.Second,
@@ -185,6 +184,7 @@ func (c *Client) initPool() {
 				c.logger.Panicf("redis.Dial err: %s", err.Error())
 				return nil, err
 			}
+
 			if c.redisPassword != "" {
 				if _, err := conn.Do("AUTH", c.redisPassword); err != nil {
 					err = conn.Close()
@@ -256,7 +256,6 @@ func (c *Client) Stats() {
 	for {
 		select {
 		case <-ticker.C:
-
 			stats = c.client.Stats()
 
 			activeCountLab := prometheus.Labels{"stats": "active_count"}

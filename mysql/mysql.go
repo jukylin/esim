@@ -257,7 +257,6 @@ func (c *Client) Stats() {
 		select {
 		case <-ticker.C:
 			for dbName, db := range c.sqlDbs {
-
 				stats = db.Stats()
 
 				maxOpenConnLab := prometheus.Labels{"db": dbName, "stats": "max_open_conn"}

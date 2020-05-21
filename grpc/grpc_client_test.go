@@ -80,7 +80,6 @@ func TestMain(m *testing.M) {
 }
 
 func TestNewGrpcClient(t *testing.T) {
-
 	memConfig := config.NewMemConfig()
 	memConfig.Set("debug", true)
 	memConfig.Set("grpc_client_debug", true)
