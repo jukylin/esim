@@ -143,8 +143,8 @@ func (rps *RPCPluginStructField) buildPluginEnv() error {
 	return nil
 }
 
-//@ Copy File
-//@ repackagename
+// @ Copy File
+// @ repackagename
 func (rps *RPCPluginStructField) copyFile(dstName, srcName string, reg *regexp.Regexp) {
 	src, err := os.Open(srcName)
 	if err != nil {
@@ -152,7 +152,7 @@ func (rps *RPCPluginStructField) copyFile(dstName, srcName string, reg *regexp.R
 	}
 
 	defer src.Close()
-	dst, err := os.OpenFile(dstName, os.O_WRONLY|os.O_CREATE, 0644)
+	dst, err := os.OpenFile(dstName, os.O_WRONLY|os.O_CREATE, 0600)
 	if err != nil {
 		rps.logger.Panicf(err.Error())
 	}
@@ -191,23 +191,21 @@ func (rps *RPCPluginStructField) genStructPlugin(dir string) {
 	}
 
 	file := dir + string(filepath.Separator) + rps.StructName + "_plugin.go"
-	err = ioutil.WriteFile(file, src, 0666)
+	err = ioutil.WriteFile(file, src, 0600)
 	if err != nil {
 		rps.logger.Panicf(err.Error())
 	}
 }
 
 func (rps *RPCPluginStructField) buildPlugin(dir string) error {
-	cmdLine := fmt.Sprintf("go build -o %s/plugin %s", dir, dir)
+	cmdLine := fmt.Sprintf("build -o %s/plugin %s", dir, dir)
 
-	println(cmdLine)
+	rps.logger.Infof("%s %s", "go", cmdLine)
 
 	args := strings.Split(cmdLine, " ")
 
-	cmd := exec.Command(args[0], args[1:]...)
+	cmd := exec.Command("go", args...)
 	cmd.Dir = dir
-
-	cmd.Env = os.Environ()
 
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -243,8 +241,9 @@ func (rps *RPCPluginStructField) run() {
 		rps.logger.Panicf("%s is empty", rps.StructName)
 	}
 
-	cmd := exec.Command(rps.structDir + string(filepath.Separator) +
-		"plugin" + string(filepath.Separator) + "plugin")
+	cmdPath := rps.structDir + string(filepath.Separator) + "plugin" + string(filepath.Separator) + "plugin"
+	cmd := exec.Command(cmdPath)
+
 	rps.pluginClient = plugin.NewClient(&plugin.ClientConfig{
 		HandshakeConfig: HandshakeConfig,
 		Plugins:         pluginMap,

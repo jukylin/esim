@@ -93,7 +93,7 @@ func NewServer(target string, options ...ServerOption) *Server {
 	}
 	keepAliveServer.Timeout = time.Duration(ServerKpTimeOut) * time.Second
 
-	//测试没生效
+	// 测试没生效
 	ServerConnTimeOut := Server.conf.GetInt("grpc_server_conn_time_out")
 	if ServerConnTimeOut == 0 {
 		ServerConnTimeOut = 3

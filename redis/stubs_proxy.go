@@ -26,12 +26,12 @@ func newStubsProxy(logger log.Logger, name string) *stubsProxy {
 	return stubsProxy
 }
 
-//implement Proxy interface
+// implement Proxy interface
 func (sp *stubsProxy) NextProxy(conn interface{}) {
 	sp.nextConn = conn.(ContextConn)
 }
 
-//implement Proxy interface
+// implement Proxy interface
 func (sp *stubsProxy) ProxyName() string {
 	return sp.name
 }

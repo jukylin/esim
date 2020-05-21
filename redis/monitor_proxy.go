@@ -74,12 +74,12 @@ func (MonitorProxyOptions) WithTracer(tracer opentracing2.Tracer) MonitorProxyOp
 	}
 }
 
-//implement Proxy interface
+// implement Proxy interface
 func (mp *MonitorProxy) NextProxy(conn interface{}) {
 	mp.nextConn = conn.(ContextConn)
 }
 
-//implement Proxy interface
+// implement Proxy interface
 func (mp *MonitorProxy) ProxyName() string {
 	return mp.name
 }
@@ -160,7 +160,7 @@ func (mp *MonitorProxy) Receive(ctx context.Context) (reply interface{}, err err
 	return
 }
 
-//初始化回调事件
+// 初始化回调事件
 func (mp *MonitorProxy) registerAfterEvent() {
 	if mp.conf.GetBool("redis_tracer") {
 		mp.afterEvents = append(mp.afterEvents, mp.redisTracer)
@@ -190,7 +190,7 @@ func (mp *MonitorProxy) redisTracer(ctx context.Context, info *execInfo) {
 	span.FinishWithOptions(opentracing2.FinishOptions{FinishTime: info.endTime})
 }
 
-//慢命令
+// 慢命令
 func (mp *MonitorProxy) redisSlowCommand(ctx context.Context, info *execInfo) {
 	redisSlowTime := mp.conf.GetInt64("redis_slow_time")
 	if info.endTime.Sub(info.startTime) > time.Duration(redisSlowTime)*time.Millisecond {

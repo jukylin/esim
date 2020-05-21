@@ -37,11 +37,11 @@ func (ce *CmdExec) ExecFmt(dir string, args ...string) error {
 }
 
 func (ce *CmdExec) ExecBuild(dir string, args ...string) error {
-	cmdLine := fmt.Sprintf("go build")
+	cmdLine := fmt.Sprintf("build")
 
 	args = append(strings.Split(cmdLine, " "), args...)
 
-	cmd := exec.Command(args[0], args[1:]...)
+	cmd := exec.Command("go", args...)
 	cmd.Dir = dir
 
 	cmd.Env = os.Environ()

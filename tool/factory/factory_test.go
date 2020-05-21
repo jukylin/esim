@@ -44,7 +44,7 @@ func TestEsimFactory_Run(t *testing.T) {
 	v.Set("pool", true)
 	v.Set("plural", true)
 	v.Set("new", true)
-	//v.Set("print", true)
+	v.Set("print", true)
 
 	err := esimfactory.Run(v)
 	assert.Nil(t, err)

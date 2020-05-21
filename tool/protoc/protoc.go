@@ -15,6 +15,10 @@ import (
 	"github.com/spf13/viper"
 )
 
+const (
+	protocCmd = "protoc"
+)
+
 type Protocer struct {
 	target string
 
@@ -68,8 +72,8 @@ func (p *Protocer) bindInput(v *viper.Viper) bool {
 	if !ex {
 		p.logger.Fatalf("Dir not exists %s", target)
 	}
-	if target != "/" {
-		p.target = strings.TrimRight(target, "/")
+	if target != string(filepath.Separator) {
+		p.target = strings.TrimRight(target, string(filepath.Separator))
 	} else {
 		p.target = target
 	}
@@ -89,7 +93,7 @@ func (p *Protocer) bindInput(v *viper.Viper) bool {
 	}
 	p.packageName = pkgName
 
-	err = file_dir.CreateDir(target + "/" + pkgName)
+	err = file_dir.CreateDir(target + string(filepath.Separator) + pkgName)
 	if err != nil {
 		p.logger.Fatalf("Create fail % : %s", target+string(filepath.Separator)+pkgName, err.Error())
 	}
@@ -98,29 +102,32 @@ func (p *Protocer) bindInput(v *viper.Viper) bool {
 }
 
 func (p *Protocer) parseProtoPath() {
-	strs := strings.Split(p.fromProto, "/")
+	strs := strings.Split(p.fromProto, string(filepath.Separator))
 	protoPath := strs[0 : len(strs)-1]
-	p.protoPath = strings.Join(protoPath, "/")
+	p.protoPath = strings.Join(protoPath, string(filepath.Separator))
 }
 
 func (p *Protocer) execCmd() bool {
-	pwd, _ := os.Getwd()
+	pwd, err := os.Getwd()
+	if err != nil {
+		p.logger.Fatalf(err.Error())
+	}
 
-	cmdLine := fmt.Sprintf("protoc --go_out=plugins=grpc:%s --proto_path %s %s",
+	cmdLine := fmt.Sprintf("--go_out=plugins=grpc:%s --proto_path %s %s",
 		p.target+string(filepath.Separator)+p.packageName, p.protoPath, p.fromProto)
 
-	p.logger.Infof(cmdLine)
+	p.logger.Infof("%s %s", protocCmd, cmdLine)
 
 	args := strings.Split(cmdLine, " ")
 
-	cmd := exec.Command(args[0], args[1:]...)
+	cmd := exec.Command(protocCmd, args...)
 	cmd.Dir = pwd
 
 	cmd.Env = os.Environ()
 
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	err := cmd.Run()
+	err = cmd.Run()
 	if err != nil {
 		p.logger.Fatalf(err.Error())
 	}

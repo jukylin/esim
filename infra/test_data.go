@@ -5,7 +5,6 @@ var (
 )
 
 func init() {
-
 	infraContent = `package infra
 
 import (
