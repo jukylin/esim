@@ -169,7 +169,7 @@ func (de *Db2Entity) Run(v *viper.Viper) error {
 		return errors.New("have not domain file")
 	}
 
-	//select table's columns from repository
+	// select table's columns from repository
 	cs, err := de.ColumnsRepo.SelectColumns(de.DbConf)
 	if err != nil {
 		return err
@@ -184,7 +184,7 @@ func (de *Db2Entity) Run(v *viper.Viper) error {
 		return err
 	}
 
-	//save domain content
+	// save domain content
 	if len(de.domainContent) > 0 {
 		for path, content := range de.domainContent {
 			de.logger.Debugf("writing %s", path)
@@ -249,7 +249,7 @@ func (de *Db2Entity) bindInfra(v *viper.Viper) {
 	}
 }
 
-//injectToInfra inject repo to infra.go and execute wire command
+// injectToInfra inject repo to infra.go and execute wire command
 func (de *Db2Entity) injectToInfra(v *viper.Viper) {
 	if !de.withInject {
 		de.logger.Infof("disable inject")
@@ -260,7 +260,13 @@ func (de *Db2Entity) injectToInfra(v *viper.Viper) {
 }
 
 func (de *Db2Entity) makeCodeBeautiful(src string) string {
-	result, err := imports.Process("", []byte(src), nil)
+	options := &imports.Options{}
+	options.Comments = false
+	options.TabIndent = true
+	options.TabWidth = 8
+	options.FormatOnly = true
+
+	result, err := imports.Process("", []byte(src), options)
 	if err != nil {
 		de.logger.Panicf("err %s : %s", err.Error(), src)
 		return ""
@@ -272,7 +278,7 @@ func (de *Db2Entity) makeCodeBeautiful(src string) string {
 func (de *Db2Entity) generateDomainFile(v *viper.Viper, cs domain_file.Columns) error {
 	var content string
 
-	//loop domainFiles to generate domain file
+	// loop domainFiles to generate domain file
 	for _, df := range de.domainFiles {
 		err := df.BindInput(v)
 		if err != nil {
@@ -284,7 +290,7 @@ func (de *Db2Entity) generateDomainFile(v *viper.Viper, cs domain_file.Columns) 
 
 			df.ParseCloumns(cs, de.shareInfo)
 
-			//parsed template
+			// parsed template
 			content = df.Execute()
 
 			content = de.makeCodeBeautiful(content)

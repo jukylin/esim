@@ -503,7 +503,7 @@ func (ef *EsimFactory) parseType(genDecl *ast.GenDecl, src []byte,
 			if typeSpec.Name.String() == ef.StructName {
 				ef.oldStructInfo.structFileContent = strSrc
 				ef.structFileName = fileInfo.Name()
-				//found the struct
+				// found the struct
 				ef.found = true
 
 				ef.packName = f.Name.String()

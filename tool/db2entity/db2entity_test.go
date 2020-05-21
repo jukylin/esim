@@ -19,7 +19,6 @@ func TestDb2Entity_Run(t *testing.T) {
 	v := viper.New()
 	v.Set("entity_target", "./example/entity")
 	v.Set("dao_target", "./example/dao")
-	v.Set("disable_entity", true)
 	v.Set("repo_target", "./example/repo")
 	v.Set("infra_dir", "./example/infra")
 
@@ -91,10 +90,10 @@ func TestDb2Entity_Run(t *testing.T) {
 		os.Remove(path)
 	}
 
-	err = file_dir.EsimRecoverFile(file_dir.GetCurrentDir() +
-		string(filepath.Separator) + "example" + string(filepath.Separator) + "infra" +
-		string(filepath.Separator) + "infra.go")
-	assert.Nil(t, err)
+	//err = file_dir.EsimRecoverFile(file_dir.GetCurrentDir() +
+	//	string(filepath.Separator) + "example" + string(filepath.Separator) + "infra" +
+	//	string(filepath.Separator) + "infra.go")
+	//assert.Nil(t, err)
 }
 
 func TestDb2Entity_ErrWrite(t *testing.T) {

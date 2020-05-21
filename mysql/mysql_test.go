@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
 	"github.com/ory/dockertest/v3"

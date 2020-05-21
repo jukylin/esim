@@ -19,7 +19,7 @@ import (
 	"{{.ProPath}}{{.ServerName}}/internal/infra/repo"
 )
 
-//Do not change the function name and var name
+// Do not change the function name and var name
 //  infraOnce
 //  onceInfra
 //  infraSet

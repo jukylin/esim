@@ -189,7 +189,7 @@ import (
 )
 
 
-//go test
+// go test
 func TestControllers_Esim(t *testing.T) {
 	logger := log.NewLogger()
 
@@ -340,10 +340,10 @@ import "{{.ProPath}}{{.ServerName}}/internal/domain/user/entity"
 
 type User struct {
 
-	//用户名称
+	// 用户名称
 	UserName string {{.SingleMark}}json:"user_name"{{.SingleMark}}
 
-	//密码
+	// 密码
 	PassWord string {{.SingleMark}}json:"pass_word"{{.SingleMark}}
 }
 

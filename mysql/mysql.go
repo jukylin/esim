@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/proxy"
@@ -205,8 +204,8 @@ func (c *Client) GetDb(dbName string) *gorm.DB {
 }
 
 func (c *Client) getDb(ctx context.Context, dbName string) *gorm.DB {
+	_ = ctx
 	dbName = strings.ToLower(dbName)
-
 	if db, ok := c.gdbs[dbName]; ok {
 		return db
 	}

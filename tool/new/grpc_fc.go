@@ -80,7 +80,7 @@ func NewGrpcServer(app *{{.PackageName}}.App) *grpc.Server {
 
 	serverOptions := grpc.ServerOptions{}
 
-	//grpc服务初始化
+	// grpc服务初始化
 	grpcServer :=  grpc.NewServer(target,
 		serverOptions.WithServerConf(app.Conf),
 		serverOptions.WithServerLogger(app.Logger),
@@ -89,7 +89,7 @@ func NewGrpcServer(app *{{.PackageName}}.App) *grpc.Server {
 		serverOptions.WithTracer(app.Tracer),
 	)
 
-	//注册grpc路由
+	// 注册grpc路由
 	routers.RegisterGrpcServer(grpcServer.Server, controllers.NewControllers(app))
 
 	return grpcServer
@@ -112,7 +112,7 @@ import (
 	gp "{{.ProPath}}{{.ServerName}}/internal/infra/third_party/protobuf/passport"
 )
 
-//go test
+// go test
 func TestUserService_GetUserByUserName(t *testing.T) {
 	logger := log.NewLogger()
 
@@ -241,10 +241,10 @@ import (
 
 type User struct {
 
-	//用户名称
+	// 用户名称
 	UserName string {{.SingleMark}}json:"user_name"{{.SingleMark}}
 
-	//密码
+	// 密码
 	PassWord string {{.SingleMark}}json:"pass_word"{{.SingleMark}}
 }
 

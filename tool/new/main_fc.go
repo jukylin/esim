@@ -10,7 +10,10 @@ var (
 		Dir:      ".",
 		Content: `package main
 
-import "{{.ProPath}}{{.ServerName}}/cmd"
+import (
+	"{{.ProPath}}{{.ServerName}}/cmd"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
+)
 
 func main() {
   cmd.Execute()

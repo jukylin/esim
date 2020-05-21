@@ -241,7 +241,8 @@ func (rps *RPCPluginStructField) run() {
 		rps.logger.Panicf("%s is empty", rps.StructName)
 	}
 
-	cmdPath := rps.structDir + string(filepath.Separator) + "plugin" + string(filepath.Separator) + "plugin"
+	cmdPath := rps.structDir + string(filepath.Separator) + "plugin" +
+		string(filepath.Separator) + "plugin"
 	cmd := exec.Command(cmdPath)
 
 	rps.pluginClient = plugin.NewClient(&plugin.ClientConfig{

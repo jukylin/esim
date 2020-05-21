@@ -21,7 +21,7 @@ var db2entityCmd = &cobra.Command{
 		dbConf := domain_file.NewDbConfig()
 		dbConf.ParseConfig(v, logger)
 
-		//select table's columns from db
+		// select table's columns from db
 		columnsInter := domain_file.NewDBColumnsInter(logger)
 
 		tpl := templates.NewTextTpl()

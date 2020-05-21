@@ -35,7 +35,7 @@ func ({{.StructName | shorten}} *{{.StructName}}) DelKey() string {
 }
 
 {{if or (.CurTimeStamp) (.OnUpdateTimeStamp)}}
-//自动增加时间
+// 自动增加时间
 func ({{.StructName | shorten}} *{{.StructName}}) BeforeCreate(scope *gorm.Scope) (err error) {
 
 	switch scope.Value.(type) {
@@ -61,7 +61,7 @@ func ({{.StructName | shorten}} *{{.StructName}}) BeforeCreate(scope *gorm.Scope
 {{end}}
 
 {{if .OnUpdateTimeStampStr }}
-//自动添加更新时间
+// 自动添加更新时间
 func ({{.StructName | shorten}} *{{.StructName}}) BeforeSave(scope *gorm.Scope) (err error) {
 	val, ok := scope.InstanceGet("gorm:update_attrs")
 	if ok {

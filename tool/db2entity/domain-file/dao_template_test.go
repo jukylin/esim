@@ -28,5 +28,4 @@ func TestDaoTemplate(t *testing.T) {
 
 	err = tmpl.Execute(&buf, daoTmp)
 	assert.Nil(t, err)
-	//println(buf.String())
 }

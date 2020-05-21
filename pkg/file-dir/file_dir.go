@@ -217,7 +217,7 @@ func EsimRecoverFile(recoverFile string) error {
 		return err
 	}
 
-	err = ioutil.WriteFile(recoverFile, input, 0644)
+	err = ioutil.WriteFile(recoverFile, input, 0600)
 	if err != nil {
 		return err
 	}
@@ -242,7 +242,7 @@ func EsimWrite(filePath, content string) error {
 		}
 	}
 
-	dst, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	dst, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
 		return err
 	}

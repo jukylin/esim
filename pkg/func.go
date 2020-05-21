@@ -7,6 +7,11 @@ import (
 
 // ./a/b/c/ => /a/b/c
 func DirPathToImportPath(dirPath string) string {
+
+	if dirPath == "" {
+		return ""
+	}
+
 	var path string
 	if string([]rune(dirPath)[0]) == "." {
 		path = string([]rune(dirPath)[1:])

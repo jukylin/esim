@@ -30,5 +30,4 @@ func TestRepoTemplate(t *testing.T) {
 		println(err.Error())
 	}
 	assert.Nil(t, err)
-	//println(buf.String())
 }

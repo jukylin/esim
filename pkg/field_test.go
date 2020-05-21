@@ -30,5 +30,5 @@ func TestFields_String(t *testing.T) {
 
 	_, err := fields.String()
 	assert.Nil(t, err)
-	//println(string(src))
+	// println(string(src))
 }

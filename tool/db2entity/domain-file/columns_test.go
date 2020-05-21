@@ -5,7 +5,7 @@ import (
 
 	"github.com/jukylin/esim/log"
 	"github.com/stretchr/testify/assert"
-	//"github.com/davecgh/go-spew/spew"
+	// "github.com/davecgh/go-spew/spew"
 )
 
 func TestDBColumnsInter_GetColumns(t *testing.T) {

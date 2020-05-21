@@ -120,8 +120,8 @@ func WithIfacerExecer(execer pkg.Exec) Option {
 func (ir *Infraer) Inject(v *viper.Viper, injectInfos []*domain_file.InjectInfo) bool {
 	var err error
 
-	if len(injectInfos) < 1 {
-		ir.logger.Errorf("not need inject")
+	if len(injectInfos) == 0 {
+		ir.logger.Errorf("Not need inject")
 		return false
 	}
 
@@ -277,7 +277,7 @@ func (ir *Infraer) sourceInfraFile() string {
 
 	formatSrc := ir.makeCodeBeautiful(string(src))
 
-	err = ioutil.WriteFile(ir.withInfraDir+ir.withInfraFile, []byte(formatSrc), 0666)
+	err = ioutil.WriteFile(ir.withInfraDir+ir.withInfraFile, []byte(formatSrc), 0600)
 	if err != nil {
 		ir.logger.Errorf(err.Error())
 		return ""
@@ -332,7 +332,13 @@ func (ir *Infraer) buildNewInfraContent() {
 }
 
 func (ir *Infraer) makeCodeBeautiful(src string) string {
-	result, err := imports.Process("", []byte(src), nil)
+	options := &imports.Options{}
+	options.Comments = false
+	options.TabIndent = true
+	options.TabWidth = 8
+	options.FormatOnly = true
+
+	result, err := imports.Process("", []byte(src), options)
 	if err != nil {
 		ir.logger.Panicf("err %s : %s", err.Error(), src)
 	}
