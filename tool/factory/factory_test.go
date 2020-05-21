@@ -14,7 +14,6 @@ import (
 )
 
 func TestMain(m *testing.M) {
-
 	setUp()
 
 	code := m.Run()

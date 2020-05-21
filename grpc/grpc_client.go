@@ -202,13 +202,13 @@ func (gc *ClientOptions) clientDebug() func(ctx context.Context,
 	return func(ctx context.Context, method string, req, reply interface{},
 		cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		beginTime := time.Now()
-		gc.logger.Debugc(ctx, "grpc client start %s : %s, req : %s",
+		gc.logger.Debugc(ctx, "Grpc client start %s : %s, req : %s",
 			cc.Target(), method, spew.Sdump(req))
 
 		err := invoker(ctx, method, req, reply, cc, opts...)
 
 		endTime := time.Now()
-		gc.logger.Debugc(ctx, "grpc client end [%v] %s : %s, reply : %s",
+		gc.logger.Debugc(ctx, "Grpc client end [%v] %s : %s, reply : %s",
 			endTime.Sub(beginTime).String(), cc.Target(), method, spew.Sdump(reply))
 
 		return err

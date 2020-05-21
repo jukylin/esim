@@ -77,7 +77,6 @@ func (edf *entityDomainFile) BindInput(v *viper.Viper) error {
 
 	edf.withDisbleEntity = v.GetBool("disable_entity")
 	if !edf.withDisbleEntity {
-
 		edf.withEntityTarget = v.GetString("entity_target")
 
 		if edf.withEntityTarget == "" {

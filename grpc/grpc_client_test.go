@@ -15,9 +15,13 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-var logger log.Logger
+var (
+	logger log.Logger
 
-var svr *Server
+	svr *Server
+
+	tcpAddr = &net.TCPAddr{IP: net.ParseIP(address).To4(), Port: port}
+)
 
 // server is used to implement helloworld.GreeterServer.
 type server struct{}
@@ -30,9 +34,9 @@ func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloRe
 func TestMain(m *testing.M) {
 	logger = log.NewLogger()
 
-	lis, err := net.Listen("tcp", "0.0.0.0:50051")
+	lis, err := net.Listen(tcpAddr.Network(), tcpAddr.String())
 	if err != nil {
-		logger.Fatalf("failed to listen: %v", err)
+		logger.Fatalf("Failed to listen: %v", err)
 	}
 
 	serverOptions := ServerOptions{}
@@ -46,13 +50,13 @@ func TestMain(m *testing.M) {
 		serverOptions.WithUnarySrvItcp(
 			ServerStubs(func(ctx context.Context, req interface{},
 				info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
-				if req.(*pb.HelloRequest).Name == "call_panic" {
-					panic("is a test")
-				} else if req.(*pb.HelloRequest).Name == "call_panic_arr" {
+				if req.(*pb.HelloRequest).Name == callPanic {
+					panic(isTest)
+				} else if req.(*pb.HelloRequest).Name == callPanicArr {
 					var arr [1]string
-					arr[0] = "is a test"
+					arr[0] = isTest
 					panic(arr)
-				} else if req.(*pb.HelloRequest).Name == "call_nil" {
+				} else if req.(*pb.HelloRequest).Name == callNil {
 					return nil, err
 				}
 				resp, err = handler(ctx, req)
@@ -76,6 +80,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestNewGrpcClient(t *testing.T) {
+
 	memConfig := config.NewMemConfig()
 	memConfig.Set("debug", true)
 	memConfig.Set("grpc_client_debug", true)
@@ -88,14 +93,14 @@ func TestNewGrpcClient(t *testing.T) {
 
 	ctx := context.Background()
 	client := NewClient(clientOptions)
-	conn := client.DialContext(ctx, ":50051")
+	conn := client.DialContext(ctx, tcpAddr.String())
 
 	defer conn.Close()
 	c := pb.NewGreeterClient(conn)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	r, err := c.SayHello(ctx, &pb.HelloRequest{Name: "esim"})
+	r, err := c.SayHello(ctx, &pb.HelloRequest{Name: esim})
 	if err != nil {
 		logger.Errorf(err.Error())
 	} else {
@@ -122,14 +127,14 @@ func TestSlowClient(t *testing.T) {
 
 	ctx := context.Background()
 	client := NewClient(clientOptions)
-	conn := client.DialContext(ctx, ":50051")
+	conn := client.DialContext(ctx, tcpAddr.String())
 
 	defer conn.Close()
 	c := pb.NewGreeterClient(conn)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	r, err := c.SayHello(ctx, &pb.HelloRequest{Name: "esim"})
+	r, err := c.SayHello(ctx, &pb.HelloRequest{Name: esim})
 	if err != nil {
 		logger.Errorf(err.Error())
 	} else {
@@ -152,14 +157,14 @@ func TestServerPanic(t *testing.T) {
 
 	ctx := context.Background()
 	client := NewClient(clientOptions)
-	conn := client.DialContext(ctx, ":50051")
+	conn := client.DialContext(ctx, tcpAddr.String())
 
 	defer conn.Close()
 	c := pb.NewGreeterClient(conn)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	r, err := c.SayHello(ctx, &pb.HelloRequest{Name: "call_panic"})
+	r, err := c.SayHello(ctx, &pb.HelloRequest{Name: callPanic})
 	assert.Error(t, err)
 	assert.Nil(t, r)
 }
@@ -177,14 +182,14 @@ func TestServerPanicArr(t *testing.T) {
 
 	ctx := context.Background()
 	client := NewClient(clientOptions)
-	conn := client.DialContext(ctx, ":50051")
+	conn := client.DialContext(ctx, tcpAddr.String())
 
 	defer conn.Close()
 	c := pb.NewGreeterClient(conn)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	r, err := c.SayHello(ctx, &pb.HelloRequest{Name: "call_panic_arr"})
+	r, err := c.SayHello(ctx, &pb.HelloRequest{Name: callPanicArr})
 	assert.Error(t, err)
 	assert.Nil(t, r)
 }
@@ -203,7 +208,7 @@ func TestSubsReply(t *testing.T) {
 				method string, req, reply interface{}, cc *grpc.ClientConn,
 				invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 				if method == "/helloworld.Greeter/SayHello" {
-					reply.(*pb.HelloReply).Message = "esim"
+					reply.(*pb.HelloReply).Message = esim
 				}
 				return nil
 			})),
@@ -212,17 +217,17 @@ func TestSubsReply(t *testing.T) {
 
 	ctx := context.Background()
 	client := NewClient(clientOptions)
-	conn := client.DialContext(ctx, ":50051")
+	conn := client.DialContext(ctx, tcpAddr.String())
 
 	defer conn.Close()
 	c := pb.NewGreeterClient(conn)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	r, err := c.SayHello(ctx, &pb.HelloRequest{Name: "esim"})
+	r, err := c.SayHello(ctx, &pb.HelloRequest{Name: esim})
 	if err != nil {
 		logger.Errorf(err.Error())
 	} else {
-		assert.Equal(t, "esim", r.Message)
+		assert.Equal(t, esim, r.Message)
 	}
 }

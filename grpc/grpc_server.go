@@ -21,6 +21,22 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
+const (
+	address = "0.0.0.0"
+
+	port = 50051
+
+	isTest = "is test"
+
+	callPanic = "call_panic"
+
+	callNil = "call_nil"
+
+	callPanicArr = "callPanciArr"
+
+	esim = "esim"
+)
+
 type Server struct {
 	Server *grpc.Server
 
@@ -110,7 +126,7 @@ func NewServer(target string, options ...ServerOption) *Server {
 		unaryServerInterceptors = append(unaryServerInterceptors, Server.serverDebug())
 	}
 
-	//handle panic
+	// handle panic
 	opts := []grpc_recovery.Option{
 		grpc_recovery.WithRecoveryHandlerContext(Server.handelPanic()),
 	}
@@ -175,7 +191,6 @@ func (gs *Server) checkServerSlow() grpc.UnaryServerInterceptor {
 		info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler,
 	) (resp interface{}, err error) {
-
 		beginTime := time.Now()
 		resp, err = handler(ctx, req)
 		endTime := time.Now()
@@ -183,7 +198,7 @@ func (gs *Server) checkServerSlow() grpc.UnaryServerInterceptor {
 		grpcClientSlowTime := gs.conf.GetInt64("grpc_server_slow_time")
 		if grpcClientSlowTime != 0 {
 			if endTime.Sub(beginTime) > time.Duration(grpcClientSlowTime)*time.Millisecond {
-				gs.logger.Warnc(ctx, "slow server %s", info.FullMethod)
+				gs.logger.Warnc(ctx, "Slow server %s", info.FullMethod)
 			}
 		}
 
@@ -198,14 +213,13 @@ func (gs *Server) serverDebug() grpc.UnaryServerInterceptor {
 		info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler,
 	) (resp interface{}, err error) {
-
 		beginTime := time.Now()
-		gs.logger.Debugc(ctx, "grpc server start %s, req : %s", info.FullMethod, spew.Sdump(req))
+		gs.logger.Debugc(ctx, "Grpc server start %s, req : %s", info.FullMethod, spew.Sdump(req))
 
 		resp, err = handler(ctx, req)
 
 		endTime := time.Now()
-		gs.logger.Debugc(ctx, "grpc server end [%v] %s, resp : %s",
+		gs.logger.Debugc(ctx, "Grpc server end [%v] %s, resp : %s",
 			endTime.Sub(beginTime).String(),
 			info.FullMethod, spew.Sdump(resp))
 
@@ -216,7 +230,7 @@ func (gs *Server) serverDebug() grpc.UnaryServerInterceptor {
 func (gs *Server) handelPanic() grpc_recovery.RecoveryHandlerFuncContext {
 	return func(ctx context.Context, p interface{}) (err error) {
 		gs.logger.Errorc(ctx, spew.Sdump(p))
-		return errors.New(spew.Sdump("server panic : ", p))
+		return errors.New(spew.Sdump("Server panic : ", p))
 	}
 }
 
@@ -228,12 +242,10 @@ func nilResp() grpc.UnaryServerInterceptor {
 		info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler,
 	) (resp interface{}, err error) {
-
 		return nil, err
 	}
 }
 
-//nolint:goconst
 func panicResp() grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
@@ -241,12 +253,11 @@ func panicResp() grpc.UnaryServerInterceptor {
 		info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler,
 	) (resp interface{}, err error) {
-
-		if req.(*helloworld.HelloRequest).Name == "call_panic" {
-			panic("is a test")
-		} else if req.(*helloworld.HelloRequest).Name == "call_panic_arr" {
+		if req.(*helloworld.HelloRequest).Name == callPanic {
+			panic(isTest)
+		} else if req.(*helloworld.HelloRequest).Name == callPanicArr {
 			var arr [1]string
-			arr[0] = "is a test"
+			arr[0] = isTest
 			panic(arr)
 		}
 		resp, err = handler(ctx, req)
@@ -274,17 +285,17 @@ func ServerStubs(stubsFunc func(
 func (gs *Server) Start() {
 	lis, err := net.Listen("tcp", gs.target)
 	if err != nil {
-		gs.logger.Panicf("failed to listen: %s", err.Error())
+		gs.logger.Panicf("Failed to listen: %s", err.Error())
 	}
 
 	// Register reflection service on gRPC server.
 	reflection.Register(gs.Server)
 
-	gs.logger.Infof("grpc server starting %s:%s",
+	gs.logger.Infof("Grpc server starting %s:%s",
 		gs.serviceName, gs.target)
 	go func() {
 		if err := gs.Server.Serve(lis); err != nil {
-			gs.logger.Panicf("failed to server: %s", err.Error())
+			gs.logger.Panicf("Failed to start server: %s", err.Error())
 		}
 	}()
 }

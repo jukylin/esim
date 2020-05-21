@@ -69,7 +69,6 @@ func (ddf *daoDomainFile) Disabled() bool {
 func (ddf *daoDomainFile) BindInput(v *viper.Viper) error {
 	ddf.withDisableDao = v.GetBool("disable_dao")
 	if !ddf.withDisableDao {
-
 		ddf.withDaoTarget = v.GetString("dao_target")
 		if ddf.withDaoTarget == "" {
 			ddf.withDaoTarget = "internal" + string(filepath.Separator) +

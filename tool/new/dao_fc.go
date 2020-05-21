@@ -29,12 +29,12 @@ func NewUserDao() *UserDao {
 	return dao
 }
 
-//master
+// master
 func (this *UserDao) GetDb(ctx context.Context) *gorm.DB {
 	return this.mysql.GetCtxDb(ctx, "passport").Table("user")
 }
 
-//slave
+// slave
 func (this *UserDao) GetSlaveDb(ctx context.Context) *gorm.DB {
 	return this.mysql.GetCtxDb(ctx, "passport_slave").Table("user")
 }

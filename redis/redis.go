@@ -128,7 +128,7 @@ func NewClient(options ...Option) *Client {
 		onceClient.initPool()
 
 		if onceClient.conf.GetString("runmode") == "pro" {
-			//conn success ？
+			// conn success ？
 			rc := onceClient.client.Get()
 			if rc.Err() != nil {
 				onceClient.logger.Panicf(rc.Err().Error())
@@ -211,14 +211,14 @@ func (c *Client) initPool() {
 	}
 }
 
-//使用原生redisgo
+// 使用原生redisgo
 func (c *Client) GetRedisConn() redis.Conn {
 	rc := c.client.Get()
 
 	return rc
 }
 
-//Recommended
+// Recommended
 func (c *Client) GetCtxRedisConn() ContextConn {
 	rc := c.client.Get()
 

@@ -16,7 +16,6 @@ const (
 	boubctx = "boubctx"
 
 	delField = "is_del"
-
 )
 
 var (

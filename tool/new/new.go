@@ -222,7 +222,6 @@ func (pj *Project) initTransport() {
 // build create a new project locally
 // if an error occurred, remove the project
 func (pj *Project) build() bool {
-
 	pj.logger.Infof("starting create %s, package name %s", pj.ServerName, pj.PackageName)
 
 	defer func() {

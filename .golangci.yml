@@ -28,6 +28,7 @@ linters-settings:
       - octalLiteral
       - whyNoLint
       - wrapperFunc
+      - commentedOutCode
   gocyclo:
     min-complexity: 15
   goimports:

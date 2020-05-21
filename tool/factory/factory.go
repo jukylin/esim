@@ -765,7 +765,6 @@ func (ef *EsimFactory) genSpecFieldInitStr() {
 		}
 
 		if f.Type == "map" {
-
 			str += `if ` + f.Name + ` == nil {
 `
 			str += f.Name + ` = make(` + f.TypeName + `)
