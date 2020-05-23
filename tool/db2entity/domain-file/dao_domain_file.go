@@ -108,7 +108,7 @@ func (ddf *daoDomainFile) ParseCloumns(cs Columns, shareInfo *ShareInfo) {
 	daoTpl.DataBaseName = shareInfo.DbConf.Database
 	daoTpl.TableName = shareInfo.DbConf.Table
 	ddf.tableName = shareInfo.DbConf.Table
-println(shareInfo.WithEntityTarget)
+
 	daoTpl.Imports = append(daoTpl.Imports,
 		pkg.Import{Path: "context"},
 		pkg.Import{Path: "github.com/jinzhu/gorm"},

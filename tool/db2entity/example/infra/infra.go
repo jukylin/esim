@@ -19,7 +19,6 @@ type Infra struct {
 
 	// redis
 	Redis *redis.Client
-
 }
 
 var infraSet = wire.NewSet(
@@ -41,4 +40,3 @@ func (inf *Infra) HealthCheck() []error {
 	var errs []error
 	return errs
 }
-

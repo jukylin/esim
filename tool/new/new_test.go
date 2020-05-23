@@ -11,6 +11,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	serviceName = "example-a"
+)
+
 func TestProject_Run(t *testing.T) {
 	project := InitProject(
 		WithProjectLogger(log.NewLogger()),
@@ -20,16 +24,16 @@ func TestProject_Run(t *testing.T) {
 
 	v := viper.New()
 
-	v.Set("server_name", "example-a")
+	v.Set("server_name", serviceName)
 	v.Set("gin", true)
 	v.Set("grpc", true)
 
 	project.Run(v)
 
-	exists, err := file_dir.IsExistsDir("example-a")
+	exists, err := file_dir.IsExistsDir(serviceName)
 	assert.Nil(t, err)
 	if exists {
-		os.RemoveAll("example-a")
+		os.RemoveAll(serviceName)
 	}
 }
 
@@ -42,15 +46,15 @@ func TestProject_ErrRun(t *testing.T) {
 
 	v := viper.New()
 
-	v.Set("server_name", "example-a")
+	v.Set("server_name", serviceName)
 	v.Set("gin", true)
 
 	project.Run(v)
 
-	exists, err := file_dir.IsExistsDir("example-a")
+	exists, err := file_dir.IsExistsDir(serviceName)
 	assert.Nil(t, err)
 	if exists {
-		os.RemoveAll("example-a")
+		os.RemoveAll(serviceName)
 	}
 }
 
@@ -68,6 +72,7 @@ func TestProject_GetPackName(t *testing.T) {
 	}
 
 	for _, test := range testCases {
+		test := test
 		t.Run(test.caseName, func(t *testing.T) {
 			project.ServerName = test.serverName
 			project.getPackName()
@@ -91,6 +96,7 @@ func TestProject_CheckServiceName(t *testing.T) {
 	}
 
 	for _, test := range testCases {
+		test := test
 		t.Run(test.caseName, func(t *testing.T) {
 			project.ServerName = test.serviceName
 			result := project.checkServerName()

@@ -79,11 +79,10 @@ func TestMulLevelRoundTrip(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	var err error
-	var resp *http.Response
 	for _, test := range testCases {
+		test := test
 		t.Run(test.behavior, func(t *testing.T) {
-			resp, err = httpClient.Get(ctx, test.url)
+			resp, err := httpClient.Get(ctx, test.url)
 			resp.Body.Close()
 
 			assert.Nil(t, err)

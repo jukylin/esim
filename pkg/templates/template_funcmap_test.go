@@ -18,6 +18,7 @@ func TestCutFirstToLower(t *testing.T) {
 	}
 
 	for _, test := range testCases {
+		test := test
 		t.Run(test.caseName, func(t *testing.T) {
 			assert.Equal(t, test.result, CutFirstToLower(test.s))
 		})
@@ -36,6 +37,7 @@ func TestFirstToLower(t *testing.T) {
 	}
 
 	for _, test := range testCases {
+		test := test
 		t.Run(test.caseName, func(t *testing.T) {
 			assert.Equal(t, test.result, FirstToLower(test.s))
 		})
@@ -58,6 +60,7 @@ func TestShortener(t *testing.T) {
 	}
 
 	for _, test := range testCases {
+		test := test
 		t.Run(test.caseName, func(t *testing.T) {
 			assert.Equal(t, test.result, Shorten(test.s))
 		})
