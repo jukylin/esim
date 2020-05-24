@@ -17,7 +17,6 @@ import (
 )
 
 type App struct{
-
 	*container.Esim
 
 	trans []transports.Transports
@@ -32,7 +31,6 @@ type Option func(c *App)
 type AppOptions struct{}
 
 func NewApp(options ...Option) *App {
-
 	app := &App{}
 
 	for _, option := range options {
@@ -90,8 +88,10 @@ func (app *App) AwaitSignal() {
 	c := make(chan os.Signal, 1)
 	signal.Reset(syscall.SIGTERM, syscall.SIGINT)
 	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
-	select {
-	case s := <-c:
+
+	close(c)
+
+	for s := range c {
 		app.Esim.Logger.Infof("receive a signal %s", s.String())
 		app.stop()
 		os.Exit(0)

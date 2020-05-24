@@ -20,10 +20,9 @@ type DemoController struct {
 	UserSvc *application.UserService
 }
 
-func (this *DemoController) Demo(c *gin.Context) {
-
+func (dc *DemoController) Demo(c *gin.Context) {
 	username := c.GetString("username")
-	info := this.UserSvc.GetUserInfo(c.Request.Context(), username)
+	info := dc.UserSvc.GetUserInfo(c.Request.Context(), username)
 
 	c.JSON(http.StatusOK, gin.H{
 		"data": dto.NewUser(info),
@@ -35,8 +34,8 @@ type PingController struct {
 	infra *infra.Infra
 }
 
-func (this *PingController) Ping(c *gin.Context)  {
-	errs := this.infra.HealthCheck()
+func (pc *PingController) Ping(c *gin.Context)  {
+	errs := pc.infra.HealthCheck()
 
 	if len(errs) > 0{
 		for _, err := range errs{
@@ -52,9 +51,9 @@ type EsimController struct {
 	infra *infra.Infra
 }
 
-func (this *EsimController) Esim(c *gin.Context)  {
+func (ec *EsimController) Esim(c *gin.Context)  {
 	c.JSON(http.StatusOK, gin.H{
-		"Esim" : this.infra.String(),
+		"Esim" : ec.infra.String(),
 	})
 }
 `,
@@ -68,16 +67,14 @@ func (this *EsimController) Esim(c *gin.Context)  {
 import (
 	"{{.ProPath}}{{.ServerName}}/internal/transports/http/controllers"
 	"github.com/gin-gonic/gin"
-
 )
 
+func RegisterGinServer(en *gin.Engine, ctl *controllers.Controllers)  {
+	en.GET("/", ctl.Esim.Esim)
 
-func RegisterGinServer(en *gin.Engine, controllers *controllers.Controllers)  {
-	en.GET("/", controllers.Esim.Esim)
+	en.GET("/demo", ctl.Demo.Demo)
 
-	en.GET("/demo", controllers.Demo.Demo)
-
-	en.GET("/ping", controllers.Ping.Ping)
+	en.GET("/ping", ctl.Ping.Ping)
 }
 `,
 	}
@@ -113,7 +110,6 @@ type GinServer struct{
 }
 
 func NewGinServer(app *{{.PackageName}}.App) *GinServer {
-
 	httpport := app.Conf.GetString("httpport")
 
 	in := strings.Index(httpport, ":")
@@ -129,11 +125,11 @@ func NewGinServer(app *{{.PackageName}}.App) *GinServer {
 
 	en := gin.Default()
 
-	if app.Conf.GetBool("http_tracer") == true{
+	if app.Conf.GetBool("http_tracer"){
 		en.Use(middleware.GinTracer(app.Tracer))
 	}
 
-	if app.Conf.GetBool("http_metrics") == true {
+	if app.Conf.GetBool("http_metrics") {
 		en.Use(middleware.GinMonitor())
 	}
 
@@ -148,26 +144,26 @@ func NewGinServer(app *{{.PackageName}}.App) *GinServer {
 }
 
 
-func (this *GinServer) Start(){
-	routers.RegisterGinServer(this.en, controllers.NewControllers(this.app))
+func (gs *GinServer) Start(){
+	routers.RegisterGinServer(gs.en, controllers.NewControllers(gs.app))
 
-	server := &http.Server{Addr: this.addr, Handler: this.en}
-	this.server = server
+	server := &http.Server{Addr: gs.addr, Handler: gs.en}
+	gs.server = server
 	go func() {
 		if err := server.ListenAndServe(); err != nil{
 			if err != http.ErrServerClosed {
-				this.logger.Fatalf("start http server err %s", err.Error())
+				gs.logger.Fatalf("start http server err %s", err.Error())
 			}
 			return
 		}
 	}()
 }
 
-func (this *GinServer) GracefulShutDown()  {
+func (gs *GinServer) GracefulShutDown()  {
 	ctx, cannel := context.WithTimeout(context.Background(), 3 * time.Second)
 	defer cannel()
-	if err := this.server.Shutdown(ctx); err != nil {
-		this.logger.Errorf("stop http server error %s", err.Error())
+	if err := gs.server.Shutdown(ctx); err != nil {
+		gs.logger.Errorf("stop http server error %s", err.Error())
 	}
 }
 `,
@@ -225,7 +221,6 @@ import (
 
 
 type Controllers struct {
-
 	App *{{.PackageName}}.App
 
 	Ping *PingController
@@ -233,10 +228,9 @@ type Controllers struct {
 	Esim *EsimController
 
 	Demo *DemoController
-
 }
 
-
+//nolint:deadcode,varcheck,unused
 var controllersSet = wire.NewSet(
 	wire.Struct(new(Controllers), "*"),
 	providePingController,
@@ -244,12 +238,10 @@ var controllersSet = wire.NewSet(
 	provideDemoController,
 )
 
-
 func NewControllers(app *{{.PackageName}}.App) *Controllers {
 	controllers := initControllers(app)
 	return controllers
 }
-
 
 func providePingController(app *{{.PackageName}}.App) *PingController {
 	pingController := &PingController{}
@@ -257,16 +249,13 @@ func providePingController(app *{{.PackageName}}.App) *PingController {
 	return pingController
 }
 
-
 func provideEsimController(app *{{.PackageName}}.App) *EsimController {
 	esimController := &EsimController{}
 	esimController.infra = app.Infra
 	return esimController
 }
 
-
 func provideDemoController(app *{{.PackageName}}.App) *DemoController {
-
 	userSvc := application.NewUserSvc(app.Infra)
 
 	demoController := &DemoController{}
@@ -289,8 +278,6 @@ import (
 	"github.com/google/wire"
 	{{.PackageName}} "{{.ProPath}}{{.ServerName}}/internal"
 )
-
-
 
 func initControllers(app *{{.PackageName}}.App) *Controllers {
 	wire.Build(controllersSet)
@@ -339,7 +326,6 @@ func initControllers(app *{{.PackageName}}.App) *Controllers {
 import "{{.ProPath}}{{.ServerName}}/internal/domain/user/entity"
 
 type User struct {
-
 	// 用户名称
 	UserName string {{.SingleMark}}json:"user_name"{{.SingleMark}}
 
@@ -411,7 +397,6 @@ func provideStubsGrpcClient(esim *container.Esim) *grpc.Client {
 
 
 func setUp(app *{{.PackageName}}.App) {
-
 	app.Infra = infra.NewStubsInfra(provideStubsGrpcClient(app.Esim))
 
 	app.RegisterTran(http.NewGinServer(app))

@@ -34,6 +34,7 @@ type Infra struct {
 	UserRepo repo.UserRepo
 }
 
+//nolint:deadcode,unused,varcheck
 var infraSet = wire.NewSet(
 	wire.Struct(new(Infra), "*"),
 	provideDb,
@@ -60,16 +61,15 @@ func NewStubsInfra(grpcClient *grpc.Client) *Infra {
 }
 
 // Close close the infra when app stop
-func (this *Infra) Close()  {
-
-	this.DB.Close()
+func (infraer *Infra) Close()  {
+	infraer.DB.Close()
 }
 
-func (this *Infra) HealthCheck() []error {
+func (infraer *Infra) HealthCheck() []error {
 	var errs []error
 	var err error
 
-	dbErrs := this.DB.Ping()
+	dbErrs := infraer.DB.Ping()
 	if err != nil{
 		errs = append(errs, dbErrs...)
 	}
@@ -79,7 +79,6 @@ func (this *Infra) HealthCheck() []error {
 
 
 func provideDb(esim *container.Esim) *mysql.Client {
-
 	clientOptions := mysql.ClientOptions{}
 	mysqlClent := mysql.NewClient(
 		clientOptions.WithConf(esim.Conf),
@@ -103,7 +102,6 @@ func provideDb(esim *container.Esim) *mysql.Client {
 func provideUserRepo(esim *container.Esim) repo.UserRepo {
 	return repo.NewDBUserRepo(esim.Logger)
 }
-
 
 func provideGrpcClient(esim *container.Esim) *grpc.Client {
 	clientOptional := grpc.ClientOptionals{}
@@ -157,7 +155,6 @@ import (
 )
 
 // Injectors from wire.go:
-
 func initInfra(esim *container.Esim, grpc2 *grpc.Client) *Infra {
 	mysqlClient := provideDb(esim)
 	userRepo := provideUserRepo(esim)

@@ -21,12 +21,12 @@ type DemoController struct {
 }
 
 
-func (this *DemoController) GetUserByUserName(ctx context.Context,
+func (dc *DemoController) GetUserByUserName(ctx context.Context,
 	request *gp.GetUserByUserNameRequest) (*gp.GrpcUserReply, error) {
 	grpcReply := &gp.GrpcUserReply{}
 	userName := request.GetUsername()
 
-	userInfo := this.userSvc.GetUserInfo(ctx, userName)
+	userInfo := dc.userSvc.GetUserInfo(ctx, userName)
 
 	grpcReply.Code = 0;
 
@@ -49,8 +49,8 @@ import (
 )
 
 
-func RegisterGrpcServer(s *grpc.Server, controllers *controllers.Controllers)  {
-	passport.RegisterUserInfoServer(s, controllers.Demo)
+func RegisterGrpcServer(s *grpc.Server, ctl *controllers.Controllers)  {
+	passport.RegisterUserInfoServer(s, ctl.Demo)
 }
 `,
 	}
@@ -70,7 +70,6 @@ import (
 )
 
 func NewGrpcServer(app *{{.PackageName}}.App) *grpc.Server {
-
 	target := app.Conf.GetString("grpc_server_tcp")
 
 	in := strings.Index(target, ":")
@@ -149,18 +148,16 @@ import (
 
 
 type Controllers struct {
-
 	App *{{.PackageName}}.App
 
 	Demo *DemoController
 }
 
-
+//nolint:deadcode,varcheck,unused
 var controllersSet = wire.NewSet(
 	wire.Struct(new(Controllers), "*"),
 	provideDemoController,
 )
-
 
 func NewControllers(app *{{.PackageName}}.App) *Controllers {
 	controllers := initControllers(app)
@@ -169,7 +166,6 @@ func NewControllers(app *{{.PackageName}}.App) *Controllers {
 
 
 func provideDemoController(app *{{.PackageName}}.App) *DemoController {
-
 	userSvc := application.NewUserSvc(app.Infra)
 
 	demoController := &DemoController{}
@@ -192,8 +188,6 @@ import (
 	"github.com/google/wire"
 	{{.PackageName}} "{{.ProPath}}{{.ServerName}}/internal"
 )
-
-
 
 func initControllers(app *{{.PackageName}}.App) *Controllers {
 	wire.Build(controllersSet)
@@ -240,7 +234,6 @@ import (
 )
 
 type User struct {
-
 	// 用户名称
 	UserName string {{.SingleMark}}json:"user_name"{{.SingleMark}}
 
@@ -309,7 +302,6 @@ func provideStubsGrpcClient(esim *container.Esim) *egrpc.Client {
 }
 
 func setUp(app *{{.PackageName}}.App) {
-
 	app.Infra = infra.NewStubsInfra(provideStubsGrpcClient(app.Esim))
 
 	app.RegisterTran(grpc.NewGrpcServer(app))

@@ -26,18 +26,18 @@ func NewUserDao() *UserDao {
 }
 
 // master
-func (this *UserDao) GetDb(ctx context.Context) *gorm.DB {
-	return this.mysql.GetCtxDb(ctx, "passport").Table("user")
+func (ud *UserDao) GetDb(ctx context.Context) *gorm.DB {
+	return ud.mysql.GetCtxDb(ctx, "passport").Table("user")
 }
 
 // slave
-func (this *UserDao) GetSlaveDb(ctx context.Context) *gorm.DB {
-	return this.mysql.GetCtxDb(ctx, "passport_slave").Table("user")
+func (ud *UserDao) GetSlaveDb(ctx context.Context) *gorm.DB {
+	return ud.mysql.GetCtxDb(ctx, "passport_slave").Table("user")
 }
 
 
 // ctx, "id,name", "name = ?", "test"
-func (this *UserDao) Find(ctx context.Context, squery, wquery interface{},
+func (ud *UserDao) Find(ctx context.Context, squery, wquery interface{},
 args ...interface{}) (entity.User, error) {
 	var user entity.User
 	user.ID = 1

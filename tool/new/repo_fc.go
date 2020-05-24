@@ -18,14 +18,14 @@ type UserRepo interface {
 }
 
 type userRepo struct {
-	log log.Logger
+	logger log.Logger
 
 	userDao *dao.UserDao
 }
 
 func NewDBUserRepo(logger log.Logger) UserRepo {
 	repo := &userRepo{
-		log: logger,
+		logger: logger,
 	}
 
 	if repo.userDao == nil {
@@ -35,14 +35,14 @@ func NewDBUserRepo(logger log.Logger) UserRepo {
 	return repo
 }
 
-func (this *userRepo) FindByUserName(ctx context.Context, username string) entity.User {
+func (ur *userRepo) FindByUserName(ctx context.Context, username string) entity.User {
 	var user entity.User
 	var err error
 
-	user, err = this.userDao.Find(ctx, "*", "username = ? ", username)
+	user, err = ur.userDao.Find(ctx, "*", "username = ? ", username)
 
 	if err != nil {
-		this.log.Errorf(err.Error())
+		ur.logger.Errorf(err.Error())
 		return user
 	}
 
