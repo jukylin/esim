@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	filedir "github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
 	"github.com/jukylin/esim/tool/new"
 	"github.com/spf13/cobra"
@@ -15,7 +15,7 @@ var newCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		new.InitProject(
 			new.WithProjectLogger(logger),
-			new.WithProjectWriter(file_dir.NewEsimWriter()),
+			new.WithProjectWriter(filedir.NewEsimWriter()),
 			new.WithProjectTpl(templates.NewTextTpl()),
 		).Run(v)
 	},

@@ -5,7 +5,7 @@ import (
 
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
-	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	filedir "github.com/jukylin/esim/pkg/file-dir"
 
 	"errors"
 	"os"
@@ -13,7 +13,7 @@ import (
 
 	"github.com/jukylin/esim/infra"
 	"github.com/jukylin/esim/pkg/templates"
-	domain_file "github.com/jukylin/esim/tool/db2entity/domain-file"
+	domainfile "github.com/jukylin/esim/tool/db2entity/domain-file"
 	"github.com/serenize/snaker"
 	"github.com/spf13/viper"
 	"golang.org/x/tools/imports"
@@ -23,15 +23,15 @@ type Db2Entity struct {
 	// Camel Form
 	CamelStruct string
 
-	ColumnsRepo domain_file.ColumnsRepo
+	ColumnsRepo domainfile.ColumnsRepo
 
-	DbConf *domain_file.DbConfig
+	DbConf *domainfile.DbConfig
 
-	writer file_dir.IfaceWriter
+	writer filedir.IfaceWriter
 
 	execer pkg.Exec
 
-	domainFiles []domain_file.DomainFile
+	domainFiles []domainfile.DomainFile
 
 	// parsed content
 	domainContent map[string]string
@@ -41,9 +41,9 @@ type Db2Entity struct {
 
 	tpl templates.Tpl
 
-	shareInfo *domain_file.ShareInfo
+	shareInfo *domainfile.ShareInfo
 
-	injectInfos []*domain_file.InjectInfo
+	injectInfos []*domainfile.InjectInfo
 
 	infraer *infra.Infraer
 
@@ -73,7 +73,7 @@ func NewDb2Entity(options ...Db2EnOption) *Db2Entity {
 	}
 
 	if d.writer == nil {
-		d.writer = file_dir.NewNullWrite()
+		d.writer = filedir.NewNullWrite()
 	}
 
 	if d.execer == nil {
@@ -96,13 +96,13 @@ func (Db2EnOptions) WithLogger(logger log.Logger) Db2EnOption {
 	}
 }
 
-func (Db2EnOptions) WithColumnsInter(columnsRepo domain_file.ColumnsRepo) Db2EnOption {
+func (Db2EnOptions) WithColumnsInter(columnsRepo domainfile.ColumnsRepo) Db2EnOption {
 	return func(d *Db2Entity) {
 		d.ColumnsRepo = columnsRepo
 	}
 }
 
-func (Db2EnOptions) WithWriter(writer file_dir.IfaceWriter) Db2EnOption {
+func (Db2EnOptions) WithWriter(writer filedir.IfaceWriter) Db2EnOption {
 	return func(d *Db2Entity) {
 		d.writer = writer
 	}
@@ -114,19 +114,19 @@ func (Db2EnOptions) WithExecer(execer pkg.Exec) Db2EnOption {
 	}
 }
 
-func (Db2EnOptions) WithDbConf(dbConf *domain_file.DbConfig) Db2EnOption {
+func (Db2EnOptions) WithDbConf(dbConf *domainfile.DbConfig) Db2EnOption {
 	return func(d *Db2Entity) {
 		d.DbConf = dbConf
 	}
 }
 
-func (Db2EnOptions) WithDomainFile(dfs ...domain_file.DomainFile) Db2EnOption {
+func (Db2EnOptions) WithDomainFile(dfs ...domainfile.DomainFile) Db2EnOption {
 	return func(d *Db2Entity) {
 		d.domainFiles = dfs
 	}
 }
 
-func (Db2EnOptions) WithShareInfo(shareInfo *domain_file.ShareInfo) Db2EnOption {
+func (Db2EnOptions) WithShareInfo(shareInfo *domainfile.ShareInfo) Db2EnOption {
 	return func(d *Db2Entity) {
 		d.shareInfo = shareInfo
 	}
@@ -238,7 +238,7 @@ func (de *Db2Entity) bindInfra(v *viper.Viper) {
 		de.withInfraFile = "infra.go"
 	}
 
-	exists, err := file_dir.IsExistsFile(de.withInfraDir + de.withInfraFile)
+	exists, err := filedir.IsExistsFile(de.withInfraDir + de.withInfraFile)
 	if err != nil {
 		de.logger.Fatalf(err.Error())
 		return
@@ -275,7 +275,7 @@ func (de *Db2Entity) makeCodeBeautiful(src string) string {
 	return string(result)
 }
 
-func (de *Db2Entity) generateDomainFile(v *viper.Viper, cs domain_file.Columns) error {
+func (de *Db2Entity) generateDomainFile(v *viper.Viper, cs domainfile.Columns) error {
 	var content string
 
 	// loop domainFiles to generate domain file

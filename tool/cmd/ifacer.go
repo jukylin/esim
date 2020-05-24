@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	filedir "github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
 	"github.com/jukylin/esim/tool/ifacer"
 	"github.com/spf13/cobra"
@@ -12,7 +12,7 @@ var ifacerCmd = &cobra.Command{
 	Short: "根据接口生成空实例",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		writer := &file_dir.EsimWriter{}
+		writer := &filedir.EsimWriter{}
 		ifacer := ifacer.NewIfacer(
 			ifacer.WithIfacerLogger(logger),
 			ifacer.WithIfacerTpl(templates.NewTextTpl()),

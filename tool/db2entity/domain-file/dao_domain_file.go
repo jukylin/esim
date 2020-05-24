@@ -1,4 +1,4 @@
-package domain_file
+package domainfile
 
 import (
 	"path/filepath"
@@ -8,7 +8,7 @@ import (
 
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
-	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	filedir "github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
 	"github.com/spf13/viper"
 )
@@ -80,7 +80,7 @@ func (ddf *daoDomainFile) BindInput(v *viper.Viper) error {
 		}
 
 		// check dao dir
-		existsdao, err := file_dir.IsExistsDir(ddf.withDaoTarget)
+		existsdao, err := filedir.IsExistsDir(ddf.withDaoTarget)
 		if err != nil {
 			return err
 		}
@@ -114,7 +114,7 @@ func (ddf *daoDomainFile) ParseCloumns(cs Columns, shareInfo *ShareInfo) {
 		pkg.Import{Path: "github.com/jinzhu/gorm"},
 		pkg.Import{Path: "errors"},
 		pkg.Import{Path: "github.com/jukylin/esim/mysql"},
-		pkg.Import{Path: file_dir.GetGoProPath() +
+		pkg.Import{Path: filedir.GetGoProPath() +
 			pkg.DirPathToImportPath(shareInfo.WithEntityTarget)})
 
 	for i := range cs {

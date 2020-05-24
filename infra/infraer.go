@@ -10,7 +10,7 @@ import (
 
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
-	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	filedir "github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
 	domain_file "github.com/jukylin/esim/tool/db2entity/domain-file"
 	"github.com/spf13/viper"
@@ -20,7 +20,7 @@ import (
 type Infraer struct {
 	logger log.Logger
 
-	writer file_dir.IfaceWriter
+	writer filedir.IfaceWriter
 
 	execer pkg.Exec
 
@@ -104,7 +104,7 @@ func WithIfacerInfraInfo(infra *Info) Option {
 	}
 }
 
-func WithIfacerWriter(writer file_dir.IfaceWriter) Option {
+func WithIfacerWriter(writer filedir.IfaceWriter) Option {
 	return func(ir *Infraer) {
 		ir.writer = writer
 	}
@@ -133,7 +133,7 @@ func (ir *Infraer) Inject(v *viper.Viper, injectInfos []*domain_file.InjectInfo)
 	ir.injectInfos = injectInfos
 
 	// back up infra.go
-	err = file_dir.EsimBackUpFile(file_dir.GetCurrentDir() + string(filepath.Separator) +
+	err = filedir.EsimBackUpFile(filedir.GetCurrentDir() + string(filepath.Separator) +
 		ir.withInfraDir + ir.withInfraFile)
 	if err != nil {
 		ir.logger.Errorf("Back up err : %s", err.Error())
@@ -185,7 +185,7 @@ func (ir *Infraer) bindInput(v *viper.Viper) bool {
 		ir.withInfraFile = "infra.go"
 	}
 
-	exists, err := file_dir.IsExistsFile(ir.withInfraDir + ir.withInfraFile)
+	exists, err := filedir.IsExistsFile(ir.withInfraDir + ir.withInfraFile)
 	if err != nil {
 		ir.logger.Errorf(err.Error())
 		return false

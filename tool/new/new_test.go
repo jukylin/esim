@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/jukylin/esim/log"
-	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	filedir "github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
@@ -18,7 +18,7 @@ const (
 func TestProject_Run(t *testing.T) {
 	project := InitProject(
 		WithProjectLogger(log.NewLogger()),
-		WithProjectWriter(file_dir.NewEsimWriter()),
+		WithProjectWriter(filedir.NewEsimWriter()),
 		WithProjectTpl(templates.NewTextTpl()),
 	)
 
@@ -30,7 +30,7 @@ func TestProject_Run(t *testing.T) {
 
 	project.Run(v)
 
-	exists, err := file_dir.IsExistsDir(serviceName)
+	exists, err := filedir.IsExistsDir(serviceName)
 	assert.Nil(t, err)
 	if exists {
 		os.RemoveAll(serviceName)
@@ -40,7 +40,7 @@ func TestProject_Run(t *testing.T) {
 func TestProject_ErrRun(t *testing.T) {
 	project := InitProject(
 		WithProjectLogger(log.NewLogger()),
-		WithProjectWriter(file_dir.NewErrWrite(3)),
+		WithProjectWriter(filedir.NewErrWrite(3)),
 		WithProjectTpl(templates.NewTextTpl()),
 	)
 
@@ -51,7 +51,7 @@ func TestProject_ErrRun(t *testing.T) {
 
 	project.Run(v)
 
-	exists, err := file_dir.IsExistsDir(serviceName)
+	exists, err := filedir.IsExistsDir(serviceName)
 	assert.Nil(t, err)
 	if exists {
 		os.RemoveAll(serviceName)

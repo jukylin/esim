@@ -1,10 +1,6 @@
 package infra
 
 var (
-	infraContent string
-)
-
-func init() {
 	infraContent = `package infra
 
 import (
@@ -53,4 +49,4 @@ func (this *Infra) HealthCheck() []error {
 	var errs []error
 	return errs
 }`
-}
+)

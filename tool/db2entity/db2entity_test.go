@@ -8,9 +8,9 @@ import (
 	"github.com/jukylin/esim/infra"
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
-	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	filedir "github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
-	domain_file "github.com/jukylin/esim/tool/db2entity/domain-file"
+	domainfile "github.com/jukylin/esim/tool/db2entity/domain-file"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
@@ -34,38 +34,38 @@ func TestDb2Entity_Run(t *testing.T) {
 	logger := log.NewLogger(loggerOptions.WithDebug(true))
 	tpl := templates.NewTextTpl()
 
-	dbConf := domain_file.NewDbConfig()
+	dbConf := domainfile.NewDbConfig()
 	dbConf.ParseConfig(v, logger)
 
-	daoDomainFile := domain_file.NewDaoDomainFile(
-		domain_file.WithDaoDomainFileLogger(logger),
-		domain_file.WithDaoDomainFileTpl(tpl),
+	daoDomainFile := domainfile.NewDaoDomainFile(
+		domainfile.WithDaoDomainFileLogger(logger),
+		domainfile.WithDaoDomainFileTpl(tpl),
 	)
 
-	entityDomainFile := domain_file.NewEntityDomainFile(
-		domain_file.WithEntityDomainFileLogger(logger),
-		domain_file.WithEntityDomainFileTpl(tpl),
+	entityDomainFile := domainfile.NewEntityDomainFile(
+		domainfile.WithEntityDomainFileLogger(logger),
+		domainfile.WithEntityDomainFileTpl(tpl),
 	)
 
-	repoDomainFile := domain_file.NewRepoDomainFile(
-		domain_file.WithRepoDomainFileLogger(logger),
-		domain_file.WithRepoDomainFileTpl(tpl),
+	repoDomainFile := domainfile.NewRepoDomainFile(
+		domainfile.WithRepoDomainFileLogger(logger),
+		domainfile.WithRepoDomainFileTpl(tpl),
 	)
 
 	db2EntityOptions := Db2EnOptions{}
-	StubsColumnsRepo := domain_file.StubsColumnsRepo{}
+	StubsColumnsRepo := domainfile.StubsColumnsRepo{}
 
-	shareInfo := domain_file.NewShareInfo()
+	shareInfo := domainfile.NewShareInfo()
 	shareInfo.DbConf = dbConf
 
-	writer := file_dir.NewEsimWriter()
+	writer := filedir.NewEsimWriter()
 
 	db2Entity := NewDb2Entity(
 		db2EntityOptions.WithLogger(logger),
 		db2EntityOptions.WithColumnsInter(StubsColumnsRepo),
 		db2EntityOptions.WithWriter(writer),
 		db2EntityOptions.WithExecer(pkg.NewNullExec()),
-		db2EntityOptions.WithDbConf(domain_file.NewDbConfig()),
+		db2EntityOptions.WithDbConf(domainfile.NewDbConfig()),
 		db2EntityOptions.WithDomainFile(entityDomainFile, daoDomainFile, repoDomainFile),
 		db2EntityOptions.WithShareInfo(shareInfo),
 		db2EntityOptions.WithTpl(templates.NewTextTpl()),
@@ -90,7 +90,7 @@ func TestDb2Entity_Run(t *testing.T) {
 		os.Remove(path)
 	}
 
-	err = file_dir.EsimRecoverFile(file_dir.GetCurrentDir() +
+	err = filedir.EsimRecoverFile(filedir.GetCurrentDir() +
 		string(filepath.Separator) + "example" + string(filepath.Separator) + "infra" +
 		string(filepath.Separator) + "infra.go")
 	assert.Nil(t, err)
@@ -115,36 +115,36 @@ func TestDb2Entity_ErrWrite(t *testing.T) {
 	logger := log.NewLogger(loggerOptions.WithDebug(true))
 	tpl := templates.NewTextTpl()
 
-	dbConf := domain_file.NewDbConfig()
+	dbConf := domainfile.NewDbConfig()
 	dbConf.ParseConfig(v, logger)
 
-	daoDomainFile := domain_file.NewDaoDomainFile(
-		domain_file.WithDaoDomainFileLogger(logger),
-		domain_file.WithDaoDomainFileTpl(tpl),
+	daoDomainFile := domainfile.NewDaoDomainFile(
+		domainfile.WithDaoDomainFileLogger(logger),
+		domainfile.WithDaoDomainFileTpl(tpl),
 	)
 
-	entityDomainFile := domain_file.NewEntityDomainFile(
-		domain_file.WithEntityDomainFileLogger(logger),
-		domain_file.WithEntityDomainFileTpl(tpl),
+	entityDomainFile := domainfile.NewEntityDomainFile(
+		domainfile.WithEntityDomainFileLogger(logger),
+		domainfile.WithEntityDomainFileTpl(tpl),
 	)
 
-	repoDomainFile := domain_file.NewRepoDomainFile(
-		domain_file.WithRepoDomainFileLogger(logger),
-		domain_file.WithRepoDomainFileTpl(tpl),
+	repoDomainFile := domainfile.NewRepoDomainFile(
+		domainfile.WithRepoDomainFileLogger(logger),
+		domainfile.WithRepoDomainFileTpl(tpl),
 	)
 
 	db2EntityOptions := Db2EnOptions{}
-	StubsColumnsRepo := domain_file.StubsColumnsRepo{}
+	StubsColumnsRepo := domainfile.StubsColumnsRepo{}
 
-	shareInfo := domain_file.NewShareInfo()
+	shareInfo := domainfile.NewShareInfo()
 	shareInfo.DbConf = dbConf
 
 	db2Entity := NewDb2Entity(
 		db2EntityOptions.WithLogger(logger),
 		db2EntityOptions.WithColumnsInter(StubsColumnsRepo),
-		db2EntityOptions.WithWriter(file_dir.NewErrWrite(2)),
+		db2EntityOptions.WithWriter(filedir.NewErrWrite(2)),
 		db2EntityOptions.WithExecer(pkg.NewNullExec()),
-		db2EntityOptions.WithDbConf(domain_file.NewDbConfig()),
+		db2EntityOptions.WithDbConf(domainfile.NewDbConfig()),
 		db2EntityOptions.WithDomainFile(entityDomainFile, daoDomainFile, repoDomainFile),
 		db2EntityOptions.WithShareInfo(shareInfo),
 		db2EntityOptions.WithTpl(templates.NewTextTpl()),
@@ -152,7 +152,7 @@ func TestDb2Entity_ErrWrite(t *testing.T) {
 		db2EntityOptions.WithInfraer(infra.NewInfraer(
 			infra.WithIfacerInfraInfo(infra.NewInfo()),
 			infra.WithIfacerLogger(logger),
-			infra.WithIfacerWriter(file_dir.NewNullWrite()),
+			infra.WithIfacerWriter(filedir.NewNullWrite()),
 			infra.WithIfacerExecer(pkg.NewNullExec()),
 		)),
 	)
@@ -160,7 +160,7 @@ func TestDb2Entity_ErrWrite(t *testing.T) {
 	err := db2Entity.Run(v)
 	assert.Nil(t, err)
 
-	err = file_dir.EsimRecoverFile(file_dir.GetCurrentDir() +
+	err = filedir.EsimRecoverFile(filedir.GetCurrentDir() +
 		string(filepath.Separator) + "example" + string(filepath.Separator) + "infra" +
 		string(filepath.Separator) + "infra.go")
 	assert.Nil(t, err)

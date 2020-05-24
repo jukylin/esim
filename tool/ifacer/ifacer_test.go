@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/jukylin/esim/log"
-	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	filedir "github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
@@ -104,7 +104,7 @@ func TestIfacer_RunNullWrite(t *testing.T) {
 
 	v.Set("ipath", "./example/iface.go")
 
-	writer := &file_dir.NullWrite{}
+	writer := &filedir.NullWrite{}
 	ifacer := NewIfacer(
 		WithIfacerLogger(log.NewLogger()),
 		WithIfacerTpl(templates.NewTextTpl()),
@@ -126,7 +126,7 @@ func TestIfacer_Write(t *testing.T) {
 
 	v.Set("ipath", "./example/iface.go")
 
-	writer := &file_dir.EsimWriter{}
+	writer := &filedir.EsimWriter{}
 	ifacer := NewIfacer(
 		WithIfacerLogger(log.NewLogger()),
 		WithIfacerTpl(templates.NewTextTpl()),
@@ -136,14 +136,14 @@ func TestIfacer_Write(t *testing.T) {
 	err := ifacer.Run(v)
 	assert.Equal(t, Result, ifacer.Content)
 	assert.Nil(t, err)
-	err = file_dir.RemoveDir("./abc")
+	err = filedir.RemoveDir("./abc")
 	assert.Nil(t, err)
 }
 
 func TestIfacer_GetUniqueImportName(t *testing.T) {
 	pkgName := "github.com/jukylin/esim/redis"
 
-	writer := &file_dir.NullWrite{}
+	writer := &filedir.NullWrite{}
 	ifacer := NewIfacer(
 		WithIfacerLogger(log.NewLogger()),
 		WithIfacerTpl(templates.NewTextTpl()),
@@ -183,7 +183,7 @@ func TestIfacer_SetNoConflictImport(t *testing.T) {
 		{"gitlabcomjukyaredis", "redis", "gitlab.com/juky/a/redis", "gitlab.com/juky/a/redis"},
 	}
 
-	writer := &file_dir.NullWrite{}
+	writer := &filedir.NullWrite{}
 	ifacer := NewIfacer(
 		WithIfacerLogger(log.NewLogger()),
 		WithIfacerTpl(templates.NewTextTpl()),

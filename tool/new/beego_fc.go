@@ -64,7 +64,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
-	middle_ware "github.com/jukylin/esim/middle-ware"
+	middleware "github.com/jukylin/esim/middle-ware"
 	"github.com/astaxie/beego"
 	"github.com/opentracing-contrib/go-stdlib/nethttp"
 	"github.com/jukylin/esim/container"
@@ -119,7 +119,7 @@ func getMwd(esim *container.Esim) []beego.MiddleWare {
 
 	if esim.Conf.GetBool("http_metrics") == true {
 		mws = append(mws, func(handler http.Handler) http.Handler {
-			return middle_ware.Monitor(handler)
+			return middleware.Monitor(handler)
 		})
 	}
 

@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/jukylin/esim/log"
-	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	filedir "github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
 	"github.com/spf13/viper"
 	"golang.org/x/tools/imports"
@@ -49,7 +49,7 @@ type Project struct {
 
 	withGrpc bool
 
-	writer file_dir.IfaceWriter
+	writer filedir.IfaceWriter
 
 	tpl templates.Tpl
 }
@@ -78,7 +78,7 @@ func WithProjectLogger(logger log.Logger) ProjectOption {
 	}
 }
 
-func WithProjectWriter(writer file_dir.IfaceWriter) ProjectOption {
+func WithProjectWriter(writer filedir.IfaceWriter) ProjectOption {
 	return func(pj *Project) {
 		pj.writer = writer
 	}
@@ -148,7 +148,7 @@ func (pj *Project) checkServerName() bool {
 }
 
 func (pj *Project) createDir() bool {
-	exists, err := file_dir.IsExistsDir(pj.ServerName)
+	exists, err := filedir.IsExistsDir(pj.ServerName)
 	if err != nil {
 		pj.logger.Fatalf(err.Error())
 	}
@@ -157,7 +157,7 @@ func (pj *Project) createDir() bool {
 		pj.logger.Fatalf("The %s is exists can't be create", pj.ServerName)
 	}
 
-	err = file_dir.CreateDir(pj.ServerName)
+	err = filedir.CreateDir(pj.ServerName)
 	if err != nil {
 		pj.logger.Fatalf(err.Error())
 	}
@@ -166,13 +166,13 @@ func (pj *Project) createDir() bool {
 }
 
 func (pj *Project) delDir() bool {
-	dirExists, err := file_dir.IsExistsDir(pj.ServerName)
+	dirExists, err := filedir.IsExistsDir(pj.ServerName)
 	if err != nil {
 		pj.logger.Errorf(err.Error())
 	}
 
 	if dirExists {
-		err = file_dir.RemoveDir(pj.ServerName)
+		err = filedir.RemoveDir(pj.ServerName)
 		if err != nil {
 			pj.logger.Errorf("remove err : %s", err.Error())
 		}
@@ -183,7 +183,7 @@ func (pj *Project) delDir() bool {
 }
 
 func (pj *Project) getProPath() {
-	currentDir := file_dir.GetGoProPath()
+	currentDir := filedir.GetGoProPath()
 	if currentDir != "" {
 		currentDir += string(filepath.Separator)
 	}
@@ -233,13 +233,13 @@ func (pj *Project) build() bool {
 	for _, file := range Files {
 		dir := pj.ServerName + string(filepath.Separator) + file.Dir
 
-		exists, err := file_dir.IsExistsDir(dir)
+		exists, err := filedir.IsExistsDir(dir)
 		if err != nil {
 			pj.logger.Panicf("%s : %s", file.FileName, err.Error())
 		}
 
 		if !exists {
-			err = file_dir.CreateDir(dir)
+			err = filedir.CreateDir(dir)
 			if err != nil {
 				pj.logger.Panicf("%s : %s", file.FileName, err.Error())
 			}

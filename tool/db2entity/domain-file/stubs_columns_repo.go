@@ -1,4 +1,4 @@
-package domain_file
+package domainfile
 
 type StubsColumnsRepo struct{}
 

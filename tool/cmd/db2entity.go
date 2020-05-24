@@ -7,10 +7,10 @@ import (
 
 	"github.com/jukylin/esim/infra"
 	"github.com/jukylin/esim/pkg"
-	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	filedir "github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
 	"github.com/jukylin/esim/tool/db2entity"
-	domain_file "github.com/jukylin/esim/tool/db2entity/domain-file"
+	domainfile "github.com/jukylin/esim/tool/db2entity/domain-file"
 )
 
 var db2entityCmd = &cobra.Command{
@@ -18,32 +18,32 @@ var db2entityCmd = &cobra.Command{
 	Short: "table's fields to entity",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		dbConf := domain_file.NewDbConfig()
+		dbConf := domainfile.NewDbConfig()
 		dbConf.ParseConfig(v, logger)
 
 		// select table's columns from db
-		columnsInter := domain_file.NewDBColumnsInter(logger)
+		columnsInter := domainfile.NewDBColumnsInter(logger)
 
 		tpl := templates.NewTextTpl()
 
-		daoDomainFile := domain_file.NewDaoDomainFile(
-			domain_file.WithDaoDomainFileLogger(logger),
-			domain_file.WithDaoDomainFileTpl(tpl),
+		daoDomainFile := domainfile.NewDaoDomainFile(
+			domainfile.WithDaoDomainFileLogger(logger),
+			domainfile.WithDaoDomainFileTpl(tpl),
 		)
 
-		entityDomainFile := domain_file.NewEntityDomainFile(
-			domain_file.WithEntityDomainFileLogger(logger),
-			domain_file.WithEntityDomainFileTpl(tpl),
+		entityDomainFile := domainfile.NewEntityDomainFile(
+			domainfile.WithEntityDomainFileLogger(logger),
+			domainfile.WithEntityDomainFileTpl(tpl),
 		)
 
-		repoDomainFile := domain_file.NewRepoDomainFile(
-			domain_file.WithRepoDomainFileLogger(logger),
-			domain_file.WithRepoDomainFileTpl(tpl),
+		repoDomainFile := domainfile.NewRepoDomainFile(
+			domainfile.WithRepoDomainFileLogger(logger),
+			domainfile.WithRepoDomainFileTpl(tpl),
 		)
 
-		writer := file_dir.NewEsimWriter()
+		writer := filedir.NewEsimWriter()
 
-		shareInfo := domain_file.NewShareInfo()
+		shareInfo := domainfile.NewShareInfo()
 		shareInfo.DbConf = dbConf
 
 		db2EntityOptions := db2entity.Db2EnOptions{}

@@ -1,4 +1,4 @@
-package file_dir
+package filedir
 
 import (
 	"os"

@@ -1,4 +1,4 @@
-package domain_file
+package domainfile
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
-	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	filedir "github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
 	"github.com/serenize/snaker"
 	"github.com/spf13/viper"
@@ -92,13 +92,13 @@ func (edf *entityDomainFile) BindInput(v *viper.Viper) error {
 			edf.withEntityTarget = edf.withBoubctx + edf.withEntityTarget
 		}
 
-		entityTargetExists, err := file_dir.IsExistsDir(edf.withEntityTarget)
+		entityTargetExists, err := filedir.IsExistsDir(edf.withEntityTarget)
 		if err != nil {
 			return err
 		}
 
 		if !entityTargetExists {
-			err = file_dir.CreateDir(edf.withEntityTarget)
+			err = filedir.CreateDir(edf.withEntityTarget)
 			if err != nil {
 				return err
 			}

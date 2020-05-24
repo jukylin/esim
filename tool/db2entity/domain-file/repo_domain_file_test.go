@@ -1,17 +1,17 @@
-package domain_file
+package domainfile
 
 import (
 	"os"
 	"testing"
 
 	"github.com/jukylin/esim/log"
-	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	filedir "github.com/jukylin/esim/pkg/file-dir"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestRepoDomainFile(t *testing.T) {
-	err := file_dir.CreateDir(target)
+	err := filedir.CreateDir(target)
 	assert.Nil(t, err)
 
 	v := viper.New()

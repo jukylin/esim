@@ -17,7 +17,7 @@ import (
 	"github.com/hashicorp/go-plugin"
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
-	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	filedir "github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
 	"golang.org/x/tools/imports"
 )
@@ -65,7 +65,7 @@ type RPCPluginStructField struct {
 
 	model Model
 
-	writer file_dir.IfaceWriter
+	writer filedir.IfaceWriter
 }
 
 var pluginMap = map[string]plugin.Plugin{
@@ -78,7 +78,7 @@ var HandshakeConfig = plugin.HandshakeConfig{
 	MagicCookieValue: "hello",
 }
 
-func NewRPCPluginStructField(writer file_dir.IfaceWriter,
+func NewRPCPluginStructField(writer filedir.IfaceWriter,
 	logger log.Logger) *RPCPluginStructField {
 	rpcPlugin := &RPCPluginStructField{}
 
@@ -94,13 +94,13 @@ func (rps *RPCPluginStructField) buildPluginEnv() error {
 
 	targetDir := rps.structDir + string(filepath.Separator) + "plugin"
 
-	exists, err := file_dir.IsExistsDir(targetDir)
+	exists, err := filedir.IsExistsDir(targetDir)
 	if err != nil {
 		return err
 	}
 
 	if !exists {
-		err := file_dir.CreateDir(targetDir)
+		err := filedir.CreateDir(targetDir)
 		if err != nil {
 			return err
 		}

@@ -1,4 +1,4 @@
-package middle_ware
+package middleware
 
 import (
 	"github.com/prometheus/client_golang/prometheus"

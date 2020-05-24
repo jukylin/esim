@@ -1,16 +1,16 @@
-package domain_file
+package domainfile
 
 import (
 	"os"
 	"testing"
 
-	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	filedir "github.com/jukylin/esim/pkg/file-dir"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestDaoDomainFile(t *testing.T) {
-	err := file_dir.CreateDir(target)
+	err := filedir.CreateDir(target)
 	assert.Nil(t, err)
 
 	defer func() {

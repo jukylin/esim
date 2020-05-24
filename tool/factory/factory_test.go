@@ -7,7 +7,7 @@ import (
 
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
-	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	filedir "github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
@@ -28,7 +28,7 @@ func setUp() {
 	logger := log.NewLogger(loggerOptions.WithDebug(true))
 	esimfactory = NewEsimFactory(
 		WithEsimFactoryLogger(logger),
-		WithEsimFactoryWriter(file_dir.NewEsimWriter()),
+		WithEsimFactoryWriter(filedir.NewEsimWriter()),
 		WithEsimFactoryTpl(templates.NewTextTpl()),
 	)
 }
@@ -50,7 +50,7 @@ func TestEsimFactory_Run(t *testing.T) {
 	assert.Nil(t, err)
 	esimfactory.Close()
 
-	err = file_dir.EsimRecoverFile(esimfactory.structDir +
+	err = filedir.EsimRecoverFile(esimfactory.structDir +
 		string(filepath.Separator) + esimfactory.structFileName)
 	assert.Nil(t, err)
 }
@@ -106,7 +106,7 @@ func TestExtendFieldAndReplaceStructContent(t *testing.T) {
 	logger := log.NewLogger(loggerOptions.WithDebug(true))
 	esimfactory = NewEsimFactory(
 		WithEsimFactoryLogger(logger),
-		WithEsimFactoryWriter(file_dir.NewEsimWriter()),
+		WithEsimFactoryWriter(filedir.NewEsimWriter()),
 		WithEsimFactoryTpl(templates.NewTextTpl()),
 	)
 
@@ -120,7 +120,7 @@ func TestExtendFieldAndReplaceStructContent(t *testing.T) {
 	assert.Equal(t, 2, len(esimfactory.NewStructInfo.Fields))
 	assert.Equal(t, 2, len(esimfactory.NewStructInfo.imports))
 
-	esimfactory.writer = file_dir.NewNullWrite()
+	esimfactory.writer = filedir.NewNullWrite()
 
 	afield := pkg.Field{}
 	afield.Field = "a int"

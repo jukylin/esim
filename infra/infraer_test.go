@@ -5,7 +5,7 @@ import (
 
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
-	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	filedir "github.com/jukylin/esim/pkg/file-dir"
 	domain_file "github.com/jukylin/esim/tool/db2entity/domain-file"
 	"github.com/stretchr/testify/assert"
 )
@@ -65,7 +65,7 @@ func provideA() { println("test") }
 
 	infraer := NewInfraer(
 		WithIfacerLogger(log.NewLogger()),
-		WithIfacerWriter(file_dir.NewEsimWriter()),
+		WithIfacerWriter(filedir.NewEsimWriter()),
 		WithIfacerInfraInfo(NewInfo()),
 		WithIfacerExecer(pkg.NewNullExec()),
 	)

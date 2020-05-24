@@ -1,4 +1,4 @@
-package domain_file
+package domainfile
 
 import (
 	"errors"
@@ -7,7 +7,7 @@ import (
 
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
-	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	filedir "github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
 	"github.com/spf13/viper"
 )
@@ -81,7 +81,7 @@ func (rdf *repoDomainFile) BindInput(v *viper.Viper) error {
 		}
 
 		// check repo dir
-		existsRepo, err := file_dir.IsExistsDir(rdf.withRepoTarget)
+		existsRepo, err := filedir.IsExistsDir(rdf.withRepoTarget)
 		if err != nil {
 			return err
 		}
@@ -114,8 +114,8 @@ func (rdf *repoDomainFile) ParseCloumns(cs Columns, info *ShareInfo) {
 	repoTpl.Imports = append(
 		repoTpl.Imports, pkg.Import{Path: "context"},
 		pkg.Import{Path: "github.com/jukylin/esim/log"},
-		pkg.Import{Path: file_dir.GetGoProPath() + pkg.DirPathToImportPath(info.WithEntityTarget)},
-		pkg.Import{Path: file_dir.GetGoProPath() + pkg.DirPathToImportPath(info.WithDaoTarget)})
+		pkg.Import{Path: filedir.GetGoProPath() + pkg.DirPathToImportPath(info.WithEntityTarget)},
+		pkg.Import{Path: filedir.GetGoProPath() + pkg.DirPathToImportPath(info.WithDaoTarget)})
 
 	for i := range cs {
 		column := (&cs[i])
@@ -158,7 +158,7 @@ func (rdf *repoDomainFile) GetInjectInfo() *InjectInfo {
 		"provide"+rdf.shareInfo.CamelStruct+"Repo")
 
 	injectInfo.Imports = append(injectInfo.Imports,
-		pkg.Import{Path: file_dir.GetGoProPath() +
+		pkg.Import{Path: filedir.GetGoProPath() +
 			pkg.DirPathToImportPath(rdf.shareInfo.WithRepoTarget)})
 
 	content, err := rdf.tpl.Execute("provide_tpl",

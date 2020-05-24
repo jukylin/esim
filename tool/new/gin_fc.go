@@ -94,7 +94,7 @@ import (
 	"time"
 	"github.com/gin-gonic/gin"
 	"{{.ProPath}}{{.ServerName}}/internal/transports/http/routers"
-	middle_ware "github.com/jukylin/esim/middle-ware"
+	middleware "github.com/jukylin/esim/middle-ware"
 	"github.com/jukylin/esim/log"
 	"{{.ProPath}}{{.ServerName}}/internal/transports/http/controllers"
 	{{.PackageName}} "{{.ProPath}}{{.ServerName}}/internal"
@@ -130,11 +130,11 @@ func NewGinServer(app *{{.PackageName}}.App) *GinServer {
 	en := gin.Default()
 
 	if app.Conf.GetBool("http_tracer") == true{
-		en.Use(middle_ware.GinTracer(app.Tracer))
+		en.Use(middleware.GinTracer(app.Tracer))
 	}
 
 	if app.Conf.GetBool("http_metrics") == true {
-		en.Use(middle_ware.GinMonitor())
+		en.Use(middleware.GinMonitor())
 	}
 
 	server := &GinServer{

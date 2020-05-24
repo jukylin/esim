@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/jukylin/esim/log"
-	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	filedir "github.com/jukylin/esim/pkg/file-dir"
 	"github.com/spf13/viper"
 )
 
@@ -64,7 +64,7 @@ func (p *Protocer) Run(v *viper.Viper) bool {
 func (p *Protocer) bindInput(v *viper.Viper) bool {
 	target := v.GetString("target")
 
-	ex, err := file_dir.IsExistsDir(target)
+	ex, err := filedir.IsExistsDir(target)
 	if err != nil {
 		p.logger.Fatalf(err.Error())
 	}
@@ -93,7 +93,7 @@ func (p *Protocer) bindInput(v *viper.Viper) bool {
 	}
 	p.packageName = pkgName
 
-	err = file_dir.CreateDir(target + string(filepath.Separator) + pkgName)
+	err = filedir.CreateDir(target + string(filepath.Separator) + pkgName)
 	if err != nil {
 		p.logger.Fatalf("Create fail % : %s", target+string(filepath.Separator)+pkgName, err.Error())
 	}

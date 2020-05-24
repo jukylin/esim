@@ -10,7 +10,7 @@ import (
 
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
-	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	filedir "github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
 	"github.com/spf13/viper"
 	"github.com/vektra/mockery/mockery"
@@ -45,7 +45,7 @@ type Ifacer struct {
 	// import in the interface
 	ifaceUsingIngImport map[string]string
 
-	writer file_dir.IfaceWriter
+	writer filedir.IfaceWriter
 
 	tpl templates.Tpl
 
@@ -76,7 +76,7 @@ func WithIfacerLogger(logger log.Logger) Option {
 	}
 }
 
-func WithIfacerWriter(writer file_dir.IfaceWriter) Option {
+func WithIfacerWriter(writer filedir.IfaceWriter) Option {
 	return func(f *Ifacer) {
 		f.writer = writer
 	}

@@ -15,7 +15,7 @@ import (
 
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
-	file_dir "github.com/jukylin/esim/pkg/file-dir"
+	filedir "github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
 	"github.com/martinusso/inflect"
 	"github.com/serenize/snaker"
@@ -128,7 +128,7 @@ type EsimFactory struct {
 
 	WithNew bool
 
-	writer file_dir.IfaceWriter
+	writer filedir.IfaceWriter
 
 	SpecFieldInitStr string
 
@@ -153,7 +153,7 @@ func NewEsimFactory(options ...Option) *EsimFactory {
 	}
 
 	if factory.writer == nil {
-		factory.writer = file_dir.NewEsimWriter()
+		factory.writer = filedir.NewEsimWriter()
 	}
 
 	if factory.tpl == nil {
@@ -177,7 +177,7 @@ func WithEsimFactoryLogger(logger log.Logger) Option {
 	}
 }
 
-func WithEsimFactoryWriter(writer file_dir.IfaceWriter) Option {
+func WithEsimFactoryWriter(writer filedir.IfaceWriter) Option {
 	return func(ef *EsimFactory) {
 		ef.writer = writer
 	}
@@ -268,7 +268,7 @@ func (ef *EsimFactory) Run(v *viper.Viper) error {
 	if ef.withPrint {
 		ef.printResult()
 	} else {
-		err = file_dir.EsimBackUpFile(ef.structDir +
+		err = filedir.EsimBackUpFile(ef.structDir +
 			string(filepath.Separator) + ef.structFileName)
 		if err != nil {
 			ef.logger.Warnf("backup err %s:%s", ef.structDir+
@@ -283,7 +283,7 @@ func (ef *EsimFactory) Run(v *viper.Viper) error {
 			ef.logger.Panicf("%s:%s", err.Error(), originContent)
 		}
 
-		err = file_dir.EsimWrite(ef.structDir+
+		err = filedir.EsimWrite(ef.structDir+
 			string(filepath.Separator)+ef.structFileName,
 			string(res))
 		if err != nil {
@@ -434,7 +434,7 @@ func (ef *EsimFactory) genStr() {
 // find struct
 // parse struct
 func (ef *EsimFactory) parseStruct() bool {
-	exists, err := file_dir.IsExistsDir(ef.structDir)
+	exists, err := filedir.IsExistsDir(ef.structDir)
 	if err != nil {
 		ef.logger.Panicf(err.Error())
 	}
