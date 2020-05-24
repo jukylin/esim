@@ -305,6 +305,6 @@ func tearDown(app *{{.PackageName}}.App) {
 	}
 )
 
-func BeegoInit() {
+func initBeegoFiles() {
 	Files = append(Files, beegofc1, beegofc2, beegofc3, beegofc4, beegofc5, beegofc6, beegofc7)
 }

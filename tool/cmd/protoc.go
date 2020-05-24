@@ -20,7 +20,6 @@ var protocCmd = &cobra.Command{
 	},
 }
 
-//nolint
 func init() {
 	rootCmd.AddCommand(protocCmd)
 

@@ -474,25 +474,30 @@ func (ef *EsimFactory) parseStruct() bool {
 				ef.logger.Panicf(err.Error())
 			}
 
-			for _, decl := range f.Decls {
-				if genDecl, ok := decl.(*ast.GenDecl); ok {
-					if genDecl.Tok.String() == "type" {
-						ef.parseType(genDecl, src, fileInfo, f)
-					}
-
-					if genDecl.Tok.String() == "var" && ef.found {
-						ef.oldStructInfo.vars.ParseFromAst(genDecl, strSrc)
-					}
-
-					if genDecl.Tok.String() == "import" && ef.found {
-						ef.parseImport(genDecl, src)
-					}
-				}
-			}
+			ef.parseDecls(src, fileInfo, f)
 		}
 	}
 
 	return ef.found
+}
+
+func (ef *EsimFactory) parseDecls(src []byte, fileInfo os.FileInfo, f *ast.File) {
+	strSrc := string(src)
+	for _, decl := range f.Decls {
+		if genDecl, ok := decl.(*ast.GenDecl); ok {
+			if genDecl.Tok.String() == "type" {
+				ef.parseType(genDecl, src, fileInfo, f)
+			}
+
+			if genDecl.Tok.String() == "var" && ef.found {
+				ef.oldStructInfo.vars.ParseFromAst(genDecl, strSrc)
+			}
+
+			if genDecl.Tok.String() == "import" && ef.found {
+				ef.parseImport(genDecl, src)
+			}
+		}
+	}
 }
 
 func (ef *EsimFactory) parseType(genDecl *ast.GenDecl, src []byte,

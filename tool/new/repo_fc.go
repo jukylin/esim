@@ -1,9 +1,5 @@
 package new
 
-func init() {
-	Files = append(Files, repofc1, repofc2)
-}
-
 var (
 	repofc1 = &FileContent{
 		FileName: "user_repo.go",
@@ -99,3 +95,7 @@ func tearDown()  {
 `,
 	}
 )
+
+func initRepoFiles() {
+	Files = append(Files, repofc1, repofc2)
+}

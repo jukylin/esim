@@ -99,6 +99,8 @@ func (pj *Project) Run(v *viper.Viper) {
 
 	pj.initTransport()
 
+	pj.initFiles()
+
 	pj.createDir()
 
 	pj.build()
@@ -198,25 +200,53 @@ func (pj *Project) getPackName() {
 // initTransport initialization Transport mode
 func (pj *Project) initTransport() {
 	if pj.withGin {
-		GinInit()
+		initGinFiles()
 		pj.RunTrans = append(pj.RunTrans, "app.RegisterTran(http.NewGinServer(app))")
 		pj.ImportServer = append(pj.ImportServer,
 			pj.ProPath+pj.ServerName+"/internal/transports/http")
 	}
 
 	if pj.withBeego {
-		BeegoInit()
+		initBeegoFiles()
 		pj.RunTrans = append(pj.RunTrans, "app.RegisterTran(http.NewBeegoServer(app.Esim))")
 		pj.ImportServer = append(pj.ImportServer,
 			pj.ProPath+pj.ServerName+"/internal/transports/http")
 	}
 
 	if pj.withGrpc {
-		GrpcInit()
+		initGrpcFiles()
 		pj.RunTrans = append(pj.RunTrans, "app.RegisterTran(grpc.NewGrpcServer(app))")
 		pj.ImportServer = append(pj.ImportServer,
 			pj.ProPath+pj.ServerName+"/internal/transports/grpc")
 	}
+}
+
+func (pj *Project) initFiles() {
+	initAppFiles()
+
+	initCmdFiles()
+
+	initConfigFiles()
+
+	initInfraFiles()
+
+	initInternalFiles()
+
+	initMainFiles()
+
+	initModFiles()
+
+	initProtobufFiles()
+
+	initRepoFiles()
+
+	initDaoFiles()
+
+	initDomainFiles()
+
+	initGitIgnoreFiles()
+
+	initThirdParthFiles()
 }
 
 // build create a new project locally

@@ -1,9 +1,5 @@
 package new
 
-func init() {
-	Files = append(Files, cmdfc)
-}
-
 var (
 	cmdfc = &FileContent{
 		FileName: "root.go",
@@ -66,3 +62,7 @@ func init() {
 `,
 	}
 )
+
+func initCmdFiles() {
+	Files = append(Files, cmdfc)
+}

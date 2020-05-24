@@ -1,9 +1,5 @@
 package new
 
-func init() {
-	Files = append(Files, appfc)
-}
-
 var (
 	appfc = &FileContent{
 		FileName: "user_service.go",
@@ -34,3 +30,7 @@ func (svc *UserService) GetUserInfo(ctx context.Context, username string) (user 
 }`,
 	}
 )
+
+func initAppFiles() {
+	Files = append(Files, appfc)
+}

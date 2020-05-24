@@ -73,7 +73,7 @@ linters:
    #- dupl
     - errcheck
     - funlen
-    - gochecknoinits
+   # - gochecknoinits
     - goconst
     - gocritic
     - gocyclo

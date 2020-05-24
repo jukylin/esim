@@ -1,9 +1,5 @@
 package new
 
-func init() {
-	Files = append(Files, gitIgnorefc)
-}
-
 var (
 	gitIgnorefc = &FileContent{
 		FileName: ".gitignore",
@@ -17,3 +13,7 @@ lastupdate.tmp
 *.proto`,
 	}
 )
+
+func initGitIgnoreFiles() {
+	Files = append(Files, gitIgnorefc)
+}

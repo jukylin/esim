@@ -19,31 +19,24 @@ const (
 )
 
 var (
-	Cols = make([]Column, 0)
+	Cols = []Column{
+		{
+			ColumnName:    "user_name",
+			DataType:      "varchar",
+			IsNullAble:    yesNull,
+			ColumnComment: "user name",
+		},
+		{
+			ColumnName: "id",
+			ColumnKey:  pri,
+			DataType:   "int",
+			IsNullAble: noNull,
+		},
+		{
+			ColumnName: "update_time",
+			DataType:   "timestamp",
+			IsNullAble: noNull,
+			Extra:      upCurrentTimestamp,
+		},
+	}
 )
-
-func init() {
-	col1 := Column{
-		ColumnName:    "user_name",
-		DataType:      "varchar",
-		IsNullAble:    yesNull,
-		ColumnComment: "user name",
-	}
-	Cols = append(Cols, col1)
-
-	col2 := Column{
-		ColumnName: "id",
-		ColumnKey:  pri,
-		DataType:   "int",
-		IsNullAble: noNull,
-	}
-	Cols = append(Cols, col2)
-
-	col3 := Column{
-		ColumnName: "update_time",
-		DataType:   "timestamp",
-		IsNullAble: noNull,
-		Extra:      upCurrentTimestamp,
-	}
-	Cols = append(Cols, col3)
-}

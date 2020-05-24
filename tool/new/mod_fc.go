@@ -1,9 +1,5 @@
 package new
 
-func init() {
-	Files = append(Files, modfc)
-}
-
 var (
 	modfc = &FileContent{
 		FileName: "go.mod",
@@ -11,3 +7,7 @@ var (
 		Content:  `module {{.ProPath}}{{.ServerName}}`,
 	}
 )
+
+func initModFiles() {
+	Files = append(Files, modfc)
+}

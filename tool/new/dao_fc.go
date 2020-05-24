@@ -1,9 +1,5 @@
 package new
 
-func init() {
-	Files = append(Files, daofc1)
-}
-
 var (
 	daofc1 = &FileContent{
 		FileName: "user_dao.go",
@@ -53,3 +49,7 @@ args ...interface{}) (entity.User, error) {
 `,
 	}
 )
+
+func initDaoFiles() {
+	Files = append(Files, daofc1)
+}

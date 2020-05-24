@@ -1,9 +1,5 @@
 package new
 
-func init() {
-	Files = append(Files, configfc1, configfc2)
-}
-
 var (
 	configfc1 = &FileContent{
 		FileName: "conf.yaml",
@@ -152,3 +148,7 @@ redis_metrics : {{.Monitoring}}
 `,
 	}
 )
+
+func initConfigFiles() {
+	Files = append(Files, configfc1, configfc2)
+}

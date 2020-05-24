@@ -1,9 +1,5 @@
 package new
 
-func init() {
-	Files = append(Files, protoBuffc1)
-}
-
 var (
 	//nolint:lll
 	protoBuffc1 = &FileContent{
@@ -288,3 +284,7 @@ var _UserInfo_serviceDesc = grpc.ServiceDesc{
 `,
 	}
 )
+
+func initProtobufFiles() {
+	Files = append(Files, protoBuffc1)
+}

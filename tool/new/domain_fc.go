@@ -1,9 +1,5 @@
 package new
 
-func init() {
-	Files = append(Files, domainfc1, domainfc2)
-}
-
 var (
 	domainfc1 = &FileContent{
 		FileName: "user_entity.go",
@@ -30,3 +26,7 @@ type User struct {
 		Content:  `domain service`,
 	}
 )
+
+func initDomainFiles() {
+	Files = append(Files, domainfc1, domainfc2)
+}

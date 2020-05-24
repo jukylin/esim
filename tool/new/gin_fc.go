@@ -433,6 +433,6 @@ func tearDown(app *{{.PackageName}}.App) {
 	}
 )
 
-func GinInit() {
+func initGinFiles() {
 	Files = append(Files, ginfc1, ginfc2, ginfc3, ginfc4, ginfc5, ginfc6, ginfc7, ginfc8, ginfc9)
 }

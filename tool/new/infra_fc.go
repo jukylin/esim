@@ -1,9 +1,5 @@
 package new
 
-func init() {
-	Files = append(Files, infrafc1, infrafc2, infrafc3)
-}
-
 var (
 	infrafc1 = &FileContent{
 		FileName: "infra.go",
@@ -176,3 +172,7 @@ func initInfra(esim *container.Esim, grpc2 *grpc.Client) *Infra {
 `,
 	}
 )
+
+func initInfraFiles() {
+	Files = append(Files, infrafc1, infrafc2, infrafc3)
+}

@@ -25,7 +25,6 @@ var ifacerCmd = &cobra.Command{
 	},
 }
 
-//nolint
 func init() {
 	rootCmd.AddCommand(ifacerCmd)
 

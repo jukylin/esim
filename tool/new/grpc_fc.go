@@ -330,7 +330,7 @@ func tearDown(app *{{.PackageName}}.App) {
 	}
 )
 
-func GrpcInit() {
+func initGrpcFiles() {
 	Files = append(Files, grpcfc1, grpcfc2, grpcfc3, grpcfc4, grpcfc5,
 		grpcfc6, grpcfc7, grpcfc8, grpcfc9)
 }

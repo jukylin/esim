@@ -1,9 +1,5 @@
 package new
 
-func init() {
-	Files = append(Files, internalfc1)
-}
-
 var (
 	internalfc1 = &FileContent{
 		FileName: "app.go",
@@ -113,3 +109,7 @@ func (app *App) stop()  {
 `,
 	}
 )
+
+func initInternalFiles() {
+	Files = append(Files, internalfc1)
+}
