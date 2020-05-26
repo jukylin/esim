@@ -5,7 +5,7 @@ import (
 	"github.com/fsnotify/fsnotify"
 )
 
-type esimWatcher interface {
+type EsimWatcher interface {
 	// Watch folder for changes, receiver receive folder of changed files
 	// Only watch file write operations
 	watch(folder []string, receiver func(string))
@@ -20,9 +20,9 @@ type fsnotifyWatcher struct {
 	logger log.Logger
 }
 
-type fwOption func(*fsnotifyWatcher)
+type FwOption func(*fsnotifyWatcher)
 
-func newFsnotifyWatcher(options ...fwOption) esimWatcher {
+func NewFsnotifyWatcher(options ...FwOption) EsimWatcher {
 	fw := &fsnotifyWatcher{}
 
 	for _, option := range options {
@@ -32,7 +32,7 @@ func newFsnotifyWatcher(options ...fwOption) esimWatcher {
 	return fw
 }
 
-func withLogger(logger log.Logger) fwOption {
+func WithFwLogger(logger log.Logger) FwOption {
 	return func(fw *fsnotifyWatcher) {
 		fw.logger = logger
 	}

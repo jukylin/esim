@@ -17,7 +17,7 @@ const (
 func TestRwWatch(t *testing.T) {
 	logger := log.NewLogger()
 
-	fw := newFsnotifyWatcher(withLogger(logger))
+	fw := NewFsnotifyWatcher(WithFwLogger(logger))
 
 	paths := make([]string, 0)
 	paths = append(paths, "example")

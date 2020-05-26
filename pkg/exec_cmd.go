@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"github.com/jukylin/esim/log"
 )
 
 type Exec interface {
@@ -17,10 +18,30 @@ type Exec interface {
 	ExecBuild(string, ...string) error
 }
 
-type CmdExec struct{}
+type CmdExecOption func(*CmdExec)
 
-func NewCmdExec() Exec {
-	return &CmdExec{}
+type CmdExec struct{
+	logger log.Logger
+}
+
+func NewCmdExec(options ...CmdExecOption) Exec {
+	e := &CmdExec{}
+
+	for _, option := range options {
+		option(e)
+	}
+
+	if e.logger == nil {
+		e.logger = log.NewNullLogger()
+	}
+
+	return e
+}
+
+func WithCmdExecLogger(logger log.Logger) CmdExecOption {
+	return func(ce *CmdExec) {
+		ce.logger = logger
+	}
 }
 
 func (ce *CmdExec) ExecWire(dir string, args ...string) error {
@@ -28,6 +49,8 @@ func (ce *CmdExec) ExecWire(dir string, args ...string) error {
 	cmd.Dir = dir
 
 	cmd.Env = os.Environ()
+
+	ce.logger.Infof("wire %s", strings.Join(args, ""))
 
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -45,6 +68,8 @@ func (ce *CmdExec) ExecBuild(dir string, args ...string) error {
 
 	args = append(strings.Split(cmdLine, " "), args...)
 
+	ce.logger.Infof("go %s", strings.Join(args, ""))
+
 	cmd := exec.Command("go", args...)
 	cmd.Dir = dir
 
@@ -61,6 +86,8 @@ func (ce *CmdExec) ExecTest(dir string, args ...string) error {
 	cmdLine := fmt.Sprintf("test")
 
 	args = append(strings.Split(cmdLine, " "), args...)
+
+	ce.logger.Infof("go %s", strings.Join(args, ""))
 
 	cmd := exec.Command("go", args...)
 	cmd.Dir = dir

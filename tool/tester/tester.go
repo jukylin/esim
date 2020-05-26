@@ -1,30 +1,29 @@
 package tester
 
 import (
+	"path/filepath"
 
 	"github.com/spf13/viper"
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg"
-	"os"
-	"github.com/davecgh/go-spew/spew"
 )
 
 type Tester struct {
 
-	// watch the dir
+	// watch the dir, default "."
 	withWatchDir string
 
 	logger log.Logger
 
-	watcher esimWatcher
+	watcher EsimWatcher
 
 	execer pkg.Exec
 }
 
-type TesterOption func(*Tester)
+type Option func(*Tester)
 
-func NewTester(options ...TesterOption) *Tester {
+func NewTester(options ...Option) *Tester {
 	tester := &Tester{}
 	for _, option := range options {
 		option(tester)
@@ -33,19 +32,19 @@ func NewTester(options ...TesterOption) *Tester {
 	return tester
 }
 
-func WithTesterLogger(logger log.Logger) TesterOption {
+func WithTesterLogger(logger log.Logger) Option {
 	return func(t *Tester) {
 		t.logger = logger
 	}
 }
 
-func WithTesterWatcher(watcher esimWatcher) TesterOption {
+func WithTesterWatcher(watcher EsimWatcher) Option {
 	return func(t *Tester) {
 		t.watcher = watcher
 	}
 }
 
-func WithTesterExec(execer pkg.Exec) TesterOption {
+func WithTesterExec(execer pkg.Exec) Option {
 	return func(t *Tester) {
 		t.execer = execer
 	}
@@ -59,7 +58,10 @@ func (tester *Tester) bindInput(v *viper.Viper) {
 	tester.withWatchDir = watchDir
 }
 
-func (tester *Tester) run() {
+
+func (tester *Tester) Run(v *viper.Viper) {
+	tester.bindInput(v)
+
 	paths, err := filedir.ReadDir(tester.withWatchDir)
 	if err != nil {
 		tester.logger.Fatalf(err.Error())
@@ -67,14 +69,14 @@ func (tester *Tester) run() {
 	paths = append(paths, tester.withWatchDir)
 
 	tester.watcher.watch(paths, tester.receive)
-
 }
 
-// receive file path of be changed
+// receive file path of be changed and run go test
 func (tester *Tester) receive(path string)  {
+	dir := filepath.Dir(path)
 
-	fileInfo, _ := os.Stat(path)
-	//fileInfo.
-spew.Dump(fileInfo)
-	//tester.exec.ExecTest()
+	err := tester.execer.ExecTest(dir)
+	if err != nil {
+		tester.logger.Errorf(err.Error())
+	}
 }

@@ -16,6 +16,8 @@ var Log Logger
 type logger struct {
 	debug bool
 
+	json bool
+
 	logger *zap.Logger
 
 	sugar *zap.SugaredLogger
@@ -55,7 +57,7 @@ func NewLogger(options ...Option) Logger {
 	}
 	zapConfig.EncoderConfig.EncodeTime = logger.standardTimeEncoder
 
-	if logger.debug {
+	if !logger.json {
 		zapConfig.Encoding = "console"
 		zapConfig.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	} else {
@@ -73,6 +75,12 @@ func NewLogger(options ...Option) Logger {
 func (LoggerOptions) WithDebug(debug bool) Option {
 	return func(l *logger) {
 		l.debug = debug
+	}
+}
+
+func (LoggerOptions) WithJson(json bool) Option {
+	return func(l *logger) {
+		l.json = json
 	}
 }
 
