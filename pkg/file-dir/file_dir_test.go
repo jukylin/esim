@@ -113,3 +113,16 @@ func TestEsimRecoverFile(t *testing.T) {
 	err = EsimRecoverFile(file)
 	assert.NoError(t, err)
 }
+
+func TestReadDir(t *testing.T)  {
+	paths, err := ReadDir("./")
+	assert.Nil(t, err)
+	assert.Equal(t, paths[0], "./test")
+
+	paths, err = ReadDir(".")
+	assert.Nil(t, err)
+	assert.Equal(t, paths[0], "./test")
+
+	paths, err = ReadDir("")
+	assert.NotNil(t, err)
+}
