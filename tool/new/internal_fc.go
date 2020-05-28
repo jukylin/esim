@@ -89,15 +89,12 @@ func (app *App) AwaitSignal() {
 	signal.Reset(syscall.SIGTERM, syscall.SIGINT)
 	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
 
+	s := <- c
+	app.Esim.Logger.Infof("receive a signal %s", s.String())
+	app.stop()
+
 	close(c)
-
-	for s := range c {
-		app.Esim.Logger.Infof("receive a signal %s", s.String())
-		app.stop()
-		os.Exit(0)
-	}
 }
-
 
 func (app *App) stop()  {
 	for _, tran := range app.trans {
