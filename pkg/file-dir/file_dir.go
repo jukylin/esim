@@ -259,7 +259,6 @@ func EsimWrite(filePath, content string) error {
 // ReadDir read directory recursively by dirname
 // and returns list of directory (not include dirname).
 func ReadDir(dirname string) ([]string, error) {
-
 	if dirname == "" {
 		return nil, errors.New("dirname is empty")
 	}
@@ -279,19 +278,21 @@ func ReadDir(dirname string) ([]string, error) {
 	}
 
 	for _, fileInfo := range fileInfos {
-		if fileInfo.IsDir() && fileInfo.Name()[0] != '.' {
-
-			if strings.HasSuffix(fileInfo.Name(), "vendor") {
-				continue
-			}
-
-			paths = append(paths, dirname + string(filepath.Separator) + fileInfo.Name())
-			childPaths, err := ReadDir(dirname + string(filepath.Separator) + fileInfo.Name())
-			if err != nil {
-				return nil, err
-			}
-			paths = append(paths, childPaths...)
+		if !(fileInfo.IsDir() && fileInfo.Name()[0] != '.') {
+			continue
 		}
+
+		if strings.HasSuffix(fileInfo.Name(), "vendor") {
+			continue
+		}
+
+		paths = append(paths, dirname+string(filepath.Separator)+fileInfo.Name())
+		childPaths, err := ReadDir(dirname + string(filepath.Separator) + fileInfo.Name())
+		if err != nil {
+			return nil, err
+		}
+
+		paths = append(paths, childPaths...)
 	}
 
 	return paths, nil

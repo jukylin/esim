@@ -2,6 +2,7 @@ package tester
 
 import (
 	"testing"
+
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
 	"github.com/spf13/viper"
@@ -9,18 +10,24 @@ import (
 )
 
 const (
-	watchDir = "watch-dir"
+	watchDir    = "watch-dir"
+	receivePath = "./test.go"
 )
 
-func TestTesterReceive(t *testing.T)  {
+func TestTesterReceive(t *testing.T) {
 	logger := log.NewLogger()
 	watcher := NewTester(
-		 WithTesterLogger(logger),
-		 WithTesterExec(pkg.NewNullExec()))
-	watcher.receive("./")
+		WithTesterLogger(logger),
+		WithTesterExec(pkg.NewNullExec()))
+
+	result := watcher.receiver(receivePath)
+	assert.True(t, result)
+
+	result = watcher.receiver(receivePath)
+	assert.False(t, result)
 }
 
-func TestTesterBindInput(t *testing.T)  {
+func TestTesterBindInput(t *testing.T) {
 	watcher := NewTester()
 
 	v := viper.New()
@@ -33,5 +40,4 @@ func TestTesterBindInput(t *testing.T)  {
 	watcher.bindInput(v)
 
 	assert.Equal(t, watcher.withWatchDir, ".")
-
 }

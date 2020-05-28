@@ -78,7 +78,7 @@ func (LoggerOptions) WithDebug(debug bool) Option {
 	}
 }
 
-func (LoggerOptions) WithJson(json bool) Option {
+func (LoggerOptions) WithJSON(json bool) Option {
 	return func(l *logger) {
 		l.json = json
 	}

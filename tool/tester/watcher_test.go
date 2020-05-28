@@ -1,17 +1,18 @@
 package tester
 
 import (
-	"testing"
-	"github.com/jukylin/esim/log"
-	"time"
-	"github.com/jukylin/esim/pkg/file-dir"
 	"fmt"
 	"strconv"
+	"testing"
+	"time"
+
+	"github.com/jukylin/esim/log"
+	filedir "github.com/jukylin/esim/pkg/file-dir"
 	"github.com/stretchr/testify/assert"
 )
 
 const (
-	watchFolder	= "./example"
+	watchFolder = "./example"
 )
 
 func TestRwWatch(t *testing.T) {
@@ -23,8 +24,9 @@ func TestRwWatch(t *testing.T) {
 	paths = append(paths, "example")
 
 	go func() {
-		fw.watch(paths, func(s string) {
+		fw.watch(paths, func(s string) bool {
 			assert.Equal(t, "example/example.go", s)
+			return true
 		})
 	}()
 

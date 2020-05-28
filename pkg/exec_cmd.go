@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+
 	"github.com/jukylin/esim/log"
 )
 
@@ -20,7 +21,7 @@ type Exec interface {
 
 type CmdExecOption func(*CmdExec)
 
-type CmdExec struct{
+type CmdExec struct {
 	logger log.Logger
 }
 
@@ -83,11 +84,11 @@ func (ce *CmdExec) ExecBuild(dir string, args ...string) error {
 }
 
 func (ce *CmdExec) ExecTest(dir string, args ...string) error {
-	cmdLine := fmt.Sprintf("test")
+	cmdLine := fmt.Sprintf("test -v")
 
 	args = append(strings.Split(cmdLine, " "), args...)
 
-	ce.logger.Infof("go %s", strings.Join(args, ""))
+	ce.logger.Infof("go %s", strings.Join(args, " "))
 
 	cmd := exec.Command("go", args...)
 	cmd.Dir = dir

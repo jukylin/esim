@@ -3,10 +3,12 @@ package tester
 import (
 	"path/filepath"
 
-	"github.com/spf13/viper"
+	"time"
+
 	"github.com/jukylin/esim/log"
-	"github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg"
+	filedir "github.com/jukylin/esim/pkg/file-dir"
+	"github.com/spf13/viper"
 )
 
 type Tester struct {
@@ -19,6 +21,8 @@ type Tester struct {
 	watcher EsimWatcher
 
 	execer pkg.Exec
+
+	receiveEvent map[string]int64
 }
 
 type Option func(*Tester)
@@ -28,6 +32,8 @@ func NewTester(options ...Option) *Tester {
 	for _, option := range options {
 		option(tester)
 	}
+
+	tester.receiveEvent = make(map[string]int64)
 
 	return tester
 }
@@ -58,7 +64,6 @@ func (tester *Tester) bindInput(v *viper.Viper) {
 	tester.withWatchDir = watchDir
 }
 
-
 func (tester *Tester) Run(v *viper.Viper) {
 	tester.bindInput(v)
 
@@ -68,15 +73,37 @@ func (tester *Tester) Run(v *viper.Viper) {
 	}
 	paths = append(paths, tester.withWatchDir)
 
-	tester.watcher.watch(paths, tester.receive)
+	absDir, err := filepath.Abs(tester.withWatchDir)
+	if err != nil {
+		tester.logger.Fatalf(err.Error())
+	}
+
+	tester.logger.Infof("Watching : %s", absDir)
+
+	tester.watcher.watch(paths, tester.receiver)
 }
 
-// receive file path of be changed and run go test
-func (tester *Tester) receive(path string)  {
+// receiver receive go file path of be changed and run go test
+func (tester *Tester) receiver(path string) bool {
+	if filepath.Ext(path) != ".go" {
+		return false
+	}
+
 	dir := filepath.Dir(path)
+
+	if eventTime := tester.receiveEvent[dir]; eventTime == time.Now().Unix() {
+		return false
+	}
+
+	tester.receiveEvent[dir] = time.Now().Unix()
+
+	tester.logger.Infof("Go file modified %s", path)
 
 	err := tester.execer.ExecTest(dir)
 	if err != nil {
 		tester.logger.Errorf(err.Error())
+		return false
 	}
+
+	return true
 }

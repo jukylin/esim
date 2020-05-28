@@ -1,8 +1,8 @@
-
 package example
 
 // example
 func example() bool {
 	return true
 }
-// 1590509895509530000
+
+// 1590581820566812000

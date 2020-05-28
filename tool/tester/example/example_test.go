@@ -2,6 +2,7 @@ package example
 
 import (
 	"testing"
+
 	"github.com/stretchr/testify/assert"
 )
 

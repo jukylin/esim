@@ -1,14 +1,13 @@
 package tester
 
 import (
-	"github.com/jukylin/esim/log"
 	"github.com/fsnotify/fsnotify"
+	"github.com/jukylin/esim/log"
 )
 
 type EsimWatcher interface {
 	// Watch folder for changes, receiver receive folder of changed files
-	// Only watch file write operations
-	watch(folder []string, receiver func(string))
+	watch(folder []string, receiver func(string) bool)
 
 	// close watcher
 	close() error
@@ -38,7 +37,7 @@ func WithFwLogger(logger log.Logger) FwOption {
 	}
 }
 
-func (fw *fsnotifyWatcher)  watch(folders []string, receiver func(string)) {
+func (fw *fsnotifyWatcher) watch(folders []string, receiver func(string) bool) {
 	if len(folders) == 0 {
 		fw.logger.Errorf("There is no folder to be watch")
 		return
@@ -60,13 +59,12 @@ func (fw *fsnotifyWatcher)  watch(folders []string, receiver func(string)) {
 					return
 				}
 
-				if event.Op&fsnotify.Write == fsnotify.Write {
-					receiver(event.Name)
-				}
+				receiver(event.Name)
 			case err, ok := <-watcher.Errors:
 				if !ok {
 					return
 				}
+
 				fw.logger.Errorf(err.Error())
 			}
 		}

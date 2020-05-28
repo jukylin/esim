@@ -1,10 +1,10 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
-	"github.com/jukylin/esim/tool/tester"
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
+	"github.com/jukylin/esim/tool/tester"
+	"github.com/spf13/cobra"
 )
 
 var testCmd = &cobra.Command{
