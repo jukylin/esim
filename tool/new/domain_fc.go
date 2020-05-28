@@ -2,7 +2,7 @@ package new
 
 var (
 	domainfc1 = &FileContent{
-		FileName: "user_entity.go",
+		FileName: "user.go",
 		Dir:      "internal/domain/user/entity",
 		Content: `package entity
 

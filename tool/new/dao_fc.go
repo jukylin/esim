@@ -2,7 +2,7 @@ package new
 
 var (
 	daofc1 = &FileContent{
-		FileName: "user_dao.go",
+		FileName: "user.go",
 		Dir:      "internal/infra/dao",
 		Content: `package dao
 

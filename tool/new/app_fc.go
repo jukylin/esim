@@ -2,7 +2,7 @@ package new
 
 var (
 	appfc = &FileContent{
-		FileName: "user_service.go",
+		FileName: "user.go",
 		Dir:      "internal/application",
 		Content: `package application
 

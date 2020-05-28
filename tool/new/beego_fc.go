@@ -2,7 +2,7 @@ package new
 
 var (
 	beegofc1 = &FileContent{
-		FileName: "user_controller.go",
+		FileName: "user.go",
 		Dir:      "internal/transports/http/controllers",
 		Content: `package controllers
 
@@ -129,7 +129,7 @@ func getMwd(esim *container.Esim) []beego.MiddleWare {
 	}
 
 	beegofc4 = &FileContent{
-		FileName: "index_controller.go",
+		FileName: "index.go",
 		Dir:      "internal/transports/http/controllers",
 		Content: `package controllers
 
@@ -208,7 +208,7 @@ func TestControllers_Esim(t *testing.T) {
 	}
 
 	beegofc6 = &FileContent{
-		FileName: "user_dto.go",
+		FileName: "user.go",
 		Dir:      "internal/transports/http/dto",
 		Content: `package dto
 

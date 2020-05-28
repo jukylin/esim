@@ -2,7 +2,7 @@ package new
 
 var (
 	ginfc1 = &FileContent{
-		FileName: "demo_controller.go",
+		FileName: "demo.go",
 		Dir:      "internal/transports/http/controllers",
 		Content: `package controllers
 
@@ -319,7 +319,7 @@ func initControllers(app *{{.PackageName}}.App) *Controllers {
 	}
 
 	ginfc8 = &FileContent{
-		FileName: "user_dto.go",
+		FileName: "user.go",
 		Dir:      "internal/transports/http/dto",
 		Content: `package dto
 

@@ -2,7 +2,7 @@ package new
 
 var (
 	repofc1 = &FileContent{
-		FileName: "user_repo.go",
+		FileName: "user.go",
 		Dir:      "internal/infra/repo",
 		Content: `package repo
 

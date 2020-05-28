@@ -2,7 +2,7 @@ package new
 
 var (
 	grpcfc1 = &FileContent{
-		FileName: "demo_controller.go",
+		FileName: "demo.go",
 		Dir:      "internal/transports/grpc/controllers",
 		Content: `package controllers
 
@@ -224,7 +224,7 @@ func initControllers(app *{{.PackageName}}.App) *Controllers {
 	}
 
 	grpcfc8 = &FileContent{
-		FileName: "user_dto.go",
+		FileName: "user.go",
 		Dir:      "internal/transports/grpc/dto",
 		Content: `package dto
 
