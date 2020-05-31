@@ -137,6 +137,8 @@ type EsimFactory struct {
 	StructTpl templates.StructInfo
 
 	tpl templates.Tpl
+
+	ot *optionTpl
 }
 
 type Option func(*EsimFactory)
@@ -158,6 +160,10 @@ func NewEsimFactory(options ...Option) *EsimFactory {
 
 	if factory.tpl == nil {
 		factory.tpl = templates.NewTextTpl()
+	}
+
+	if factory.ot == nil {
+		factory.ot = newOptionTpl()
 	}
 
 	factory.oldStructInfo = &structInfo{}
@@ -277,7 +283,8 @@ func (ef *EsimFactory) Run(v *viper.Viper) error {
 		}
 
 		originContent := ef.replaceOriginContent()
-
+		//println(originContent)
+		return nil
 		res, err := imports.Process("", []byte(originContent), nil)
 		if err != nil {
 			ef.logger.Panicf("%s:%s", err.Error(), originContent)
@@ -316,7 +323,9 @@ func (ef *EsimFactory) replaceOriginContent() string {
 	if ef.oldStructInfo.importStr != "" {
 		newContent = strings.Replace(newContent, ef.oldStructInfo.importStr, "", 1)
 	}
-
+	println(ef.firstPart)
+	println(ef.thirdPart)
+	println(ef.secondPart)
 	newContent = strings.Replace(newContent, ef.packStr, ef.firstPart, 1)
 
 	if ef.secondPart != "" {
@@ -539,69 +548,42 @@ func (ef *EsimFactory) extendField() bool {
 	if ef.withOption {
 		if ef.withGenLoggerOption {
 			HasExtend = true
-			ef.extendLog()
+			ef.extendFieldInfo(newLoggerFieldInfo())
 		}
 
 		if ef.withGenConfOption {
 			HasExtend = true
-			ef.extendConf()
+			ef.extendFieldInfo(newConfigFieldInfo())
 		}
 	}
 
 	return HasExtend
 }
 
-func (ef *EsimFactory) extendLog() {
-	var foundLogField bool
+func (ef *EsimFactory) extendFieldInfo(fieldInfo extendFieldInfo) {
+	var foundField bool
 	for _, field := range ef.NewStructInfo.Fields {
-		if strings.Contains(field.Field, "log.Logger") && !foundLogField {
-			foundLogField = true
+		if strings.Contains(field.Field, fieldInfo.ftype) && !foundField {
+			foundField = true
 		}
 	}
 
-	if !foundLogField || len(ef.NewStructInfo.Fields) == 0 {
+	if !foundField || len(ef.NewStructInfo.Fields) == 0 {
 		fld := pkg.Field{}
-		fld.Field = "logger log.Logger"
-		fld.Name = "logger"
+		fld.Field = fmt.Sprintf("%s %s", fieldInfo.name, fieldInfo.ftype)
+		fld.Name = fieldInfo.name
 		ef.NewStructInfo.Fields = append(ef.NewStructInfo.Fields, fld)
 	}
 
-	var foundLogImport bool
+	var foundImport bool
 	for _, oim := range ef.NewStructInfo.imports {
-		if oim.Path == "github.com/jukylin/esim/log" {
-			foundLogImport = true
+		if oim.Path == fieldInfo.importPath {
+			foundImport = true
 		}
 	}
 
-	if !foundLogImport {
-		ef.appendNewImport("github.com/jukylin/esim/log")
-	}
-}
-
-func (ef *EsimFactory) extendConf() {
-	var foundConfField bool
-	for _, field := range ef.NewStructInfo.Fields {
-		if strings.Contains(field.Field, "config.Config") && !foundConfField {
-			foundConfField = true
-		}
-	}
-
-	if !foundConfField || len(ef.NewStructInfo.Fields) == 0 {
-		fld := pkg.Field{}
-		fld.Field = "conf config.Config"
-		fld.Name = "conf"
-		ef.NewStructInfo.Fields = append(ef.NewStructInfo.Fields, fld)
-	}
-
-	var foundConfImport bool
-	for _, oim := range ef.NewStructInfo.imports {
-		if oim.Path == "github.com/jukylin/esim/config" {
-			foundConfImport = true
-		}
-	}
-
-	if !foundConfImport {
-		ef.appendNewImport("github.com/jukylin/esim/config")
+	if !foundImport {
+		ef.appendNewImport(fieldInfo.importPath)
 	}
 }
 
@@ -614,7 +596,7 @@ func (ef *EsimFactory) buildNewStructFileContent() error {
 		ef.NewStructInfo.structFileContent = strings.Replace(ef.oldStructInfo.structFileContent,
 			ef.oldStructInfo.importStr, ef.NewStructInfo.importStr, -1)
 	} else if ef.packStr != "" {
-		// not find import
+		// not found import
 		ef.getFirstPart()
 		ef.NewStructInfo.structFileContent = strings.Replace(ef.oldStructInfo.structFileContent,
 			ef.packStr, ef.firstPart, -1)
@@ -698,25 +680,11 @@ func (ef *EsimFactory) genOptions() {
 	}`
 
 	if ef.withGenConfOption {
-		ef.Option4 += `
-func With` + ef.StructName + `Conf(conf config.Config) ` + ef.StructName + `Option {
-	return func(` + templates.Shorten(snaker.SnakeToCamelLower(ef.StructName)) +
-			` ` + ef.NewStructInfo.ReturnVarStr + `) {
-	` + templates.Shorten(snaker.SnakeToCamelLower(ef.StructName)) + `.conf = conf
-	}
-}
-`
+		//ef.Option4 = ef.ot.confString(ef.StructName, ef.NewStructInfo.ReturnVarStr)
 	}
 
 	if ef.withGenLoggerOption {
-		ef.Option5 += `
-func With` + ef.StructName + `Logger(logger log.Logger) ` + ef.StructName + `Option {
-	return func(` + templates.Shorten(snaker.SnakeToCamelLower(ef.StructName)) +
-			` ` + ef.NewStructInfo.ReturnVarStr + `) {
-		` + templates.Shorten(snaker.SnakeToCamelLower(ef.StructName)) + `.logger = logger
-	}
-}
-`
+		//ef.Option5 = ef.ot.loggerString(ef.StructName, ef.NewStructInfo.ReturnVarStr)
 	}
 }
 

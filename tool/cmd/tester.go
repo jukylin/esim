@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var testCmd = &cobra.Command{
+var testerCmd = &cobra.Command{
 	Use:   "test",
 	Short: "Automatic execution go test",
 	Long: `Watching for files change, If there is a change,
@@ -35,9 +35,11 @@ run the go test in the current directory
 }
 
 func init() {
-	rootCmd.AddCommand(testCmd)
+	rootCmd.AddCommand(testerCmd)
 
-	err := v.BindPFlags(testCmd.Flags())
+	testerCmd.Flags().BoolP("wire", "w", true, "run with wire")
+
+	err := v.BindPFlags(testerCmd.Flags())
 	if err != nil {
 		logger.Errorf(err.Error())
 	}

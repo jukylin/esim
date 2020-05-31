@@ -9,6 +9,10 @@ import (
 	"github.com/jukylin/esim/log"
 )
 
+const (
+	WireCmd = "wire"
+)
+
 type Exec interface {
 	ExecWire(string, ...string) error
 
@@ -46,12 +50,12 @@ func WithCmdExecLogger(logger log.Logger) CmdExecOption {
 }
 
 func (ce *CmdExec) ExecWire(dir string, args ...string) error {
-	cmd := exec.Command("wire", args...)
+	cmd := exec.Command(WireCmd, args...)
 	cmd.Dir = dir
 
 	cmd.Env = os.Environ()
 
-	ce.logger.Infof("wire %s", strings.Join(args, ""))
+	ce.logger.Infof("%s %s", WireCmd, strings.Join(args, ""))
 
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

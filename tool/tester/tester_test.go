@@ -3,6 +3,8 @@ package tester
 import (
 	"testing"
 
+	"time"
+
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
 	"github.com/spf13/viper"
@@ -12,32 +14,64 @@ import (
 const (
 	watchDir    = "watch-dir"
 	receivePath = "./test.go"
+	wirePath    = "./wire.go"
+)
+
+var (
+	loggerOptions = log.LoggerOptions{}
+	logger        = log.NewLogger(loggerOptions.WithDebug(true))
 )
 
 func TestTesterReceive(t *testing.T) {
-	logger := log.NewLogger()
-	watcher := NewTester(
+	tester := NewTester(
 		WithTesterLogger(logger),
 		WithTesterExec(pkg.NewNullExec()))
 
-	result := watcher.receiver(receivePath)
+	result := tester.receiver(receivePath)
 	assert.True(t, result)
 
-	result = watcher.receiver(receivePath)
+	result = tester.receiver(receivePath)
+	assert.False(t, result)
+}
+
+func TestTesterIgnoreFiles(t *testing.T) {
+	tester := NewTester(
+		WithTesterLogger(logger),
+		WithTesterExec(pkg.NewNullExec()))
+
+	result := tester.receiver(receivePath)
+	assert.True(t, result)
+
+	result = tester.receiver(wirePath)
 	assert.False(t, result)
 }
 
 func TestTesterBindInput(t *testing.T) {
-	watcher := NewTester()
+	tester := NewTester()
 
 	v := viper.New()
 	v.Set("watch_dir", watchDir)
-	watcher.bindInput(v)
+	tester.bindInput(v)
 
-	assert.Equal(t, watcher.withWatchDir, watchDir)
+	assert.Equal(t, tester.withWatchDir, watchDir)
 
 	v.Set("watch_dir", "")
-	watcher.bindInput(v)
+	tester.bindInput(v)
 
-	assert.Equal(t, watcher.withWatchDir, ".")
+	assert.Equal(t, tester.withWatchDir, ".")
+}
+
+func TestTesterCheckAndRunWire(t *testing.T) {
+	tester := NewTester(
+		WithTesterLogger(logger),
+		WithTesterExec(pkg.NewNullExec()))
+
+	tester.withWire = true
+	tester.waitTime = 20 * time.Millisecond
+
+	tester.checkAndRunWire("infra.go", "./")
+	time.Sleep(10 * time.Millisecond)
+	assert.Equal(t, tester.runningWire, int32(1))
+	time.Sleep(20 * time.Millisecond)
+	assert.Equal(t, tester.runningWire, int32(0))
 }
