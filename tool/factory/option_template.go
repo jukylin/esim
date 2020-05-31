@@ -35,23 +35,11 @@ func newOptionTpl(tpl templates.Tpl) *optionTpl {
 	return ot
 }
 
-func (ot *optionTpl) confString(structName, returnVarStr string) string {
+func (ot *optionTpl) String(structName, returnVarStr, tplName, tpl string) string {
 	ot.StructName = structName
 	ot.ReturnVarStr = returnVarStr
 
-	content, err := ot.tpl.Execute("conf_template", confOptionTemplate, ot)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	return content
-}
-
-func (ot *optionTpl) loggerString(structName, returnVarStr string) string {
-	ot.StructName = structName
-	ot.ReturnVarStr = returnVarStr
-
-	content, err := ot.tpl.Execute("logger_template", loggerOptionTemplate, ot)
+	content, err := ot.tpl.Execute(tplName, tpl, ot)
 	if err != nil {
 		panic(err.Error())
 	}

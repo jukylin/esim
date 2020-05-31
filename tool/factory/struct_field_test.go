@@ -82,10 +82,12 @@ type empty struct {}`
 
 	rpcPlugin.filesName = append(rpcPlugin.filesName, "example.go")
 	rpcPlugin.packName = "example"
-	sortResult := rpcPlugin.SortField(fields)
+	sortResult := &SortReturn{}
+	rpcPlugin.HandleField(fields, sortResult)
 	assert.Equal(t, 9, len(sortResult.Fields))
 
-	initResult := rpcPlugin.InitField(fields)
+	initResult := &InitFieldsReturn{}
+	rpcPlugin.HandleField(fields, initResult)
 	assert.Equal(t, 24, len(initResult.Fields))
 	rpcPlugin.clear()
 }

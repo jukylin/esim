@@ -227,7 +227,6 @@ func (ef *EsimFactory) getPluralForm(word string) string {
 }
 
 func (ef *EsimFactory) Run(v *viper.Viper) error {
-
 	defer func() {
 		ef.Close()
 	}()
@@ -260,12 +259,14 @@ func (ef *EsimFactory) Run(v *viper.Viper) error {
 		ef.structFieldIface.SetPackName(ef.packName)
 
 		if ef.withSort {
-			sortedField := ef.structFieldIface.SortField(ef.NewStructInfo.Fields)
+			sortedField := &SortReturn{}
+			ef.structFieldIface.HandleField(ef.NewStructInfo.Fields, sortedField)
 			ef.logger.Debugf("sorted fields %+v", sortedField.Fields)
 			ef.NewStructInfo.Fields = sortedField.Fields
 		}
 
-		ef.InitField = ef.structFieldIface.InitField(ef.NewStructInfo.Fields)
+		ef.InitField = &InitFieldsReturn{}
+		ef.structFieldIface.HandleField(ef.NewStructInfo.Fields, ef.InitField)
 	}
 
 	ef.genStr()
@@ -685,11 +686,13 @@ func (ef *EsimFactory) genOptions() {
 	}`
 
 	if ef.withGenConfOption {
-		ef.Option4 = ef.ot.confString(ef.StructName, ef.NewStructInfo.ReturnVarStr)
+		ef.Option4 = ef.ot.String(ef.StructName, ef.NewStructInfo.ReturnVarStr,
+			"conf_template", confOptionTemplate)
 	}
 
 	if ef.withGenLoggerOption {
-		ef.Option5 = ef.ot.loggerString(ef.StructName, ef.NewStructInfo.ReturnVarStr)
+		ef.Option5 = ef.ot.String(ef.StructName, ef.NewStructInfo.ReturnVarStr,
+			"logger_template", loggerOptionTemplate)
 	}
 }
 

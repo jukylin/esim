@@ -2,7 +2,7 @@ package factory
 
 import (
 	"os"
-	//"path/filepath"
+	"path/filepath"
 	"testing"
 
 	"github.com/jukylin/esim/log"
@@ -44,15 +44,15 @@ func TestEsimFactory_Run(t *testing.T) {
 	v.Set("pool", true)
 	v.Set("plural", true)
 	v.Set("new", true)
-	//v.Set("print", true)
+	v.Set("print", true)
 
 	err := esimfactory.Run(v)
 	assert.Nil(t, err)
 	esimfactory.Close()
 
-	//err = filedir.EsimRecoverFile(esimfactory.structDir +
-	//	string(filepath.Separator) + esimfactory.structFileName)
-	//assert.Nil(t, err)
+	err = filedir.EsimRecoverFile(esimfactory.structDir +
+		string(filepath.Separator) + esimfactory.structFileName)
+	assert.Nil(t, err)
 }
 
 func TestEsimFactory_InputBind(t *testing.T) {

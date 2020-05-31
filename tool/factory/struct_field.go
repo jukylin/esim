@@ -23,9 +23,7 @@ import (
 )
 
 type StructFieldIface interface {
-	SortField(fields []pkg.Field) *SortReturn
-
-	InitField(fields []pkg.Field) *InitFieldsReturn
+	HandleField(fields []pkg.Field, data interface{})
 
 	Close()
 
@@ -264,36 +262,27 @@ func (rps *RPCPluginStructField) run() {
 	rps.dispense()
 }
 
-func (rps *RPCPluginStructField) SortField(fields []pkg.Field) *SortReturn {
+func (rps *RPCPluginStructField) HandleField(fields []pkg.Field, data interface{}) {
 	rps.Fields = fields
 
 	if rps.model == nil {
 		rps.run()
 	}
 
-	sortReturn := &SortReturn{}
-	err := json.Unmarshal([]byte(rps.model.Sort()), sortReturn)
-	if err != nil {
-		rps.logger.Panicf(err.Error())
+	switch d := data.(type) {
+	case *SortReturn:
+		err := json.Unmarshal([]byte(rps.model.Sort()), data)
+		if err != nil {
+			rps.logger.Panicf(err.Error())
+		}
+	case *InitFieldsReturn:
+		err := json.Unmarshal([]byte(rps.model.InitField()), data)
+		if err != nil {
+			rps.logger.Panicf(err.Error())
+		}
+	default:
+		rps.logger.Panicf("unknow type %T", d)
 	}
-
-	return sortReturn
-}
-
-func (rps *RPCPluginStructField) InitField(fields []pkg.Field) *InitFieldsReturn {
-	rps.Fields = fields
-
-	if rps.model == nil {
-		rps.run()
-	}
-
-	initReturn := &InitFieldsReturn{}
-	err := json.Unmarshal([]byte(rps.model.InitField()), initReturn)
-	if err != nil {
-		rps.logger.Panicf(err.Error())
-	}
-
-	return initReturn
 }
 
 func (rps *RPCPluginStructField) SetStructDir(structDir string) {
