@@ -163,7 +163,7 @@ func NewEsimFactory(options ...Option) *EsimFactory {
 	}
 
 	if factory.ot == nil {
-		factory.ot = newOptionTpl()
+		factory.ot = newOptionTpl(factory.tpl)
 	}
 
 	factory.oldStructInfo = &structInfo{}
@@ -227,6 +227,11 @@ func (ef *EsimFactory) getPluralForm(word string) string {
 }
 
 func (ef *EsimFactory) Run(v *viper.Viper) error {
+
+	defer func() {
+		ef.Close()
+	}()
+
 	err := ef.bindInput(v)
 	if err != nil {
 		ef.logger.Panicf(err.Error())
@@ -283,11 +288,9 @@ func (ef *EsimFactory) Run(v *viper.Viper) error {
 		}
 
 		originContent := ef.replaceOriginContent()
-		//println(originContent)
-		return nil
 		res, err := imports.Process("", []byte(originContent), nil)
 		if err != nil {
-			ef.logger.Panicf("%s:%s", err.Error(), originContent)
+			ef.logger.Panicf("%s : %s", err.Error(), originContent)
 		}
 
 		err = filedir.EsimWrite(ef.structDir+
@@ -323,11 +326,8 @@ func (ef *EsimFactory) replaceOriginContent() string {
 	if ef.oldStructInfo.importStr != "" {
 		newContent = strings.Replace(newContent, ef.oldStructInfo.importStr, "", 1)
 	}
-	println(ef.firstPart)
-	println(ef.thirdPart)
-	println(ef.secondPart)
-	newContent = strings.Replace(newContent, ef.packStr, ef.firstPart, 1)
 
+	newContent = strings.Replace(newContent, ef.packStr, ef.firstPart, 1)
 	if ef.secondPart != "" {
 		newContent = strings.Replace(newContent, ef.oldStructInfo.varStr, ef.secondPart, 1)
 	}
@@ -492,12 +492,18 @@ func (ef *EsimFactory) parseStruct() bool {
 
 func (ef *EsimFactory) parseDecls(src []byte, fileInfo os.FileInfo, f *ast.File) {
 	strSrc := string(src)
+
+	// Must find the structName first
 	for _, decl := range f.Decls {
 		if genDecl, ok := decl.(*ast.GenDecl); ok {
 			if genDecl.Tok.String() == "type" {
 				ef.parseType(genDecl, src, fileInfo, f)
 			}
+		}
+	}
 
+	for _, decl := range f.Decls {
+		if genDecl, ok := decl.(*ast.GenDecl); ok {
 			if genDecl.Tok.String() == "var" && ef.found {
 				ef.oldStructInfo.vars.ParseFromAst(genDecl, strSrc)
 			}
@@ -609,7 +615,6 @@ func (ef *EsimFactory) buildNewStructFileContent() error {
 	structInfo.Fields = ef.NewStructInfo.Fields
 
 	ef.NewStructInfo.structStr = structInfo.String()
-
 	ef.NewStructInfo.structFileContent = strings.Replace(ef.NewStructInfo.structFileContent,
 		ef.oldStructInfo.structStr, ef.NewStructInfo.structStr, -1)
 
@@ -680,11 +685,11 @@ func (ef *EsimFactory) genOptions() {
 	}`
 
 	if ef.withGenConfOption {
-		//ef.Option4 = ef.ot.confString(ef.StructName, ef.NewStructInfo.ReturnVarStr)
+		ef.Option4 = ef.ot.confString(ef.StructName, ef.NewStructInfo.ReturnVarStr)
 	}
 
 	if ef.withGenLoggerOption {
-		//ef.Option5 = ef.ot.loggerString(ef.StructName, ef.NewStructInfo.ReturnVarStr)
+		ef.Option5 = ef.ot.loggerString(ef.StructName, ef.NewStructInfo.ReturnVarStr)
 	}
 }
 

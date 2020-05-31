@@ -1,22 +1,21 @@
 package factory
 
 import (
-	"bytes"
-	"text/template"
+	"github.com/jukylin/esim/pkg/templates"
 )
 
 var confOptionTemplate = `
 func With{{.StructName}}Conf(conf config.Config) {{.StructName}}Option {
-	return func({{.StructName|snakeToCamelLower|Shorten}} {{.ReturnVarStr}}) {
-		{{.StructName|snakeToCamelLower|Shorten}}.conf = conf
+	return func({{.StructName|snakeToCamelLower|shorten}} {{.ReturnVarStr}}) {
+		{{.StructName|snakeToCamelLower|shorten}}.conf = conf
 	}
 }
 `
 
 var loggerOptionTemplate = `
 func With{{.StructName}}Logger(logger log.Logger) {{.StructName}}Option {
-	return func({{.StructName|snakeToCamelLower|Shorten}} {{.ReturnVarStr}}) {
-		{{.StructName|snakeToCamelLower|Shorten}}.logger = logger
+	return func({{.StructName|snakeToCamelLower|shorten}} {{.ReturnVarStr}}) {
+		{{.StructName|snakeToCamelLower|shorten}}.logger = logger
 	}
 }
 `
@@ -25,10 +24,13 @@ type optionTpl struct {
 	StructName string
 
 	ReturnVarStr string
+
+	tpl templates.Tpl
 }
 
-func newOptionTpl() *optionTpl {
+func newOptionTpl(tpl templates.Tpl) *optionTpl {
 	ot := &optionTpl{}
+	ot.tpl = tpl
 
 	return ot
 }
@@ -37,34 +39,22 @@ func (ot *optionTpl) confString(structName, returnVarStr string) string {
 	ot.StructName = structName
 	ot.ReturnVarStr = returnVarStr
 
-	tmpl, err := template.New("conf_template").Parse(confOptionTemplate)
+	content, err := ot.tpl.Execute("conf_template", confOptionTemplate, ot)
 	if err != nil {
 		panic(err.Error())
 	}
 
-	var buf bytes.Buffer
-	err = tmpl.Execute(&buf, ot)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	return buf.String()
+	return content
 }
 
 func (ot *optionTpl) loggerString(structName, returnVarStr string) string {
 	ot.StructName = structName
 	ot.ReturnVarStr = returnVarStr
 
-	tmpl, err := template.New("logger_template").Parse(loggerOptionTemplate)
+	content, err := ot.tpl.Execute("logger_template", loggerOptionTemplate, ot)
 	if err != nil {
 		panic(err.Error())
 	}
 
-	var buf bytes.Buffer
-	err = tmpl.Execute(&buf, ot)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	return buf.String()
+	return content
 }
