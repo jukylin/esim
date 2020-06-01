@@ -133,6 +133,7 @@ func (edf *entityDomainFile) ParseCloumns(cs Columns, info *ShareInfo) {
 	var doc string
 	var nullable bool
 	var fieldName string
+	var delField string
 
 	for i := range cs {
 		column := (&cs[i])
@@ -180,7 +181,10 @@ func (edf *entityDomainFile) ParseCloumns(cs Columns, info *ShareInfo) {
 
 		field.Tag = fmt.Sprintf("`gorm:\"column:%s%s%s\"`", column.ColumnName, primary, colDefault)
 
-		entityTpl.DelField = column.CheckDelField()
+		delField = column.CheckDelField()
+		if delField != "" {
+			entityTpl.DelField = delField
+		}
 
 		field.Field = field.Name + " " + field.Type
 		structInfo.Fields = append(structInfo.Fields, field)

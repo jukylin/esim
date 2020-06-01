@@ -38,7 +38,6 @@ func ({{.StructName | shorten}} *{{.StructName}}) DelKey() string {
 func ({{.StructName | shorten}} *{{.StructName}}) BeforeCreate(scope *gorm.Scope) (err error) {
 	switch scope.Value.(type) {
 	case *{{.StructName}}:
-
 		val := scope.Value.(*{{.StructName}})
 
 		{{range $stamp := .CurTimeStamp}}

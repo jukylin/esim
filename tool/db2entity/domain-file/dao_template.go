@@ -101,7 +101,7 @@ func ({{.StructName | shorten}} *{{.StructName}}) DelById(ctx context.Context,
 	var del{{.EntityName}} entity.{{.EntityName}}
 
 	if del{{.EntityName}}.DelKey() == ""{
-		return false, errors.New("找不到 is_del / is_deleted / is_delete 字段")
+		return false, errors.New("not found is_del / is_deleted / is_delete")
 	}
 
 	del{{.EntityName}}.ID = id
