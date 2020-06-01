@@ -88,7 +88,7 @@ func (ce *CmdExec) ExecBuild(dir string, args ...string) error {
 }
 
 func (ce *CmdExec) ExecTest(dir string, args ...string) error {
-	cmdLine := fmt.Sprintf("test -v")
+	cmdLine := fmt.Sprintf("test")
 
 	args = append(strings.Split(cmdLine, " "), args...)
 
