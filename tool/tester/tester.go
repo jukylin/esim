@@ -35,6 +35,8 @@ type Tester struct {
 
 	receiveEvent map[string]int64
 
+	isWireFile bool
+
 	runningWire int32
 
 	runningTest int32
@@ -142,8 +144,6 @@ func (tester *Tester) receiver(path string) bool {
 
 	tester.receiveEvent[dir] = time.Now().Unix()
 
-	tester.logger.Infof("Go file modified %s", path)
-
 	tester.checkAndRunWire(fileName, dir)
 
 	tester.runGoTest(dir)
@@ -164,8 +164,10 @@ func (tester *Tester) checkIsIgnoreFile(fileName string) bool {
 }
 
 func (tester *Tester) runGoTest(dir string) {
-	if atomic.CompareAndSwapInt32(&tester.runningTest, 0, 1) {
+	if !tester.isWireFile && atomic.CompareAndSwapInt32(&tester.runningTest, 0, 1) {
 		go func() {
+			tester.logger.Infof("Go file modified %s", dir)
+
 			// Avoid redundant execution
 			time.Sleep(tester.waitTime)
 			tester.logger.Debugf("Running go test......")
@@ -185,6 +187,7 @@ func (tester *Tester) checkAndRunWire(fileName, dir string) {
 		atomic.CompareAndSwapInt32(&tester.runningWire, 0, 1) {
 		for _, provideFile := range wireProvidersFiles {
 			if provideFile == fileName {
+				tester.isWireFile = true
 				go func() {
 					// Avoid redundant execution
 					time.Sleep(tester.waitTime)
