@@ -75,3 +75,17 @@ func TestTesterCheckAndRunWire(t *testing.T) {
 	time.Sleep(20 * time.Millisecond)
 	assert.Equal(t, tester.runningWire, int32(0))
 }
+
+func TestTesterRunGoTest(t *testing.T) {
+	tester := NewTester(
+		WithTesterLogger(logger),
+		WithTesterExec(pkg.NewNullExec()))
+
+	tester.isWireFile = true
+	tester.runGoTest("./")
+	assert.Equal(t, int32(0), tester.runningTest)
+
+	tester.isWireFile = false
+	tester.runGoTest("./")
+	assert.Equal(t, int32(1), tester.runningTest)
+}
