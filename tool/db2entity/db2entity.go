@@ -261,7 +261,7 @@ func (de *Db2Entity) injectToInfra(v *viper.Viper) {
 
 func (de *Db2Entity) makeCodeBeautiful(src string) string {
 	options := &imports.Options{}
-	options.Comments = false
+	options.Comments = true
 	options.TabIndent = true
 	options.TabWidth = 8
 	options.FormatOnly = true

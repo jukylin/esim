@@ -52,15 +52,17 @@ func (fw *fsnotifyWatcher) watch(folders []string, receiver func(string) bool) {
 
 	done := make(chan bool)
 	go func() {
+		var ok bool
+		var event fsnotify.Event
 		for {
 			select {
-			case event, ok := <-watcher.Events:
+			case event, ok = <-watcher.Events:
 				if !ok {
 					return
 				}
 
 				receiver(event.Name)
-			case err, ok := <-watcher.Errors:
+			case err, ok = <-watcher.Errors:
 				if !ok {
 					return
 				}

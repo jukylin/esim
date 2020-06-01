@@ -166,7 +166,7 @@ func (edf *entityDomainFile) ParseCloumns(cs Columns, info *ShareInfo) {
 
 		doc = column.FilterComment()
 		if doc != "" {
-			field.Doc = append(field.Doc, "//"+doc)
+			field.Doc = append(field.Doc, "// "+doc)
 		}
 
 		primary := ""
