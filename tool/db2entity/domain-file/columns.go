@@ -104,7 +104,7 @@ func (dc *DBColumnsInter) SelectColumns(dbConf *DbConfig) (Columns, error) {
 	}
 
 	if !db.HasTable(dbConf.Table) {
-		dc.logger.Panicf("%s 表不存在", dbConf.Table)
+		dc.logger.Panicf("%s table not exists", dbConf.Table)
 	}
 
 	sql := "SELECT COLUMN_NAME, COLUMN_KEY, DATA_TYPE, IS_NULLABLE, COLUMN_DEFAULT, " +
