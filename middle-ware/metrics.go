@@ -9,13 +9,12 @@ func init() {
 	prometheus.MustRegister(requestDuration)
 }
 
-// 初始化 web_reqeust_total
+// web_reqeust_total
 var requestTotal = prometheus.NewCounterVec(
 	prometheus.CounterOpts{
 		Name: "web_reqeust_total",
 		Help: "Number of hello requests in total",
 	},
-	// 设置两个标签 请求方法和 路径 对请求总次数在两个
 	[]string{"method", "endpoint"},
 )
 

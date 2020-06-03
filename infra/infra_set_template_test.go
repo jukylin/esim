@@ -7,9 +7,9 @@ import (
 )
 
 func TestInfraSetTemplate(t *testing.T) {
-	infraSetArgs := infraSetArgs{}
-	infraSetArgs.Args = append(infraSetArgs.Args, "provideRedis", "provideDb")
+	isa := infraSetArgs{}
+	isa.Args = append(isa.Args, "provideRedis", "provideDb")
 
-	result := infraSetArgs.String()
+	result := isa.String()
 	assert.NotEmpty(t, result)
 }

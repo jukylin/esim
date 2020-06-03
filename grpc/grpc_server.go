@@ -12,6 +12,7 @@ import (
 	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
+	"github.com/jukylin/esim/pkg/tracer-id"
 	opentracing2 "github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/net/context"
@@ -93,7 +94,6 @@ func NewServer(target string, options ...ServerOption) *Server {
 	}
 	keepAliveServer.Timeout = time.Duration(ServerKpTimeOut) * time.Second
 
-	// 测试没生效
 	ServerConnTimeOut := Server.conf.GetInt("grpc_server_conn_time_out")
 	if ServerConnTimeOut == 0 {
 		ServerConnTimeOut = 3
@@ -125,6 +125,8 @@ func NewServer(target string, options ...ServerOption) *Server {
 	if Server.conf.GetBool("grpc_server_debug") {
 		unaryServerInterceptors = append(unaryServerInterceptors, Server.serverDebug())
 	}
+
+	unaryServerInterceptors = append(unaryServerInterceptors, Server.tracerID())
 
 	// handle panic
 	opts := []grpc_recovery.Option{
@@ -231,6 +233,27 @@ func (gs *Server) handelPanic() grpc_recovery.RecoveryHandlerFuncContext {
 	return func(ctx context.Context, p interface{}) (err error) {
 		gs.logger.Errorc(ctx, spew.Sdump(p))
 		return errors.New(spew.Sdump("Server panic : ", p))
+	}
+}
+
+// tracerId If not found opentracing's tracer_id then generate a new tracer_id
+// Recommend to the end of the Interceptor
+func (gs *Server) tracerID() grpc.UnaryServerInterceptor {
+	tracerID := tracerid.TracerID()
+	return func(
+		ctx context.Context,
+		req interface{},
+		info *grpc.UnaryServerInfo,
+		handler grpc.UnaryHandler,
+	) (resp interface{}, err error) {
+		sp := opentracing2.SpanFromContext(ctx)
+		if sp == nil {
+			ctx = context.WithValue(ctx, tracerid.ActiveEsimKey, tracerID())
+		}
+
+		resp, err = handler(ctx, req)
+
+		return resp, err
 	}
 }
 

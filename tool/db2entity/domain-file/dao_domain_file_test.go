@@ -14,7 +14,7 @@ func TestDaoDomainFile(t *testing.T) {
 	assert.Nil(t, err)
 
 	defer func() {
-		err := os.RemoveAll(target)
+		err = os.RemoveAll(target)
 		assert.Nil(t, err)
 	}()
 

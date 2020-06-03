@@ -31,25 +31,25 @@ func TestEntityTemplate(t *testing.T) {
 	Field2.Doc = append(Field2.Doc, "//username \\r\\n is a test")
 
 	var buf bytes.Buffer
-	entityTpl := entityTpl{}
-	entityTpl.StructName = "Entity"
-	entityTpl.CurTimeStamp = append(entityTpl.CurTimeStamp, "CreateTime1", "CreateTime2")
+	tpl := entityTpl{}
+	tpl.StructName = "Entity"
+	tpl.CurTimeStamp = append(tpl.CurTimeStamp, "CreateTime1", "CreateTime2")
 
-	entityTpl.OnUpdateTimeStamp = append(entityTpl.OnUpdateTimeStamp, "LastUpdateTime")
+	tpl.OnUpdateTimeStamp = append(tpl.OnUpdateTimeStamp, "LastUpdateTime")
 
-	entityTpl.OnUpdateTimeStampStr = append(entityTpl.OnUpdateTimeStampStr,
+	tpl.OnUpdateTimeStampStr = append(tpl.OnUpdateTimeStampStr,
 		"last_update_time1", "last_update_time2")
 
-	entityTpl.Imports = imports
-	entityTpl.DelField = delField
+	tpl.Imports = imports
+	tpl.DelField = delField
 
 	structInfo := templates.StructInfo{}
-	structInfo.StructName = entityTpl.StructName
+	structInfo.StructName = tpl.StructName
 	structInfo.Fields = append(structInfo.Fields, Field1, Field2)
 
-	entityTpl.StructInfo = structInfo
+	tpl.StructInfo = structInfo
 
-	err = tmpl.Execute(&buf, entityTpl)
+	err = tmpl.Execute(&buf, tpl)
 	assert.Nil(t, err)
 	println(buf.String())
 }

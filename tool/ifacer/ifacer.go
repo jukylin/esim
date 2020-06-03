@@ -215,14 +215,14 @@ func (f *Ifacer) setNoConflictImport(importName, importPath string) {
 		level := 1
 		flag := true
 		for flag {
-			importName := f.getUniqueImportName(importPath, level)
+			uniqueImportName := f.getUniqueImportName(importPath, level)
 
-			if _, ok := f.pkgNoConflictImport[importName]; !ok {
+			if _, ok := f.pkgNoConflictImport[uniqueImportName]; !ok {
 				imp := pkg.Import{}
-				imp.Name = importName
+				imp.Name = uniqueImportName
 				imp.Path = importPath
 
-				f.pkgNoConflictImport[importName] = imp
+				f.pkgNoConflictImport[uniqueImportName] = imp
 				flag = false
 			}
 			level++

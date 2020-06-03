@@ -114,7 +114,7 @@ func (edf *entityDomainFile) BindInput(v *viper.Viper) error {
 
 // parseCloumns implements DomainFile.
 func (edf *entityDomainFile) ParseCloumns(cs Columns, info *ShareInfo) {
-	entityTpl := entityTpl{}
+	tpl := entityTpl{}
 
 	if cs.Len() == 0 {
 		return
@@ -122,9 +122,9 @@ func (edf *entityDomainFile) ParseCloumns(cs Columns, info *ShareInfo) {
 
 	edf.tableName = info.DbConf.Table
 
-	entityTpl.Imports = append(entityTpl.Imports, pkg.Import{Path: "github.com/jinzhu/gorm"})
+	tpl.Imports = append(tpl.Imports, pkg.Import{Path: "github.com/jinzhu/gorm"})
 
-	entityTpl.StructName = info.CamelStruct
+	tpl.StructName = info.CamelStruct
 
 	structInfo := templates.StructInfo{}
 
@@ -149,19 +149,19 @@ func (edf *entityDomainFile) ParseCloumns(cs Columns, info *ShareInfo) {
 
 		valueType = column.GetGoType(nullable)
 		if column.IsTime(valueType) {
-			entityTpl.Imports = append(entityTpl.Imports, pkg.Import{Path: "time"})
+			tpl.Imports = append(tpl.Imports, pkg.Import{Path: "time"})
 		} else if strings.Contains(valueType, "sql.") {
-			entityTpl.Imports = append(entityTpl.Imports, pkg.Import{Path: "database/sql"})
+			tpl.Imports = append(tpl.Imports, pkg.Import{Path: "database/sql"})
 		}
 		field.Type = valueType
 
 		if column.IsCurrentTimeStamp() {
-			entityTpl.CurTimeStamp = append(entityTpl.CurTimeStamp, fieldName)
+			tpl.CurTimeStamp = append(tpl.CurTimeStamp, fieldName)
 		}
 
 		if column.IsOnUpdate() {
-			entityTpl.OnUpdateTimeStamp = append(entityTpl.OnUpdateTimeStamp, fieldName)
-			entityTpl.OnUpdateTimeStampStr = append(entityTpl.OnUpdateTimeStampStr,
+			tpl.OnUpdateTimeStamp = append(tpl.OnUpdateTimeStamp, fieldName)
+			tpl.OnUpdateTimeStampStr = append(tpl.OnUpdateTimeStampStr,
 				column.ColumnName)
 		}
 
@@ -183,7 +183,7 @@ func (edf *entityDomainFile) ParseCloumns(cs Columns, info *ShareInfo) {
 
 		delField = column.CheckDelField()
 		if delField != "" {
-			entityTpl.DelField = delField
+			tpl.DelField = delField
 		}
 
 		field.Field = field.Name + " " + field.Type
@@ -193,11 +193,11 @@ func (edf *entityDomainFile) ParseCloumns(cs Columns, info *ShareInfo) {
 		nullable = false
 	}
 
-	structInfo.StructName = entityTpl.StructName
+	structInfo.StructName = tpl.StructName
 
-	entityTpl.StructInfo = structInfo
+	tpl.StructInfo = structInfo
 
-	edf.data = entityTpl
+	edf.data = tpl
 }
 
 // execute implements DomainFile.

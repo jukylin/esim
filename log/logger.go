@@ -5,6 +5,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/jukylin/esim/pkg/tracer-id"
 	"github.com/opentracing/opentracing-go"
 	"github.com/uber/jaeger-client-go"
 	"go.uber.org/zap"
@@ -89,98 +90,95 @@ func (log *logger) Error(msg string) {
 }
 
 func (log *logger) Debugf(template string, args ...interface{}) {
-	log.sugar.With("caller", log.getCaller(runtime.Caller(1))).Debugf(template, args...)
+	log.sugar.With(log.getArgs(context.TODO())...).Debugf(template, args...)
 }
 
 func (log *logger) Infof(template string, args ...interface{}) {
-	log.sugar.With("caller", log.getCaller(runtime.Caller(1))).Infof(template, args...)
+	log.sugar.With(log.getArgs(context.TODO())...).Infof(template, args...)
 }
 
 func (log *logger) Warnf(template string, args ...interface{}) {
-	log.sugar.With("caller", log.getCaller(runtime.Caller(1))).Warnf(template, args...)
+	log.sugar.With(log.getArgs(context.TODO())...).Warnf(template, args...)
 }
 
 func (log *logger) Errorf(template string, args ...interface{}) {
-	log.sugar.With("caller", log.getCaller(runtime.Caller(1))).Errorf(template, args...)
+	log.sugar.With(log.getArgs(context.TODO())...).Errorf(template, args...)
 }
 
 func (log *logger) DPanicf(template string, args ...interface{}) {
-	log.sugar.With("caller", log.getCaller(runtime.Caller(1))).DPanicf(template, args...)
+	log.sugar.With(log.getArgs(context.TODO())...).DPanicf(template, args...)
 }
 
 func (log *logger) Panicf(template string, args ...interface{}) {
-	log.sugar.With("caller", log.getCaller(runtime.Caller(1))).Panicf(template, args...)
+	log.sugar.With(log.getArgs(context.TODO())...).Panicf(template, args...)
 }
 
 func (log *logger) Fatalf(template string, args ...interface{}) {
-	log.sugar.With("caller", log.getCaller(runtime.Caller(1))).
-		Fatalf(template, args...)
+	log.sugar.With(log.getArgs(context.TODO())...).Fatalf(template, args...)
 }
 
 func (log *logger) Debugc(ctx context.Context, template string, args ...interface{}) {
-	if tracerID := log.getTracerID(ctx); tracerID != "" {
-		log.sugar.With("tracer_id", tracerID)
-	}
-	log.sugar.With("caller", log.getCaller(runtime.Caller(1))).Debugf(template, args...)
+	log.sugar.With(log.getArgs(ctx)...).Debugf(template, args...)
 }
 
 func (log *logger) Infoc(ctx context.Context, template string, args ...interface{}) {
-	if tracerID := log.getTracerID(ctx); tracerID != "" {
-		log.sugar.With("tracer_id", tracerID)
-	}
-	log.sugar.With("caller", log.getCaller(runtime.Caller(1))).Infof(template, args...)
+	log.sugar.With(log.getArgs(ctx)...).Infof(template, args...)
 }
 
 func (log *logger) Warnc(ctx context.Context, template string, args ...interface{}) {
-	if tracerID := log.getTracerID(ctx); tracerID != "" {
-		log.sugar.With("tracer_id", tracerID)
-	}
-	log.sugar.With("caller", log.getCaller(runtime.Caller(1))).Warnf(template, args...)
+	log.sugar.With(log.getArgs(ctx)...).Warnf(template, args...)
 }
 
 func (log *logger) Errorc(ctx context.Context, template string, args ...interface{}) {
-	if tracerID := log.getTracerID(ctx); tracerID != "" {
-		log.sugar.With("tracer_id", tracerID)
-	}
-	log.sugar.With("caller", log.getCaller(runtime.Caller(1))).Errorf(template, args...)
+	log.sugar.With(log.getArgs(ctx)...).Errorf(template, args...)
 }
 
 func (log *logger) DPanicc(ctx context.Context, template string, args ...interface{}) {
-	if tracerID := log.getTracerID(ctx); tracerID != "" {
-		log.sugar.With("tracer_id", tracerID)
-	}
-	log.sugar.With("caller", log.getCaller(runtime.Caller(1))).DPanicf(template, args...)
+	log.sugar.With(log.getArgs(ctx)...).DPanicf(template, args...)
 }
 
 func (log *logger) Panicc(ctx context.Context, template string, args ...interface{}) {
-	if tracerID := log.getTracerID(ctx); tracerID != "" {
-		log.sugar.With("tracer_id", tracerID)
-	}
-	log.sugar.With("caller", log.getCaller(runtime.Caller(1))).Panicf(template, args...)
+	log.sugar.With(log.getArgs(ctx)...).Panicf(template, args...)
 }
 
 func (log *logger) Fatalc(ctx context.Context, template string, args ...interface{}) {
-	if tracerID := log.getTracerID(ctx); tracerID != "" {
-		log.sugar.With("tracer_id", tracerID)
-	}
-	log.sugar.With("caller", log.getCaller(runtime.Caller(1))).Fatalf(template, args...)
-}
-
-func (log *logger) getCaller(pc uintptr, file string, line int, ok bool) string {
-	return zapcore.NewEntryCaller(pc, file, line, ok).TrimmedPath()
+	log.sugar.With(log.getArgs(ctx)...).Fatalf(template, args...)
 }
 
 func (log *logger) standardTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
 	enc.AppendString(t.Format("2006-01-02 15:04:05"))
 }
 
-// getTracerID get tracer_id from opentracing
+func (log *logger) getArgs(ctx context.Context) []interface{} {
+	args := make([]interface{}, 0)
+
+	args = append(args, "caller")
+	args = append(args, log.getCaller(runtime.Caller(2)))
+	tracerId := log.getTracerID(ctx)
+	if tracerId != "" {
+		args = append(args, "tracer_id")
+		args = append(args, tracerId)
+	}
+
+	return args
+}
+
+func (log *logger) getCaller(pc uintptr, file string, line int, ok bool) string {
+	return zapcore.NewEntryCaller(pc, file, line, ok).TrimmedPath()
+}
+
+// getTracerID get tracer_id from context
 func (log *logger) getTracerID(ctx context.Context) string {
 	sp := opentracing.SpanFromContext(ctx)
 	if sp != nil {
 		if jaegerSpanContext, ok := sp.Context().(jaeger.SpanContext); ok {
 			return jaegerSpanContext.TraceID().String()
 		}
+	}
+
+	val := ctx.Value(tracerid.ActiveEsimKey)
+	if tracerId, ok := val.(string); ok {
+		return tracerId
 	}
 
 	return ""

@@ -91,21 +91,20 @@ func (rps *RPCPluginStructField) buildPluginEnv() error {
 	rps.structDir = strings.TrimRight(rps.structDir, string(filepath.Separator))
 
 	targetDir := rps.structDir + string(filepath.Separator) + "plugin"
-
 	exists, err := filedir.IsExistsDir(targetDir)
 	if err != nil {
 		return err
 	}
 
 	if !exists {
-		err := filedir.CreateDir(targetDir)
+		err = filedir.CreateDir(targetDir)
 		if err != nil {
 			return err
 		}
 	}
 
-	// 复制文件
-	// 改 package 名称
+	// copy go file
+	// rename package
 	reg, _ := regexp.Compile(`package[\s*]` + rps.packName)
 
 	for _, name := range rps.filesName {

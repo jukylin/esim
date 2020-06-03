@@ -133,6 +133,8 @@ func NewGinServer(app *{{.PackageName}}.App) *GinServer {
 		en.Use(middleware.GinMonitor())
 	}
 
+	en.Use(middleware.GinTracerID())
+
 	server := &GinServer{
 		en : en,
 		addr : httpport,
