@@ -2,33 +2,43 @@ package log
 
 import (
 	"context"
+	"os"
+	"reflect"
 	"testing"
 
+	"github.com/jukylin/esim/pkg/tracer-id"
 	"github.com/opentracing/opentracing-go"
-	"github.com/stretchr/testify/assert"
 	"github.com/uber/jaeger-client-go"
 	jaegerConfig "github.com/uber/jaeger-client-go/config"
 )
 
-func initJaeger() (opentracing.Tracer, error) {
-	cfg, err := jaegerConfig.FromEnv()
-	if err != nil {
-		return nil, err
-	}
+var tracer opentracing.Tracer
 
+func TestMain(m *testing.M) {
+
+	setUp()
+
+	code := m.Run()
+
+	tearDown()
+
+	os.Exit(code)
+}
+
+func setUp() {
+	cfg, _ := jaegerConfig.FromEnv()
 	cfg.ServiceName = "logger"
-	tracer, _, err := cfg.NewTracer()
+	tracer, _, _ = cfg.NewTracer()
+}
 
-	return tracer, err
+func tearDown() {
+
 }
 
 func TestLog(t *testing.T) {
 	loggerOptions := LoggerOptions{}
 
 	logger := NewLogger(loggerOptions.WithDebug(false))
-
-	tracer, err := initJaeger()
-	assert.Nil(t, err)
 
 	sp := tracer.StartSpan("test")
 	ctx := opentracing.ContextWithSpan(context.Background(), sp)
@@ -46,26 +56,46 @@ func TestLog(t *testing.T) {
 	logger.Warnc(ctx, "warn")
 }
 
-func TestGetTracerId(t *testing.T) {
-	loggerOptions := LoggerOptions{}
+func Test_logger_getArgs(t *testing.T) {
+	type args struct {
+		ctx context.Context
+	}
 
-	log := NewLogger(loggerOptions.WithDebug(false))
-
-	tracer, err := initJaeger()
-	assert.Nil(t, err)
-
+	log := new(logger)
 	sp := tracer.StartSpan("test")
-	ctx := opentracing.ContextWithSpan(context.Background(), sp)
+	jaegerCtx := opentracing.ContextWithSpan(context.Background(), sp)
 
-	assert.Equal(t, sp.Context().(jaeger.SpanContext).TraceID().String(),
-		log.(*logger).getTracerID(ctx))
-}
+	esimTracerId := tracerid.TracerID()()
+	esimCtx := context.WithValue(context.Background(), tracerid.ActiveEsimKey, esimTracerId)
 
-func TestGetTracerIdEmpty(t *testing.T) {
-	loggerOptions := LoggerOptions{}
+	tests := []struct {
+		name string
+		args args
+		want []interface{}
+	}{
+		{"jaeger_tracer_id", args{jaegerCtx},
+			[]interface{}{
+				"caller", "testing/testing.go:991", "tracer_id", sp.Context().(jaeger.SpanContext).TraceID().String(),
+			}},
+		{"esim_tracer_id", args{esimCtx},
+			[]interface{}{
+				"caller", "testing/testing.go:991", "tracer_id", esimTracerId,
+			}},
+		{"empty_tracer_id", args{context.Background()},
+			[]interface{}{
+				"caller", "testing/testing.go:991",
+			}},
+		{"nil_ctx", args{context.Background()},
+			[]interface{}{
+				"caller", "testing/testing.go:991",
+			}},
+	}
 
-	log := NewLogger(loggerOptions.WithDebug(false))
-
-	ctx := context.Background()
-	assert.Empty(t, log.(*logger).getTracerID(ctx))
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := log.getArgs(tt.args.ctx); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("logger.getArgs() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }
