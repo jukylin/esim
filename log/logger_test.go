@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/jukylin/esim/pkg/tracer-id"
+	tracerid "github.com/jukylin/esim/pkg/tracer-id"
 	"github.com/opentracing/opentracing-go"
 	"github.com/uber/jaeger-client-go"
 	jaegerConfig "github.com/uber/jaeger-client-go/config"
@@ -15,7 +15,6 @@ import (
 var tracer opentracing.Tracer
 
 func TestMain(m *testing.M) {
-
 	setUp()
 
 	code := m.Run()
@@ -37,7 +36,6 @@ func tearDown() {
 
 func TestLog(t *testing.T) {
 	loggerOptions := LoggerOptions{}
-
 	logger := NewLogger(loggerOptions.WithDebug(false))
 
 	sp := tracer.StartSpan("test")
@@ -65,8 +63,8 @@ func Test_logger_getArgs(t *testing.T) {
 	sp := tracer.StartSpan("test")
 	jaegerCtx := opentracing.ContextWithSpan(context.Background(), sp)
 
-	esimTracerId := tracerid.TracerID()()
-	esimCtx := context.WithValue(context.Background(), tracerid.ActiveEsimKey, esimTracerId)
+	esimTracerID := tracerid.TracerID()()
+	esimCtx := context.WithValue(context.Background(), tracerid.ActiveEsimKey, esimTracerID)
 
 	tests := []struct {
 		name string
@@ -75,11 +73,12 @@ func Test_logger_getArgs(t *testing.T) {
 	}{
 		{"jaeger_tracer_id", args{jaegerCtx},
 			[]interface{}{
-				"caller", "testing/testing.go:991", "tracer_id", sp.Context().(jaeger.SpanContext).TraceID().String(),
+				"caller", "testing/testing.go:991", "tracer_id",
+				sp.Context().(jaeger.SpanContext).TraceID().String(),
 			}},
 		{"esim_tracer_id", args{esimCtx},
 			[]interface{}{
-				"caller", "testing/testing.go:991", "tracer_id", esimTracerId,
+				"caller", "testing/testing.go:991", "tracer_id", esimTracerID,
 			}},
 		{"empty_tracer_id", args{context.Background()},
 			[]interface{}{

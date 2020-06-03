@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jukylin/esim/pkg/tracer-id"
+	tracerid "github.com/jukylin/esim/pkg/tracer-id"
 	opentracing2 "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/prometheus/client_golang/prometheus"

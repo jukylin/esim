@@ -134,13 +134,13 @@ func (mp *MonitorProxy) Flush(ctx context.Context) (err error) {
 	now := time.Now()
 	err = mp.nextConn.Flush(ctx)
 
-	execInfo := execInfo{}
-	execInfo.err = err
-	execInfo.startTime = now
-	execInfo.endTime = time.Now()
-	execInfo.commandName = "flush"
+	info := execInfo{}
+	info.err = err
+	info.startTime = now
+	info.endTime = time.Now()
+	info.commandName = "flush"
 
-	mp.after(ctx, &execInfo)
+	mp.after(ctx, &info)
 
 	return
 }

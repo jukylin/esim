@@ -122,11 +122,11 @@ func TestMain(m *testing.M) {
 }
 
 func TestInitAndSingleInstance(t *testing.T) {
-	ClientOptions := ClientOptions{}
+	clientOptions := ClientOptions{}
 
 	client := NewClient(
-		ClientOptions.WithDbConfig([]DbConfig{test1Config}),
-		ClientOptions.WithDB(db),
+		clientOptions.WithDbConfig([]DbConfig{test1Config}),
+		clientOptions.WithDB(db),
 	)
 	ctx := context.Background()
 	db1 := client.GetCtxDb(ctx, "test_1")
@@ -144,14 +144,14 @@ func TestInitAndSingleInstance(t *testing.T) {
 func TestProxyPatternWithTwoInstance(t *testing.T) {
 	clientOnce = sync.Once{}
 
-	ClientOptions := ClientOptions{}
+	clientOptions := ClientOptions{}
 	monitorProxyOptions := MonitorProxyOptions{}
 	memConfig := config.NewMemConfig()
 
 	client := NewClient(
-		ClientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
-		ClientOptions.WithConf(memConfig),
-		ClientOptions.WithProxy(func() interface{} {
+		clientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
+		clientOptions.WithConf(memConfig),
+		clientOptions.WithProxy(func() interface{} {
 			return NewMonitorProxy(
 				monitorProxyOptions.WithConf(memConfig),
 				monitorProxyOptions.WithLogger(log.NewLogger()))
@@ -182,7 +182,7 @@ func TestProxyPatternWithTwoInstance(t *testing.T) {
 func TestMulProxyPatternWithOneInstance(t *testing.T) {
 	clientOnce = sync.Once{}
 
-	ClientOptions := ClientOptions{}
+	clientOptions := ClientOptions{}
 	monitorProxyOptions := MonitorProxyOptions{}
 	memConfig := config.NewMemConfig()
 	// memConfig.Set("debug", true)
@@ -194,9 +194,9 @@ func TestMulProxyPatternWithOneInstance(t *testing.T) {
 		monitorProxyOptions.WithLogger(log.NewLogger()))
 
 	client := NewClient(
-		ClientOptions.WithDbConfig([]DbConfig{test1Config}),
-		ClientOptions.WithConf(memConfig),
-		ClientOptions.WithProxy(
+		clientOptions.WithDbConfig([]DbConfig{test1Config}),
+		clientOptions.WithConf(memConfig),
+		clientOptions.WithProxy(
 			func() interface{} {
 				return spyProxy1
 			},
@@ -234,14 +234,14 @@ func TestMulProxyPatternWithOneInstance(t *testing.T) {
 func TestMulProxyPatternWithTwoInstance(t *testing.T) {
 	clientOnce = sync.Once{}
 
-	ClientOptions := ClientOptions{}
+	clientOptions := ClientOptions{}
 	memConfig := config.NewMemConfig()
 	// memConfig.Set("debug", true)
 
 	client := NewClient(
-		ClientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
-		ClientOptions.WithConf(memConfig),
-		ClientOptions.WithProxy(
+		clientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
+		clientOptions.WithConf(memConfig),
+		clientOptions.WithProxy(
 			func() interface{} {
 				return newSpyProxy(log.NewLogger(), "spyProxy1")
 			},
@@ -285,14 +285,14 @@ func BenchmarkParallelGetDB(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
-	ClientOptions := ClientOptions{}
+	clientOptions := ClientOptions{}
 	monitorProxyOptions := MonitorProxyOptions{}
 	memConfig := config.NewMemConfig()
 
 	client := NewClient(
-		ClientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
-		ClientOptions.WithConf(memConfig),
-		ClientOptions.WithProxy(func() interface{} {
+		clientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
+		clientOptions.WithConf(memConfig),
+		clientOptions.WithProxy(func() interface{} {
 			spyProxy := newSpyProxy(log.NewLogger(), "spyProxy")
 			spyProxy.NextProxy(NewMonitorProxy(
 				monitorProxyOptions.WithConf(memConfig),

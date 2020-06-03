@@ -186,7 +186,7 @@ func (c *Client) initPool() {
 			}
 
 			if c.redisPassword != "" {
-				if _, err := conn.Do("AUTH", c.redisPassword); err != nil {
+				if _, err = conn.Do("AUTH", c.redisPassword); err != nil {
 					err = conn.Close()
 					c.logger.Panicf(err.Error())
 					c.logger.Panicf("redis.AUTH err: %s", err.Error())

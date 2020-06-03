@@ -14,8 +14,8 @@ import (
 var esimOnce sync.Once
 var onceEsim *Esim
 
-const DefaultAppname = "esim"
-const DefaultPrometheusHTTPArrd = "9002"
+const defaultAppname = "esim"
+const defaultPrometheusHTTPArrd = "9002"
 
 // esim init start
 type Esim struct {
@@ -53,7 +53,7 @@ var prometheusFunc = func(conf config.Config, logger log.Logger) *prometheus.Pro
 	if conf.GetString("prometheus_http_addr") != "" {
 		httpAddr = conf.GetString("prometheus_http_addr")
 	} else {
-		httpAddr = DefaultPrometheusHTTPArrd
+		httpAddr = defaultPrometheusHTTPArrd
 	}
 	return prometheus.NewPrometheus(httpAddr, logger)
 }
@@ -70,6 +70,7 @@ var loggerFunc = func(conf config.Config) log.Logger {
 
 	logger := log.NewLogger(
 		loggerOptions.WithDebug(conf.GetBool("debug")),
+		loggerOptions.WithJSON(conf.GetString("runmode") == "pro"),
 	)
 	return logger
 }
@@ -86,7 +87,7 @@ var tracerFunc = func(conf config.Config, logger log.Logger) opentracing.Tracer 
 	if conf.GetString("appname") != "" {
 		appname = conf.GetString("appname")
 	} else {
-		appname = DefaultAppname
+		appname = defaultAppname
 	}
 	return eot.NewTracer(appname, logger)
 }

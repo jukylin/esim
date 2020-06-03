@@ -177,7 +177,8 @@ func (c *Client) init() {
 			c.logger.Panicf("New mongo client error: %s , uri: %s \n", err.Error(), mgo.URI)
 		}
 
-		ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
 
 		err = client.Connect(ctx)
 		if err != nil {
@@ -246,7 +247,8 @@ func (c *Client) poolEvent(pev *event.PoolEvent) {
 
 // Close ping all connection
 func (c *Client) Ping() []error {
-	ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
 
 	var errs []error
 	var err error
@@ -263,7 +265,8 @@ func (c *Client) Ping() []error {
 // Close close all connection
 func (c *Client) Close() {
 	var err error
-	ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
 
 	for _, db := range c.Mgos {
 		err = db.Disconnect(ctx)

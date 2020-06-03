@@ -208,8 +208,9 @@ func TestMulGo_Do(t *testing.T) {
 	wg.Add(2)
 
 	go func() {
+		var name string
 		conn := redisClent.GetRedisConn()
-		name, err := String(conn.Do("get", "name"))
+		name, err = String(conn.Do("get", "name"))
 		assert.Nil(t, err)
 		assert.Equal(t, "test", name)
 		err = conn.Close()
@@ -219,8 +220,9 @@ func TestMulGo_Do(t *testing.T) {
 	}()
 
 	go func() {
+		var version string
 		conn := redisClent.GetRedisConn()
-		version, err := String(conn.Do("get", "version"))
+		version, err = String(conn.Do("get", "version"))
 		assert.Nil(t, err)
 		assert.Equal(t, "2.0", version)
 		err = conn.Close()

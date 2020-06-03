@@ -5,7 +5,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/jukylin/esim/pkg/tracer-id"
+	tracerid "github.com/jukylin/esim/pkg/tracer-id"
 	"github.com/opentracing/opentracing-go"
 	"github.com/uber/jaeger-client-go"
 	"go.uber.org/zap"
@@ -152,12 +152,10 @@ func (log *logger) standardTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEn
 func (log *logger) getArgs(ctx context.Context) []interface{} {
 	args := make([]interface{}, 0)
 
-	args = append(args, "caller")
-	args = append(args, log.getCaller(runtime.Caller(2)))
-	tracerId := log.getTracerID(ctx)
-	if tracerId != "" {
-		args = append(args, "tracer_id")
-		args = append(args, tracerId)
+	args = append(args, "caller", log.getCaller(runtime.Caller(2)))
+	tracerID := log.getTracerID(ctx)
+	if tracerID != "" {
+		args = append(args, "tracer_id", tracerID)
 	}
 
 	return args
@@ -177,8 +175,8 @@ func (log *logger) getTracerID(ctx context.Context) string {
 	}
 
 	val := ctx.Value(tracerid.ActiveEsimKey)
-	if tracerId, ok := val.(string); ok {
-		return tracerId
+	if tracerID, ok := val.(string); ok {
+		return tracerID
 	}
 
 	return ""
