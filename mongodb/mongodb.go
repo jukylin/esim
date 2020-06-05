@@ -97,8 +97,8 @@ func (ClientOptions) WithMonitorEvent(mongoEvent ...func() MgoEvent) Option {
 }
 
 type MgoConfig struct {
-	Db  string `json:"db",yaml:"db"`
-	URI string `json:"uri",yaml:"uri"`
+	Db  string `json:"db" yaml:"db"`
+	URI string `json:"uri" yaml:"uri"`
 }
 
 func (c *Client) init() {

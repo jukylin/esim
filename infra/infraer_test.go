@@ -77,7 +77,7 @@ func provideA() { println("test") }
 	injectInfo.Fields = append(injectInfo.Fields, pkg.Field{Field: "a int"})
 	injectInfo.InfraSetArgs = append(injectInfo.InfraSetArgs, "provideA")
 	injectInfo.Provides = append(injectInfo.Provides,
-		domain_file.Provide{`func provideA() {println("test")}`})
+		domain_file.Provide{Content: `func provideA() {println("test")}`})
 
 	infraer.injectInfos = append(infraer.injectInfos, injectInfo)
 

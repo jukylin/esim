@@ -90,10 +90,11 @@ func Test_logger_getArgs(t *testing.T) {
 			}},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := log.getArgs(tt.args.ctx); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("logger.getArgs() = %v, want %v", got, tt.want)
+	for k := range tests {
+		test := tests[k]
+		t.Run(test.name, func(t *testing.T) {
+			if got := log.getArgs(test.args.ctx); !reflect.DeepEqual(got, test.want) {
+				t.Errorf("logger.getArgs() = %v, want %v", got, test.want)
 			}
 		})
 	}

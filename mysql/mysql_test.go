@@ -319,14 +319,14 @@ func BenchmarkParallelGetDB(b *testing.B) {
 func TestDummyProxy_Exec(t *testing.T) {
 	clientOnce = sync.Once{}
 
-	ClientOptions := ClientOptions{}
+	clientOptions := ClientOptions{}
 	memConfig := config.NewMemConfig()
 	// memConfig.Set("debug", true)
 
 	client := NewClient(
-		ClientOptions.WithDbConfig([]DbConfig{test1Config}),
-		ClientOptions.WithConf(memConfig),
-		ClientOptions.WithProxy(
+		clientOptions.WithDbConfig([]DbConfig{test1Config}),
+		clientOptions.WithConf(memConfig),
+		clientOptions.WithProxy(
 			func() interface{} {
 				return newSpyProxy(log.NewLogger(), "spyProxy")
 			},
@@ -350,12 +350,12 @@ func TestDummyProxy_Exec(t *testing.T) {
 func TestClient_GetStats(t *testing.T) {
 	clientOnce = sync.Once{}
 
-	ClientOptions := ClientOptions{}
+	clientOptions := ClientOptions{}
 
 	client := NewClient(
-		ClientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
-		ClientOptions.WithStateTicker(10*time.Millisecond),
-		ClientOptions.WithProxy(func() interface{} {
+		clientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
+		clientOptions.WithStateTicker(10*time.Millisecond),
+		clientOptions.WithProxy(func() interface{} {
 			memConfig := config.NewMemConfig()
 			monitorProxyOptions := MonitorProxyOptions{}
 			return NewMonitorProxy(
@@ -392,11 +392,11 @@ func TestClient_GetStats(t *testing.T) {
 func TestClient_TxCommit(t *testing.T) {
 	clientOnce = sync.Once{}
 
-	ClientOptions := ClientOptions{}
+	clientOptions := ClientOptions{}
 
 	client := NewClient(
-		ClientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
-		ClientOptions.WithProxy(func() interface{} {
+		clientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
+		clientOptions.WithProxy(func() interface{} {
 			memConfig := config.NewMemConfig()
 			monitorProxyOptions := MonitorProxyOptions{}
 			return NewMonitorProxy(
@@ -428,11 +428,11 @@ func TestClient_TxCommit(t *testing.T) {
 func TestClient_TxRollBack(t *testing.T) {
 	clientOnce = sync.Once{}
 
-	ClientOptions := ClientOptions{}
+	clientOptions := ClientOptions{}
 
 	client := NewClient(
-		ClientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
-		ClientOptions.WithProxy(func() interface{} {
+		clientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
+		clientOptions.WithProxy(func() interface{} {
 			memConfig := config.NewMemConfig()
 			monitorProxyOptions := MonitorProxyOptions{}
 			return NewMonitorProxy(

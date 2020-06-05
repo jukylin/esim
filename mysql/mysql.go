@@ -44,11 +44,11 @@ type Option func(c *Client)
 type ClientOptions struct{}
 
 type DbConfig struct {
-	Db          string `json:"db",yaml:"db"`
-	Dsn         string `json:"dns",yaml:"dsn"`
-	MaxIdle     int    `json:"max_idle",yaml:"maxidle"`
-	MaxOpen     int    `json:"max_open",yaml:"maxopen"`
-	MaxLifetime int    `json:"max_lifetime",yaml:"maxlifetime"`
+	Db          string `json:"db" yaml:"db"`
+	Dsn         string `json:"dns" yaml:"dsn"`
+	MaxIdle     int    `json:"max_idle" yaml:"maxidle"`
+	MaxOpen     int    `json:"max_open" yaml:"maxopen"`
+	MaxLifetime int    `json:"max_lifetime" yaml:"maxlifetime"`
 }
 
 func NewClient(options ...Option) *Client {
