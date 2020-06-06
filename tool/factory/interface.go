@@ -17,7 +17,7 @@ type Model interface {
 	InitField() string
 }
 
-// Here is an implementation that talks over RPC
+// Here is an implementation that talks over RPC.
 type ModelRPC struct{ client *rpc.Client }
 
 func (g *ModelRPC) Sort() string {
@@ -45,7 +45,7 @@ func (g *ModelRPC) InitField() string {
 }
 
 // Here is the RPC server that ModelRPC talks to, conforming to
-// the requirements of net/rpc
+// the requirements of net/rpc.
 type ModelRPCServer struct {
 	// This is the real implementation
 	Impl Model

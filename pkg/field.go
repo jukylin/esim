@@ -11,7 +11,7 @@ var fieldTpl = `{{ range .Fields }}
 {{end}}{{.Field}} {{.Tag}}
 {{end}}`
 
-// struct field
+// Struct field.
 type Field struct {
 	Name string
 
@@ -19,7 +19,7 @@ type Field struct {
 
 	TypeName string
 
-	// Name + type or type
+	// Name + type or type.
 	Field string
 
 	Size int

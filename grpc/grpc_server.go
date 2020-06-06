@@ -236,8 +236,8 @@ func (gs *Server) handelPanic() grpc_recovery.RecoveryHandlerFuncContext {
 	}
 }
 
-// tracerId If not found opentracing's tracer_id then generate a new tracer_id
-// Recommend to the end of the Interceptor
+// tracerId If not found opentracing's tracer_id then generate a new tracer_id.
+// Recommend to the end of the Interceptor.
 func (gs *Server) tracerID() grpc.UnaryServerInterceptor {
 	tracerID := tracerid.TracerID()
 	return func(

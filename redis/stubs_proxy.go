@@ -6,6 +6,7 @@ import (
 	"github.com/jukylin/esim/log"
 )
 
+//nolint:unused
 type stubsProxy struct {
 	nextConn ContextConn
 
@@ -14,6 +15,7 @@ type stubsProxy struct {
 	log log.Logger
 }
 
+//nolint:deadcode,unused
 func newStubsProxy(logger log.Logger, name string) *stubsProxy {
 	stubsProxy := &stubsProxy{}
 
@@ -26,12 +28,12 @@ func newStubsProxy(logger log.Logger, name string) *stubsProxy {
 	return stubsProxy
 }
 
-// implement Proxy interface
+// Implement Proxy interface.
 func (sp *stubsProxy) NextProxy(conn interface{}) {
 	sp.nextConn = conn.(ContextConn)
 }
 
-// implement Proxy interface
+// Implement Proxy interface.
 func (sp *stubsProxy) ProxyName() string {
 	return sp.name
 }

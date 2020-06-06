@@ -140,8 +140,8 @@ func (rps *RPCPluginStructField) buildPluginEnv() error {
 	return nil
 }
 
-// @ Copy File
-// @ repackagename
+// Copy File.
+// repackagename.
 func (rps *RPCPluginStructField) copyFile(dstName, srcName string, reg *regexp.Regexp) {
 	src, err := os.Open(srcName)
 	if err != nil {
@@ -168,7 +168,7 @@ func (rps *RPCPluginStructField) copyFile(dstName, srcName string, reg *regexp.R
 	}
 }
 
-// gen modelName_plugin.go
+// gen modelName_plugin.go.
 func (rps *RPCPluginStructField) genStructPlugin(dir string) {
 	tmpl, err := template.New("rpc_plugin").Funcs(templates.EsimFuncMap()).
 		Parse(rpcPluginTemplate)

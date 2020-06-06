@@ -32,7 +32,7 @@ type InitFieldsReturn struct {
 	SpecFields []pkg.Field `json:"SpecFields"`
 }
 
-// +-----------+-----------+
+// +-----------+-----------+.
 // | firstPart |	package	  |
 // |			  |	import	  |
 // |	----------|	----------|
@@ -42,6 +42,7 @@ type InitFieldsReturn struct {
 // | thirdPart | struct	  |
 // |			  |	funcBody  |
 // |	----------|	----------|
+//nolint:godot
 type EsimFactory struct {
 	// struct name which be search
 	StructName string
@@ -215,8 +216,8 @@ type structInfo struct {
 	StructInitStr string
 }
 
-// getPluralWord Struct plural form
-// If plural is not obtained, add "s" at the end of the word
+// getPluralWord Struct plural form.
+// If plural is not obtained, add "s" at the end of the word.
 func (ef *EsimFactory) getPluralForm(word string) string {
 	newWord := inflect.Pluralize(word)
 	if newWord == word || newWord == "" {
@@ -319,7 +320,7 @@ func (ef *EsimFactory) executeNewTmpl() {
 	ef.NewStructInfo.structStr = content
 }
 
-// replaceOriginContent gen a new struct file content
+// replaceOriginContent gen a new struct file content.
 func (ef *EsimFactory) replaceOriginContent() string {
 	var newContent string
 	originContent := ef.oldStructInfo.structFileContent
@@ -339,7 +340,7 @@ func (ef *EsimFactory) replaceOriginContent() string {
 	return newContent
 }
 
-// printResult println file content to terminal
+// printResult println file content to terminal.
 func (ef *EsimFactory) printResult() {
 	src := ef.firstPart + "\n"
 	src += ef.secondPart + "\n"
@@ -353,7 +354,7 @@ func (ef *EsimFactory) printResult() {
 	}
 }
 
-// organizePart  organize pack, import, var, struct
+// organizePart  organize pack, import, var, struct.
 func (ef *EsimFactory) organizePart() {
 	ef.firstPart = ef.packStr + "\n"
 	ef.firstPart += ef.NewStructInfo.importStr + "\n"
@@ -368,7 +369,7 @@ func (ef *EsimFactory) organizePart() {
 	ef.thirdPart = ef.NewStructInfo.structStr
 }
 
-// copy oldStructInfo to NewStructInfo
+// copy oldStructInfo to NewStructInfo.
 func (ef *EsimFactory) copyOldStructInfo() {
 	copyStructInfo := *ef.oldStructInfo
 	ef.NewStructInfo = &copyStructInfo
@@ -441,8 +442,8 @@ func (ef *EsimFactory) genStr() {
 	ef.NewStructInfo.varStr = ef.NewStructInfo.vars.String()
 }
 
-// find struct
-// parse struct
+// Find struct.
+// Parse struct.
 func (ef *EsimFactory) parseStruct() bool {
 	exists, err := filedir.IsExistsDir(ef.structDir)
 	if err != nil {
@@ -494,7 +495,7 @@ func (ef *EsimFactory) parseStruct() bool {
 func (ef *EsimFactory) parseDecls(src []byte, fileInfo os.FileInfo, f *ast.File) {
 	strSrc := string(src)
 
-	// Must find the structName first
+	// Must find the structName first.
 	for _, decl := range f.Decls {
 		if genDecl, ok := decl.(*ast.GenDecl); ok {
 			if genDecl.Tok.String() == "type" {
@@ -549,7 +550,7 @@ func (ef *EsimFactory) parseImport(genDecl *ast.GenDecl, src []byte) {
 	ef.oldStructInfo.importStr = strSrc[genDecl.Pos()-1 : genDecl.End()]
 }
 
-// extend logger and conf for new struct field
+// Extend logger and conf for new struct field.
 func (ef *EsimFactory) extendField() bool {
 	var HasExtend bool
 	if ef.withOption {
@@ -594,8 +595,8 @@ func (ef *EsimFactory) extendFieldInfo(fieldInfo extendFieldInfo) {
 	}
 }
 
-// if struct field had extend logger or conf
-// so build a new struct
+// If struct field had extend logger or conf
+// so build a new struct.
 func (ef *EsimFactory) buildNewStructFileContent() error {
 	ef.NewStructInfo.importStr = ef.NewStructInfo.imports.String()
 
@@ -643,7 +644,7 @@ func (ef *EsimFactory) genReturnVarStr() {
 	}
 }
 
-// type Option func(c *{{.OptionParam}})
+// type Option func(c *{{.OptionParam}}).
 func (ef *EsimFactory) genOptionParam() {
 	if ef.withPool || ef.withStar {
 		ef.OptionParam = "*" + ef.StructName
@@ -652,7 +653,7 @@ func (ef *EsimFactory) genOptionParam() {
 	}
 }
 
-// StructObj := Struct{} => {{.StructInitStr}}
+// StructObj := Struct{} => {{.StructInitStr}}.
 func (ef *EsimFactory) genStructInitStr() {
 	var structInitStr string
 	if ef.withStar {
@@ -670,7 +671,7 @@ func (ef *EsimFactory) genStructInitStr() {
 	ef.NewStructInfo.StructInitStr = structInitStr
 }
 
-// return {{.ReturnStr}}
+// return {{.ReturnStr}}.
 func (ef *EsimFactory) genReturnStr() {
 	ef.ReturnStr = templates.Shorten(snaker.SnakeToCamelLower(ef.StructName))
 }
@@ -802,7 +803,6 @@ func (ef *EsimFactory) appendPoolVar(pollVarName, structName string) pkg.Var {
 	return poolVar
 }
 
-// 变量是否存在
 func (ef *EsimFactory) varNameExists(vars pkg.Vars, poolVarName string) bool {
 	for _, varInfo := range vars {
 		for _, varName := range varInfo.Name {
@@ -815,7 +815,7 @@ func (ef *EsimFactory) varNameExists(vars pkg.Vars, poolVarName string) bool {
 	return false
 }
 
-// package + import
+// package + import.
 func (ef *EsimFactory) getFirstPart() {
 	if ef.oldStructInfo.importStr == "" {
 		ef.firstPart += ef.packStr + "\n\n"

@@ -41,7 +41,7 @@ type Tester struct {
 
 	runningTest int32
 
-	// Wait a few seconds before run command
+	// Wait a few seconds before run command.
 	waitTime time.Duration
 }
 
@@ -98,7 +98,7 @@ func (tester *Tester) bindInput(v *viper.Viper) {
 	}
 }
 
-// Run read directory recursively by withWatchDir and watching them
+// Run read directory recursively by withWatchDir and watching them.
 func (tester *Tester) Run(v *viper.Viper) {
 	tester.bindInput(v)
 

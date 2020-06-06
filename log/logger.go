@@ -165,7 +165,7 @@ func (log *logger) getCaller(pc uintptr, file string, line int, ok bool) string 
 	return zapcore.NewEntryCaller(pc, file, line, ok).TrimmedPath()
 }
 
-// getTracerID get tracer_id from context
+// getTracerID get tracer_id from context.
 func (log *logger) getTracerID(ctx context.Context) string {
 	sp := opentracing.SpanFromContext(ctx)
 	if sp != nil {

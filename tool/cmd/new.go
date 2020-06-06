@@ -7,7 +7,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// grpcCmd represents the grpc command
 var newCmd = &cobra.Command{
 	Use:   "new",
 	Short: "create a new project",

@@ -87,7 +87,7 @@ func (mc *MemConfig) GetStringMapStringSlice(key string) map[string][]string {
 	return cast.ToStringMapStringSlice(mc.Get(key))
 }
 
-// TODO 还没实现
+// Not implemented.
 func (mc *MemConfig) GetSizeInBytes(key string) uint {
 	return 0
 }

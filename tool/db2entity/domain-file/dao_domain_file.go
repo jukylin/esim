@@ -66,6 +66,7 @@ func (ddf *daoDomainFile) Disabled() bool {
 }
 
 // BindInput implements DomainFile.
+//nolint:dupl
 func (ddf *daoDomainFile) BindInput(v *viper.Viper) error {
 	ddf.withDisableDao = v.GetBool("disable_dao")
 	if !ddf.withDisableDao {

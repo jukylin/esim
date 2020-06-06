@@ -19,18 +19,29 @@ func EsimFuncMap() map[string]interface{} {
 	}
 }
 
-// Abc => a
+// Abc => a.
 func CutFirstToLower(s string) string {
+	if s == "" {
+		return s
+	}
 	return strings.ToLower(string([]rune(s)[0]))
 }
 
-// Abc => abc
+// Abc => abc.
 func FirstToLower(s string) string {
+	if s == "" {
+		return s
+	}
+
 	return strings.ToLower(string([]rune(s)[0])) + string([]rune(s)[1:])
 }
 
-// Shorten shorten the string
+// Shorten shorten the string.
 func Shorten(s string) string {
+	if s == "" {
+		return s
+	}
+
 	var result string
 	var words []rune
 	var max = 3

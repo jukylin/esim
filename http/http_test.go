@@ -34,6 +34,7 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
+//nolint:dupl
 func TestMulLevelRoundTrip(t *testing.T) {
 	clientOptions := ClientOptions{}
 	httpClient := NewClient(
@@ -91,6 +92,7 @@ func TestMulLevelRoundTrip(t *testing.T) {
 	}
 }
 
+//nolint:dupl
 func TestMonitorProxy(t *testing.T) {
 	memConfig := config.NewMemConfig()
 	memConfig.Set("debug", true)
@@ -153,6 +155,7 @@ func TestMonitorProxy(t *testing.T) {
 	assert.Equal(t, float64(1), metric.Counter.GetValue())
 }
 
+//nolint:dupl
 func TestTimeoutProxy(t *testing.T) {
 	memConfig := config.NewMemConfig()
 	memConfig.Set("debug", true)

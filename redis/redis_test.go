@@ -52,10 +52,8 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-// 使用 proxyConn 代理请求
 func TestGetProxyConn(t *testing.T) {
 	poolOnce = sync.Once{}
-
 	redisClientOptions := ClientOptions{}
 	redisClent := NewClient(
 		redisClientOptions.WithProxy(
@@ -80,7 +78,6 @@ func TestGetProxyConn(t *testing.T) {
 
 func TestGetNotProxyConn(t *testing.T) {
 	poolOnce = sync.Once{}
-
 	redisClientOptions := ClientOptions{}
 	memConfig := config.NewMemConfig()
 	memConfig.Set("debug", true)
@@ -110,7 +107,6 @@ func TestGetNotProxyConn(t *testing.T) {
 
 func TestMonitorProxy_Do(t *testing.T) {
 	poolOnce = sync.Once{}
-
 	redisClientOptions := ClientOptions{}
 	memConfig := config.NewMemConfig()
 	memConfig.Set("debug", true)
@@ -142,7 +138,6 @@ func TestMonitorProxy_Do(t *testing.T) {
 
 func TestMulLevelProxy_Do(t *testing.T) {
 	poolOnce = sync.Once{}
-
 	redisClientOptions := ClientOptions{}
 	memConfig := config.NewMemConfig()
 	memConfig.Set("debug", true)
@@ -178,67 +173,8 @@ func TestMulLevelProxy_Do(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestMulGo_Do(t *testing.T) {
-	poolOnce = sync.Once{}
-
-	redisClientOptions := ClientOptions{}
-	memConfig := config.NewMemConfig()
-	memConfig.Set("debug", true)
-
-	redisClent := NewClient(
-		redisClientOptions.WithConf(memConfig),
-		redisClientOptions.WithProxy(
-			func() interface{} {
-				return newStubsProxy(log.NewLogger(), "stubsProxy")
-			},
-		),
-	)
-
-	conn := redisClent.GetRedisConn()
-	_, err := conn.Do("set", "name", "test")
-	assert.Nil(t, err)
-
-	_, err = conn.Do("set", "version", "2.0")
-	assert.Nil(t, err)
-
-	err = conn.Close()
-	assert.Nil(t, err)
-
-	wg := sync.WaitGroup{}
-	wg.Add(2)
-
-	go func() {
-		var name string
-		conn := redisClent.GetRedisConn()
-		name, err = String(conn.Do("get", "name"))
-		assert.Nil(t, err)
-		assert.Equal(t, "test", name)
-		err = conn.Close()
-		assert.Nil(t, err)
-
-		wg.Done()
-	}()
-
-	go func() {
-		var version string
-		conn := redisClent.GetRedisConn()
-		version, err = String(conn.Do("get", "version"))
-		assert.Nil(t, err)
-		assert.Equal(t, "2.0", version)
-		err = conn.Close()
-		assert.Nil(t, err)
-
-		wg.Done()
-	}()
-	wg.Wait()
-
-	err = redisClent.Close()
-	assert.Nil(t, err)
-}
-
 func Benchmark_MulGo_Do(b *testing.B) {
 	poolOnce = sync.Once{}
-
 	redisClientOptions := ClientOptions{}
 	memConfig := config.NewMemConfig()
 	memConfig.Set("debug", true)
@@ -252,27 +188,25 @@ func Benchmark_MulGo_Do(b *testing.B) {
 			wg := sync.WaitGroup{}
 			ctx := context.Background()
 			wg.Add(b.N * 2)
+
+			testFunc := func(args, expected string) {
+				conn := redisClent.GetCtxRedisConn()
+				name, err := String(conn.Do(ctx, "get", args))
+				assert.Nil(b, err)
+				assert.Equal(b, expected, name)
+
+				err = conn.Close()
+				assert.Nil(b, err)
+				wg.Done()
+			}
+
 			for j := 0; j < b.N; j++ {
 				go func() {
-					conn := redisClent.GetCtxRedisConn()
-					name, err := String(conn.Do(ctx, "get", "name"))
-					assert.Nil(b, err)
-					assert.Equal(b, "test", name)
-
-					err = conn.Close()
-					assert.Nil(b, err)
-					wg.Done()
+					testFunc("name", "test")
 				}()
 
 				go func() {
-					conn := redisClent.GetCtxRedisConn()
-					version, err := String(conn.Do(ctx, "get", "version"))
-					assert.Nil(b, err)
-					assert.Equal(b, "2.0", version)
-
-					err = conn.Close()
-					assert.Nil(b, err)
-					wg.Done()
+					testFunc("version", "2.0")
 				}()
 			}
 			wg.Wait()
@@ -285,7 +219,6 @@ func Benchmark_MulGo_Do(b *testing.B) {
 
 func TestRedisClient_Stats(t *testing.T) {
 	poolOnce = sync.Once{}
-
 	redisClientOptions := ClientOptions{}
 	memConfig := config.NewMemConfig()
 	memConfig.Set("debug", true)

@@ -14,7 +14,9 @@ func TestCutFirstToLower(t *testing.T) {
 	}{
 		{caseName: "case1", s: "abc", result: "a"},
 		{caseName: "case2", s: "我们", result: "我"},
-		{caseName: "case2", s: "*+-\\'", result: "*"},
+		{caseName: "case3", s: "*+-\\'", result: "*"},
+		{caseName: "case4", s: "_Acc", result: "_"},
+		{caseName: "case5", s: "", result: ""},
 	}
 
 	for _, test := range testCases {
@@ -34,6 +36,7 @@ func TestFirstToLower(t *testing.T) {
 		{caseName: "First to lower", s: "Abc", result: "abc"},
 		{caseName: "Chinese character", s: "我们", result: "我们"},
 		{caseName: "Special symbols", s: "*+-\\'", result: "*+-\\'"},
+		{caseName: "Empty string", s: "", result: ""},
 	}
 
 	for _, test := range testCases {
@@ -57,6 +60,7 @@ func TestShortener(t *testing.T) {
 		{caseName: "case5", s: "testshortener", result: "t"},
 		{caseName: "case6", s: "test_shortener", result: "ts"},
 		{caseName: "case7", s: "我们", result: "我"},
+		{caseName: "Empty string", s: "", result: ""},
 	}
 
 	for _, test := range testCases {

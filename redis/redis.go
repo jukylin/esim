@@ -168,7 +168,7 @@ func (ClientOptions) WithStateTicker(stateTicker time.Duration) Option {
 	}
 }
 
-// initClient Initialize the pool of connections
+// initClient Initialize the pool of connections.
 func (c *Client) initPool() {
 	c.client = &redis.Pool{
 		MaxIdle:     c.redisMaxIdle,
@@ -211,14 +211,13 @@ func (c *Client) initPool() {
 	}
 }
 
-// 使用原生redisgo
 func (c *Client) GetRedisConn() redis.Conn {
 	rc := c.client.Get()
 
 	return rc
 }
 
-// Recommended
+// Recommended.
 func (c *Client) GetCtxRedisConn() ContextConn {
 	rc := c.client.Get()
 

@@ -67,6 +67,7 @@ func (rdf *repoDomainFile) Disabled() bool {
 }
 
 // BindInput implements DomainFile.
+//nolint:dupl
 func (rdf *repoDomainFile) BindInput(v *viper.Viper) error {
 	rdf.withDisableRepo = v.GetBool("disable_repo")
 	if !rdf.withDisableRepo {

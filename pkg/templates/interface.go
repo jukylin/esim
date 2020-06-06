@@ -7,11 +7,11 @@ import (
 )
 
 type Tpl interface {
-	// Execute applies a parsed template to the specified data object,
+	// Execute applies a parsed template to the specified data object.
 	Execute(tplName, text string, data interface{}) (string, error)
 }
 
-// TextTpl is the representation of the text parsed template
+// TextTpl is the representation of the text parsed template.
 type TextTpl struct {
 	template *template.Template
 }
@@ -40,7 +40,7 @@ func (tt TextTpl) Execute(tplName, text string, data interface{}) (string, error
 	return buf.String(), nil
 }
 
-// HtmlTpl is the representation of the html parsed template
+// HtmlTpl is the representation of the html parsed template.
 type HTMLTpl struct {
 	template *htpl.Template
 }

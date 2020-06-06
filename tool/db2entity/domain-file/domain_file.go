@@ -13,7 +13,6 @@ const (
 	DomainFileExt = ".go"
 )
 
-// DomainFile
 type DomainFile interface {
 	// if true not need this domain file
 	Disabled() bool
@@ -32,7 +31,6 @@ type DomainFile interface {
 
 	GetName() string
 
-	//
 	GetInjectInfo() *InjectInfo
 }
 
@@ -90,7 +88,7 @@ func (dc *DbConfig) ParseConfig(v *viper.Viper, logger log.Logger) {
 }
 
 // Share information for all domain files
-// avoid import cycle not allowed
+// avoid import cycle not allowed.
 type ShareInfo struct {
 	// Camel Form
 	CamelStruct string

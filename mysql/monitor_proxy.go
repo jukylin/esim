@@ -77,12 +77,12 @@ func (MonitorProxyOptions) WithTracer(tracer opentracing2.Tracer) MonitorProxyOp
 	}
 }
 
-// implement Proxy interface
+// Implement Proxy interface.
 func (mp *MonitorProxy) NextProxy(db interface{}) {
 	mp.nextProxy = db.(SQLCommon)
 }
 
-// implement Proxy interface
+// Implement Proxy interface.
 func (mp *MonitorProxy) ProxyName() string {
 	return mp.name
 }
@@ -167,7 +167,7 @@ func (mp *MonitorProxy) withMysqlMetrics(query string, beginTime, endTime time.T
 	mysqlDuration.With(lab).Observe(endTime.Sub(beginTime).Seconds())
 }
 
-// 要等2.0
+// Waiting for version 2.0 .
 func (mp *MonitorProxy) withMysqlTracer(query string, beginTime, endTime time.Time) {
 	// span := opentracing.GetSpan(ctx, m.tracer,
 	//	query, beginTime)

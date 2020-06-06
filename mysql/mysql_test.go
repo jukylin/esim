@@ -389,11 +389,11 @@ func TestClient_GetStats(t *testing.T) {
 	client.Close()
 }
 
+//nolint:dupl
 func TestClient_TxCommit(t *testing.T) {
 	clientOnce = sync.Once{}
 
 	clientOptions := ClientOptions{}
-
 	client := NewClient(
 		clientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
 		clientOptions.WithProxy(func() interface{} {
@@ -425,11 +425,11 @@ func TestClient_TxCommit(t *testing.T) {
 	client.Close()
 }
 
+//nolint:dupl
 func TestClient_TxRollBack(t *testing.T) {
 	clientOnce = sync.Once{}
 
 	clientOptions := ClientOptions{}
-
 	client := NewClient(
 		clientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
 		clientOptions.WithProxy(func() interface{} {

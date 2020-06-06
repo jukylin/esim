@@ -79,7 +79,7 @@ func (nc *NullConfig) GetStringMapStringSlice(key string) map[string][]string {
 	return map[string][]string{}
 }
 
-// TODO 还没实现
+// Not implemented.
 func (nc *NullConfig) GetSizeInBytes(key string) uint {
 	return 0
 }

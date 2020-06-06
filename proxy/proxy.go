@@ -7,10 +7,10 @@ import (
 )
 
 type Proxy interface {
-	// set next proxy
+	// set next proxy.
 	NextProxy(proxy interface{})
 
-	// get proxy name
+	// get proxy name.
 	ProxyName() string
 }
 
@@ -50,7 +50,7 @@ func (FactoryOptions) WithLogger(logger log.Logger) FactoryOption {
 
 // GetFirstInstance implement init mul level proxy,
 // RealInstance and proxys make sure both implement the same interface
-// return firstProxy | realInstance
+// return firstProxy | realInstance.
 func (pf *Factory) GetFirstInstance(realName string, realInstance interface{},
 	proxys ...func() interface{}) interface{} {
 	var firstProxy interface{}

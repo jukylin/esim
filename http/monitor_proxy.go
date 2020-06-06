@@ -74,7 +74,7 @@ func (MonitorProxyOptions) WithLogger(logger log.Logger) MonitorProxyOption {
 	}
 }
 
-// use nethttp.Tracer
+// Use nethttp.Tracer.
 func (MonitorProxyOptions) WithTracer(tracer opentracing2.Tracer) MonitorProxyOption {
 	return func(c *MonitorProxy) {
 		c.tracer = tracer

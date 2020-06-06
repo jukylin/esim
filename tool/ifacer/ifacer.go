@@ -32,17 +32,16 @@ type Ifacer struct {
 
 	Methods []Method
 
-	// implements interface context
 	Content string
 
 	Star string
 
 	OutFile string
 
-	// import from interface file
+	// import from interface file.
 	pkgNoConflictImport map[string]pkg.Import
 
-	// import in the interface
+	// import in the interface.
 	ifaceUsingIngImport map[string]string
 
 	writer filedir.IfaceWriter
@@ -235,8 +234,9 @@ func (f *Ifacer) setNoConflictImport(importName, importPath string) {
 	}
 }
 
-// github.com/jukylin/esim/redis
-// level
+// Example:
+// 	github.com/jukylin/esim/redis
+//  level
 //		0 redis
 //		1 esimredis
 //		2 jukylinesimredis
@@ -373,7 +373,7 @@ func (f *Ifacer) getReturnStr(tuple *types.Tuple, m *Method) {
 	}
 }
 
-// Process parsed template and formats and adjusts imports for the parsed content
+// Process parsed template and formats and adjusts imports for the parsed content.
 func (f *Ifacer) Process() error {
 	content, err := f.tpl.Execute("ifacer", ifacerTemplate, f)
 	if err != nil {

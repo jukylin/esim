@@ -17,7 +17,7 @@ var onceEsim *Esim
 const defaultAppname = "esim"
 const defaultPrometheusHTTPArrd = "9002"
 
-// esim init start
+// Esim init start.
 type Esim struct {
 	prometheus *prometheus.Prometheus
 
@@ -99,7 +99,7 @@ func provideTracer(conf config.Config, logger log.Logger) opentracing.Tracer {
 	return tracerFunc(conf, logger)
 }
 
-// esim init end
+// Esim init end.
 
 func NewEsim() *Esim {
 	esimOnce.Do(func() {

@@ -139,9 +139,6 @@ func (m *MonitorEvent) registerAfterEvent() {
 	}
 }
 
-// 执行慢的命令
-// dur_nan 纳秒
-// 执行的命令
 func (m *MonitorEvent) withSlowCommand(ctx context.Context, backEvent *mongoBackEvent,
 	beginTime, endTime time.Time) {
 	mgoSlowTime := m.conf.GetInt64("mgo_slow_time")

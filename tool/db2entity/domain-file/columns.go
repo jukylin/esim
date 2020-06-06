@@ -8,7 +8,7 @@ import (
 	"github.com/jukylin/esim/log"
 )
 
-// Constants for return types of golang
+// Constants for return types of golang.
 //nolint:deadcode,varcheck
 const (
 	golangByteArray  = "[]byte"
@@ -85,7 +85,7 @@ func NewDBColumnsInter(logger log.Logger) ColumnsRepo {
 	return dBColumnsInter
 }
 
-// SelectColumns Select column details
+// SelectColumns Select column details.
 func (dc *DBColumnsInter) SelectColumns(dbConf *DbConfig) (Columns, error) {
 	var err error
 	var db *gorm.DB
@@ -180,7 +180,7 @@ func (c *Column) IsOnUpdate() bool {
 	return c.Extra == upCurrentTimestamp
 }
 
-// filterComment filter and escaping speckial string
+// filterComment filter and escaping speckial string.
 func (c *Column) FilterComment() string {
 	if c.ColumnComment != "" {
 		c.ColumnComment = strings.Replace(c.ColumnComment, "\r", "\\r", -1)
@@ -194,7 +194,7 @@ func (c *Column) IsPri() bool {
 	return c.ColumnKey == pri
 }
 
-// GetDefCol get default tag
+// GetDefCol get default tag.
 func (c *Column) GetDefCol() string {
 	if c.ColumnDefault != currentTimestamp && c.ColumnDefault != "" {
 		return ";default:'" + c.ColumnDefault + "'"

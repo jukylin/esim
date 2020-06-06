@@ -39,7 +39,7 @@ func TestRwWatch(t *testing.T) {
 			content := `
 package example
 
-// example
+// example.
 func example() bool {
 	return true
 }

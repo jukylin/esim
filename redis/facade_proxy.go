@@ -6,7 +6,7 @@ import (
 	"github.com/gomodule/redigo/redis"
 )
 
-// FacadeProxy implement ContextConn interface, but nextConn is redis.Conn
+// FacadeProxy implement ContextConn interface, but nextConn is redis.Conn.
 type FacadeProxy struct {
 	nextConn redis.Conn
 
@@ -27,12 +27,12 @@ func NewFacadeProxy(options ...FacadeProxyOption) *FacadeProxy {
 	return FacadeProxy
 }
 
-// implement Proxy interface
+// Implement Proxy interface.
 func (fp *FacadeProxy) NextProxy(conn interface{}) {
 	fp.nextConn = conn.(redis.Conn)
 }
 
-// implement Proxy interface
+// Implement Proxy interface.
 func (fp *FacadeProxy) ProxyName() string {
 	return fp.name
 }

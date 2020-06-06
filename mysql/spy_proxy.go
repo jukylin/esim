@@ -32,12 +32,12 @@ func newSpyProxy(logger log.Logger, name string) *spyProxy {
 	return spyProxy
 }
 
-// implement Proxy interface
+// Implement Proxy interface.
 func (sp *spyProxy) NextProxy(db interface{}) {
 	sp.nextProxy = db.(SQLCommon)
 }
 
-// implement Proxy interface
+// Implement Proxy interface.
 func (sp *spyProxy) ProxyName() string {
 	return sp.name
 }

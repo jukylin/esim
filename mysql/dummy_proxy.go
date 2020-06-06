@@ -8,7 +8,7 @@ import (
 	"github.com/jukylin/esim/log"
 )
 
-// last proxy
+// dummyProxy must as last proxy.
 type dummyProxy struct {
 	nextProxy SQLCommon
 
@@ -26,12 +26,12 @@ func newDummyProxy(logger log.Logger, name string) SQLCommon {
 	return dummyProxy
 }
 
-// implement Proxy interface
+// Implement Proxy interface.
 func (dp *dummyProxy) NextProxy(db interface{}) {
 	dp.nextProxy = db.(SQLCommon)
 }
 
-// implement Proxy interface
+// Implement Proxy interface.
 func (dp *dummyProxy) ProxyName() string {
 	return dp.name
 }
@@ -61,16 +61,16 @@ func (dp *dummyProxy) Close() error {
 	return dp.nextProxy.Close()
 }
 
-// implement sql.Result interface
+// Implement sql.Result interface.
 type dummySQLResult struct {
 }
 
-// implement sql.Result interface
+// Implement sql.Result interface.
 func (dp *dummySQLResult) LastInsertId() (int64, error) {
 	return 0, nil
 }
 
-// implement sql.Result interface
+// Implement sql.Result interface.
 func (dp *dummySQLResult) RowsAffected() (int64, error) {
 	return 0, nil
 }

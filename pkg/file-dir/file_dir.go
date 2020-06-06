@@ -121,9 +121,9 @@ func RemoveDir(dir string) error {
 	return os.RemoveAll(dir)
 }
 
-// BackUpFile backup files to os.Getenv("GOPATH") + "/pkg/esim/backup/"
-// backFile is Absolute path
-// Overwrite as soon as the file exists
+// BackUpFile backup files to os.Getenv("GOPATH") + "/pkg/esim/backup/".
+// backFile is Absolute path.
+// Overwrite as soon as the file exists.
 func EsimBackUpFile(backFile string) error {
 	if backFile == "" {
 		return errors.New("没有文件")
@@ -178,7 +178,7 @@ func EsimBackUpFile(backFile string) error {
 	return nil
 }
 
-// EsimRecoverFile recover file from os.Getenv("GOPATH") + "/pkg/esim/backup/"
+// EsimRecoverFile recover file from os.Getenv("GOPATH") + "/pkg/esim/backup/".
 func EsimRecoverFile(recoverFile string) error {
 	if recoverFile == "" {
 		return errors.New("没有文件")

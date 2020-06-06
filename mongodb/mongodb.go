@@ -141,7 +141,6 @@ func (c *Client) init() {
 			clientOptions.SetMonitor(eventComMon)
 		}
 
-		// 池子监控
 		poolMon := &event.PoolMonitor{
 			Event: func(pev *event.PoolEvent) {
 				c.poolEvent(pev)
@@ -245,7 +244,7 @@ func (c *Client) poolEvent(pev *event.PoolEvent) {
 	mongodbPoolTypes.With(lab).Inc()
 }
 
-// Close ping all connection
+// Close ping all connection.
 func (c *Client) Ping() []error {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
@@ -262,7 +261,7 @@ func (c *Client) Ping() []error {
 	return errs
 }
 
-// Close close all connection
+// Close close all connection.
 func (c *Client) Close() {
 	var err error
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)

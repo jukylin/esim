@@ -9,7 +9,7 @@ func init() {
 	prometheus.MustRegister(requestDuration)
 }
 
-// web_reqeust_total
+// web_reqeust_total.
 var requestTotal = prometheus.NewCounterVec(
 	prometheus.CounterOpts{
 		Name: "web_reqeust_total",
@@ -18,7 +18,7 @@ var requestTotal = prometheus.NewCounterVec(
 	[]string{"method", "endpoint"},
 )
 
-// web_request_duration_seconds
+// web_request_duration_seconds.
 var requestDuration = prometheus.NewHistogramVec(
 	prometheus.HistogramOpts{
 		Name:    "web_request_duration_seconds",

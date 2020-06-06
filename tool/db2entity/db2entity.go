@@ -249,7 +249,7 @@ func (de *Db2Entity) bindInfra(v *viper.Viper) {
 	}
 }
 
-// injectToInfra inject repo to infra.go and execute wire command
+// injectToInfra inject repo to infra.go and execute wire command.
 func (de *Db2Entity) injectToInfra(v *viper.Viper) {
 	if !de.withInject {
 		de.logger.Infof("disable inject")

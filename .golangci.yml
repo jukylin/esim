@@ -8,7 +8,7 @@ linters-settings:
     packages-with-error-message:
       - github.com/sirupsen/logrus: "logging is allowed only by logutils.Log"
   dupl:
-    threshold: 50
+    threshold: 100
   funlen:
     lines: 100
     statements: 50
@@ -70,7 +70,7 @@ linters:
     - deadcode
     - depguard
     - dogsled
-   # - dupl
+    - dupl
     - errcheck
     - funlen
    # - gochecknoinits
@@ -107,12 +107,12 @@ linters:
   # - asciicheck
   # - gochecknoglobals
   # - gocognit
-  # - godot
+    - godot
   # - godox
   # - goerr113
   # - maligned
   # - nestif
-  # - prealloc
+    - prealloc
   # - testpackage
   # - wsl
 
@@ -125,10 +125,7 @@ issues:
 
 run:
   skip-dirs:
-    - test/testdata_etc
-    - internal/cache
-    - internal/renameio
-    - internal/robustio
+    - tool/new
 
 # golangci.com configuration
 # https://github.com/golangci/golangci/wiki/Configuration

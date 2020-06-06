@@ -12,7 +12,7 @@ var redisTotal = prometheus.NewCounterVec(
 	[]string{"cmd"},
 )
 
-// redis_duration_seconds
+// redis_duration_seconds.
 var redisDuration = prometheus.NewHistogramVec(
 	prometheus.HistogramOpts{
 		Name:    "redis_duration_seconds",

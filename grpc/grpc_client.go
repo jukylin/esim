@@ -141,7 +141,7 @@ func (ClientOptionals) WithDialOptions(options ...grpc.DialOption) ClientOptiona
 }
 
 // NewClient create Client for business.
-// clientOptions clientOptions can not nil
+// clientOptions clientOptions can not nil.
 func NewClient(clientOptions *ClientOptions) *Client {
 	Client := &Client{}
 

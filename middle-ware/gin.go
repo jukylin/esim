@@ -47,8 +47,8 @@ func GinTracer(tracer opentracing2.Tracer) gin.HandlerFunc {
 	}
 }
 
-// GinTracerId If not found opentracing's tracer_id then generate a new tracer_id
-// Recommend to the end of the gin middleware
+// GinTracerId If not found opentracing's tracer_id then generate a new tracer_id.
+// Recommend to the end of the gin middleware.
 func GinTracerID() gin.HandlerFunc {
 	tracerID := tracerid.TracerID()
 	return func(c *gin.Context) {

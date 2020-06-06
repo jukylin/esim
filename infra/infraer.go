@@ -116,7 +116,7 @@ func WithIfacerExecer(execer pkg.Exec) Option {
 	}
 }
 
-// injectToInfra inject repo to infra.go and execute wire command
+// injectToInfra inject repo to infra.go and execute wire command.
 func (ir *Infraer) Inject(v *viper.Viper, injectInfos []*domain_file.InjectInfo) bool {
 	var err error
 
@@ -200,7 +200,7 @@ func (ir *Infraer) bindInput(v *viper.Viper) bool {
 }
 
 // parseInfra parse infra.go 's content,
-// find "import", "Infra" , "infraSet" and record origin syntax
+// find "import", "Infra" , "infraSet" and record origin syntax.
 func (ir *Infraer) parseInfra(srcStr string) bool {
 	// positions are relative to fset
 	fset := token.NewFileSet()
@@ -267,7 +267,7 @@ func (ir *Infraer) parseVar(genDecl *ast.GenDecl, srcStr string) {
 	}
 }
 
-// sourceInfraFile Beautify infra.go
+// sourceInfraFile Beautify infra.go.
 func (ir *Infraer) sourceInfraFile() string {
 	src, err := ioutil.ReadFile(ir.withInfraDir + ir.withInfraFile)
 	if err != nil {
@@ -291,7 +291,7 @@ func (ir *Infraer) copyInfraInfo() {
 	ir.newInfraInfo = &oldContent
 }
 
-// processInfraInfo process newInfraInfo, append import, repo field and wire's provider
+// processInfraInfo process newInfraInfo, append import, repo field and wire's provider.
 func (ir *Infraer) processNewInfra() {
 	for _, injectInfo := range ir.injectInfos {
 		ir.newInfraInfo.structInfo.Fields = append(ir.newInfraInfo.structInfo.Fields,
@@ -346,7 +346,7 @@ func (ir *Infraer) makeCodeBeautiful(src string) string {
 	return string(result)
 }
 
-// writeNewInfra cover old infra.go's content
+// writeNewInfra cover old infra.go's content.
 func (ir *Infraer) writeNewInfra() bool {
 	processSrc := ir.makeCodeBeautiful(ir.newInfraInfo.content)
 

@@ -14,7 +14,7 @@ var cfgFile string
 var v = viper.New()
 var logger = log.NewLogger()
 
-// rootCmd represents the base command when called without any subcommands
+// rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
 	Use:   "esim",
 	Short: "A brief description of your application",

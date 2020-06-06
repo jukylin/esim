@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// ./a/b/c/ => /a/b/c
+// ./a/b/c/ => /a/b/c.
 func DirPathToImportPath(dirPath string) string {
 	if dirPath == "" {
 		return ""

@@ -63,7 +63,7 @@ func WithEntityDomainFileTpl(tpl templates.Tpl) EntityDomainFileOption {
 }
 
 // Disabled implements DomainFile.
-// EntityDomainFile never disable
+// EntityDomainFile never disable.
 func (edf *entityDomainFile) Disabled() bool {
 	return edf.withDisbleEntity
 }
