@@ -240,6 +240,7 @@ export ESIM_DB_PASSWORD=123456
 
 > 前置条件:
 > 1. 项目目录下
+> 2. 推荐使用[gotests](https://github.com/cweill/gotests)
 
 > ```test``` 命令监听项目被修改文件，并在文件目录下执行```go test``` 自动运行单元测试
 
@@ -250,7 +251,7 @@ export ESIM_DB_PASSWORD=123456
 
 > esim 默认为 dev 环境，esim主要由 dev 和 pro 环境
 
-> export ESIM_ENV=pro
+> export ENV=pro
 
 - 配置文件
 
