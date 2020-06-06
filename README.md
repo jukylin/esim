@@ -36,12 +36,13 @@ go run main.go
 
 ```
 cd  test/internal/transports/http/component-test/
-go test -v -tags="component_test"
+go test
 ```
 
 ## 架构
 
-> Esim的架构来源于《实现领域驱动设计》的六边形架构和阿里的COLA架构，这2个架构有一个共同点：业务与技术分离。这点很好的解决了由于微服务架构增加的网络通讯和事件导致service层越来越胖的问题。所以才决定由原来的三层架构转为四层架构。
+> Esim的架构来源于《实现领域驱动设计》的六边形架构和阿里的COLA架构，这2个架构有一个共同点：业务与技术分离。
+> 这点很好的解决了由于微服务架构增加的网络通讯和事件导致service层越来越胖的问题。所以才决定由原来的三层架构转为四层架构。
 
 
 ![此处输入图片的描述][1]
@@ -50,7 +51,8 @@ go test -v -tags="component_test"
 
 > Esim使用松散的分层架构，上层可以任意调用下层。
 
-> Esim使用松散的分层架构，是因为我们在使用四层架构的过程中发现：一些简单的场景，app层的service只是增加了一层调用，并没有起到协调的作用，反而增加了一些不必要的工作，所以使用松散的架构，让controller直接掉用domain的逻辑。
+> Esim使用松散的分层架构，是因为我们在使用四层架构的过程中发现：一些简单的场景，app层的service只是增加了一层调用，
+> 并没有起到协调的作用，反而增加了一些不必要的工作，所以使用松散的架构，让controller直接掉用domain的逻辑。
 
 > **不能因为使用松散的架构，把原有app层的service职责都放到了controller里面！！！**
 
@@ -217,7 +219,8 @@ export ESIM_DB_PORT=3306
 export ESIM_DB_USER=root 
 export ESIM_DB_PASSWORD=123456
 ```
-> 由于DDD开发方式多了很多目录，文件，导致这部分工作变得很繁琐，所以```db2entity``` 从mysql数据库的表开始，自动建立实体，生成简单的CRUD语句和资源库的接口与实现，并把生成的资源库注入到基础设施。
+> 由于DDD开发方式多了很多目录，文件，导致这部分工作变得很繁琐，所以```db2entity``` 从mysql数据库的表开始，
+> 自动建立实体，生成简单的CRUD语句和资源库的接口与实现，并把生成的资源库注入到基础设施。
 
 - esim factory --sname struct_name -n
 
@@ -242,7 +245,8 @@ export ESIM_DB_PASSWORD=123456
 > 1. 项目目录下
 > 2. 推荐使用[gotests](https://github.com/cweill/gotests)
 
-> ```test``` 命令监听项目被修改文件，并在文件目录下执行```go test``` 自动运行单元测试
+> ```test``` 命令监听项目被修改文件，并在文件目录下执行```go test``` 自动运行单元测试。
+> 当然为了减轻一些繁杂的工作，```esim test```还会执行```[wire](https://github.com/google/wire)```, ```[mockery](https://github.com/vektra/mockery)```等命令
 
 
 ## 配置
