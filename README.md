@@ -236,6 +236,8 @@ export ESIM_DB_PASSWORD=123456
 
 - esim test
 
+![esim test](https://s1.ax1x.com/2020/06/06/tc9qS0.gif)
+
 > 前置条件:
 > 1. 项目目录下
 
