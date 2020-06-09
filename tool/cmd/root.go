@@ -48,7 +48,7 @@ func init() {
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.esim.yaml)")
 
-	rootCmd.PersistentFlags().BoolP("inject", "i", true, "Automatic inject instance to infra")
+	rootCmd.PersistentFlags().BoolP("inject", "", true, "Automatic inject instance to infra")
 
 	rootCmd.PersistentFlags().StringP("infra_dir", "", "internal/infra/", "Infra dir")
 
