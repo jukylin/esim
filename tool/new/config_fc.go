@@ -80,8 +80,8 @@ prometheus_http_addr : 9002
 grpc_server_check_slow : {{.Monitoring}}
 #单位: ms
 grpc_server_slow_time : 500
-#开启 tracer true/false
-grpc_server_tracer : {{.Monitoring}}
+#开启 trace true/false
+grpc_server_trace : {{.Monitoring}}
 #启动metrice true/false
 grpc_server_metrics : {{.Monitoring}}
 #启动debug true/false
@@ -92,8 +92,8 @@ grpc_server_debug: {{.Monitoring}}
 grpc_client_check_slow : {{.Monitoring}}
 #单位: ms
 grpc_client_slow_time : 500
-#开启 tracer true/false
-grpc_client_tracer : {{.Monitoring}}
+#开启 trace true/false
+grpc_client_trace : {{.Monitoring}}
 #启动metrice true/false
 grpc_client_metrics : {{.Monitoring}}
 #启动debug true/false
@@ -104,8 +104,8 @@ grpc_client_debug: {{.Monitoring}}
 mysql_check_slow : {{.Monitoring}}
 # 大于 slow_sql_time 为慢sql 单位：ms
 mysql_slow_time : 500
-#开启 tracer true/false
-mysql_tracer : {{.Monitoring}}
+#开启 trace true/false
+mysql_trace : {{.Monitoring}}
 #启动metrice true/false
 mysql_metrics : {{.Monitoring}}
 
@@ -114,8 +114,8 @@ mysql_metrics : {{.Monitoring}}
 mgo_check_slow : {{.Monitoring}}
 # 大于 slow_sql_time 为慢命令 单位：ms
 mgo_slow_time : 250
-#开启 tracer true/false
-mgo_tracer : {{.Monitoring}}
+#开启 trace true/false
+mgo_trace : {{.Monitoring}}
 #启动metrice true/false
 mgo_metrics : {{.Monitoring}}
 
@@ -125,14 +125,14 @@ mgo_metrics : {{.Monitoring}}
 http_client_check_slow : {{.Monitoring}}
 #  单位：ms
 http_client_slow_time : 500
-#开启 tracer true/false
-http_client_tracer : {{.Monitoring}}
+#开启 trace true/false
+http_client_trace : {{.Monitoring}}
 #启动metrice true/false
 http_client_metrics : {{.Monitoring}}
 
 # http server
-#开启 tracer true/false
-http_tracer: {{.Monitoring}}
+#开启 trace true/false
+http_trace: {{.Monitoring}}
 #启动metrice true/false
 http_metrics: {{.Monitoring}}
 
@@ -141,8 +141,8 @@ http_metrics: {{.Monitoring}}
 redis_check_slow : {{.Monitoring}}
 #慢命令 单位 ms
 redis_slow_time : 50
-#开启 tracer true/false
-redis_tracer : {{.Monitoring}}
+#开启 trace true/false
+redis_trace : {{.Monitoring}}
 #启动metrice true/false
 redis_metrics : {{.Monitoring}}
 `,

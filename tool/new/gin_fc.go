@@ -125,7 +125,7 @@ func NewGinServer(app *{{.PackageName}}.App) *GinServer {
 
 	en := gin.Default()
 
-	if app.Conf.GetBool("http_tracer"){
+	if app.Conf.GetBool("http_trace"){
 		en.Use(middleware.GinTracer(app.Tracer))
 	}
 

@@ -102,7 +102,7 @@ func (mp *MonitorProxy) RoundTrip(req *http.Request) (*http.Response, error) {
 	var resp *http.Response
 	var err error
 
-	if mp.conf.GetBool("http_client_tracer") {
+	if mp.conf.GetBool("http_client_trace") {
 		tracerReq, ht := nethttp.TraceRequest(mp.tracer, req)
 
 		transport := nethttp.Transport{}

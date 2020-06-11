@@ -131,7 +131,7 @@ func (mp *MonitorProxy) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.
 }
 
 func (mp *MonitorProxy) registerAfterEvent() {
-	if mp.conf.GetBool("mysql_tracer") {
+	if mp.conf.GetBool("mysql_trace") {
 		mp.afterEvents = append(mp.afterEvents, mp.withMysqlTracer)
 	}
 

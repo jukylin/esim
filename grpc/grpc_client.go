@@ -87,7 +87,7 @@ func NewClientOptions(options ...ClientOptional) *ClientOptions {
 		grpc.WithKeepaliveParams(keepAliveClient),
 	}
 
-	if clientOptions.conf.GetBool("grpc_client_tracer") {
+	if clientOptions.conf.GetBool("grpc_client_trace") {
 		tracerInterceptor := otgrpc.OpenTracingClientInterceptor(clientOptions.tracer)
 		opts = append(opts, grpc.WithChainUnaryInterceptor(tracerInterceptor))
 	}

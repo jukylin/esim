@@ -111,7 +111,7 @@ func getMwd(esim *container.Esim) []beego.MiddleWare {
 
 	var mws []beego.MiddleWare
 
-	if esim.Conf.GetBool("http_tracer") == true{
+	if esim.Conf.GetBool("http_trace") == true{
 		mws = append(mws, func(handler http.Handler) http.Handler {
 			return nethttp.Middleware(esim.Tracer, handler)
 		})

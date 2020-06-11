@@ -122,7 +122,7 @@ func (m *MonitorEvent) FailedEvent(ctx context.Context, failedEvent *event.Comma
 }
 
 func (m *MonitorEvent) registerAfterEvent() {
-	if m.conf.GetBool("mgo_tracer") {
+	if m.conf.GetBool("mgo_trace") {
 		m.afterEvents = append(m.afterEvents, m.withTracer)
 	}
 

@@ -24,6 +24,7 @@ func (ew *EsimWriter) Write(outFile, content string) error {
 	return EsimWrite(outFile, content)
 }
 
+// ErrWrite for write errors.
 type ErrWrite struct {
 	nilNum int
 

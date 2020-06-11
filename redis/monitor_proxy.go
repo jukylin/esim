@@ -161,7 +161,7 @@ func (mp *MonitorProxy) Receive(ctx context.Context) (reply interface{}, err err
 }
 
 func (mp *MonitorProxy) registerAfterEvent() {
-	if mp.conf.GetBool("redis_tracer") {
+	if mp.conf.GetBool("redis_trace") {
 		mp.afterEvents = append(mp.afterEvents, mp.redisTracer)
 	}
 

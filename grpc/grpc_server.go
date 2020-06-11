@@ -105,7 +105,7 @@ func NewServer(target string, options ...ServerOption) *Server {
 	}
 
 	unaryServerInterceptors := make([]grpc.UnaryServerInterceptor, 0)
-	if Server.conf.GetBool("grpc_server_tracer") {
+	if Server.conf.GetBool("grpc_server_trace") {
 		unaryServerInterceptors = append(unaryServerInterceptors,
 			otgrpc.OpenTracingServerInterceptor(Server.tracer))
 	}
