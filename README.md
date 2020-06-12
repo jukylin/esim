@@ -2,6 +2,23 @@
 
 > &nbsp;&nbsp;&nbsp;&nbsp;Esim专注解决业务问题：业务复杂度，如何测试，代码组织，扩展等问题。不会提供微服务整套技术体系，服务自理、服务注册、服务发现等都不是它专注解决的问题，这部分问题我们交给了Service Mesh。
 
+> &nbsp;&nbsp;&nbsp;&nbsp;做为业务框架，Esim默认集成了gin和grpc二个技术框架，但吸收了业务和技术分离思想，所以为集成其他技术框架提供了接口，只要实现[Transports](https://github.com/jukylin/esim/blob/master/transports/interface.go#L3)接口，再把实例注册到```App.trans```就可以很轻松的集成其他技术框架。
+
+```
+type Transports interface {
+	// start server
+	Start()
+
+	// graceful shutdown server
+	GracefulShutDown()
+}
+
+func (app *App) RegisterTran(tran transports.Transports) {
+	app.trans = append(app.trans, tran)
+}
+
+```
+
 ## 安装
 
 > 环境 go 1.3 及以上
@@ -241,7 +258,7 @@ export ESIM_DB_PASSWORD=123456
 > 1. 项目目录下
 > 2. 推荐使用[gotests](https://github.com/cweill/gotests)
 
-> &nbsp;&nbsp;&nbsp;&nbsp;```test``` 命令监听项目被修改文件，并在文件目录下执行```go test``` 自动运行单元测试。当然为了减轻一些繁杂的工作，```esim test```还会执行```[wire](https://github.com/google/wire)```, ```[mockery](https://github.com/vektra/mockery)```等命令
+> &nbsp;&nbsp;&nbsp;&nbsp;```test``` 命令监听项目被修改文件，并在文件目录下执行```go test``` 自动运行单元测试。当然为了减轻一些繁杂的工作，```esim test```还会执行[wire](https://github.com/google/wire), [mockery](https://github.com/vektra/mockery)等命令
 
 
 ## 配置
