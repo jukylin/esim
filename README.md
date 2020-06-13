@@ -480,7 +480,6 @@ exists, err := redis.Bool(conn.Do(ctx, "exists", key))
 
 ```golang
 func provideDb(esim *container.Esim) *mysql.MysqlClient {
-
     mysqlClientOptions := mysql.MysqlClientOptions{}
 	mysqlClent := mysql.NewMysqlClient(
 		mysqlClientOptions.WithConf(esim.Conf),

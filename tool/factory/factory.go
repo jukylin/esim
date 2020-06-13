@@ -35,13 +35,13 @@ type InitFieldsReturn struct {
 // +-----------+-----------+.
 // | firstPart |	package	  |
 // |			  |	import	  |
-// |	----------|	----------|
+// |----------|	----------|
 // | secondPart| var		  |
 // |			  |	     	  |
-// |	----------|	----------|
-// | thirdPart | struct	  |
+// |----------|	----------|
+// | thirdPart    | struct	  |
 // |			  |	funcBody  |
-// |	----------|	----------|
+// |----------|	----------|
 //nolint:godot
 type EsimFactory struct {
 	// struct name which be search
@@ -93,7 +93,7 @@ type EsimFactory struct {
 
 	InitField *InitFieldsReturn
 
-	// Struct plural form
+	// Struct plural form.
 	pluralName string
 
 	NewPluralStr string
@@ -102,7 +102,7 @@ type EsimFactory struct {
 
 	TypePluralStr string
 
-	// option start
+	// option start.
 	Option1 string
 
 	Option2 string
@@ -113,7 +113,7 @@ type EsimFactory struct {
 
 	Option5 string
 
-	// option end
+	// option end.
 
 	OptionParam string
 
@@ -167,9 +167,13 @@ func NewEsimFactory(options ...Option) *EsimFactory {
 		factory.ot = newOptionTpl(factory.tpl)
 	}
 
-	factory.oldStructInfo = &structInfo{}
+	factory.oldStructInfo = &structInfo{
+		vars: &pkg.Vars{},
+	}
 
-	factory.NewStructInfo = &structInfo{}
+	factory.NewStructInfo = &structInfo{
+		vars: &pkg.Vars{},
+	}
 
 	factory.structFieldIface = NewRPCPluginStructField(factory.writer, factory.logger)
 
@@ -203,7 +207,7 @@ type structInfo struct {
 
 	structFileContent string
 
-	vars pkg.Vars
+	vars *pkg.Vars
 
 	varStr string
 
@@ -330,6 +334,7 @@ func (ef *EsimFactory) replaceOriginContent() string {
 	}
 
 	newContent = strings.Replace(newContent, ef.packStr, ef.firstPart, 1)
+
 	if ef.secondPart != "" {
 		newContent = strings.Replace(newContent, ef.oldStructInfo.varStr, ef.secondPart, 1)
 	}
@@ -508,6 +513,7 @@ func (ef *EsimFactory) parseDecls(src []byte, fileInfo os.FileInfo, f *ast.File)
 		if genDecl, ok := decl.(*ast.GenDecl); ok {
 			if genDecl.Tok.String() == "var" && ef.found {
 				ef.oldStructInfo.vars.ParseFromAst(genDecl, strSrc)
+				ef.oldStructInfo.varStr = ef.oldStructInfo.vars.String()
 			}
 
 			if genDecl.Tok.String() == "import" && ef.found {
@@ -722,10 +728,11 @@ func (ef *EsimFactory) genPlural() {
 
 func (ef *EsimFactory) incrPoolVar(structName string) {
 	poolName := structName + "Pool"
-	if ef.varNameExists(ef.NewStructInfo.vars, poolName) {
+	if ef.varNameExists(*ef.NewStructInfo.vars, poolName) {
 		ef.logger.Debugf("var is exists : %s", poolName)
 	} else {
-		ef.NewStructInfo.vars = append(ef.NewStructInfo.vars,
+
+		*ef.NewStructInfo.vars = append(*ef.NewStructInfo.vars,
 			ef.appendPoolVar(poolName, structName))
 		ef.appendNewImport("sync")
 	}

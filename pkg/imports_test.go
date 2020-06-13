@@ -18,7 +18,6 @@ func TestImports_String(t *testing.T) {
 	//time
 	//is a test
 	time "time"
-
 	//sync
 	//is a test
 	sync "sync"

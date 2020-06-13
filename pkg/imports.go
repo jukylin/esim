@@ -9,8 +9,8 @@ import (
 
 var importTpl = `import (
 {{ range .Imports }}
-{{ range $doc := .Doc}}{{$doc}}
-{{end}}{{.Name}} "{{.Path}}"{{end}}
+	{{ range $doc := .Doc}}{{$doc}}
+	{{end}}{{.Name}} "{{.Path}}"{{end}}
 )`
 
 type Import struct {
@@ -28,7 +28,7 @@ func (is Imports) Len() int {
 }
 
 func (is Imports) String() string {
-	if is.Len() < 0 {
+	if is.Len() == 0 {
 		return ""
 	}
 

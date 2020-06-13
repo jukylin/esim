@@ -30,7 +30,7 @@ func (vs Vars) Len() int {
 }
 
 func (vs Vars) String() string {
-	if vs.Len() < 0 {
+	if vs.Len() == 0 {
 		return ""
 	}
 

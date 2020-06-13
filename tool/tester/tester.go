@@ -21,28 +21,28 @@ var (
 )
 
 type Tester struct {
-	// Watchint the directory, default current directory.
-	withWatchDir string
+	isWireFile bool
 
 	// If true, run wire command in the changed directory.
 	withWire bool
 
-	logger log.Logger
-
-	watcher EsimWatcher
-
-	execer pkg.Exec
-
-	receiveEvent map[string]int64
-
-	isWireFile bool
+	runningTest int32
 
 	runningWire int32
 
-	runningTest int32
-
 	// Wait a few seconds before run command.
 	waitTime time.Duration
+
+	receiveEvent map[string]int64
+
+	execer pkg.Exec
+
+	// Watchint the directory, default current directory.
+	withWatchDir string
+
+	logger log.Logger
+
+	watcher EsimWatcher
 }
 
 type Option func(*Tester)

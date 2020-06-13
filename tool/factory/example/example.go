@@ -4,7 +4,11 @@ import (
 	"github.com/jukylin/esim/pkg"
 )
 
-//nolint:unused,structcheck
+var (
+	var1 = []string{"var1"}
+)
+
+//nolint:unused,structcheck,maligned
 type Test struct {
 	b int64
 
