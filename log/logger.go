@@ -73,13 +73,27 @@ func NewLogger(options ...Option) Logger {
 	return logger
 }
 
+// Deprecated: use WithDebug instead.
 func (LoggerOptions) WithDebug(debug bool) Option {
 	return func(l *logger) {
 		l.debug = debug
 	}
 }
 
+// Deprecated: use WithJSON instead.
 func (LoggerOptions) WithJSON(json bool) Option {
+	return func(l *logger) {
+		l.json = json
+	}
+}
+
+func WithDebug(debug bool) Option {
+	return func(l *logger) {
+		l.debug = debug
+	}
+}
+
+func WithJSON(json bool) Option {
 	return func(l *logger) {
 		l.json = json
 	}

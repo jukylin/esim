@@ -12,7 +12,8 @@ import (
 
 var cfgFile string
 var v = viper.New()
-var logger = log.NewLogger()
+var loggerOptions = log.LoggerOptions{}
+var logger = log.NewLogger(loggerOptions.WithDebug(os.Getenv("ESIM_DEBUG") == "true"))
 
 // rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{

@@ -105,37 +105,6 @@ func TestGetNotProxyConn(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestMonitorProxy_Do(t *testing.T) {
-	poolOnce = sync.Once{}
-	redisClientOptions := ClientOptions{}
-	memConfig := config.NewMemConfig()
-	memConfig.Set("debug", true)
-
-	redisClent := NewClient(
-		redisClientOptions.WithConf(memConfig),
-		redisClientOptions.WithProxy(
-			func() interface{} {
-				monitorProxyOptions := MonitorProxyOptions{}
-				return NewMonitorProxy(
-					monitorProxyOptions.WithLogger(log.NewLogger()),
-				)
-			},
-		),
-	)
-
-	ctx := context.Background()
-
-	conn := redisClent.GetCtxRedisConn()
-
-	_, err := String(conn.Do(ctx, "get", "name"))
-	assert.Nil(t, err)
-	err = conn.Close()
-	assert.Nil(t, err)
-
-	err = redisClent.Close()
-	assert.Nil(t, err)
-}
-
 func TestMulLevelProxy_Do(t *testing.T) {
 	poolOnce = sync.Once{}
 	redisClientOptions := ClientOptions{}

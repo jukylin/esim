@@ -124,7 +124,6 @@ func (p *Protocer) execCmd() bool {
 	cmd.Dir = pwd
 
 	cmd.Env = os.Environ()
-
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err = cmd.Run()

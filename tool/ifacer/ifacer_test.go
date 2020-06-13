@@ -15,7 +15,7 @@ var Result = `package example1
 import (
 	context "context"
 
-	redis "github.com/jukylin/esim/redis"
+	redis "github.com/gomodule/redigo/redis"
 	repo "github.com/jukylin/esim/tool/ifacer/example/repo"
 )
 
@@ -112,8 +112,8 @@ func TestIfacer_RunNullWrite(t *testing.T) {
 	)
 
 	err := ifacer.Run(v)
-	assert.Equal(t, Result, ifacer.Content)
 	assert.Nil(t, err)
+	assert.Equal(t, Result, ifacer.Content)
 }
 
 func TestIfacer_Write(t *testing.T) {
@@ -151,24 +151,12 @@ func TestIfacer_GetUniqueImportName(t *testing.T) {
 	)
 
 	importName := ifacer.getUniqueImportName(pkgName, 0)
-	assert.Equal(t, "redis", importName)
+	assert.Equal(t, "redis0", importName)
 
 	importName = ifacer.getUniqueImportName(pkgName, 1)
-	assert.Equal(t, "esimredis", importName)
-
-	importName = ifacer.getUniqueImportName(pkgName, 2)
-	assert.Equal(t, "jukylinesimredis", importName)
-
-	importName = ifacer.getUniqueImportName(pkgName, 3)
-	assert.Equal(t, "githubcomjukylinesimredis", importName)
-
-	shouldPanic := assert.Panics(t, func() {
-		importName = ifacer.getUniqueImportName(pkgName, 4)
-	})
-	assert.True(t, shouldPanic)
+	assert.Equal(t, "redis1", importName)
 }
 
-// false positives
 //nolint:scopelint
 func TestIfacer_SetNoConflictImport(t *testing.T) {
 	testCases := []struct {
@@ -178,14 +166,13 @@ func TestIfacer_SetNoConflictImport(t *testing.T) {
 		expected   string
 	}{
 		{"redis", "redis", "github.com/jukylin/esim/redis", "github.com/jukylin/esim/redis"},
-		{"aredis", "redis", "github.com/jukylin/a/redis", "github.com/jukylin/a/redis"},
-		{"jukyaredis", "redis", "github.com/juky/a/redis", "github.com/juky/a/redis"},
-		{"gitlabcomjukyaredis", "redis", "gitlab.com/juky/a/redis", "gitlab.com/juky/a/redis"},
+		{"redis1", "redis", "github.com/jukylin/a/redis", "github.com/jukylin/a/redis"},
+		{"redis2", "redis", "github.com/juky/a/redis", "github.com/juky/a/redis"},
 	}
 
 	writer := &filedir.NullWrite{}
 	ifacer := NewIfacer(
-		WithIfacerLogger(log.NewLogger()),
+		WithIfacerLogger(log.NewLogger(log.WithDebug(true))),
 		WithIfacerTpl(templates.NewTextTpl()),
 		WithIfacerWriter(writer),
 	)

@@ -215,7 +215,6 @@ func (f *Ifacer) setNoConflictImport(importName, importPath string) {
 		flag := true
 		for flag {
 			uniqueImportName := f.getUniqueImportName(importPath, level)
-
 			if _, ok := f.pkgNoConflictImport[uniqueImportName]; !ok {
 				imp := pkg.Import{}
 				imp.Name = uniqueImportName
@@ -244,18 +243,19 @@ func (f *Ifacer) setNoConflictImport(importName, importPath string) {
 func (f *Ifacer) getUniqueImportName(pkgName string, level int) string {
 	strs := strings.Split(pkgName, string(filepath.Separator))
 
-	lenStr := len(strs)
-
-	if lenStr-1 < level {
-		f.logger.Panicf("%d out of range", level)
-	}
+	f.logger.Debugf("pkgName %s", pkgName)
 
 	var importName string
-	for _, str := range strs[lenStr-level-1:] {
-		if strings.Contains(str, ".") {
-			str = strings.Replace(str, ".", "", -1)
-		}
-		importName += str
+
+	lenStr := len(strs)
+	importName = strs[lenStr-1] + strconv.Itoa(level)
+
+	if strings.Contains(importName, ".") {
+		importName = strings.Replace(importName, ".", "", -1)
+	}
+
+	if strings.Contains(importName, "-") {
+		importName = strings.Replace(importName, "-", "", -1)
 	}
 
 	return importName
@@ -379,7 +379,7 @@ func (f *Ifacer) Process() error {
 	if err != nil {
 		return err
 	}
-
+	f.logger.Debugf("content : %s", content)
 	src, err := imports.Process("", []byte(content), nil)
 	if err != nil {
 		return err

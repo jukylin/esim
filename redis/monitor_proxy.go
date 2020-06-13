@@ -101,7 +101,7 @@ func (mp *MonitorProxy) Do(ctx context.Context, commandName string,
 
 	reply, err = mp.nextConn.Do(ctx, commandName, args...)
 
-	execInfo := &execInfo{}
+	execInfo := newExecInfo()
 	execInfo.err = err
 	execInfo.startTime = now
 	execInfo.endTime = time.Now()
@@ -109,6 +109,7 @@ func (mp *MonitorProxy) Do(ctx context.Context, commandName string,
 	execInfo.args = args
 
 	mp.after(ctx, execInfo)
+	execInfo.Release()
 
 	return
 }
@@ -118,7 +119,7 @@ func (mp *MonitorProxy) Send(ctx context.Context, commandName string,
 	now := time.Now()
 	err = mp.nextConn.Send(ctx, commandName, args...)
 
-	execInfo := &execInfo{}
+	execInfo := newExecInfo()
 	execInfo.err = err
 	execInfo.startTime = now
 	execInfo.endTime = time.Now()
@@ -126,6 +127,7 @@ func (mp *MonitorProxy) Send(ctx context.Context, commandName string,
 	execInfo.args = args
 
 	mp.after(ctx, execInfo)
+	execInfo.Release()
 
 	return
 }
@@ -134,13 +136,14 @@ func (mp *MonitorProxy) Flush(ctx context.Context) (err error) {
 	now := time.Now()
 	err = mp.nextConn.Flush(ctx)
 
-	info := execInfo{}
-	info.err = err
-	info.startTime = now
-	info.endTime = time.Now()
-	info.commandName = "flush"
+	execInfo := newExecInfo()
+	execInfo.err = err
+	execInfo.startTime = now
+	execInfo.endTime = time.Now()
+	execInfo.commandName = "flush"
 
-	mp.after(ctx, &info)
+	mp.after(ctx, execInfo)
+	execInfo.Release()
 
 	return
 }
@@ -149,13 +152,14 @@ func (mp *MonitorProxy) Receive(ctx context.Context) (reply interface{}, err err
 	now := time.Now()
 	reply, err = mp.nextConn.Receive(ctx)
 
-	execInfo := &execInfo{}
+	execInfo := newExecInfo()
 	execInfo.err = err
 	execInfo.startTime = now
 	execInfo.endTime = time.Now()
 	execInfo.commandName = "receive"
 
 	mp.after(ctx, execInfo)
+	execInfo.Release()
 
 	return
 }

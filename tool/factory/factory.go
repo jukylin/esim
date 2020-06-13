@@ -42,7 +42,7 @@ type InitFieldsReturn struct {
 // | thirdPart    | struct	  |
 // |			  |	funcBody  |
 // |----------|	----------|
-//nolint:godot
+//nolint:godot,maligned
 type EsimFactory struct {
 	// struct name which be search
 	StructName string
@@ -731,7 +731,6 @@ func (ef *EsimFactory) incrPoolVar(structName string) {
 	if ef.varNameExists(*ef.NewStructInfo.vars, poolName) {
 		ef.logger.Debugf("var is exists : %s", poolName)
 	} else {
-
 		*ef.NewStructInfo.vars = append(*ef.NewStructInfo.vars,
 			ef.appendPoolVar(poolName, structName))
 		ef.appendNewImport("sync")

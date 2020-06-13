@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	var1 = []string{"var1"}
+	var1 = []string{"var1"} //nolint:unused,varcheck,deadcode
 )
 
 //nolint:unused,structcheck,maligned
