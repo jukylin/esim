@@ -5,10 +5,12 @@ import (
 	"reflect"
 	"testing"
 
+	"errors"
 	"github.com/jukylin/esim/config"
-	"github.com/jukylin/esim/log"
-	opentracing2 "github.com/opentracing/opentracing-go"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
+	"time"
 )
 
 var monitorProxy *MonitorProxy
@@ -18,6 +20,7 @@ func TestNewMonitorProxy(t *testing.T) {
 	conf.Set("redis_trace", true)
 	conf.Set("redis_check_slow", true)
 	conf.Set("redis_metrics", true)
+	conf.Set("redis_slow_time", 100)
 
 	monitorProxyOptions := MonitorProxyOptions{}
 	monitorProxy = NewMonitorProxy(
@@ -38,7 +41,6 @@ func TestMonitorProxy_Do(t *testing.T) {
 	}
 
 	ctx := context.Background()
-
 	tests := []struct {
 		name      string
 		args      args
@@ -64,38 +66,22 @@ func TestMonitorProxy_Do(t *testing.T) {
 }
 
 func TestMonitorProxy_Send(t *testing.T) {
-	type fields struct {
-		name        string
-		nextConn    ContextConn
-		tracer      opentracing2.Tracer
-		conf        config.Config
-		logger      log.Logger
-		afterEvents []afterEvents
-	}
 	type args struct {
 		ctx         context.Context
 		commandName string
 		args        []interface{}
 	}
+	ctx := context.Background()
 	tests := []struct {
 		name    string
-		fields  fields
 		args    args
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{"one", args{ctx, "get", []interface{}{"one"}}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mp := &MonitorProxy{
-				name:        tt.fields.name,
-				nextConn:    tt.fields.nextConn,
-				tracer:      tt.fields.tracer,
-				conf:        tt.fields.conf,
-				logger:      tt.fields.logger,
-				afterEvents: tt.fields.afterEvents,
-			}
-			if err := mp.Send(tt.args.ctx, tt.args.commandName, tt.args.args...); (err != nil) != tt.wantErr {
+			if err := monitorProxy.Send(tt.args.ctx, tt.args.commandName, tt.args.args...); (err != nil) != tt.wantErr {
 				t.Errorf("MonitorProxy.Send() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
@@ -103,36 +89,20 @@ func TestMonitorProxy_Send(t *testing.T) {
 }
 
 func TestMonitorProxy_Flush(t *testing.T) {
-	type fields struct {
-		name        string
-		nextConn    ContextConn
-		tracer      opentracing2.Tracer
-		conf        config.Config
-		logger      log.Logger
-		afterEvents []afterEvents
-	}
 	type args struct {
 		ctx context.Context
 	}
+	ctx := context.Background()
 	tests := []struct {
 		name    string
-		fields  fields
 		args    args
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{"one", args{ctx}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mp := &MonitorProxy{
-				name:        tt.fields.name,
-				nextConn:    tt.fields.nextConn,
-				tracer:      tt.fields.tracer,
-				conf:        tt.fields.conf,
-				logger:      tt.fields.logger,
-				afterEvents: tt.fields.afterEvents,
-			}
-			if err := mp.Flush(tt.args.ctx); (err != nil) != tt.wantErr {
+			if err := monitorProxy.Flush(tt.args.ctx); (err != nil) != tt.wantErr {
 				t.Errorf("MonitorProxy.Flush() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
@@ -140,37 +110,22 @@ func TestMonitorProxy_Flush(t *testing.T) {
 }
 
 func TestMonitorProxy_Receive(t *testing.T) {
-	type fields struct {
-		name        string
-		nextConn    ContextConn
-		tracer      opentracing2.Tracer
-		conf        config.Config
-		logger      log.Logger
-		afterEvents []afterEvents
-	}
 	type args struct {
 		ctx context.Context
 	}
+
+	ctx := context.Background()
 	tests := []struct {
 		name      string
-		fields    fields
 		args      args
 		wantReply interface{}
 		wantErr   bool
 	}{
-		// TODO: Add test cases.
+		{"one", args{ctx}, nil, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mp := &MonitorProxy{
-				name:        tt.fields.name,
-				nextConn:    tt.fields.nextConn,
-				tracer:      tt.fields.tracer,
-				conf:        tt.fields.conf,
-				logger:      tt.fields.logger,
-				afterEvents: tt.fields.afterEvents,
-			}
-			gotReply, err := mp.Receive(tt.args.ctx)
+			gotReply, err := monitorProxy.Receive(tt.args.ctx)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("MonitorProxy.Receive() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -183,106 +138,84 @@ func TestMonitorProxy_Receive(t *testing.T) {
 }
 
 func TestMonitorProxy_redisTracer(t *testing.T) {
-	type fields struct {
-		name        string
-		nextConn    ContextConn
-		tracer      opentracing2.Tracer
-		conf        config.Config
-		logger      log.Logger
-		afterEvents []afterEvents
-	}
 	type args struct {
 		ctx  context.Context
 		info *execInfo
 	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mp := &MonitorProxy{
-				name:        tt.fields.name,
-				nextConn:    tt.fields.nextConn,
-				tracer:      tt.fields.tracer,
-				conf:        tt.fields.conf,
-				logger:      tt.fields.logger,
-				afterEvents: tt.fields.afterEvents,
-			}
-			mp.redisTracer(tt.args.ctx, tt.args.info)
-		})
-	}
-}
 
-func TestMonitorProxy_redisSlowCommand(t *testing.T) {
-	type fields struct {
-		name        string
-		nextConn    ContextConn
-		tracer      opentracing2.Tracer
-		conf        config.Config
-		logger      log.Logger
-		afterEvents []afterEvents
-	}
-	type args struct {
-		ctx  context.Context
-		info *execInfo
-	}
+	ctx := context.Background()
+
 	tests := []struct {
-		name   string
-		fields fields
-		args   args
+		name string
+		args args
 	}{
-		// TODO: Add test cases.
+		{"span_record_error", args{ctx, &execInfo{
+			err: errors.New("This is an error"), commandName: "",
+			startTime: time.Now(), endTime: time.Now()}}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mp := &MonitorProxy{
-				name:        tt.fields.name,
-				nextConn:    tt.fields.nextConn,
-				tracer:      tt.fields.tracer,
-				conf:        tt.fields.conf,
-				logger:      tt.fields.logger,
-				afterEvents: tt.fields.afterEvents,
-			}
-			mp.redisSlowCommand(tt.args.ctx, tt.args.info)
+			monitorProxy.redisTracer(tt.args.ctx, tt.args.info)
 		})
 	}
 }
 
 func TestMonitorProxy_redisMetrics(t *testing.T) {
-	type fields struct {
-		name        string
-		nextConn    ContextConn
-		tracer      opentracing2.Tracer
-		conf        config.Config
-		logger      log.Logger
-		afterEvents []afterEvents
-	}
 	type args struct {
 		ctx  context.Context
 		info *execInfo
 	}
+
+	redisTotal.Reset()
+	ctx := context.Background()
+
 	tests := []struct {
-		name   string
-		fields fields
-		args   args
+		name string
+		args args
 	}{
-		// TODO: Add test cases.
+		{"metrics", args{ctx,
+			&execInfo{
+				commandName: "get",
+				startTime:   time.Now().Add(-2 * time.Second),
+				endTime:     time.Now()}}}}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			monitorProxy.redisMetrics(tt.args.ctx, tt.args.info)
+			lab := prometheus.Labels{"cmd": "get"}
+			c, _ := redisTotal.GetMetricWith(lab)
+			metric := &io_prometheus_client.Metric{}
+			err := c.Write(metric)
+			assert.Nil(t, err)
+			assert.True(t, metric.Counter.GetValue() == 1)
+		})
+	}
+}
+
+func TestMonitorProxy_redisSlowCommand(t *testing.T) {
+	type args struct {
+		ctx  context.Context
+		info *execInfo
+	}
+
+	ctx := context.Background()
+	tests := []struct {
+		name string
+		args args
+	}{
+		{"show_command", args{ctx,
+			&execInfo{
+				commandName: "get",
+				startTime:   time.Now().Add(-2 * time.Second),
+				endTime:     time.Now()}}},
+		{"quick_command", args{ctx,
+			&execInfo{
+				commandName: "get",
+				startTime:   time.Now().Add(-10 * time.Millisecond),
+				endTime:     time.Now()}}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mp := &MonitorProxy{
-				name:        tt.fields.name,
-				nextConn:    tt.fields.nextConn,
-				tracer:      tt.fields.tracer,
-				conf:        tt.fields.conf,
-				logger:      tt.fields.logger,
-				afterEvents: tt.fields.afterEvents,
-			}
-			mp.redisMetrics(tt.args.ctx, tt.args.info)
+			monitorProxy.redisSlowCommand(tt.args.ctx, tt.args.info)
 		})
 	}
 }

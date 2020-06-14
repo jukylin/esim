@@ -118,10 +118,10 @@ linters:
 
 issues:
   # Excluding configuration per-path, per-linter, per-text and per-source
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - gomnd
+  # exclude-rules:
+  #  - path: _test\.go
+  #    linters:
+  #      - gomnd
 
 run:
   skip-dirs:

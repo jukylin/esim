@@ -31,27 +31,10 @@ func NewTracer(serviceName string, logger log.Logger) opentracing.Tracer {
 func GetSpan(ctx context.Context, tracer opentracing.Tracer,
 	operationName string, beginTime time.Time) opentracing.Span {
 	if parSpan := opentracing.SpanFromContext(ctx); parSpan != nil {
-		spanOption := opentracing.StartSpanOptions{}
-		spanOption.StartTime = beginTime
-
 		span := tracer.StartSpan(operationName, opentracing.ChildOf(parSpan.Context()),
 			opentracing.StartTime(beginTime))
 		return span
 	}
 
-	return tracer.StartSpan(operationName)
-}
-
-func FinishWithOptions(ctx context.Context, tracer opentracing.Tracer, operationName string,
-	beginTime time.Time) opentracing.Span {
-	if parSpan := opentracing.SpanFromContext(ctx); parSpan != nil {
-		spanOption := opentracing.StartSpanOptions{}
-		spanOption.StartTime = beginTime
-
-		span := tracer.StartSpan(operationName, opentracing.ChildOf(parSpan.Context()),
-			opentracing.StartTime(beginTime))
-		return span
-	}
-
-	return tracer.StartSpan(operationName)
+	return tracer.StartSpan(operationName, opentracing.StartTime(beginTime))
 }

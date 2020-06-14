@@ -18,7 +18,6 @@ const (
 	notServiceName = "not_service_name"
 )
 
-//nolint:scopelint
 func TestNewTracer(t *testing.T) {
 	type args struct {
 		serviceName string
@@ -59,46 +58,6 @@ func TestNewTracer(t *testing.T) {
 	}
 }
 
-//nolint:scopelint
-func TestFinishWithOptions(t *testing.T) {
-	type args struct {
-		ctx           context.Context
-		tracer        opentracing.Tracer
-		operationName string
-		beginTime     time.Time
-	}
-
-	ctx := context.Background()
-	tracer := NewTracer("test", log.NewNullLogger())
-	spanCtx := opentracing.ContextWithSpan(ctx, tracer.StartSpan("withSpan"))
-
-	tests := []struct {
-		name string
-		args args
-		want opentracing.Span
-	}{
-		{"noopTracer", args{ctx, &opentracing.NoopTracer{},
-			"test", time.Now()},
-			opentracing.StartSpan("test")},
-		{"notParentSpan", args{ctx, &opentracing.NoopTracer{},
-			"test", time.Now()},
-			opentracing.StartSpan("test")},
-		{"ParentSpan", args{spanCtx,
-			&opentracing.NoopTracer{},
-			"test", time.Now()},
-			opentracing.StartSpan("test")}}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := FinishWithOptions(tt.args.ctx, tt.args.tracer,
-				tt.args.operationName, tt.args.beginTime); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("FinishWithOptions() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-//nolint:scopelint
 func TestGetSpan(t *testing.T) {
 	type args struct {
 		ctx           context.Context
