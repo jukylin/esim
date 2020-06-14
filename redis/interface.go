@@ -36,7 +36,7 @@ func newExecInfo() *execInfo {
 	return ei
 }
 
-// Release initializes the variable and put that to tool
+// Release initializes the variable and put that to tool.
 func (ei *execInfo) Release() {
 	ei.err = nil
 	ei.commandName = ""

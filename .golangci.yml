@@ -126,6 +126,8 @@ issues:
 run:
   skip-dirs:
     - tool/new
+  skip-files:
+    - _test\.go
 
 # golangci.com configuration
 # https://github.com/golangci/golangci/wiki/Configuration

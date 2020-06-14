@@ -9,6 +9,7 @@ require (
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/fsnotify/fsnotify v1.4.7
 	github.com/gin-gonic/gin v1.5.0
+	github.com/go-playground/locales v0.12.1
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/golang/protobuf v1.3.3 // indirect
 	github.com/golang/snappy v0.0.1 // indirect

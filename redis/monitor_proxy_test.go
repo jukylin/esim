@@ -23,48 +23,39 @@ func TestNewMonitorProxy(t *testing.T) {
 	monitorProxy = NewMonitorProxy(
 		monitorProxyOptions.WithConf(conf),
 	)
+	monitorProxy.NextProxy(&DummyContextConn{})
 	assert.IsType(t, &MonitorProxy{}, monitorProxy)
 	assert.True(t, len(monitorProxy.afterEvents) > 0)
+
+	assert.NotNil(t, monitorProxy.tracer)
 }
 
 func TestMonitorProxy_Do(t *testing.T) {
-	type fields struct {
-		name        string
-		nextConn    ContextConn
-		tracer      opentracing2.Tracer
-		conf        config.Config
-		logger      log.Logger
-		afterEvents []afterEvents
-	}
 	type args struct {
 		ctx         context.Context
 		commandName string
 		args        []interface{}
 	}
+
+	ctx := context.Background()
+
 	tests := []struct {
 		name      string
-		fields    fields
 		args      args
 		wantReply interface{}
 		wantErr   bool
 	}{
-		// TODO: Add test cases.
+		{"one", args{ctx, "get", []interface{}{"one"}}, nil, false},
+		{"two", args{ctx, "get", []interface{}{"tow"}}, nil, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mp := &MonitorProxy{
-				name:        tt.fields.name,
-				nextConn:    tt.fields.nextConn,
-				tracer:      tt.fields.tracer,
-				conf:        tt.fields.conf,
-				logger:      tt.fields.logger,
-				afterEvents: tt.fields.afterEvents,
-			}
-			gotReply, err := mp.Do(tt.args.ctx, tt.args.commandName, tt.args.args...)
+			gotReply, err := monitorProxy.Do(tt.args.ctx, tt.args.commandName, tt.args.args...)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("MonitorProxy.Do() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
+
 			if !reflect.DeepEqual(gotReply, tt.wantReply) {
 				t.Errorf("MonitorProxy.Do() = %v, want %v", gotReply, tt.wantReply)
 			}

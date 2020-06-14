@@ -237,9 +237,8 @@ func (f *Ifacer) setNoConflictImport(importName, importPath string) {
 // 	github.com/jukylin/esim/redis
 //  level
 //		0 redis
-//		1 esimredis
-//		2 jukylinesimredis
-//		3 githubcomjukylinesimredis
+//		1 redis1
+//		2 redis2
 func (f *Ifacer) getUniqueImportName(pkgName string, level int) string {
 	strs := strings.Split(pkgName, string(filepath.Separator))
 

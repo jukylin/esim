@@ -38,7 +38,8 @@ func GetSpan(ctx context.Context, tracer opentracing.Tracer,
 			opentracing.StartTime(beginTime))
 		return span
 	}
-	return nil
+
+	return tracer.StartSpan(operationName)
 }
 
 func FinishWithOptions(ctx context.Context, tracer opentracing.Tracer, operationName string,
@@ -51,5 +52,6 @@ func FinishWithOptions(ctx context.Context, tracer opentracing.Tracer, operation
 			opentracing.StartTime(beginTime))
 		return span
 	}
-	return nil
+
+	return tracer.StartSpan(operationName)
 }

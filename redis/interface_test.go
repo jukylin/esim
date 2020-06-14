@@ -1,8 +1,9 @@
 package redis
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_execInfo_Release(t *testing.T) {
