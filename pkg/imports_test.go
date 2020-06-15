@@ -15,18 +15,19 @@ func TestImports_EmptyString(t *testing.T) {
 func TestImports_String(t *testing.T) {
 	var result = `import (
 
-	//time
-	//is a test
+	// time
+	// is a test
 	time "time"
-	//sync
-	//is a test
+	// sync
+	// is a test
 	sync "sync"
-)`
+)
+`
 
 	imports := Imports{}
 
-	docs1 := []string{"//time", "//is a test"}
-	docs2 := []string{"//sync", "//is a test"}
+	docs1 := []string{"// time", "// is a test"}
+	docs2 := []string{"// sync", "// is a test"}
 
 	imports = append(imports, Import{Name: "time", Path: "time", Doc: docs1},
 		Import{Name: "sync", Path: "sync", Doc: docs2})

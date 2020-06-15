@@ -19,9 +19,7 @@ const (
 
 func TestGet(t *testing.T) {
 	memConfig := NewMemConfig()
-
 	memConfig.Set(testKey, testStrVal)
-
 	res := memConfig.Get(testKey)
 	if res.(string) != testStrVal {
 		t.Errorf("结果错误 应该 config 实际 %s", res.(string))
@@ -30,9 +28,7 @@ func TestGet(t *testing.T) {
 
 func TestGetString(t *testing.T) {
 	memConfig := NewMemConfig()
-
 	memConfig.Set(testKey, testStrVal)
-
 	res := memConfig.GetString(testKey)
 	if res != testStrVal {
 		t.Errorf("结果错误 应该 config 实际 %s", res)

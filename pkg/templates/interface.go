@@ -48,7 +48,7 @@ type HTMLTpl struct {
 func NewHTMLTpl() Tpl {
 	tt := &HTMLTpl{}
 
-	tt.template = &htpl.Template{}
+	tt.template = htpl.New("")
 
 	return tt
 }

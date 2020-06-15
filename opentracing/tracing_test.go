@@ -23,6 +23,7 @@ func TestNewTracer(t *testing.T) {
 		serviceName string
 		logger      log.Logger
 	}
+
 	tests := []struct {
 		name string
 		args args

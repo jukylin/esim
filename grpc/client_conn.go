@@ -45,8 +45,8 @@ func (cc *ClientConn) Close() {
 // State unity show the grpc.ClientConn state.
 func (cc *ClientConn) State() []string {
 	state := make([]string, len(cc.conns))
-	for _, conn := range cc.conns {
-		state = append(state, conn.Target()+":"+conn.GetState().String())
+	for k, conn := range cc.conns {
+		state[k] = conn.Target() + ":" + conn.GetState().String()
 	}
 
 	return state

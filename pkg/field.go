@@ -8,7 +8,7 @@ import (
 
 var fieldTpl = `{{ range .Fields }}
 {{ range $doc := .Doc}}{{$doc}}
-{{end}}{{.Field}} {{.Tag}}
+{{end}}{{.Field}}{{if .Tag}} {{.Tag}}{{end}}
 {{end}}`
 
 // Struct field.

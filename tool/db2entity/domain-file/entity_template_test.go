@@ -43,7 +43,7 @@ func TestEntityTemplate(t *testing.T) {
 	tpl.Imports = imports
 	tpl.DelField = delField
 
-	structInfo := templates.StructInfo{}
+	structInfo := templates.NewStructInfo()
 	structInfo.StructName = tpl.StructName
 	structInfo.Fields = append(structInfo.Fields, Field1, Field2)
 

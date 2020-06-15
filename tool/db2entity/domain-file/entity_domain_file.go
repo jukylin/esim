@@ -126,7 +126,7 @@ func (edf *entityDomainFile) ParseCloumns(cs Columns, info *ShareInfo) {
 
 	tpl.StructName = info.CamelStruct
 
-	structInfo := templates.StructInfo{}
+	structInfo := templates.NewStructInfo()
 
 	var colDefault string
 	var valueType string

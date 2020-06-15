@@ -24,8 +24,6 @@ type Factory struct {
 
 type FactoryOption func(c *Factory)
 
-type FactoryOptions struct{}
-
 func NewProxyFactory(options ...FactoryOption) *Factory {
 	factoryOnce.Do(func() {
 		proxyFactory = &Factory{}
@@ -42,7 +40,7 @@ func NewProxyFactory(options ...FactoryOption) *Factory {
 	return proxyFactory
 }
 
-func (FactoryOptions) WithLogger(logger log.Logger) FactoryOption {
+func WithLogger(logger log.Logger) FactoryOption {
 	return func(p *Factory) {
 		p.logger = logger
 	}
@@ -85,11 +83,12 @@ func (pf *Factory) GetInstances(realName string, proxys ...func() interface{}) [
 		}
 
 		for k, proxyIns := range proxyInses {
-			if proxyNum == 1 {
-				proxyIns.(Proxy).NextProxy(proxyInses[k])
-				pf.logger.Infof("[%s] %s init [%p]", realName, proxyIns.(Proxy).ProxyName(),
-					proxyIns)
-			} else if k+1 < proxyNum {
+			//if proxyNum == 1 {
+			//	proxyIns.(Proxy).NextProxy(proxyInses[k])
+			//	pf.logger.Infof("[%s] %s init [%p]", realName, proxyIns.(Proxy).ProxyName(),
+			//		proxyIns)
+			//} else
+			if k+1 < proxyNum {
 				proxyIns.(Proxy).NextProxy(proxyInses[k+1])
 				pf.logger.Infof("[%s] %s init [%p]", realName, proxyIns.(Proxy).ProxyName(),
 					proxyIns)

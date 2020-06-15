@@ -26,7 +26,7 @@ func TestExecuteFactoryTemplate(t *testing.T) {
 
 	factory.NewStructInfo = s
 
-	structTpl := templates.StructInfo{}
+	structTpl := templates.NewStructInfo()
 	structTpl.StructName = factory.StructName
 	structTpl.Fields = factory.NewStructInfo.Fields
 

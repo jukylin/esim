@@ -3,6 +3,7 @@ package proxy
 import (
 	"testing"
 
+	"fmt"
 	"github.com/jukylin/esim/log"
 	"github.com/stretchr/testify/assert"
 )
@@ -77,19 +78,31 @@ func (fp *realDb) Get(str string) string {
 	return "1.0.0"
 }
 
+type notProxy struct{}
+
+func newNotProxy() *notProxy {
+	return &notProxy{}
+}
+
+func (np *notProxy) Get(str string) string {
+	return "1.0.0"
+}
+
 func TestProxyFactory(t *testing.T) {
-	firstProxy := NewProxyFactory().GetFirstInstance("db_repo", newRealDb(),
+	realDb := newRealDb()
+	firstProxy := NewProxyFactory().GetFirstInstance("db_repo", realDb,
 		func() interface{} {
 			return newFilterProxy()
 		},
 		func() interface{} {
 			return newCacheProxy()
 		}).(DbRepo)
-
 	assert.Equal(t, firstProxy.(Proxy).ProxyName(), "filter_proxy")
 
 	result := firstProxy.Get("version")
 	assert.Equal(t, result, "1.0.0")
+	assert.Equal(t, fmt.Sprintf("%p", firstProxy.(*filterProxy).nextProxy.(*cacheProxy).nextProxy),
+		fmt.Sprintf("%p", realDb))
 }
 
 func TestProxyFactoryNotProxy(t *testing.T) {
@@ -117,13 +130,42 @@ func TestProxyFactoryNotRealInstanceButProxy(t *testing.T) {
 }
 
 func TestProxyFactoryGetInstances(t *testing.T) {
+	filterProxyObj := newFilterProxy()
+	cacheProxyObj := newCacheProxy()
 	firstProxy := NewProxyFactory().GetInstances("db_repo",
 		func() interface{} {
-			return newFilterProxy()
+			return filterProxyObj
 		},
 		func() interface{} {
-			return newCacheProxy()
+			return cacheProxyObj
 		})
 	assert.IsType(t, &filterProxy{}, firstProxy[0])
 	assert.IsType(t, &cacheProxy{}, firstProxy[1])
+
+	assert.Equal(t, fmt.Sprintf("%p", filterProxyObj.nextProxy),
+		fmt.Sprintf("%p", cacheProxyObj))
+	assert.Nil(t, cacheProxyObj.nextProxy)
+}
+
+func TestProxyFactoryGetOneInstances(t *testing.T) {
+	firstProxy := NewProxyFactory(WithLogger(log.NewNullLogger())).GetInstances("db_repo",
+		func() interface{} {
+			return newFilterProxy()
+		})
+	assert.IsType(t, &filterProxy{}, firstProxy[0])
+	assert.Nil(t, firstProxy[0].(*filterProxy).nextProxy)
+}
+
+func TestProxyFactoryGetZoreInstances(t *testing.T) {
+	firstProxy := NewProxyFactory().GetInstances("zore_proxy")
+	assert.Nil(t, firstProxy)
+}
+
+func TestProxyFactory_GetInstancesNotImplementTheProxyInterface(t *testing.T) {
+	assert.Panics(t, func() {
+		NewProxyFactory().GetInstances("not_implement_proxy",
+			func() interface{} {
+				return newNotProxy()
+			})
+	})
 }

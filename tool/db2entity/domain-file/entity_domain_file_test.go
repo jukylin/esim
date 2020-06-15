@@ -43,6 +43,6 @@ func TestEntityDomainFile(t *testing.T) {
 	assert.NotEmpty(t, content)
 
 	savePath := testEntityDomainFile.GetSavePath()
-	assert.Equal(t, "a/example/test.go", savePath)
+	assert.Equal(t, boubctx+"/example/test.go", savePath)
 	os.RemoveAll(boubctx)
 }

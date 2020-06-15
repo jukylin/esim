@@ -1,9 +1,7 @@
 package templates
 
 import (
-	"bytes"
-	"text/template"
-
+	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
 )
 
@@ -11,32 +9,57 @@ type StructInfo struct {
 	StructName string
 
 	Fields pkg.Fields
+
+	tpl Tpl
+
+	logger log.Logger
 }
 
-func NewStructInfo() StructInfo {
-	return StructInfo{}
+type Option func(c *StructInfo)
+
+func NewStructInfo(options ...Option) *StructInfo {
+	structInfo := &StructInfo{}
+
+	for _, option := range options {
+		option(structInfo)
+	}
+
+	if structInfo.logger == nil {
+		structInfo.logger = log.NewLogger()
+	}
+
+	if structInfo.tpl == nil {
+		structInfo.tpl = NewTextTpl()
+	}
+
+	return structInfo
 }
 
-var StructTemplate = `
-type {{.StructName}} struct{
+func WithTpl(tpl Tpl) Option {
+	return func(si *StructInfo) {
+		si.tpl = tpl
+	}
+}
+
+func WithLogger(logger log.Logger) Option {
+	return func(si *StructInfo) {
+		si.logger = logger
+	}
+}
+
+var StructTemplate = `type {{.StructName}} struct{
 {{.Fields.String}}
 }`
 
-func (si StructInfo) String() string {
+func (si *StructInfo) String() string {
 	if si.StructName == "" {
 		return ""
 	}
 
-	tmpl, err := template.New("struct_template").Parse(StructTemplate)
+	content, err := si.tpl.Execute("struct_template", StructTemplate, si)
 	if err != nil {
-		panic(err.Error())
+		si.logger.Panicf(err.Error())
 	}
 
-	var buf bytes.Buffer
-	err = tmpl.Execute(&buf, si)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	return buf.String()
+	return content
 }

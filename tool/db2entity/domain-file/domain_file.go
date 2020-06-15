@@ -152,7 +152,7 @@ func (ps Provides) Len() int {
 }
 
 func (ps Provides) String() string {
-	if ps.Len() < 0 {
+	if ps.Len() == 0 {
 		return ""
 	}
 

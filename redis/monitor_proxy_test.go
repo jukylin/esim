@@ -61,6 +61,7 @@ func TestMonitorProxy_Do(t *testing.T) {
 			if !reflect.DeepEqual(gotReply, tt.wantReply) {
 				t.Errorf("MonitorProxy.Do() = %v, want %v", gotReply, tt.wantReply)
 			}
+			monitorProxy.Close()
 		})
 	}
 }

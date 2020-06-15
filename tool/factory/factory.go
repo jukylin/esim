@@ -135,7 +135,7 @@ type EsimFactory struct {
 
 	ReturnStr string
 
-	StructTpl templates.StructInfo
+	StructTpl *templates.StructInfo
 
 	tpl templates.Tpl
 
@@ -177,7 +177,10 @@ func NewEsimFactory(options ...Option) *EsimFactory {
 
 	factory.structFieldIface = NewRPCPluginStructField(factory.writer, factory.logger)
 
-	factory.StructTpl = templates.StructInfo{}
+	factory.StructTpl = templates.NewStructInfo(
+		templates.WithTpl(factory.tpl),
+		templates.WithLogger(factory.logger),
+	)
 
 	return factory
 }

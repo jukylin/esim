@@ -20,7 +20,7 @@ type entityTpl struct {
 
 	DelField string
 
-	StructInfo templates.StructInfo
+	StructInfo *templates.StructInfo
 }
 
 var entityTemplate = `package entity

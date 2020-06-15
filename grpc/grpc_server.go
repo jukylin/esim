@@ -54,6 +54,8 @@ type Server struct {
 	serviceName string
 
 	tracer opentracing2.Tracer
+
+	tcpAddr *net.TCPAddr
 }
 
 type ServerOption func(c *Server)

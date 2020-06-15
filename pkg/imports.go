@@ -11,7 +11,8 @@ var importTpl = `import (
 {{ range .Imports }}
 	{{ range $doc := .Doc}}{{$doc}}
 	{{end}}{{.Name}} "{{.Path}}"{{end}}
-)`
+)
+`
 
 type Import struct {
 	Name string
