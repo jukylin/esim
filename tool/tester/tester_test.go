@@ -2,7 +2,6 @@ package tester
 
 import (
 	"testing"
-
 	"time"
 
 	"github.com/jukylin/esim/log"
@@ -18,8 +17,7 @@ const (
 )
 
 var (
-	loggerOptions = log.LoggerOptions{}
-	logger        = log.NewLogger(loggerOptions.WithDebug(true))
+	logger = log.NewLogger(log.WithDebug(true))
 )
 
 func TestTesterReceive(t *testing.T) {
@@ -81,11 +79,49 @@ func TestTesterRunGoTest(t *testing.T) {
 		WithTesterLogger(logger),
 		WithTesterExec(pkg.NewNullExec()))
 
-	tester.isWireFile = true
+	tester.notRunTest = true
 	tester.runGoTest("./")
 	assert.Equal(t, int32(0), tester.runningTest)
 
-	tester.isWireFile = false
+	tester.notRunTest = false
 	tester.runGoTest("./")
 	assert.Equal(t, int32(1), tester.runningTest)
+}
+
+func TestTester_checkNeedRunMockDir(t *testing.T) {
+	tests := []struct {
+		name string
+		dir  string
+		want bool
+	}{
+		{"need run mock", "/test/internal/infra/repo/test.go", true},
+		{"not need", "/test/internal/infra/test.go", false},
+		{"need run mock", "/test/internal/infra/gateway/test.go", true},
+	}
+
+	tester := NewTester()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tester.checkNeedRunMockDir(tt.dir); got != tt.want {
+				t.Errorf("Tester.checkNeedRunMockDir() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestTester_checkAndRunMock(t *testing.T) {
+	tests := []struct {
+		name        string
+		dir         string
+		withMockery bool
+	}{
+		{"run mockery", "./repo", true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tester := NewTester()
+			tester.withMockery = tt.withMockery
+			tester.checkAndRunMock(tt.dir)
+		})
+	}
 }

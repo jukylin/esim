@@ -11,6 +11,10 @@ import (
 
 const (
 	WireCmd = "wire"
+
+	MockeryCmd = "mockery"
+
+	GolangciLineCmd = "golangci-lint"
 )
 
 type Exec interface {
@@ -21,6 +25,8 @@ type Exec interface {
 	ExecTest(string, ...string) error
 
 	ExecBuild(string, ...string) error
+
+	ExecMock(string, ...string) error
 }
 
 type CmdExecOption func(*CmdExec)
@@ -106,6 +112,19 @@ func (ce *CmdExec) ExecTest(dir string, args ...string) error {
 	return err
 }
 
+func (ce *CmdExec) ExecMock(dir string, args ...string) error {
+	ce.logger.Infof("mockery %s", strings.Join(args, " "))
+	cmd := exec.Command("mockery", args...)
+	cmd.Dir = dir
+
+	cmd.Env = os.Environ()
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Run()
+
+	return err
+}
+
 type NullExec struct{}
 
 func NewNullExec() Exec {
@@ -125,5 +144,9 @@ func (ce *NullExec) ExecBuild(dir string, args ...string) error {
 }
 
 func (ce *NullExec) ExecTest(dir string, args ...string) error {
+	return nil
+}
+
+func (ce *NullExec) ExecMock(dir string, args ...string) error {
 	return nil
 }

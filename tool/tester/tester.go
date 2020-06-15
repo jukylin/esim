@@ -12,23 +12,36 @@ import (
 	"github.com/jukylin/esim/pkg"
 	filedir "github.com/jukylin/esim/pkg/file-dir"
 	"github.com/spf13/viper"
+	"strings"
 )
 
 var (
 	ignoreFiles = []string{"wire.go", "wire_gen.go"}
 
 	wireProvidersFiles = []string{"infra.go", "controllers.go"}
+
+	runMockDir = []string{"repo", "gateway"}
 )
 
 type Tester struct {
-	isWireFile bool
-
 	// If true, run wire command in the changed directory.
 	withWire bool
+
+	// If true, run mockery command in the changed directory.
+	withMockery bool
+
+	// If true, run golangci-lint command in the changed directory.
+	withLint bool
 
 	runningTest int32
 
 	runningWire int32
+
+	runningMock int32
+
+	runningLint int32
+
+	notRunTest bool
 
 	// Wait a few seconds before run command.
 	waitTime time.Duration
@@ -37,7 +50,7 @@ type Tester struct {
 
 	execer pkg.Exec
 
-	// Watchint the directory, default current directory.
+	// Watching the directory, default current directory.
 	withWatchDir string
 
 	logger log.Logger
@@ -54,6 +67,14 @@ func NewTester(options ...Option) *Tester {
 
 	for _, option := range options {
 		option(tester)
+	}
+
+	if tester.logger == nil {
+		tester.logger = log.NewLogger()
+	}
+
+	if tester.execer == nil {
+		tester.execer = pkg.NewCmdExec()
 	}
 
 	tester.waitTime = 1 * time.Second
@@ -94,6 +115,28 @@ func (tester *Tester) bindInput(v *viper.Viper) {
 			tester.logger.Warnf(err.Error())
 			// no found, set to false.
 			tester.withWire = false
+		}
+	}
+
+	mockeryBool := v.GetBool(pkg.MockeryCmd)
+	if mockeryBool {
+		tester.withMockery = true
+		_, err := exec.LookPath(pkg.MockeryCmd)
+		if err != nil {
+			tester.logger.Warnf(err.Error())
+			// no found, set to false.
+			tester.withMockery = false
+		}
+	}
+
+	golangciLintBool := v.GetBool(pkg.GolangciLineCmd)
+	if golangciLintBool {
+		tester.withLint = true
+		_, err := exec.LookPath(pkg.GolangciLineCmd)
+		if err != nil {
+			tester.logger.Warnf(err.Error())
+			// no found, set to false.
+			tester.withLint = false
 		}
 	}
 }
@@ -137,7 +180,6 @@ func (tester *Tester) receiver(path string) bool {
 	}
 
 	dir := filepath.Dir(path)
-
 	if eventTime := tester.receiveEvent[dir]; eventTime == time.Now().Unix() {
 		return false
 	}
@@ -145,6 +187,8 @@ func (tester *Tester) receiver(path string) bool {
 	tester.receiveEvent[dir] = time.Now().Unix()
 
 	tester.checkAndRunWire(fileName, dir)
+
+	tester.checkAndRunMock(dir)
 
 	tester.runGoTest(dir)
 
@@ -163,8 +207,10 @@ func (tester *Tester) checkIsIgnoreFile(fileName string) bool {
 	return false
 }
 
+// runGoTest run go test when the directory be changed.
+// There are exceptions：is wire file，mock
 func (tester *Tester) runGoTest(dir string) {
-	if !tester.isWireFile && atomic.CompareAndSwapInt32(&tester.runningTest, 0, 1) {
+	if !tester.notRunTest && atomic.CompareAndSwapInt32(&tester.runningTest, 0, 1) {
 		go func() {
 			tester.logger.Infof("Go file modified %s", dir)
 
@@ -187,7 +233,7 @@ func (tester *Tester) checkAndRunWire(fileName, dir string) {
 		atomic.CompareAndSwapInt32(&tester.runningWire, 0, 1) {
 		for _, provideFile := range wireProvidersFiles {
 			if provideFile == fileName {
-				tester.isWireFile = true
+				tester.notRunTest = true
 				go func() {
 					// Avoid redundant execution
 					time.Sleep(tester.waitTime)
@@ -203,4 +249,40 @@ func (tester *Tester) checkAndRunWire(fileName, dir string) {
 			}
 		}
 	}
+}
+
+func (tester *Tester) checkAndRunMock(dir string) {
+	absDir, _ := filepath.Abs(dir)
+
+	if tester.withMockery && tester.checkNeedRunMockDir(dir) &&
+		atomic.CompareAndSwapInt32(&tester.runningMock, 0, 1) {
+		tester.notRunTest = true
+		go func() {
+			// Avoid redundant execution
+			time.Sleep(tester.waitTime)
+
+			tester.logger.Debugf("Running mockery......")
+			err := tester.execer.ExecMock(dir, "-all", "-dir", absDir)
+			if err != nil {
+				tester.logger.Errorf(err.Error())
+			}
+
+			atomic.StoreInt32(&tester.runningMock, 0)
+		}()
+	}
+}
+
+func (tester *Tester) checkNeedRunMockDir(dir string) bool {
+	if len(runMockDir) != 0 {
+		dirSplit := strings.Split(dir, string(filepath.Separator))
+		for _, mockDir := range runMockDir {
+			for _, partPath := range dirSplit {
+				if mockDir == partPath {
+					return true
+				}
+			}
+		}
+	}
+
+	return false
 }
