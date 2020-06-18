@@ -43,7 +43,6 @@ func NewLogger(options ...Option) Logger {
 	}
 
 	encoderConfig := zap.NewProductionEncoderConfig()
-
 	zapConfig := zap.Config{
 		Level:       level,
 		Development: logger.debug,
@@ -181,6 +180,10 @@ func (log *logger) getCaller(pc uintptr, file string, line int, ok bool) string 
 
 // getTracerID get tracer_id from context.
 func (log *logger) getTracerID(ctx context.Context) string {
+	if ctx == nil {
+		return ""
+	}
+
 	sp := opentracing.SpanFromContext(ctx)
 	if sp != nil {
 		if jaegerSpanContext, ok := sp.Context().(jaeger.SpanContext); ok {

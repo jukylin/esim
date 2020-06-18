@@ -42,7 +42,7 @@ type Info struct {
 
 	importStr string
 
-	structInfo templates.StructInfo
+	structInfo *templates.StructInfo
 
 	structStr string
 
@@ -70,7 +70,7 @@ func NewInfo() *Info {
 
 	ifaInfo.infraSetArgs = infraSetArgs{}
 
-	structInfo := templates.StructInfo{}
+	structInfo := templates.NewStructInfo()
 	structInfo.StructName = ifaInfo.specialStructName
 	ifaInfo.structInfo = structInfo
 

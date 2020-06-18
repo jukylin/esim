@@ -71,7 +71,7 @@ func TestMain(m *testing.M) {
 
 	code := m.Run()
 
-	client.Close()
+	//client.Close()
 
 	// You can't defer this because os.Exit doesn't care for defer
 	if err := pool.Purge(resource); err != nil {
@@ -103,7 +103,7 @@ func TestGetColl(t *testing.T) {
 	_, err := coll.Find(mongoClient.GetCtx(ctx), filter)
 	assert.Nil(t, err)
 
-	_, ok := ctx.Value("command").(*string)
+	_, ok := ctx.Value(keyCtx).(*string)
 	assert.True(t, ok)
 
 	mongoClient.Close()

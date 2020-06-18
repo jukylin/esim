@@ -410,7 +410,7 @@ func TestClient_TxCommit(t *testing.T) {
 	assert.NotNil(t, db1)
 
 	tx := db1.Begin()
-	tx.Exec("insert into test values (1, 'test')")
+	tx.Exec("insert into test values (3, 'test')")
 	tx.Commit()
 	if len(tx.GetErrors()) > 0 {
 		assert.Error(t, tx.GetErrors()[0])
@@ -446,7 +446,7 @@ func TestClient_TxRollBack(t *testing.T) {
 	assert.NotNil(t, db1)
 
 	tx := db1.Begin()
-	tx.Exec("insert into test values (1, 'test')")
+	tx.Exec("insert into test values (2, 'test')")
 	tx.Rollback()
 	if len(tx.GetErrors()) > 0 {
 		assert.Error(t, tx.GetErrors()[0])

@@ -109,12 +109,12 @@ func (pj *Project) Run(v *viper.Viper) {
 func (pj *Project) bindInput(v *viper.Viper) {
 	serverName := v.GetString("server_name")
 	if serverName == "" {
-		pj.logger.Fatalf("The server_name is empty")
+		pj.logger.Panicf("The server_name is empty")
 	}
 	pj.ServerName = serverName
 
 	if !pj.checkServerName() {
-		pj.logger.Fatalf("The server_name only supports【a-z_-】")
+		pj.logger.Panicf("The server_name only supports【a-z0-9_-】")
 	}
 
 	pj.withGin = v.GetBool("gin")
@@ -122,7 +122,7 @@ func (pj *Project) bindInput(v *viper.Viper) {
 	pj.withBeego = v.GetBool("beego")
 
 	if pj.withGin && pj.withBeego {
-		pj.logger.Fatalf("either gin or beego")
+		pj.logger.Panicf("Either gin or beego")
 	}
 
 	if !pj.withGin && !pj.withBeego {
@@ -139,9 +139,9 @@ func (pj *Project) bindInput(v *viper.Viper) {
 	}
 }
 
-// checkServerName ServerName only support lowercase ,"_", "-"
+// checkServerName ServerName only support lowercase, number ,"_", "-"
 func (pj *Project) checkServerName() bool {
-	match, err := regexp.MatchString("^[a-z_-]+$", pj.ServerName)
+	match, err := regexp.MatchString("^[a-z0-9_-]+$", pj.ServerName)
 	if err != nil {
 		pj.logger.Fatalf(err.Error())
 	}
@@ -247,6 +247,8 @@ func (pj *Project) initFiles() {
 	initGitIgnoreFiles()
 
 	initThirdParthFiles()
+
+	initGolangCiFiles()
 }
 
 // build create a new project locally

@@ -45,7 +45,6 @@ func TestProject_ErrRun(t *testing.T) {
 	)
 
 	v := viper.New()
-
 	v.Set("server_name", serviceName)
 	v.Set("gin", true)
 
@@ -90,7 +89,7 @@ func TestProject_CheckServiceName(t *testing.T) {
 		expected    bool
 	}{
 		{"case1", "api_test", true},
-		{"case2", "api1123", false},
+		{"case2", "api1123", true},
 		{"case3", "example&*^", false},
 		{"case4", "api-test", true},
 	}
@@ -110,6 +109,6 @@ func TestProject_BindInput(t *testing.T) {
 
 	v := viper.New()
 	v.Set("service_name", "example")
-
+	v.Set("monitoring", false)
 	project.bindInput(v)
 }

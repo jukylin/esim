@@ -51,5 +51,4 @@ func TestEntityTemplate(t *testing.T) {
 
 	err = tmpl.Execute(&buf, tpl)
 	assert.Nil(t, err)
-	println(buf.String())
 }

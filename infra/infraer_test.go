@@ -14,10 +14,8 @@ func TestInfraer_BuildNewInfraContent(t *testing.T) {
 	expected := `package infra
 
 import (
-
-	//sync
-	//is a test
 	"sync"
+	"time"
 
 	"github.com/google/wire"
 	"github.com/jukylin/esim/container"
@@ -28,11 +26,8 @@ var infraOnce sync.Once
 var onceInfra *Infra
 
 type Infra struct {
-
-	//Esim
 	*container.Esim
 
-	//redis
 	Redis redis.RedisClient
 
 	check bool
@@ -52,7 +47,6 @@ func NewInfra() *Infra {
 	return onceInfra
 }
 
-// Close close the infra when app stop
 func (this *Infra) Close() {
 }
 
@@ -88,6 +82,5 @@ func provideA() { println("test") }
 	infraer.toStringNewInfra()
 
 	infraer.buildNewInfraContent()
-
 	assert.Equal(t, expected, infraer.makeCodeBeautiful(infraer.newInfraInfo.content))
 }
