@@ -199,7 +199,8 @@ func (mp *MonitorProxy) redisTracer(ctx context.Context, info *execInfo) {
 func (mp *MonitorProxy) redisSlowCommand(ctx context.Context, info *execInfo) {
 	redisSlowTime := mp.conf.GetInt64("redis_slow_time")
 	if info.endTime.Sub(info.startTime) > time.Duration(redisSlowTime)*time.Millisecond {
-		mp.logger.Warnf("Slow redis command %s [%s]", info.commandName, info.endTime.Sub(info.startTime).String())
+		mp.logger.Warnf("Slow redis command %s [%s]",
+			info.commandName, info.endTime.Sub(info.startTime).String())
 	}
 }
 

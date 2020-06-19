@@ -8,11 +8,12 @@ import (
 	"os/exec"
 	"sync/atomic"
 
+	"strings"
+
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
 	filedir "github.com/jukylin/esim/pkg/file-dir"
 	"github.com/spf13/viper"
-	"strings"
 )
 
 var (
@@ -129,10 +130,10 @@ func (tester *Tester) bindInput(v *viper.Viper) {
 		}
 	}
 
-	golangciLintBool := v.GetBool(pkg.GolangciLineCmd)
+	golangciLintBool := v.GetBool(pkg.LintCmd)
 	if golangciLintBool {
 		tester.withLint = true
-		_, err := exec.LookPath(pkg.GolangciLineCmd)
+		_, err := exec.LookPath(pkg.LintCmd)
 		if err != nil {
 			tester.logger.Warnf(err.Error())
 			// no found, set to false.
@@ -186,11 +187,13 @@ func (tester *Tester) receiver(path string) bool {
 
 	tester.receiveEvent[dir] = time.Now().Unix()
 
+	// wire and mock are not running at the same time
 	tester.checkAndRunWire(fileName, dir)
-
 	tester.checkAndRunMock(dir)
 
 	tester.runGoTest(dir)
+
+	tester.runLint()
 
 	return true
 }
@@ -208,7 +211,7 @@ func (tester *Tester) checkIsIgnoreFile(fileName string) bool {
 }
 
 // runGoTest run go test when the directory be changed.
-// There are exceptions：is wire file，mock
+// There are exceptions：is wire file，mock.
 func (tester *Tester) runGoTest(dir string) {
 	if !tester.notRunTest && atomic.CompareAndSwapInt32(&tester.runningTest, 0, 1) {
 		go func() {
@@ -244,6 +247,7 @@ func (tester *Tester) checkAndRunWire(fileName, dir string) {
 						tester.logger.Errorf(err.Error())
 					}
 
+					tester.notRunTest = false
 					atomic.StoreInt32(&tester.runningWire, 0)
 				}()
 			}
@@ -253,7 +257,6 @@ func (tester *Tester) checkAndRunWire(fileName, dir string) {
 
 func (tester *Tester) checkAndRunMock(dir string) {
 	absDir, _ := filepath.Abs(dir)
-
 	if tester.withMockery && tester.checkNeedRunMockDir(dir) &&
 		atomic.CompareAndSwapInt32(&tester.runningMock, 0, 1) {
 		tester.notRunTest = true
@@ -267,6 +270,7 @@ func (tester *Tester) checkAndRunMock(dir string) {
 				tester.logger.Errorf(err.Error())
 			}
 
+			tester.notRunTest = false
 			atomic.StoreInt32(&tester.runningMock, 0)
 		}()
 	}
@@ -285,4 +289,20 @@ func (tester *Tester) checkNeedRunMockDir(dir string) bool {
 	}
 
 	return false
+}
+
+func (tester *Tester) runLint() {
+	if tester.withLint && atomic.CompareAndSwapInt32(&tester.runningLint, 0, 1) {
+		go func() {
+			// Avoid redundant execution
+			time.Sleep(tester.waitTime)
+			tester.logger.Debugf("Running golangci-lint ......")
+
+			err := tester.execer.ExecLint(tester.withWatchDir)
+			if err != nil {
+				tester.logger.Errorf(err.Error())
+			}
+			atomic.StoreInt32(&tester.runningLint, 0)
+		}()
+	}
 }

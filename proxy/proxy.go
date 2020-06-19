@@ -83,11 +83,6 @@ func (pf *Factory) GetInstances(realName string, proxys ...func() interface{}) [
 		}
 
 		for k, proxyIns := range proxyInses {
-			//if proxyNum == 1 {
-			//	proxyIns.(Proxy).NextProxy(proxyInses[k])
-			//	pf.logger.Infof("[%s] %s init [%p]", realName, proxyIns.(Proxy).ProxyName(),
-			//		proxyIns)
-			//} else
 			if k+1 < proxyNum {
 				proxyIns.(Proxy).NextProxy(proxyInses[k+1])
 				pf.logger.Infof("[%s] %s init [%p]", realName, proxyIns.(Proxy).ProxyName(),

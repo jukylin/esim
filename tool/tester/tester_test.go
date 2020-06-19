@@ -125,3 +125,24 @@ func TestTester_checkAndRunMock(t *testing.T) {
 		})
 	}
 }
+
+func TestTester_runLint(t *testing.T) {
+	tests := []struct {
+		name        string
+		watchDir    string
+		withMockery bool
+	}{
+		{"run lint", "./repo", true},
+	}
+
+	execer := pkg.NewNullExec()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tester := NewTester(WithTesterLogger(log.NewLogger(log.WithDebug(true))))
+			tester.execer = execer
+			tester.withWatchDir = tt.watchDir
+			tester.runLint()
+			tester.runLint()
+		})
+	}
+}

@@ -54,8 +54,6 @@ type Server struct {
 	serviceName string
 
 	tracer opentracing2.Tracer
-
-	tcpAddr *net.TCPAddr
 }
 
 type ServerOption func(c *Server)
@@ -271,6 +269,7 @@ func nilResp() grpc.UnaryServerInterceptor {
 	}
 }
 
+//nolint:deadcode,unused
 func panicResp() grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,

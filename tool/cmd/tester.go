@@ -34,7 +34,11 @@ run the go test in the current directory
 func init() {
 	rootCmd.AddCommand(testerCmd)
 
-	testerCmd.Flags().BoolP("wire", "w", true, "run with wire")
+	testerCmd.Flags().BoolP(pkg.WireCmd, "w", true, "run with wire")
+
+	testerCmd.Flags().BoolP(pkg.MockeryCmd, "", true, "run with mockery")
+
+	testerCmd.Flags().BoolP(pkg.LintCmd, "", false, "run with golangci-lint")
 
 	err := v.BindPFlags(testerCmd.Flags())
 	if err != nil {
