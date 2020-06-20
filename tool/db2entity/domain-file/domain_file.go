@@ -2,12 +2,12 @@ package domainfile
 
 import (
 	"bytes"
-	"text/template"
-
+	"fmt"
 	"github.com/dave/dst"
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
 	"github.com/spf13/viper"
+	"text/template"
 )
 
 const (
@@ -132,6 +132,26 @@ type ProvideRepoFunc struct {
 	BodyFuncArg *dst.Ident
 }
 
+func NewProvideRepoFunc(entityName, path string) ProvideRepoFunc {
+	provideRepoFunc := ProvideRepoFunc{}
+	repoName := fmt.Sprintf("%sRepo", entityName)
+
+	provideRepoFunc.FuncName = &dst.Ident{
+		Name: fmt.Sprintf("provide%s", repoName)}
+	provideRepoFunc.ParamName = dst.NewIdent("esim")
+	provideRepoFunc.ParamType = &dst.Ident{
+		Name: "Esim", Path: "github.com/jukylin/esim/container"}
+	provideRepoFunc.Result = &dst.Ident{
+		Name: repoName,
+		Path: path}
+	provideRepoFunc.BodyFunc = &dst.Ident{
+		Name: fmt.Sprintf("NewDb%s", repoName),
+		Path: path}
+	provideRepoFunc.BodyFuncArg = &dst.Ident{Name: "esim.Logger"}
+
+	return provideRepoFunc
+}
+
 type InjectInfo struct {
 	Fields pkg.Fields
 
@@ -139,7 +159,7 @@ type InjectInfo struct {
 
 	InfraSetArgs []string
 
-	Provides Provides
+	// Provides Provides
 
 	ProvideRepoFuns []ProvideRepoFunc
 }
@@ -147,9 +167,10 @@ type InjectInfo struct {
 func NewInjectInfo() *InjectInfo {
 	injectInfo := &InjectInfo{}
 
-	injectInfo.Provides = make(Provides, 0)
+	// injectInfo.Provides = make(Provides, 0)
 	injectInfo.Imports = make(pkg.Imports, 0)
 	injectInfo.InfraSetArgs = make([]string, 0)
+	injectInfo.ProvideRepoFuns = make([]ProvideRepoFunc, 0)
 
 	return injectInfo
 }

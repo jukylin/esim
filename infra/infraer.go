@@ -94,6 +94,10 @@ func NewInfraer(options ...Option) *Infraer {
 		option(infraer)
 	}
 
+	if infraer.injectInfos == nil {
+		infraer.injectInfos = make([]*domain_file.InjectInfo, 0)
+	}
+
 	return infraer
 }
 
@@ -127,7 +131,7 @@ func (ir *Infraer) Inject(v *viper.Viper, injectInfos []*domain_file.InjectInfo)
 	var err error
 
 	if len(injectInfos) == 0 {
-		ir.logger.Errorf("Not need inject")
+		ir.logger.Infof("Not need inject")
 		return false
 	}
 
@@ -156,9 +160,12 @@ func (ir *Infraer) Inject(v *viper.Viper, injectInfos []*domain_file.InjectInfo)
 		return false
 	}
 
-	ir.logger.Infof("inject success")
+	if ir.writeNewInfra() {
+		ir.logger.Infof("inject success")
+		return true
+	}
 
-	return true
+	return false
 }
 
 func (ir *Infraer) bindInput(v *viper.Viper) bool {
@@ -190,8 +197,12 @@ func (ir *Infraer) bindInput(v *viper.Viper) bool {
 	return true
 }
 
+// constructNewInfra construct new infra use ast
 func (ir *Infraer) constructNewInfra(srcStr string) bool {
-	// positions are relative to fset
+	if len(ir.injectInfos) == 0 {
+		return false
+	}
+
 	fset := token.NewFileSet()
 	dec := decorator.NewDecoratorWithImports(fset, "infra", goast.New())
 	f, err := dec.Parse(srcStr)
@@ -205,46 +216,13 @@ func (ir *Infraer) constructNewInfra(srcStr string) bool {
 	for _, decl := range f.Decls {
 		if genDecl, ok := decl.(*dst.GenDecl); ok {
 			if genDecl.Tok == token.TYPE {
-				for _, spec := range genDecl.Specs {
-					if typeSpec, ok := spec.(*dst.TypeSpec); ok {
-						if typeSpec.Name.String() == ir.oldInfraInfo.specialStructName {
-							ir.hasInfraStruct = true
-							fields := typeSpec.Type.(*dst.StructType).Fields.List
-							for _, injectInfo := range ir.injectInfos {
-								for _, injectField := range injectInfo.Fields {
-									fields = append(fields, &dst.Field{
-										Names: []*dst.Ident{
-											dst.NewIdent(injectField.Name),
-										},
-										Type: dst.NewIdent(injectField.Type),
-										Decs: dst.FieldDecorations{NodeDecs: dst.NodeDecs{Before: dst.NewLine}},
-									})
-								}
-							}
-							typeSpec.Type.(*dst.StructType).Fields.List = fields
-						}
-					}
-				}
+				ir.constructNewType(genDecl)
 			}
 		}
 
 		if genDecl, ok := decl.(*dst.GenDecl); ok {
 			if genDecl.Tok == token.VAR {
-				for _, spec := range genDecl.Specs {
-					if valueSpec, ok := spec.(*dst.ValueSpec); ok {
-						if valueSpec.Names[0].String() == ir.oldInfraInfo.specialVarName {
-							for _, specVals := range valueSpec.Values {
-								if callExpr, ok := specVals.(*dst.CallExpr); ok {
-									for _, injectInfo := range ir.injectInfos {
-										for _, infraSet := range injectInfo.InfraSetArgs {
-											callExpr.Args = append(callExpr.Args, dst.NewIdent(infraSet))
-										}
-									}
-								}
-							}
-						}
-					}
-				}
+				ir.constructNewVar(genDecl)
 			}
 		}
 	}
@@ -254,12 +232,10 @@ func (ir *Infraer) constructNewInfra(srcStr string) bool {
 		return false
 	}
 
-	for _, injectInfo := range ir.injectInfos {
-		funcDecls := ir.constructProvideFunc(injectInfo.ProvideRepoFuns)
-		if len(funcDecls) != 0 {
-			for _, funcDecl := range funcDecls {
-				f.Decls = append(f.Decls, funcDecl)
-			}
+	funcDecls := ir.constructProvideFunc()
+	if len(funcDecls) != 0 {
+		for _, funcDecl := range funcDecls {
+			f.Decls = append(f.Decls, funcDecl)
 		}
 	}
 
@@ -275,82 +251,98 @@ func (ir *Infraer) constructNewInfra(srcStr string) bool {
 }
 
 // Construction function
-func (ir *Infraer) constructProvideFunc(prfs []domain_file.ProvideRepoFunc) []*dst.FuncDecl {
-	if len(prfs) == 0 {
-		return []*dst.FuncDecl{}
-	}
-
-	decls := make([]*dst.FuncDecl, len(prfs))
-	for k, ps := range prfs {
-		funcDecl := &dst.FuncDecl{
-			Name: ps.FuncName,
-			Type: &dst.FuncType{
-				Func: true,
-				Params: &dst.FieldList{
-					Opening: true,
-					List: []*dst.Field{
-						&dst.Field{
-							Names: []*dst.Ident{ps.ParamName},
-							Type: &dst.StarExpr{
-								X: ps.ParamType,
-							},
-						},
-					},
-					Closing: true,
-				},
-				Results: &dst.FieldList{
-					List: []*dst.Field{
-						&dst.Field{
-							Type: ps.Result,
-						},
-					},
-				},
-			},
-			Body: &dst.BlockStmt{
-				List: []dst.Stmt{
-					&dst.ReturnStmt{
-						Results: []dst.Expr{
-							&dst.CallExpr{
-								Fun: ps.BodyFunc,
-								Args: []dst.Expr{
-									ps.BodyFuncArg,
+func (ir *Infraer) constructProvideFunc() []*dst.FuncDecl {
+	decls := make([]*dst.FuncDecl, 0)
+	for _, injectInfo := range ir.injectInfos {
+		for _, provideRepoFun := range injectInfo.ProvideRepoFuns {
+			funcDecl := &dst.FuncDecl{
+				Name: provideRepoFun.FuncName,
+				Type: &dst.FuncType{
+					Func: true,
+					Params: &dst.FieldList{
+						Opening: true,
+						List: []*dst.Field{
+							&dst.Field{
+								Names: []*dst.Ident{provideRepoFun.ParamName},
+								Type: &dst.StarExpr{
+									X: provideRepoFun.ParamType,
 								},
 							},
 						},
-						Decs: dst.ReturnStmtDecorations{NodeDecs: dst.NodeDecs{After: dst.NewLine}},
+						Closing: true,
+					},
+					Results: &dst.FieldList{
+						List: []*dst.Field{
+							&dst.Field{
+								Type: provideRepoFun.Result,
+							},
+						},
 					},
 				},
-			},
-			Decs: dst.FuncDeclDecorations{NodeDecs: dst.NodeDecs{Before: dst.EmptyLine}},
+				Body: &dst.BlockStmt{
+					List: []dst.Stmt{
+						&dst.ReturnStmt{
+							Results: []dst.Expr{
+								&dst.CallExpr{
+									Fun: provideRepoFun.BodyFunc,
+									Args: []dst.Expr{
+										provideRepoFun.BodyFuncArg,
+									},
+								},
+							},
+							Decs: dst.ReturnStmtDecorations{NodeDecs: dst.NodeDecs{After: dst.NewLine}},
+						},
+					},
+				},
+				Decs: dst.FuncDeclDecorations{NodeDecs: dst.NodeDecs{Before: dst.EmptyLine}},
+			}
+			decls = append(decls, funcDecl)
 		}
-		decls[k] = funcDecl
 	}
 
 	return decls
 }
 
-func (ir *Infraer) parseType(genDecl *ast.GenDecl, srcStr string) {
-	for _, specs := range genDecl.Specs {
-		if typeSpec, ok := specs.(*ast.TypeSpec); ok {
+func (ir *Infraer) constructNewType(genDecl *dst.GenDecl) {
+	for _, spec := range genDecl.Specs {
+		if typeSpec, ok := spec.(*dst.TypeSpec); ok {
 			if typeSpec.Name.String() == ir.oldInfraInfo.specialStructName {
 				ir.hasInfraStruct = true
-				fields := pkg.Fields{}
-				fields.ParseFromAst(genDecl, srcStr)
-				ir.oldInfraInfo.structInfo.Fields = fields
-				ir.oldInfraInfo.structStr = srcStr[genDecl.Pos()-1 : genDecl.End()]
+				fields := typeSpec.Type.(*dst.StructType).Fields.List
+				for _, injectInfo := range ir.injectInfos {
+					for _, injectField := range injectInfo.Fields {
+						fields = append(fields, &dst.Field{
+							Names: []*dst.Ident{
+								dst.NewIdent(injectField.Name),
+							},
+							Type: dst.NewIdent(injectField.Type),
+							Decs: dst.FieldDecorations{NodeDecs: dst.NodeDecs{Before: dst.EmptyLine}},
+						})
+					}
+				}
+				typeSpec.Type.(*dst.StructType).Fields.List = fields
 			}
 		}
 	}
 }
 
-func (ir *Infraer) parseVar(genDecl *ast.GenDecl, srcStr string) {
-	for _, specs := range genDecl.Specs {
-		if typeSpec, ok := specs.(*ast.ValueSpec); ok {
-			for _, name := range typeSpec.Names {
-				if name.String() == ir.oldInfraInfo.specialVarName {
-					ir.oldInfraInfo.infraSetStr = srcStr[genDecl.TokPos-1 : genDecl.End()]
-					ir.oldInfraInfo.infraSetArgs.Args = append(ir.oldInfraInfo.infraSetArgs.Args,
-						ir.parseInfraSetArgs(genDecl, srcStr)...)
+func (ir *Infraer) constructNewVar(genDecl *dst.GenDecl) {
+	for _, spec := range genDecl.Specs {
+		if valueSpec, ok := spec.(*dst.ValueSpec); ok {
+			if valueSpec.Names[0].String() == ir.oldInfraInfo.specialVarName {
+				for _, specVals := range valueSpec.Values {
+					if callExpr, ok := specVals.(*dst.CallExpr); ok {
+						for _, injectInfo := range ir.injectInfos {
+							for _, infraSet := range injectInfo.InfraSetArgs {
+								callExpr.Args = append(callExpr.Args,
+									&dst.Ident{
+										Name: infraSet,
+										Decs: dst.IdentDecorations{
+											NodeDecs: dst.NodeDecs{Before: dst.NewLine}},
+									})
+							}
+						}
+					}
 				}
 			}
 		}

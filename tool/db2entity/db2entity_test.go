@@ -21,7 +21,6 @@ func TestDb2Entity_Run(t *testing.T) {
 	v.Set("dao_target", "./example/dao")
 	v.Set("repo_target", "./example/repo")
 	v.Set("infra_dir", "./example/infra")
-
 	v.Set("host", "127.0.0.1")
 	v.Set("inject", true)
 	v.Set("port", "3306")
@@ -30,8 +29,7 @@ func TestDb2Entity_Run(t *testing.T) {
 	v.Set("database", "user")
 	v.Set("table", "test_history")
 
-	loggerOptions := log.LoggerOptions{}
-	logger := log.NewLogger(loggerOptions.WithDebug(true))
+	logger := log.NewLogger(log.WithDebug(true))
 	tpl := templates.NewTextTpl()
 
 	dbConf := domainfile.NewDbConfig()

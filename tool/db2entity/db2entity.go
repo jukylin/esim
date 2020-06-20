@@ -8,7 +8,7 @@ import (
 	filedir "github.com/jukylin/esim/pkg/file-dir"
 
 	"errors"
-	"os"
+	//"os"
 	"path/filepath"
 
 	"github.com/jukylin/esim/infra"
@@ -152,9 +152,9 @@ func (de *Db2Entity) Run(v *viper.Viper) error {
 			if len(de.wroteContent) > 0 {
 				for path := range de.wroteContent {
 					de.logger.Debugf("remove %s", path)
-					err := os.RemoveAll(path)
+					//err := os.RemoveAll(path)
 					if err != nil {
-						de.logger.Errorf(err.Error())
+						//de.logger.Errorf(err.Error())
 					}
 				}
 			}

@@ -95,6 +95,10 @@ func test(esim *container.Esim) _interface.Repo {
 	infraer.injectInfos = append(infraer.injectInfos, injectInfo)
 	assert.True(t, infraer.constructNewInfra(infraContent))
 	assert.Equal(t, expected, expected)
+
+	infraer.injectInfos = make([]*domain_file.InjectInfo, 0)
+	assert.False(t, infraer.constructNewInfra(infraContent))
+
 }
 
 func TestInfraer_constructProvideFunc(t *testing.T) {
@@ -107,7 +111,7 @@ func TestInfraer_constructProvideFunc(t *testing.T) {
 		except int
 	}{
 		{"empty", args{prfs: []domain_file.ProvideRepoFunc{}}, 0},
-		{"empty", args{prfs: []domain_file.ProvideRepoFunc{
+		{"construct success", args{prfs: []domain_file.ProvideRepoFunc{
 			domain_file.ProvideRepoFunc{
 				FuncName:    dst.NewIdent("test"),
 				ParamName:   dst.NewIdent("esim"),
@@ -120,8 +124,11 @@ func TestInfraer_constructProvideFunc(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			injectInfo := &domain_file.InjectInfo{}
 			ir := NewInfraer()
-			funcDecls := ir.constructProvideFunc(tt.args.prfs)
+			injectInfo.ProvideRepoFuns = tt.args.prfs
+			ir.injectInfos = append(ir.injectInfos, injectInfo)
+			funcDecls := ir.constructProvideFunc()
 			assert.Equal(t, tt.except, len(funcDecls))
 		})
 	}
