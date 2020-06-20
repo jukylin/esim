@@ -4,12 +4,11 @@ var (
 	infraContent = `package infra
 
 import (
-	//sync
-	//is a test
 	"sync"
 	"github.com/google/wire"
 	"github.com/jukylin/esim/container"
 	"github.com/jukylin/esim/redis"
+	_interface "test/internal/interface"
 )
 
 
@@ -30,6 +29,7 @@ type Infra struct {
 
 var infraSet = wire.NewSet(
 	wire.Struct(new(Infra), "*"),
+	provideMns,
 )
 
 func NewInfra() *Infra {
@@ -48,5 +48,13 @@ func (this *Infra) Close()  {
 func (this *Infra) HealthCheck() []error {
 	var errs []error
 	return errs
-}`
+}
+
+func provideRepo(esim *container.Esim) _interface.Repo {
+	var a int
+	return repo.NewRepo(esim.Logger)
+}
+
+func provideA(a string)  {}
+`
 )

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"text/template"
 
+	"github.com/dave/dst"
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
 	"github.com/spf13/viper"
@@ -117,6 +118,20 @@ func (shareInfo *ShareInfo) ParseInfo(obj interface{}) {
 	}
 }
 
+type ProvideRepoFunc struct {
+	FuncName *dst.Ident
+
+	ParamName *dst.Ident
+
+	ParamType *dst.Ident
+
+	Result *dst.Ident
+
+	BodyFunc *dst.Ident
+
+	BodyFuncArg *dst.Ident
+}
+
 type InjectInfo struct {
 	Fields pkg.Fields
 
@@ -125,6 +140,8 @@ type InjectInfo struct {
 	InfraSetArgs []string
 
 	Provides Provides
+
+	ProvideRepoFuns []ProvideRepoFunc
 }
 
 func NewInjectInfo() *InjectInfo {

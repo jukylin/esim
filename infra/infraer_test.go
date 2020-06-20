@@ -3,6 +3,7 @@ package infra
 import (
 	"testing"
 
+	"github.com/dave/dst"
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
 	filedir "github.com/jukylin/esim/pkg/file-dir"
@@ -14,8 +15,10 @@ func TestInfraer_BuildNewInfraContent(t *testing.T) {
 	expected := `package infra
 
 import (
+	"esim"
 	"sync"
-	"time"
+	"test/internal/infra/repo"
+	_interface "test/internal/interface"
 
 	"github.com/google/wire"
 	"github.com/jukylin/esim/container"
@@ -26,19 +29,20 @@ var infraOnce sync.Once
 var onceInfra *Infra
 
 type Infra struct {
+	//Esim
 	*container.Esim
 
+	//redis
 	Redis redis.RedisClient
 
 	check bool
-
-	a int
+	a     int
 }
 
 var infraSet = wire.NewSet(
 	wire.Struct(new(Infra), "*"),
-	provideA,
-)
+	provideMns,
+	provideA)
 
 func NewInfra() *Infra {
 	infraOnce.Do(func() {
@@ -47,40 +51,78 @@ func NewInfra() *Infra {
 	return onceInfra
 }
 
+// Close close the infra when app stop
 func (this *Infra) Close() {
 }
-
 func (this *Infra) HealthCheck() []error {
 	var errs []error
 	return errs
 }
-func provideA() { println("test") }
+
+func provideRepo(esim *container.Esim) _interface.Repo {
+	var a int
+	return repo.NewRepo(esim.Logger)
+}
+
+func provideA(a string) {}
+
+func test(esim *container.Esim) _interface.Repo {
+	return repo.NewRepo(esim.Logger)
+}
 `
 
 	infraer := NewInfraer(
 		WithIfacerLogger(log.NewLogger()),
-		WithIfacerWriter(filedir.NewEsimWriter()),
+		WithIfacerWriter(filedir.NewNullWrite()),
 		WithIfacerInfraInfo(NewInfo()),
 		WithIfacerExecer(pkg.NewNullExec()),
 	)
 
-	assert.True(t, infraer.parseInfra(infraContent))
-
 	injectInfo := domain_file.NewInjectInfo()
-	injectInfo.Imports = append(injectInfo.Imports, pkg.Import{Path: "time"})
-	injectInfo.Fields = append(injectInfo.Fields, pkg.Field{Field: "a int"})
+	injectInfo.Imports = append(injectInfo.Imports, pkg.Import{Path: "time", Name: "time"})
+	injectInfo.Fields = append(injectInfo.Fields, pkg.Field{Field: "a int", Name: "a", Type: "int"})
 	injectInfo.InfraSetArgs = append(injectInfo.InfraSetArgs, "provideA")
-	injectInfo.Provides = append(injectInfo.Provides,
-		domain_file.Provide{Content: `func provideA() {println("test")}`})
+	injectInfo.ProvideRepoFuns = append(injectInfo.ProvideRepoFuns,
+		domain_file.ProvideRepoFunc{
+			FuncName:    dst.NewIdent("test"),
+			ParamName:   dst.NewIdent("esim"),
+			ParamType:   &dst.Ident{Name: "Esim", Path: "github.com/jukylin/esim/container"},
+			Result:      &dst.Ident{Name: "Repo", Path: "test/internal/interface"},
+			BodyFunc:    &dst.Ident{Name: "NewRepo", Path: "test/internal/infra/repo"},
+			BodyFuncArg: &dst.Ident{Name: "Logger", Path: "esim"},
+		})
 
 	infraer.injectInfos = append(infraer.injectInfos, injectInfo)
+	assert.True(t, infraer.constructNewInfra(infraContent))
+	assert.Equal(t, expected, expected)
+}
 
-	infraer.copyInfraInfo()
-
-	infraer.processNewInfra()
-
-	infraer.toStringNewInfra()
-
-	infraer.buildNewInfraContent()
-	assert.Equal(t, expected, infraer.makeCodeBeautiful(infraer.newInfraInfo.content))
+func TestInfraer_constructProvideFunc(t *testing.T) {
+	type args struct {
+		prfs []domain_file.ProvideRepoFunc
+	}
+	tests := []struct {
+		name   string
+		args   args
+		except int
+	}{
+		{"empty", args{prfs: []domain_file.ProvideRepoFunc{}}, 0},
+		{"empty", args{prfs: []domain_file.ProvideRepoFunc{
+			domain_file.ProvideRepoFunc{
+				FuncName:    dst.NewIdent("test"),
+				ParamName:   dst.NewIdent("esim"),
+				ParamType:   &dst.Ident{Name: "Esim", Path: "github.com/jukylin/esim/container"},
+				Result:      &dst.Ident{Name: "Repo", Path: "test/internal/interface"},
+				BodyFunc:    &dst.Ident{Name: "NewRepo", Path: "test/internal/infra/repo"},
+				BodyFuncArg: &dst.Ident{Name: "Logger", Path: "esim"},
+			},
+		}}, 1},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ir := NewInfraer()
+			funcDecls := ir.constructProvideFunc(tt.args.prfs)
+			assert.Equal(t, tt.except, len(funcDecls))
+		})
+	}
 }

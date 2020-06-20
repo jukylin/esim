@@ -2,19 +2,23 @@ package infra
 
 import (
 	"go/ast"
-	"go/parser"
-	"go/token"
-	"io/ioutil"
-	"path/filepath"
-	"strings"
-
+	// "go/parser"
+	"bytes"
+	"github.com/dave/dst"
+	"github.com/dave/dst/decorator"
+	"github.com/dave/dst/decorator/resolver/goast"
+	"github.com/dave/dst/decorator/resolver/guess"
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
 	filedir "github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
 	domain_file "github.com/jukylin/esim/tool/db2entity/domain-file"
 	"github.com/spf13/viper"
+	"go/token"
 	"golang.org/x/tools/imports"
+	"io/ioutil"
+	"path/filepath"
+	"strings"
 )
 
 type Infraer struct {
@@ -35,6 +39,8 @@ type Infraer struct {
 	withInfraDir string
 
 	withInfraFile string
+
+	newInfraContent string
 }
 
 type Info struct {
@@ -145,23 +151,8 @@ func (ir *Infraer) Inject(v *viper.Viper, injectInfos []*domain_file.InjectInfo)
 		return false
 	}
 
-	parseResult := ir.parseInfra(beautifulSource)
+	parseResult := ir.constructNewInfra(beautifulSource)
 	if !parseResult {
-		return false
-	}
-
-	if ir.hasInfraStruct {
-		ir.copyInfraInfo()
-
-		ir.processNewInfra()
-
-		ir.toStringNewInfra()
-
-		ir.buildNewInfraContent()
-
-		ir.writeNewInfra()
-	} else {
-		ir.logger.Errorf("not found the %s", ir.oldInfraInfo.specialStructName)
 		return false
 	}
 
@@ -199,32 +190,61 @@ func (ir *Infraer) bindInput(v *viper.Viper) bool {
 	return true
 }
 
-// parseInfra parse infra.go 's content,
-// find "import", "Infra" , "infraSet" and record origin syntax.
-func (ir *Infraer) parseInfra(srcStr string) bool {
+func (ir *Infraer) constructNewInfra(srcStr string) bool {
 	// positions are relative to fset
 	fset := token.NewFileSet()
-	f, err := parser.ParseFile(fset, "", srcStr, parser.ParseComments)
+	dec := decorator.NewDecoratorWithImports(fset, "infra", goast.New())
+	f, err := dec.Parse(srcStr)
 	if err != nil {
-		ir.logger.Errorf(err.Error())
-		return false
+		if err != nil {
+			ir.logger.Errorf(err.Error())
+			return false
+		}
 	}
 
 	for _, decl := range f.Decls {
-		if genDecl, ok := decl.(*ast.GenDecl); ok {
-			if genDecl.Tok.String() == "import" {
-				imps := pkg.Imports{}
-				imps.ParseFromAst(genDecl)
-				ir.oldInfraInfo.imports = imps
-				ir.oldInfraInfo.importStr = srcStr[genDecl.Pos()-1 : genDecl.End()]
+		if genDecl, ok := decl.(*dst.GenDecl); ok {
+			if genDecl.Tok == token.TYPE {
+				for _, spec := range genDecl.Specs {
+					if typeSpec, ok := spec.(*dst.TypeSpec); ok {
+						if typeSpec.Name.String() == ir.oldInfraInfo.specialStructName {
+							ir.hasInfraStruct = true
+							fields := typeSpec.Type.(*dst.StructType).Fields.List
+							for _, injectInfo := range ir.injectInfos {
+								for _, injectField := range injectInfo.Fields {
+									fields = append(fields, &dst.Field{
+										Names: []*dst.Ident{
+											dst.NewIdent(injectField.Name),
+										},
+										Type: dst.NewIdent(injectField.Type),
+										Decs: dst.FieldDecorations{NodeDecs: dst.NodeDecs{Before: dst.NewLine}},
+									})
+								}
+							}
+							typeSpec.Type.(*dst.StructType).Fields.List = fields
+						}
+					}
+				}
 			}
+		}
 
-			if genDecl.Tok.String() == "type" {
-				ir.parseType(genDecl, srcStr)
-			}
-
-			if genDecl.Tok.String() == "var" {
-				ir.parseVar(genDecl, srcStr)
+		if genDecl, ok := decl.(*dst.GenDecl); ok {
+			if genDecl.Tok == token.VAR {
+				for _, spec := range genDecl.Specs {
+					if valueSpec, ok := spec.(*dst.ValueSpec); ok {
+						if valueSpec.Names[0].String() == ir.oldInfraInfo.specialVarName {
+							for _, specVals := range valueSpec.Values {
+								if callExpr, ok := specVals.(*dst.CallExpr); ok {
+									for _, injectInfo := range ir.injectInfos {
+										for _, infraSet := range injectInfo.InfraSetArgs {
+											callExpr.Args = append(callExpr.Args, dst.NewIdent(infraSet))
+										}
+									}
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 	}
@@ -234,9 +254,79 @@ func (ir *Infraer) parseInfra(srcStr string) bool {
 		return false
 	}
 
-	ir.oldInfraInfo.content = srcStr
+	for _, injectInfo := range ir.injectInfos {
+		funcDecls := ir.constructProvideFunc(injectInfo.ProvideRepoFuns)
+		if len(funcDecls) != 0 {
+			for _, funcDecl := range funcDecls {
+				f.Decls = append(f.Decls, funcDecl)
+			}
+		}
+	}
+
+	var buf bytes.Buffer
+	res := decorator.NewRestorerWithImports("infra", guess.New())
+	if err := res.Fprint(&buf, f); err != nil {
+		ir.logger.Errorf(err.Error())
+		return false
+	}
+	ir.newInfraContent = buf.String()
 
 	return true
+}
+
+// Construction function
+func (ir *Infraer) constructProvideFunc(prfs []domain_file.ProvideRepoFunc) []*dst.FuncDecl {
+	if len(prfs) == 0 {
+		return []*dst.FuncDecl{}
+	}
+
+	decls := make([]*dst.FuncDecl, len(prfs))
+	for k, ps := range prfs {
+		funcDecl := &dst.FuncDecl{
+			Name: ps.FuncName,
+			Type: &dst.FuncType{
+				Func: true,
+				Params: &dst.FieldList{
+					Opening: true,
+					List: []*dst.Field{
+						&dst.Field{
+							Names: []*dst.Ident{ps.ParamName},
+							Type: &dst.StarExpr{
+								X: ps.ParamType,
+							},
+						},
+					},
+					Closing: true,
+				},
+				Results: &dst.FieldList{
+					List: []*dst.Field{
+						&dst.Field{
+							Type: ps.Result,
+						},
+					},
+				},
+			},
+			Body: &dst.BlockStmt{
+				List: []dst.Stmt{
+					&dst.ReturnStmt{
+						Results: []dst.Expr{
+							&dst.CallExpr{
+								Fun: ps.BodyFunc,
+								Args: []dst.Expr{
+									ps.BodyFuncArg,
+								},
+							},
+						},
+						Decs: dst.ReturnStmtDecorations{NodeDecs: dst.NodeDecs{After: dst.NewLine}},
+					},
+				},
+			},
+			Decs: dst.FuncDeclDecorations{NodeDecs: dst.NodeDecs{Before: dst.EmptyLine}},
+		}
+		decls[k] = funcDecl
+	}
+
+	return decls
 }
 
 func (ir *Infraer) parseType(genDecl *ast.GenDecl, srcStr string) {
@@ -286,51 +376,6 @@ func (ir *Infraer) sourceInfraFile() string {
 	return formatSrc
 }
 
-func (ir *Infraer) copyInfraInfo() {
-	oldContent := *ir.oldInfraInfo
-	ir.newInfraInfo = &oldContent
-}
-
-// processInfraInfo process newInfraInfo, append import, repo field and wire's provider.
-func (ir *Infraer) processNewInfra() {
-	for _, injectInfo := range ir.injectInfos {
-		ir.newInfraInfo.structInfo.Fields = append(ir.newInfraInfo.structInfo.Fields,
-			injectInfo.Fields...)
-
-		ir.newInfraInfo.infraSetArgs.Args = append(ir.newInfraInfo.infraSetArgs.Args,
-			injectInfo.InfraSetArgs...)
-
-		ir.newInfraInfo.imports = append(ir.newInfraInfo.imports, injectInfo.Imports...)
-
-		ir.newInfraInfo.provides = append(ir.newInfraInfo.provides, injectInfo.Provides...)
-	}
-}
-
-func (ir *Infraer) toStringNewInfra() {
-	ir.newInfraInfo.importStr = ir.newInfraInfo.imports.String()
-
-	ir.newInfraInfo.structStr = ir.newInfraInfo.structInfo.String()
-
-	ir.newInfraInfo.infraSetStr = ir.newInfraInfo.infraSetArgs.String()
-
-	ir.newInfraInfo.provideStr = ir.newInfraInfo.provides.String()
-}
-
-func (ir *Infraer) buildNewInfraContent() {
-	oldContent := ir.oldInfraInfo.content
-
-	oldContent = strings.Replace(oldContent,
-		ir.oldInfraInfo.importStr, ir.newInfraInfo.importStr, -1)
-
-	oldContent = strings.Replace(oldContent,
-		ir.oldInfraInfo.structStr, ir.newInfraInfo.structStr, -1)
-
-	ir.newInfraInfo.content = strings.Replace(oldContent,
-		ir.oldInfraInfo.infraSetStr, ir.newInfraInfo.infraSetStr, -1)
-
-	ir.newInfraInfo.content += ir.newInfraInfo.provideStr
-}
-
 func (ir *Infraer) makeCodeBeautiful(src string) string {
 	options := &imports.Options{}
 	options.Comments = false
@@ -348,7 +393,7 @@ func (ir *Infraer) makeCodeBeautiful(src string) string {
 
 // writeNewInfra cover old infra.go's content.
 func (ir *Infraer) writeNewInfra() bool {
-	processSrc := ir.makeCodeBeautiful(ir.newInfraInfo.content)
+	processSrc := ir.makeCodeBeautiful(ir.newInfraContent)
 
 	err := ir.writer.Write(ir.withInfraDir+ir.withInfraFile, processSrc)
 	if err != nil {
