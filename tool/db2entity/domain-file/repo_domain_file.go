@@ -158,10 +158,6 @@ func (rdf *repoDomainFile) GetInjectInfo() *InjectInfo {
 	injectInfo.InfraSetArgs = append(injectInfo.InfraSetArgs,
 		"provide"+rdf.shareInfo.CamelStruct+"Repo")
 
-	//injectInfo.Imports = append(injectInfo.Imports,
-	//	pkg.Import{Path: filedir.GetGoProPath() +
-	//		pkg.DirPathToImportPath(rdf.shareInfo.WithRepoTarget)})
-
 	path := filedir.GetGoProPath() + pkg.DirPathToImportPath(rdf.shareInfo.WithRepoTarget)
 	provideRepoFunc := NewProvideRepoFunc(rdf.shareInfo.CamelStruct, path)
 	injectInfo.ProvideRepoFuns = append(injectInfo.ProvideRepoFuns, provideRepoFunc)

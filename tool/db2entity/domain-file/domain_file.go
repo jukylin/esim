@@ -3,11 +3,12 @@ package domainfile
 import (
 	"bytes"
 	"fmt"
+	"text/template"
+
 	"github.com/dave/dst"
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
 	"github.com/spf13/viper"
-	"text/template"
 )
 
 const (

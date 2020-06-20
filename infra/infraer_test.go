@@ -74,7 +74,6 @@ func test(esim *container.Esim) _interface.Repo {
 	infraer := NewInfraer(
 		WithIfacerLogger(log.NewLogger()),
 		WithIfacerWriter(filedir.NewNullWrite()),
-		WithIfacerInfraInfo(NewInfo()),
 		WithIfacerExecer(pkg.NewNullExec()),
 	)
 
