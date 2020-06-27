@@ -2,17 +2,9 @@ package factory
 
 import (
 	"errors"
-	"go/ast"
-	"go/parser"
-	"go/token"
-	"io/ioutil"
-	"os"
-	"path"
-	"path/filepath"
-	"strings"
-
 	"fmt"
-
+	"github.com/dave/dst"
+	"github.com/dave/dst/decorator"
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/pkg"
 	filedir "github.com/jukylin/esim/pkg/file-dir"
@@ -20,8 +12,26 @@ import (
 	"github.com/martinusso/inflect"
 	"github.com/serenize/snaker"
 	"github.com/spf13/viper"
+	"go/ast"
+	"go/build"
+	"go/parser"
+	"go/token"
+	"go/types"
+	"golang.org/x/tools/go/loader"
+	"golang.org/x/tools/go/packages"
 	"golang.org/x/tools/imports"
+	"io/ioutil"
+	"os"
+	"path"
+	"path/filepath"
+	// "sort"
+	"bytes"
+	"github.com/dave/dst/decorator/resolver/gopackages"
+	"sort"
+	"strings"
 )
+
+var fset = token.NewFileSet()
 
 type SortReturn struct {
 	Fields pkg.Fields `json:"fields"`
@@ -32,20 +42,12 @@ type InitFieldsReturn struct {
 	SpecFields []pkg.Field `json:"SpecFields"`
 }
 
-// +-----------+-----------+.
-// | firstPart |	package	  |
-// |			  |	import	  |
-// |----------|	----------|
-// | secondPart| var		  |
-// |			  |	     	  |
-// |----------|	----------|
-// | thirdPart    | struct	  |
-// |			  |	funcBody  |
-// |----------|	----------|
-//nolint:godot,maligned
 type EsimFactory struct {
-	// struct name which be search
+	// struct name which be search.
 	StructName string
+
+	// First letter uppercase of StructName.
+	UpStructName string
 
 	// struct Absolute path
 	structDir string
@@ -140,6 +142,17 @@ type EsimFactory struct {
 	tpl templates.Tpl
 
 	ot *optionTpl
+
+	typeSpec *dst.TypeSpec
+
+	// underlying type of a type.
+	underType *types.Struct
+
+	structPackage *decorator.Package
+
+	dstFile *dst.File
+
+	newStructField []*types.Var
 }
 
 type Option func(*EsimFactory)
@@ -244,46 +257,36 @@ func (ef *EsimFactory) Run(v *viper.Viper) error {
 		ef.logger.Panicf(err.Error())
 	}
 
-	if !ef.parseStruct() {
-		ef.logger.Panicf("not found struct %s", ef.StructName)
-	}
-	ef.copyOldStructInfo()
-
-	if ef.extendField() {
-		err = ef.buildNewStructFileContent()
-		if err != nil {
-			ef.logger.Panicf(err.Error())
-		}
+	ps := ef.loadPackages()
+	if !ef.findStruct(ps) {
+		ef.logger.Panicf("Not found struct %s", ef.StructName)
 	}
 
-	ef.logger.Debugf("fields len %d", ef.oldStructInfo.Fields.Len())
+	//if !ef.parseStruct() {
+	//	ef.logger.Panicf("not found struct %s", ef.StructName)
+	//}
 
-	if ef.oldStructInfo.Fields.Len() > 0 {
-		ef.structFieldIface.SetStructInfo(ef.NewStructInfo)
-		ef.structFieldIface.SetStructName(ef.StructName)
-		ef.structFieldIface.SetStructDir(ef.structDir)
-		ef.structFieldIface.SetStructFileName(ef.structFileName)
-		ef.structFieldIface.SetFilesName(ef.filesName)
-		ef.structFieldIface.SetPackName(ef.packName)
+	ef.extendFields(ps)
 
-		if ef.withSort {
-			sortedField := &SortReturn{}
-			ef.structFieldIface.HandleField(ef.NewStructInfo.Fields, sortedField)
-			ef.logger.Debugf("sorted fields %+v", sortedField.Fields)
-			ef.NewStructInfo.Fields = sortedField.Fields
-		}
-
-		ef.InitField = &InitFieldsReturn{}
-		ef.structFieldIface.HandleField(ef.NewStructInfo.Fields, ef.InitField)
+	if ef.withSort {
+		ef.sortField()
 	}
 
-	ef.genStr()
+	if ef.WithNew {
+		ef.sortField()
+	}
 
-	ef.assignStructTpl()
+	//ef.InitField = &InitFieldsReturn{}
+	//ef.structFieldIface.HandleField(ef.NewStructInfo.Fields, ef.InitField)
 
-	ef.executeNewTmpl()
-
-	ef.organizePart()
+	//
+	//ef.genStr()
+	//
+	//ef.assignStructTpl()
+	//
+	//ef.executeNewTmpl()
+	//
+	//ef.organizePart()
 
 	if ef.withPrint {
 		ef.printResult()
@@ -311,6 +314,165 @@ func (ef *EsimFactory) Run(v *viper.Viper) error {
 	}
 
 	return nil
+}
+
+func (ef *EsimFactory) loadPackages() []*decorator.Package {
+	var conf loader.Config
+	conf.TypeChecker.Sizes = types.SizesFor(build.Default.Compiler, build.Default.GOARCH)
+	conf.Fset = fset
+
+	pConfig := &packages.Config{}
+	pConfig.Fset = fset
+	pConfig.Mode = packages.LoadAllSyntax
+	pConfig.Dir = ef.structDir
+	ps, err := decorator.Load(pConfig)
+	if err != nil {
+		ef.logger.Panicf(err.Error())
+	}
+
+	return ps
+}
+
+// check exists
+func (ef *EsimFactory) findStruct(ps []*decorator.Package) bool {
+	for _, p := range ps {
+		for _, syntax := range p.Syntax {
+			for _, decl := range syntax.Decls {
+				if genDecl, ok := decl.(*dst.GenDecl); ok {
+					if genDecl.Tok == token.TYPE {
+						for _, spec := range genDecl.Specs {
+							if typeSpec, ok := spec.(*dst.TypeSpec); ok {
+								for _, def := range p.TypesInfo.Defs {
+									if def == nil {
+										continue
+									}
+
+									if _, ok := def.(*types.TypeName); !ok {
+										continue
+									}
+
+									typ, ok := def.Type().(*types.Named)
+									if !ok {
+										continue
+									}
+
+									underType, ok := typ.Underlying().(*types.Struct)
+									if !ok {
+										continue
+									}
+
+									if typeSpec.Name.String() == def.Name() &&
+										typeSpec.Name.String() == ef.StructName {
+										ef.found = true
+										ef.typeSpec = typeSpec
+										ef.underType = underType
+										ef.structPackage = p
+										ef.dstFile = syntax
+										return true
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return false
+}
+
+func (ef *EsimFactory) constructNew() {
+	params := &dst.FieldList{}
+	if ef.withOption {
+		params = &dst.FieldList{
+			Opening: true,
+			List: []*dst.Field{
+				&dst.Field{
+					Names: []*dst.Ident{dst.NewIdent("options")},
+					Type: &dst.Ellipsis{
+						Elt: dst.NewIdent(ef.UpStructName + "Option"),
+					},
+				},
+			},
+		}
+	}
+
+	funcDecl := &dst.FuncDecl{
+		Name: dst.NewIdent("New" + ef.UpStructName),
+		Type: &dst.FuncType{
+			Func:   true,
+			Params: params,
+			Results: &dst.FieldList{
+				List: []*dst.Field{
+					&dst.Field{
+						Type: &dst.StarExpr{
+							X: dst.NewIdent(ef.UpStructName),
+						},
+					},
+				},
+			},
+		},
+		Body: &dst.BlockStmt{
+			List: []dst.Stmt{
+				&dst.AssignStmt{
+					Lhs: []dst.Expr{
+						dst.NewIdent("t"),
+					},
+					Tok: token.DEFINE,
+					Rhs: []dst.Expr{
+						&dst.TypeAssertExpr{
+							X: &dst.CallExpr{
+								Fun: &dst.SelectorExpr{
+									X:   dst.NewIdent("testsPool"),
+									Sel: dst.NewIdent("Get"),
+								},
+							},
+							Type: &dst.StarExpr{
+								X: dst.NewIdent(ef.UpStructName + "s"),
+							},
+						},
+					},
+				},
+				&dst.RangeStmt{
+					Key:   dst.NewIdent("_"),
+					Value: dst.NewIdent("option"),
+					Tok:   token.DEFINE,
+					X:     dst.NewIdent("options"),
+					Body: &dst.BlockStmt{
+						List: []dst.Stmt{
+							&dst.ExprStmt{
+								X: &dst.CallExpr{
+									Fun: dst.NewIdent("option"),
+									Args: []dst.Expr{
+										dst.NewIdent("t"),
+									},
+								},
+							},
+						},
+					},
+				},
+				&dst.ReturnStmt{
+					Results: []dst.Expr{
+						dst.NewIdent("t"),
+					},
+				},
+			},
+		},
+	}
+
+	_ = funcDecl
+}
+
+func (ef *EsimFactory) newContext() string {
+	r := decorator.NewRestorerWithImports("root", gopackages.New(ef.structDir))
+
+	var buf bytes.Buffer
+	if err := r.Fprint(&buf, ef.dstFile); err != nil {
+		panic(err)
+	}
+
+	return buf.String()
 }
 
 func (ef *EsimFactory) assignStructTpl() {
@@ -389,6 +551,7 @@ func (ef *EsimFactory) bindInput(v *viper.Viper) error {
 		return errors.New("sname is empty")
 	}
 	ef.StructName = sname
+	ef.UpStructName = templates.FirstToUpper(sname)
 
 	sdir := v.GetString("sdir")
 	if sdir == "" {
@@ -560,48 +723,100 @@ func (ef *EsimFactory) parseImport(genDecl *ast.GenDecl, src []byte) {
 }
 
 // Extend logger and conf for new struct field.
-func (ef *EsimFactory) extendField() bool {
-	var HasExtend bool
+func (ef *EsimFactory) extendFields(ps []*decorator.Package) {
 	if ef.withOption {
 		if ef.withGenLoggerOption {
-			HasExtend = true
-			ef.extendFieldInfo(newLoggerFieldInfo())
+			ef.extendField(newLoggerFieldInfo())
 		}
 
 		if ef.withGenConfOption {
-			HasExtend = true
-			ef.extendFieldInfo(newConfigFieldInfo())
+			ef.extendField(newConfigFieldInfo())
 		}
 	}
-
-	return HasExtend
 }
 
-func (ef *EsimFactory) extendFieldInfo(fieldInfo extendFieldInfo) {
-	var foundField bool
-	for _, field := range ef.NewStructInfo.Fields {
-		if strings.Contains(field.Field, fieldInfo.ftype) && !foundField {
-			foundField = true
+type FieldSizes []FieldSize
+
+type FieldSize struct {
+	Size int64
+
+	Field *dst.Field
+
+	Vars *types.Var
+}
+
+func (fs FieldSizes) Len() int { return len(fs) }
+
+func (fs FieldSizes) Less(i, j int) bool {
+	return fs[i].Size < fs[j].Size
+}
+
+func (fs FieldSizes) Swap(i, j int) { fs[i], fs[j] = fs[j], fs[i] }
+
+func (fs FieldSizes) getFields() []*dst.Field {
+	dstFields := make([]*dst.Field, 0)
+	for _, f := range fs {
+		dstFields = append(dstFields, f.Field)
+	}
+
+	return dstFields
+}
+
+// sortField ascending in byte size.
+// The extension fields at the end of the struct.
+func (ef *EsimFactory) sortField() {
+	fs := make(FieldSizes, 0)
+	numField := ef.underType.NumFields()
+	var size int64
+
+	for k, field := range ef.typeSpec.Type.(*dst.StructType).Fields.List {
+		field.Decs.After = dst.EmptyLine
+
+		// The extension fields not in the underlying type
+		if k < numField {
+			size = ef.structPackage.TypesSizes.Sizeof(ef.underType.Field(k).Type())
+		} else {
+			size = 10000
+		}
+
+		fs = append(fs, FieldSize{
+			Size:  size,
+			Field: field,
+		},
+		)
+	}
+	sort.Sort(fs)
+	ef.typeSpec.Type.(*dst.StructType).Fields.List = fs.getFields()
+}
+
+func (ef *EsimFactory) extendField(fieldInfo extendFieldInfo) {
+	fields := ef.typeSpec.Type.(*dst.StructType).Fields.List
+	var fieldExists bool
+	for _, field := range fields {
+		if len(field.Names) != 0 {
+			if field.Names[0].Name == fieldInfo.name {
+				fieldExists = true
+			}
 		}
 	}
 
-	if !foundField || len(ef.NewStructInfo.Fields) == 0 {
-		fld := pkg.Field{}
-		fld.Field = fmt.Sprintf("%s %s", fieldInfo.name, fieldInfo.ftype)
-		fld.Name = fieldInfo.name
-		ef.NewStructInfo.Fields = append(ef.NewStructInfo.Fields, fld)
+	if fieldExists == false {
+		fields = append(fields,
+			&dst.Field{
+				Names: []*dst.Ident{
+					dst.NewIdent(fieldInfo.name),
+				},
+				Type: &dst.Ident{Name: fieldInfo.typeName, Path: fieldInfo.typePath},
+				Decs: dst.FieldDecorations{
+					NodeDecs: dst.NodeDecs{
+						Before: dst.EmptyLine,
+					},
+				},
+			},
+		)
+		ef.typeSpec.Type.(*dst.StructType).Fields.List = fields
 	}
 
-	var foundImport bool
-	for _, oim := range ef.NewStructInfo.imports {
-		if oim.Path == fieldInfo.importPath {
-			foundImport = true
-		}
-	}
-
-	if !foundImport {
-		ef.appendNewImport(fieldInfo.importPath)
-	}
 }
 
 // If struct field had extend logger or conf

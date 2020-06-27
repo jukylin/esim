@@ -70,3 +70,25 @@ func TestShortener(t *testing.T) {
 		})
 	}
 }
+
+func TestFirstToUpper(t *testing.T) {
+	type args struct {
+		s string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{"string to up", args{"test"}, "Test"},
+		{"num to up", args{"123"}, "123"},
+		{"empty to up", args{""}, ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := FirstToUpper(tt.args.s); got != tt.want {
+				t.Errorf("FirstToUpper() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

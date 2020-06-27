@@ -36,6 +36,14 @@ func FirstToLower(s string) string {
 	return strings.ToLower(string([]rune(s)[0])) + string([]rune(s)[1:])
 }
 
+func FirstToUpper(s string) string {
+	if s == "" {
+		return s
+	}
+
+	return strings.ToUpper(string([]rune(s)[0])) + string([]rune(s)[1:])
+}
+
 // Shorten shorten the string.
 func Shorten(s string) string {
 	if s == "" {
