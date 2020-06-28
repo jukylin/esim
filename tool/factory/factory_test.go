@@ -1,10 +1,13 @@
 package factory
 
 import (
+	"go/token"
 	"os"
-	// "path/filepath"
+	"reflect"
+	"strings"
 	"testing"
 
+	"github.com/dave/dst"
 	"github.com/jukylin/esim/log"
 	filedir "github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
@@ -144,6 +147,12 @@ func TestEsimFactory_ExtendFieldAndSortField(t *testing.T) {
 	esimfactory.withOption = true
 	esimfactory.withGenLoggerOption = true
 	esimfactory.withGenConfOption = true
+	esimfactory.WithNew = true
+	esimfactory.withStar = true
+
+	esimfactory.UpStructName = templates.FirstToUpper(testStructName)
+	esimfactory.ShortenStructName = templates.Shorten(testStructName)
+	esimfactory.LowerStructName = strings.ToLower(testStructName)
 
 	ps := esimfactory.loadPackages()
 
@@ -157,6 +166,15 @@ func TestEsimFactory_ExtendFieldAndSortField(t *testing.T) {
 	esimfactory.withSort = true
 	esimfactory.sortField()
 	assert.Equal(t, sortExpectd, esimfactory.newContext())
+
+	optionDecl := esimfactory.constructOptionTypeFunc()
+	esimfactory.dstFile.Decls = append(esimfactory.dstFile.Decls, optionDecl)
+
+	funcDecl := esimfactory.constructNew()
+	esimfactory.dstFile.Decls = append(esimfactory.dstFile.Decls, funcDecl)
+	println(esimfactory.newContext())
+
+	// assert.Equal(t, sortExpectd, esimfactory.newContext())
 }
 
 //
@@ -294,3 +312,85 @@ func TestEsimFactory_ExtendFieldAndSortField(t *testing.T) {
 //	assert.Nil(t, err)
 //	assert.Equal(t, replaceStructContent, esimfactory.NewStructInfo.structFileContent)
 //}
+
+func TestEsimFactory_getNewFuncTypeReturn(t *testing.T) {
+	tests := []struct {
+		name          string
+		structName    string
+		withPool      bool
+		withStar      bool
+		withInterface bool
+		InterName     string
+		want          interface{}
+	}{
+		{"normal", "Test", false, false, false, "",
+			dst.NewIdent("Test")},
+		{"with pool", "Test", true,
+			false, false, "", &dst.StarExpr{
+				X: dst.NewIdent("Test")}},
+		{"with star", "Test", false,
+			true, false, "", &dst.StarExpr{
+				X: dst.NewIdent("Test")}},
+		{"with interface", "", false,
+			false, true, "Test", dst.NewIdent("Test")},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ef := NewEsimFactory()
+			ef.withStar = tt.withStar
+			ef.withPool = tt.withPool
+			ef.StructName = tt.structName
+			ef.withImpIface = tt.InterName
+			got := ef.getNewFuncTypeReturn()
+			assert.True(t, reflect.DeepEqual(got.List[0].Type, tt.want))
+		})
+	}
+}
+
+func TestEsimFactory_getStructInstan(t *testing.T) {
+	tests := []struct {
+		name       string
+		structName string
+		withPool   bool
+		withStar   bool
+		want       interface{}
+	}{
+		{"normal", "Test", false, false,
+			&dst.CompositeLit{
+				Type: dst.NewIdent("Test"),
+			}},
+		{"with pool", "Test", true,
+			false, &dst.TypeAssertExpr{
+				X: &dst.CallExpr{
+					Fun: &dst.SelectorExpr{
+						X:   dst.NewIdent("testPool"),
+						Sel: dst.NewIdent("Get"),
+					},
+				},
+				Type: &dst.StarExpr{
+					X: dst.NewIdent("Test"),
+				},
+			}},
+		{"with star", "Test", false,
+			true, &dst.UnaryExpr{
+				Op: token.AND,
+				X: &dst.CompositeLit{
+					Type: dst.NewIdent("Test"),
+				},
+			}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ef := NewEsimFactory()
+			ef.withStar = tt.withStar
+			ef.withPool = tt.withPool
+			ef.ShortenStructName = "t"
+			ef.LowerStructName = "test"
+			ef.StructName = tt.structName
+			ef.UpStructName = "Test"
+			got := ef.getStructInstan()
+
+			assert.True(t, reflect.DeepEqual(got.(*dst.AssignStmt).Rhs[0], tt.want))
+		})
+	}
+}

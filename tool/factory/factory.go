@@ -49,6 +49,10 @@ type EsimFactory struct {
 	// First letter uppercase of StructName.
 	UpStructName string
 
+	LowerStructName string
+
+	ShortenStructName string
+
 	// struct Absolute path
 	structDir string
 
@@ -272,8 +276,14 @@ func (ef *EsimFactory) Run(v *viper.Viper) error {
 		ef.sortField()
 	}
 
+	if ef.withOption {
+		decl := ef.constructOptionTypeFunc()
+		ef.dstFile.Decls = append(ef.dstFile.Decls, decl)
+	}
+
 	if ef.WithNew {
-		ef.sortField()
+		decl := ef.constructNew()
+		ef.dstFile.Decls = append(ef.dstFile.Decls, decl)
 	}
 
 	//ef.InitField = &InitFieldsReturn{}
@@ -333,7 +343,7 @@ func (ef *EsimFactory) loadPackages() []*decorator.Package {
 	return ps
 }
 
-// check exists
+// check exists and extra
 func (ef *EsimFactory) findStruct(ps []*decorator.Package) bool {
 	for _, p := range ps {
 		for _, syntax := range p.Syntax {
@@ -382,7 +392,41 @@ func (ef *EsimFactory) findStruct(ps []*decorator.Package) bool {
 	return false
 }
 
-func (ef *EsimFactory) constructNew() {
+func (ef *EsimFactory) constructOptionTypeFunc() *dst.GenDecl {
+	if !ef.withOption {
+		return &dst.GenDecl{}
+	}
+
+	genDecl := &dst.GenDecl{
+		Tok: token.TYPE,
+		Specs: []dst.Spec{
+			&dst.TypeSpec{
+				Name: dst.NewIdent(ef.StructName + "Option"),
+				Type: &dst.FuncType{
+					Func: true,
+					Params: &dst.FieldList{
+						List: []*dst.Field{
+							&dst.Field{
+								Type: &dst.StarExpr{
+									X: dst.NewIdent(ef.StructName),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Decs: dst.GenDeclDecorations{
+			NodeDecs: dst.NodeDecs{
+				Before: dst.EmptyLine,
+			},
+		},
+	}
+
+	return genDecl
+}
+
+func (ef *EsimFactory) constructNew() *dst.FuncDecl {
 	params := &dst.FieldList{}
 	if ef.withOption {
 		params = &dst.FieldList{
@@ -398,70 +442,140 @@ func (ef *EsimFactory) constructNew() {
 		}
 	}
 
+	stmts := make([]dst.Stmt, 0)
+	stmts = append(stmts, ef.getStructInstan())
+	stmts = append(stmts, ef.getOptionBody())
+
+	stmts = append(stmts,
+		&dst.ReturnStmt{
+			Results: []dst.Expr{
+				dst.NewIdent(ef.ShortenStructName),
+			},
+			Decs: dst.ReturnStmtDecorations{
+				NodeDecs: dst.NodeDecs{
+					Before: dst.EmptyLine,
+				},
+			},
+		})
+
 	funcDecl := &dst.FuncDecl{
 		Name: dst.NewIdent("New" + ef.UpStructName),
 		Type: &dst.FuncType{
-			Func:   true,
-			Params: params,
-			Results: &dst.FieldList{
-				List: []*dst.Field{
-					&dst.Field{
-						Type: &dst.StarExpr{
-							X: dst.NewIdent(ef.UpStructName),
-						},
-					},
-				},
-			},
+			Func:    true,
+			Params:  params,
+			Results: ef.getNewFuncTypeReturn(),
 		},
 		Body: &dst.BlockStmt{
-			List: []dst.Stmt{
-				&dst.AssignStmt{
-					Lhs: []dst.Expr{
-						dst.NewIdent("t"),
-					},
-					Tok: token.DEFINE,
-					Rhs: []dst.Expr{
-						&dst.TypeAssertExpr{
-							X: &dst.CallExpr{
-								Fun: &dst.SelectorExpr{
-									X:   dst.NewIdent("testsPool"),
-									Sel: dst.NewIdent("Get"),
-								},
-							},
-							Type: &dst.StarExpr{
-								X: dst.NewIdent(ef.UpStructName + "s"),
-							},
-						},
-					},
-				},
-				&dst.RangeStmt{
-					Key:   dst.NewIdent("_"),
-					Value: dst.NewIdent("option"),
-					Tok:   token.DEFINE,
-					X:     dst.NewIdent("options"),
-					Body: &dst.BlockStmt{
-						List: []dst.Stmt{
-							&dst.ExprStmt{
-								X: &dst.CallExpr{
-									Fun: dst.NewIdent("option"),
-									Args: []dst.Expr{
-										dst.NewIdent("t"),
-									},
-								},
-							},
-						},
-					},
-				},
-				&dst.ReturnStmt{
-					Results: []dst.Expr{
-						dst.NewIdent("t"),
-					},
-				},
-			},
+			List: stmts,
 		},
 	}
 
-	_ = funcDecl
+	return funcDecl
+}
+
+// t := Test{}
+func (ef *EsimFactory) getStructInstan() dst.Stmt {
+	if ef.withPool {
+		return &dst.AssignStmt{
+			Lhs: []dst.Expr{
+				dst.NewIdent(ef.ShortenStructName),
+			},
+			Tok: token.DEFINE,
+			Rhs: []dst.Expr{
+				&dst.TypeAssertExpr{
+					X: &dst.CallExpr{
+						Fun: &dst.SelectorExpr{
+							X:   dst.NewIdent(ef.LowerStructName + "Pool"),
+							Sel: dst.NewIdent("Get"),
+						},
+					},
+					Type: &dst.StarExpr{
+						X: dst.NewIdent(ef.UpStructName),
+					},
+				},
+			},
+		}
+	} else if ef.withStar {
+		return &dst.AssignStmt{
+			Lhs: []dst.Expr{
+				dst.NewIdent(ef.ShortenStructName),
+			},
+			Tok: token.DEFINE,
+			Rhs: []dst.Expr{
+				&dst.UnaryExpr{
+					Op: token.AND,
+					X: &dst.CompositeLit{
+						Type: dst.NewIdent(ef.UpStructName),
+					},
+				},
+			},
+		}
+	} else {
+		return &dst.AssignStmt{
+			Lhs: []dst.Expr{
+				dst.NewIdent(ef.ShortenStructName),
+			},
+			Tok: token.DEFINE,
+			Rhs: []dst.Expr{
+				&dst.CompositeLit{
+					Type: dst.NewIdent(ef.UpStructName),
+				},
+			},
+		}
+	}
+}
+
+func (ef *EsimFactory) getOptionBody() dst.Stmt {
+	return &dst.RangeStmt{
+		Key:   dst.NewIdent("_"),
+		Value: dst.NewIdent("option"),
+		Tok:   token.DEFINE,
+		X:     dst.NewIdent("options"),
+		Body: &dst.BlockStmt{
+			List: []dst.Stmt{
+				&dst.ExprStmt{
+					X: &dst.CallExpr{
+						Fun: dst.NewIdent("option"),
+						Args: []dst.Expr{
+							dst.NewIdent(ef.ShortenStructName),
+						},
+					},
+				},
+			},
+		},
+		Decs: dst.RangeStmtDecorations{
+			NodeDecs: dst.NodeDecs{
+				Before: dst.EmptyLine,
+			},
+		},
+	}
+}
+
+func (ef *EsimFactory) getNewFuncTypeReturn() *dst.FieldList {
+	fieldList := &dst.FieldList{}
+	if ef.withImpIface != "" {
+		fieldList.List = []*dst.Field{
+			&dst.Field{
+				Type: dst.NewIdent(ef.withImpIface),
+			},
+		}
+	} else if ef.withPool || ef.withStar {
+		fieldList.List = []*dst.Field{
+			&dst.Field{
+				Type: &dst.StarExpr{
+					X: dst.NewIdent(ef.StructName),
+				},
+			},
+		}
+	} else {
+		fieldList.List = []*dst.Field{
+			&dst.Field{
+				Type: dst.NewIdent(ef.StructName),
+			},
+		}
+	}
+
+	return fieldList
 }
 
 func (ef *EsimFactory) newContext() string {
@@ -552,6 +666,8 @@ func (ef *EsimFactory) bindInput(v *viper.Viper) error {
 	}
 	ef.StructName = sname
 	ef.UpStructName = templates.FirstToUpper(sname)
+	ef.ShortenStructName = templates.Shorten(sname)
+	ef.LowerStructName = strings.ToLower(sname)
 
 	sdir := v.GetString("sdir")
 	if sdir == "" {
