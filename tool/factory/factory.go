@@ -276,6 +276,11 @@ func (ef *EsimFactory) Run(v *viper.Viper) error {
 		ef.sortField()
 	}
 
+	if ef.withPool {
+		decl := ef.constructVarPool()
+		ef.dstFile.Decls = append(ef.dstFile.Decls, decl)
+	}
+
 	if ef.withOption {
 		decl := ef.constructOptionTypeFunc()
 		ef.dstFile.Decls = append(ef.dstFile.Decls, decl)
@@ -576,6 +581,89 @@ func (ef *EsimFactory) getNewFuncTypeReturn() *dst.FieldList {
 	}
 
 	return fieldList
+}
+
+func (ef *EsimFactory) constructVarPool() *dst.GenDecl {
+	valueSpec := &dst.ValueSpec{
+		Names: []*dst.Ident{
+			&dst.Ident{
+				Name: ef.LowerStructName + "Pool",
+			},
+		},
+		Values: []dst.Expr{
+			&dst.CompositeLit{
+				Type: &dst.SelectorExpr{
+					X:   &dst.Ident{Name: "sync"},
+					Sel: &dst.Ident{Name: "Pool"},
+					Decs: dst.SelectorExprDecorations{
+						NodeDecs: dst.NodeDecs{
+							End: dst.Decorations{"\n"},
+						},
+					},
+				},
+				Elts: []dst.Expr{
+					&dst.KeyValueExpr{
+						Key: &dst.Ident{Name: "New"},
+						Value: &dst.FuncLit{
+							Type: &dst.FuncType{
+								Func: true,
+								Params: &dst.FieldList{
+									Opening: true,
+									Closing: true,
+								},
+								Results: &dst.FieldList{
+									List: []*dst.Field{
+										&dst.Field{
+											Type: &dst.InterfaceType{
+												Methods: &dst.FieldList{
+													Opening: true,
+													Closing: true,
+												},
+											},
+										},
+									},
+								},
+							},
+							Body: &dst.BlockStmt{
+								List: []dst.Stmt{
+									&dst.ReturnStmt{
+										Results: []dst.Expr{
+											&dst.UnaryExpr{
+												Op: token.AND,
+												X: &dst.CompositeLit{
+													Type: &dst.Ident{Name: ef.StructName},
+												},
+											},
+										},
+										Decs: dst.ReturnStmtDecorations{
+											NodeDecs: dst.NodeDecs{
+												Before: dst.NewLine,
+											},
+										},
+									},
+								},
+							},
+						},
+						Decs: dst.KeyValueExprDecorations{
+							NodeDecs: dst.NodeDecs{
+								Before: dst.NewLine,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	genDecl := &dst.GenDecl{
+		Tok:    token.VAR,
+		Lparen: true,
+		Specs: []dst.Spec{
+			valueSpec,
+		},
+	}
+
+	return genDecl
 }
 
 func (ef *EsimFactory) newContext() string {

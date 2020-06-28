@@ -149,6 +149,7 @@ func TestEsimFactory_ExtendFieldAndSortField(t *testing.T) {
 	esimfactory.withGenConfOption = true
 	esimfactory.WithNew = true
 	esimfactory.withStar = true
+	esimfactory.withPool = true
 
 	esimfactory.UpStructName = templates.FirstToUpper(testStructName)
 	esimfactory.ShortenStructName = templates.Shorten(testStructName)
@@ -166,6 +167,9 @@ func TestEsimFactory_ExtendFieldAndSortField(t *testing.T) {
 	esimfactory.withSort = true
 	esimfactory.sortField()
 	assert.Equal(t, sortExpectd, esimfactory.newContext())
+
+	decl := esimfactory.constructVarPool()
+	esimfactory.dstFile.Decls = append(esimfactory.dstFile.Decls, decl)
 
 	optionDecl := esimfactory.constructOptionTypeFunc()
 	esimfactory.dstFile.Decls = append(esimfactory.dstFile.Decls, optionDecl)
