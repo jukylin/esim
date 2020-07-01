@@ -486,50 +486,46 @@ func (ef *EsimFactory) constructNew() *dst.FuncDecl {
 }
 
 func (ef *EsimFactory) constructRelease() *dst.FuncDecl {
-	params := &dst.FieldList{}
-	if ef.withOption {
-		params = &dst.FieldList{
+	funcDecl := &dst.FuncDecl{
+		Recv: &dst.FieldList{
 			Opening: true,
 			List: []*dst.Field{
 				&dst.Field{
-					Names: []*dst.Ident{dst.NewIdent("options")},
-					Type: &dst.Ellipsis{
-						Elt: dst.NewIdent(ef.UpStructName + "Option"),
+					Names: []*dst.Ident{
+						dst.NewIdent("t"),
+					},
+					Type: &dst.StarExpr{
+						X: dst.NewIdent("Test"),
 					},
 				},
 			},
-		}
-	}
-
-	stmts := make([]dst.Stmt, 0)
-	stmts = append(stmts, ef.getStructInstan())
-	stmts = append(stmts, ef.getOptionBody())
-
-	stmts = append(stmts, ef.getSpecialFieldStmt()...)
-
-	stmts = append(stmts,
-		&dst.ReturnStmt{
-			Results: []dst.Expr{
-				dst.NewIdent(ef.ShortenStructName),
-			},
-			Decs: dst.ReturnStmtDecorations{
-				NodeDecs: dst.NodeDecs{
-					Before: dst.EmptyLine,
-				},
-			},
-		})
-
-	funcDecl := &dst.FuncDecl{
-		Name: dst.NewIdent("New" + ef.UpStructName),
+		},
+		Name: dst.NewIdent("Reset"),
 		Type: &dst.FuncType{
-			Func:    true,
-			Params:  params,
-			Results: ef.getNewFuncTypeReturn(),
+			Func: true,
+			Params: &dst.FieldList{
+				Opening: true,
+			},
 		},
 		Body: &dst.BlockStmt{
-			List: stmts,
+			List: []dst.Stmt{
+
+				&dst.ExprStmt{
+					X: &dst.CallExpr{
+						Fun: &dst.SelectorExpr{
+							X:   dst.NewIdent("testPool"),
+							Sel: dst.NewIdent("Put"),
+						},
+						Args: []dst.Expr{
+							dst.NewIdent("t"),
+						},
+					},
+				},
+			},
 		},
 	}
+
+	_ = funcDecl
 
 	return funcDecl
 }
