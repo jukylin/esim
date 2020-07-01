@@ -291,6 +291,11 @@ func (ef *EsimFactory) Run(v *viper.Viper) error {
 		ef.dstFile.Decls = append(ef.dstFile.Decls, decl)
 	}
 
+	if ef.withPool {
+		decl := ef.constructNew()
+		ef.dstFile.Decls = append(ef.dstFile.Decls, decl)
+	}
+
 	//ef.InitField = &InitFieldsReturn{}
 	//ef.structFieldIface.HandleField(ef.NewStructInfo.Fields, ef.InitField)
 
@@ -383,7 +388,7 @@ func (ef *EsimFactory) findStruct(ps []*decorator.Package) bool {
 										ef.underType = underType
 										ef.structPackage = p
 										ef.dstFile = syntax
-										return true
+										// return true
 									}
 								}
 							}
@@ -450,6 +455,57 @@ func (ef *EsimFactory) constructNew() *dst.FuncDecl {
 	stmts := make([]dst.Stmt, 0)
 	stmts = append(stmts, ef.getStructInstan())
 	stmts = append(stmts, ef.getOptionBody())
+
+	stmts = append(stmts, ef.getSpecialFieldStmt()...)
+
+	stmts = append(stmts,
+		&dst.ReturnStmt{
+			Results: []dst.Expr{
+				dst.NewIdent(ef.ShortenStructName),
+			},
+			Decs: dst.ReturnStmtDecorations{
+				NodeDecs: dst.NodeDecs{
+					Before: dst.EmptyLine,
+				},
+			},
+		})
+
+	funcDecl := &dst.FuncDecl{
+		Name: dst.NewIdent("New" + ef.UpStructName),
+		Type: &dst.FuncType{
+			Func:    true,
+			Params:  params,
+			Results: ef.getNewFuncTypeReturn(),
+		},
+		Body: &dst.BlockStmt{
+			List: stmts,
+		},
+	}
+
+	return funcDecl
+}
+
+func (ef *EsimFactory) constructRelease() *dst.FuncDecl {
+	params := &dst.FieldList{}
+	if ef.withOption {
+		params = &dst.FieldList{
+			Opening: true,
+			List: []*dst.Field{
+				&dst.Field{
+					Names: []*dst.Ident{dst.NewIdent("options")},
+					Type: &dst.Ellipsis{
+						Elt: dst.NewIdent(ef.UpStructName + "Option"),
+					},
+				},
+			},
+		}
+	}
+
+	stmts := make([]dst.Stmt, 0)
+	stmts = append(stmts, ef.getStructInstan())
+	stmts = append(stmts, ef.getOptionBody())
+
+	stmts = append(stmts, ef.getSpecialFieldStmt()...)
 
 	stmts = append(stmts,
 		&dst.ReturnStmt{
@@ -554,6 +610,32 @@ func (ef *EsimFactory) getOptionBody() dst.Stmt {
 			},
 		},
 	}
+}
+
+func (ef *EsimFactory) getSpecialFieldStmt() []dst.Stmt {
+	stmts := make([]dst.Stmt, 0)
+	numField := ef.underType.NumFields()
+	for k, field := range ef.typeSpec.Type.(*dst.StructType).Fields.List {
+		field.Decs.After = dst.EmptyLine
+		if k < numField {
+			switch field.Type.(type) {
+			case *dst.ArrayType:
+				if len(field.Names) != 0 {
+					cloned := dst.Clone(field.Type.(*dst.ArrayType)).(*dst.ArrayType)
+					stmts = append(stmts, ef.constructSpecialFieldStmt(ef.ShortenStructName,
+						field.Names[0].String(), cloned))
+				}
+			case *dst.MapType:
+				if len(field.Names) != 0 {
+					cloned := dst.Clone(field.Type.(*dst.MapType)).(*dst.MapType)
+					stmts = append(stmts, ef.constructSpecialFieldStmt(ef.ShortenStructName,
+						field.Names[0].String(), cloned))
+				}
+			}
+		}
+	}
+
+	return stmts
 }
 
 func (ef *EsimFactory) getNewFuncTypeReturn() *dst.FieldList {
@@ -664,6 +746,51 @@ func (ef *EsimFactory) constructVarPool() *dst.GenDecl {
 	}
 
 	return genDecl
+}
+
+func (ef *EsimFactory) constructSpecialFieldStmt(structName, field string, expr dst.Expr) dst.Stmt {
+	stmt := &dst.IfStmt{
+		Cond: &dst.BinaryExpr{
+			X: &dst.SelectorExpr{
+				X:   dst.NewIdent(structName),
+				Sel: dst.NewIdent(field),
+			},
+			Op: token.EQL,
+			Y:  dst.NewIdent("nil"),
+		},
+		Body: &dst.BlockStmt{
+			List: []dst.Stmt{
+				&dst.AssignStmt{
+					Lhs: []dst.Expr{
+						&dst.SelectorExpr{
+							X:   dst.NewIdent(structName),
+							Sel: dst.NewIdent(field),
+						},
+					},
+					Tok: token.ASSIGN,
+					Rhs: []dst.Expr{
+						&dst.CallExpr{
+							Fun: dst.NewIdent("make"),
+							Args: []dst.Expr{
+								expr,
+								&dst.BasicLit{
+									Kind:  token.INT,
+									Value: "0",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Decs: dst.IfStmtDecorations{
+			NodeDecs: dst.NodeDecs{
+				Before: dst.EmptyLine,
+			},
+		},
+	}
+
+	return stmt
 }
 
 func (ef *EsimFactory) newContext() string {

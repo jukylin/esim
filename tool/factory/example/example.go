@@ -22,6 +22,8 @@ type Test struct {
 
 	h []int
 
+	hh []interface{}
+
 	m map[string]interface{}
 
 	e string

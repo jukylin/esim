@@ -245,11 +245,10 @@ func (tester *Tester) checkAndRunWire(fileName, dir string) {
 					if err != nil {
 						tester.logger.Errorf(err.Error())
 					}
-
-					atomic.StoreInt32(&tester.runningWire, 0)
 				}()
 			}
 		}
+		atomic.StoreInt32(&tester.runningWire, 0)
 	}
 }
 
