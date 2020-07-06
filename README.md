@@ -2,7 +2,7 @@
 
 > &nbsp;&nbsp;&nbsp;&nbsp;Esim专注解决业务问题：业务复杂度，如何测试，代码组织，扩展等问题。不会提供微服务整套技术体系，服务自理、服务注册、服务发现等都不是它专注解决的问题，这部分问题我们交给了Service Mesh。
 
-> &nbsp;&nbsp;&nbsp;&nbsp;做为业务框架，Esim默认集成了gin和grpc二个技术框架，但吸收了业务和技术分离思想，所以为集成其他技术框架提供了接口，只要实现[Transports](https://github.com/jukylin/esim/blob/master/transports/interface.go#L3)接口，再把实例注册到```App.trans```就可以很轻松的集成其他技术框架。
+> &nbsp;&nbsp;&nbsp;&nbsp;做为业务框架，Esim默认集成了gin和grpc两个技术框架，但吸收了业务和技术分离思想，所以为集成其他技术框架提供了接口，只要实现[Transports](https://github.com/jukylin/esim/blob/master/transports/interface.go#L3)接口，再把实例注册到```App.trans```就可以很轻松的集成其他技术框架。
 
 ```
 type Transports interface {
@@ -67,7 +67,7 @@ go test
 
 ## 分层
 
-> &nbsp;&nbsp;&nbsp;&nbsp;Esim使用松散的分层架构，上层可以任意调用下层。使用松散的分层架构的原因，是因为我们在使用四层架构的过程中发现：一些简单的场景，app层的service只是增加了一层调用，并没有起到协调的作用，反而增加了一些不必要的工作，所以使用松散的架构，让controller直接掉用domain的逻辑。
+> &nbsp;&nbsp;&nbsp;&nbsp;Esim使用松散的分层架构，上层可以任意调用下层。使用松散的分层架构的原因，是因为我们在使用四层架构的过程中发现：一些简单的场景，app层的service只是增加了一层调用，并没有起到协调的作用，反而增加了一些不必要的工作，所以使用松散的架构，让controller直接调用domain的逻辑。
 
 > **不能因为使用松散的架构，把原有app层的service职责都放到了controller里面！！！**
 
