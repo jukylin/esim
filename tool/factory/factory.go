@@ -27,6 +27,7 @@ import (
 	// "sort"
 	"bytes"
 	"github.com/dave/dst/decorator/resolver/gopackages"
+	"github.com/davecgh/go-spew/spew"
 	"sort"
 	"strings"
 )
@@ -270,8 +271,6 @@ func (ef *EsimFactory) Run(v *viper.Viper) error {
 	//	ef.logger.Panicf("not found struct %s", ef.StructName)
 	//}
 
-	ef.extendFields(ps)
-
 	if ef.withSort {
 		ef.sortField()
 	}
@@ -292,9 +291,11 @@ func (ef *EsimFactory) Run(v *viper.Viper) error {
 	}
 
 	if ef.withPool {
-		decl := ef.constructNew()
+		decl := ef.constructRelease()
 		ef.dstFile.Decls = append(ef.dstFile.Decls, decl)
 	}
+
+	ef.extendFields(ps)
 
 	//ef.InitField = &InitFieldsReturn{}
 	//ef.structFieldIface.HandleField(ef.NewStructInfo.Fields, ef.InitField)
@@ -457,7 +458,7 @@ func (ef *EsimFactory) constructNew() *dst.FuncDecl {
 	stmts = append(stmts, ef.getOptionBody())
 
 	stmts = append(stmts, ef.getSpecialFieldStmt()...)
-
+	ef.getReleaseFieldStmt()
 	stmts = append(stmts,
 		&dst.ReturnStmt{
 			Results: []dst.Expr{
@@ -632,6 +633,27 @@ func (ef *EsimFactory) getSpecialFieldStmt() []dst.Stmt {
 	}
 
 	return stmts
+}
+
+func (ef *EsimFactory) getReleaseFieldStmt() []dst.Stmt {
+	numField := ef.underType.NumFields()
+	for k, field := range ef.typeSpec.Type.(*dst.StructType).Fields.List {
+		field.Decs.After = dst.EmptyLine
+		if k < numField {
+			spew.Dump(ef.underType.Field(k).Type().String())
+		}
+
+		//switch field.Type.(type) {
+		//case *:
+		//
+		//case *dst.ArrayType:
+		//
+		//case *dst.MapType:
+		//
+		//}
+	}
+
+	return nil
 }
 
 func (ef *EsimFactory) getNewFuncTypeReturn() *dst.FieldList {
@@ -1050,6 +1072,7 @@ func (ef *EsimFactory) parseImport(genDecl *ast.GenDecl, src []byte) {
 }
 
 // Extend logger and conf for new struct field.
+// It must after constructs.
 func (ef *EsimFactory) extendFields(ps []*decorator.Package) {
 	if ef.withOption {
 		if ef.withGenLoggerOption {
@@ -1090,22 +1113,12 @@ func (fs FieldSizes) getFields() []*dst.Field {
 }
 
 // sortField ascending in byte size.
-// The extension fields at the end of the struct.
 func (ef *EsimFactory) sortField() {
 	fs := make(FieldSizes, 0)
-	numField := ef.underType.NumFields()
 	var size int64
 
-	for k, field := range ef.typeSpec.Type.(*dst.StructType).Fields.List {
+	for _, field := range ef.typeSpec.Type.(*dst.StructType).Fields.List {
 		field.Decs.After = dst.EmptyLine
-
-		// The extension fields not in the underlying type
-		if k < numField {
-			size = ef.structPackage.TypesSizes.Sizeof(ef.underType.Field(k).Type())
-		} else {
-			size = 10000
-		}
-
 		fs = append(fs, FieldSize{
 			Size:  size,
 			Field: field,

@@ -178,7 +178,6 @@ func TestEsimFactory_ExtendFieldAndSortField(t *testing.T) {
 	esimfactory.dstFile.Decls = append(esimfactory.dstFile.Decls, funcDecl)
 	println(esimfactory.newContext())
 	// assert.Equal(t, sortExpectd, esimfactory.newContext())
-
 }
 
 //
