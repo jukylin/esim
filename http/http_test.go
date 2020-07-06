@@ -47,7 +47,7 @@ func TestMulLevelRoundTrip(t *testing.T) {
 			},
 			func() interface{} {
 				stubsProxyOptions := StubsProxyOptions{}
-				stubsProxy := newStubsProxy(
+				stubsProxy := NewStubsProxy(
 					stubsProxyOptions.WithRespFunc(func(request *http.Request) *http.Response {
 						resp := &http.Response{}
 						if request.URL.String() == host1 {
@@ -110,7 +110,7 @@ func TestMonitorProxy(t *testing.T) {
 			},
 			func() interface{} {
 				stubsProxyOptions := StubsProxyOptions{}
-				stubsProxy := newStubsProxy(
+				stubsProxy := NewStubsProxy(
 					stubsProxyOptions.WithRespFunc(func(request *http.Request) *http.Response {
 						resp := &http.Response{}
 						if request.URL.String() == host1 {
@@ -177,7 +177,7 @@ func TestTimeoutProxy(t *testing.T) {
 			},
 			func() interface{} {
 				stubsProxyOptions := StubsProxyOptions{}
-				stubsProxy := newStubsProxy(
+				stubsProxy := NewStubsProxy(
 					stubsProxyOptions.WithRespFunc(func(request *http.Request) *http.Response {
 						resp := &http.Response{}
 						if request.URL.String() == host1 {
