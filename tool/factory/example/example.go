@@ -39,4 +39,12 @@ type Test struct {
 	pkg.Field
 
 	n func(interface{})
+
+	o uint
+
+	p complex64
+
+	q rune
+
+	r uintptr
 }

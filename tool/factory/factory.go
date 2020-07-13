@@ -636,24 +636,55 @@ func (ef *EsimFactory) getSpecialFieldStmt() []dst.Stmt {
 }
 
 func (ef *EsimFactory) getReleaseFieldStmt() []dst.Stmt {
-	numField := ef.underType.NumFields()
-	for k, field := range ef.typeSpec.Type.(*dst.StructType).Fields.List {
+	// numField := ef.underType.NumFields()
+	for _, field := range ef.typeSpec.Type.(*dst.StructType).Fields.List {
 		field.Decs.After = dst.EmptyLine
-		if k < numField {
-			spew.Dump(ef.underType.Field(k).Type().String())
-		}
+		// spew.Dump(ef.underType.Field(k).Type().String())
 
-		//switch field.Type.(type) {
-		//case *:
-		//
-		//case *dst.ArrayType:
-		//
-		//case *dst.MapType:
-		//
-		//}
+		switch _t := field.Type.(type) {
+		case *dst.ArrayType:
+		case *dst.MapType:
+		default:
+			spew.Dump(_t)
+
+		}
 	}
 
 	return nil
+}
+
+//nolint:goconst
+func (ef *EsimFactory) TypeToInit(ident *dst.Ident) string {
+	var initStr string
+
+	switch ident.Name {
+	case "string":
+		initStr = "\"\""
+	case "int", "int64", "int8", "int16", "int32":
+		initStr = "0"
+	case "uint", "uint64", "uint8", "uint16", "uint32":
+		initStr = "0"
+	case "bool":
+		initStr = "false"
+	case "float32", "float64":
+		initStr = "0.00"
+	case reflect.Complex64, reflect.Complex128:
+		initStr = "0+0i"
+	case reflect.Interface:
+		initStr = "nil"
+	case reflect.Uintptr:
+		initStr = "0"
+	case reflect.Invalid, reflect.Func, reflect.Chan, reflect.Ptr, reflect.UnsafePointer:
+		initStr = "nil"
+	case reflect.Slice:
+		initStr = "nil"
+	case reflect.Map:
+		initStr = "nil"
+	case reflect.Array:
+		initStr = "nil"
+	}
+
+	return initStr
 }
 
 func (ef *EsimFactory) getNewFuncTypeReturn() *dst.FieldList {
