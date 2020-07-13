@@ -11,6 +11,7 @@ import (
 	filedir "github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
 	"github.com/spf13/viper"
+	"github.com/serenize/snaker"
 )
 
 type daoDomainFile struct {
@@ -120,6 +121,9 @@ func (ddf *daoDomainFile) ParseCloumns(cs Columns, shareInfo *ShareInfo) {
 
 	for i := range cs {
 		column := (&cs[i])
+
+		fieldName := snaker.SnakeToCamel(column.ColumnName)
+
 		nullable := false
 		if column.IsNullAble == yesNull {
 			nullable = true
@@ -128,6 +132,16 @@ func (ddf *daoDomainFile) ParseCloumns(cs Columns, shareInfo *ShareInfo) {
 		if column.ColumnKey == pri {
 			daoTpl.PriKeyType = column.GetGoType(nullable)
 			break
+		}
+
+		if column.IsCurrentTimeStamp() {
+			daoTpl.CurTimeStamp = append(daoTpl.CurTimeStamp, fieldName)
+		}
+
+		if column.IsOnUpdate() {
+			daoTpl.OnUpdateTimeStamp = append(daoTpl.OnUpdateTimeStamp, fieldName)
+			daoTpl.OnUpdateTimeStampStr = append(daoTpl.OnUpdateTimeStampStr,
+				column.ColumnName)
 		}
 	}
 

@@ -14,6 +14,14 @@ type daoTpl struct {
 	TableName string
 
 	PriKeyType string
+
+	// CURRENT_TIMESTAMP
+	CurTimeStamp []string
+
+	// on update CURRENT_TIMESTAMP
+	OnUpdateTimeStamp []string
+
+	OnUpdateTimeStampStr []string
 }
 
 //nolint:lll
@@ -48,6 +56,9 @@ func ({{.StructName | shorten}} *{{.StructName}}) GetSlaveDb(ctx context.Context
 // primary key，error
 func ({{.StructName | shorten}} *{{.StructName}}) Create(ctx context.Context,
 		{{.EntityName| firstToLower}} *entity.{{.EntityName}}) ({{.PriKeyType}}, error){
+{{range $stamp := .CurTimeStamp}}{{$.EntityName| firstToLower}}.{{$stamp}} = time.Now()
+{{end}}{{range $stamp := .OnUpdateTimeStamp}}{{$.EntityName| firstToLower}}.{{$stamp}} = time.Now()
+{{end}}
 	db := {{.StructName | shorten}}.GetDb(ctx).Create({{.EntityName| firstToLower}})
 	if db.Error != nil{
 		return {{.PriKeyType}}(0), db.Error
@@ -104,9 +115,13 @@ func ({{.StructName | shorten}} *{{.StructName}}) DelById(ctx context.Context,
 		return false, errors.New("not found is_del / is_deleted / is_delete")
 	}
 
+	delMap := make(map[string]interface{}, 0)
+	delMap[del{{.EntityName}}.DelKey()] = 1
+{{range $stamp := .OnUpdateTimeStampStr}}delMap["{{$stamp}}"] = time.Now()
+{{end}}
 	del{{.EntityName}}.ID = id
 	db := {{.StructName | shorten}}.GetDb(ctx).Where("id = ?", id).
-		Update(map[string]interface{}{del{{.EntityName}}.DelKey(): 1})
+		Update()
 	if db.Error != nil{
 		return false, db.Error
 	}else{
@@ -118,6 +133,8 @@ func ({{.StructName | shorten}} *{{.StructName}}) DelById(ctx context.Context,
 // return RowsAffected, error
 func ({{.StructName | shorten}} *{{.StructName}}) Update(ctx context.Context,
 		update map[string]interface{}, query interface{}, args ...interface{}) (int64, error) {
+{{range $stamp := .OnUpdateTimeStampStr}}update["{{$stamp}}"] = time.Now()
+{{end}}
 	db := {{.StructName | shorten}}.GetDb(ctx).Where(query, args).
 		Updates(update)
 	return db.RowsAffected, db.Error

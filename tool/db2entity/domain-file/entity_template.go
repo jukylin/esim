@@ -33,45 +33,4 @@ var entityTemplate = `package entity
 func ({{.StructName | shorten}} *{{.StructName}}) DelKey() string {
 	return "{{.DelField}}"
 }
-
-{{if or (.CurTimeStamp) (.OnUpdateTimeStamp)}}
-func ({{.StructName | shorten}} *{{.StructName}}) BeforeCreate(scope *gorm.Scope) (err error) {
-	switch scope.Value.(type) {
-	case *{{.StructName}}:
-		val := scope.Value.(*{{.StructName}})
-
-		{{range $stamp := .CurTimeStamp}}
-		if val.{{$stamp}}.Unix() < 0 {
-			val.{{$stamp}} = time.Now()
-		}
-		{{end}}
-
-		{{range $stamp := .OnUpdateTimeStamp}}
-		if val.{{$stamp}}.Unix() < 0 {
-			val.{{$stamp}} = time.Now()
-		}
-		{{end}}
-	}
-
-	return
-}
-{{end}}
-
-{{if .OnUpdateTimeStampStr }}
-func ({{.StructName | shorten}} *{{.StructName}}) BeforeSave(scope *gorm.Scope) (err error) {
-	val, ok := scope.InstanceGet("gorm:update_attrs")
-	if ok {
-		switch val.(type) {
-		case map[string]interface{}:
-			mapVal := val.(map[string]interface{})
-			{{range $stampStr := .OnUpdateTimeStampStr}}
-			if _, ok := mapVal["{{$stampStr}}"]; !ok {
-				mapVal["{{$stampStr}}"] = time.Now()
-			}
-			{{end}}
-		}
-	}
-	return
-}
-{{end}}
 `
