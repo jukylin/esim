@@ -119,7 +119,6 @@ func (ddf *daoDomainFile) ParseCloumns(cs Columns, shareInfo *ShareInfo) {
 		pkg.Import{Path: filedir.GetGoProPath() +
 			pkg.DirPathToImportPath(shareInfo.WithEntityTarget)})
 
-
 	var hastTime bool
 	for i := range cs {
 		column := (&cs[i])
@@ -135,16 +134,14 @@ func (ddf *daoDomainFile) ParseCloumns(cs Columns, shareInfo *ShareInfo) {
 			daoTpl.PriKeyType = column.GetGoType(nullable)
 		}
 
-		if column.IsCurrentTimeStamp() {
-			hastTime = true
-			daoTpl.CurTimeStamp = append(daoTpl.CurTimeStamp, fieldName)
-		}
-
 		if column.IsOnUpdate() {
 			hastTime = true
 			daoTpl.OnUpdateTimeStamp = append(daoTpl.OnUpdateTimeStamp, fieldName)
 			daoTpl.OnUpdateTimeStampStr = append(daoTpl.OnUpdateTimeStampStr,
 				column.ColumnName)
+		} else if column.IsCurrentTimeStamp() {
+			hastTime = true
+			daoTpl.CurTimeStamp = append(daoTpl.CurTimeStamp, fieldName)
 		}
 	}
 
