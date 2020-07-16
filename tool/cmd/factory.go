@@ -2,7 +2,6 @@ package cmd
 
 import (
 	filedir "github.com/jukylin/esim/pkg/file-dir"
-	"github.com/jukylin/esim/pkg/templates"
 	"github.com/jukylin/esim/tool/factory"
 	"github.com/spf13/cobra"
 )
@@ -15,13 +14,11 @@ var factoryCmd = &cobra.Command{
 		esimFactory := factory.NewEsimFactory(
 			factory.WithEsimFactoryLogger(logger),
 			factory.WithEsimFactoryWriter(filedir.NewEsimWriter()),
-			factory.WithEsimFactoryTpl(templates.NewTextTpl()),
 		)
 		err := esimFactory.Run(v)
 		if err != nil {
 			logger.Errorf(err.Error())
 		}
-		esimFactory.Close()
 	},
 }
 
