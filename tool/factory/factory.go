@@ -81,6 +81,8 @@ type EsimFactory struct {
 	structPackage *decorator.Package
 
 	dstFile *dst.File
+
+	structIndex int
 }
 
 type Option func(*EsimFactory)
@@ -142,10 +144,11 @@ func (ef *EsimFactory) Run(v *viper.Viper) error {
 		ef.sortField()
 	}
 
-	if ef.withPool {
-		decl := ef.constructVarPool()
-		ef.dstFile.Decls = append(ef.dstFile.Decls, decl)
-	}
+	//
+	//if ef.withPool {
+	//	decl := ef.constructVarPool()
+	//	ef.dstFile.Decls = append(ef.dstFile.Decls, decl)
+	//}
 
 	if ef.withOption {
 		decl := ef.constructOptionTypeFunc()
@@ -157,10 +160,10 @@ func (ef *EsimFactory) Run(v *viper.Viper) error {
 		ef.dstFile.Decls = append(ef.dstFile.Decls, decl)
 	}
 
-	if ef.withPool {
-		decl := ef.constructRelease()
-		ef.dstFile.Decls = append(ef.dstFile.Decls, decl)
-	}
+	//if ef.withPool {
+	//	decl := ef.constructRelease()
+	//	ef.dstFile.Decls = append(ef.dstFile.Decls, decl)
+	//}
 
 	ef.extendFields()
 
@@ -214,7 +217,7 @@ func (ef *EsimFactory) loadPackages() []*decorator.Package {
 // check exists and extra.
 func (ef *EsimFactory) findStruct(ps []*decorator.Package) bool {
 	for _, p := range ps {
-		for _, syntax := range p.Syntax {
+		for k, syntax := range p.Syntax {
 			for _, decl := range syntax.Decls {
 				if genDecl, ok := decl.(*dst.GenDecl); ok {
 					if genDecl.Tok == token.TYPE {
@@ -245,6 +248,7 @@ func (ef *EsimFactory) findStruct(ps []*decorator.Package) bool {
 										ef.underType = underType
 										ef.structPackage = p
 										ef.dstFile = syntax
+										ef.structIndex = k
 										// return true
 									}
 								}

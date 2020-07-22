@@ -31,7 +31,7 @@ func init() {
 
 	factoryCmd.Flags().BoolP("option", "o", false, "New with option")
 
-	factoryCmd.Flags().BoolP("pool", "p", false, "with pool")
+	// factoryCmd.Flags().BoolP("pool", "p", false, "with pool")
 
 	factoryCmd.Flags().BoolP("ol", "", false, "generate logger option")
 
@@ -43,9 +43,9 @@ func init() {
 
 	factoryCmd.Flags().StringP("sdir", "", "", "struct path")
 
-	factoryCmd.Flags().BoolP("plural", "", false, "with plural")
+	// factoryCmd.Flags().BoolP("plural", "", false, "with plural")
 
-	factoryCmd.Flags().StringP("imp_iface", "", "", "implement the interface")
+	// factoryCmd.Flags().StringP("imp_iface", "", "", "implement the interface")
 
 	err := v.BindPFlags(factoryCmd.Flags())
 	if err != nil {
