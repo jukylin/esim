@@ -162,24 +162,24 @@ func TestEsimFactory_ExtendFieldAndSortField(t *testing.T) {
 
 	found := esimfactory.findStruct(ps)
 	assert.True(t, found)
-
-	esimfactory.extendFields()
-
 	// assert.Equal(t, extendExcept, esimfactory.newContext())
 
 	esimfactory.withSort = true
 	esimfactory.sortField()
 	// assert.Equal(t, sortExpectd, esimfactory.newContext())
 
-	decl := esimfactory.constructVarPool()
-	esimfactory.dstFile.Decls = append(esimfactory.dstFile.Decls, decl)
+	// decl := esimfactory.constructVarPool()
+	//esimfactory.dstFile.Decls = append(esimfactory.dstFile.Decls, decl)
 
 	optionDecl := esimfactory.constructOptionTypeFunc()
-	esimfactory.dstFile.Decls = append(esimfactory.dstFile.Decls, optionDecl)
+	esimfactory.newDecls = append(esimfactory.newDecls, optionDecl)
 
 	funcDecl := esimfactory.constructNew()
-	esimfactory.dstFile.Decls = append(esimfactory.dstFile.Decls, funcDecl)
-	println(esimfactory.newContext())
+	esimfactory.newDecls = append(esimfactory.newDecls, funcDecl)
+
+	esimfactory.extendFields()
+	esimfactory.constructDecls()
+	esimfactory.printResult()
 	// assert.Equal(t, sortExpectd, esimfactory.newContext())
 }
 

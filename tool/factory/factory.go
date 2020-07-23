@@ -83,6 +83,8 @@ type EsimFactory struct {
 	dstFile *dst.File
 
 	structIndex int
+
+	newDecls []dst.Decl
 }
 
 type Option func(*EsimFactory)
@@ -101,6 +103,8 @@ func NewEsimFactory(options ...Option) *EsimFactory {
 	if factory.writer == nil {
 		factory.writer = filedir.NewEsimWriter()
 	}
+
+	factory.newDecls = make([]dst.Decl, 0)
 
 	return factory
 }
@@ -152,12 +156,12 @@ func (ef *EsimFactory) Run(v *viper.Viper) error {
 
 	if ef.withOption {
 		decl := ef.constructOptionTypeFunc()
-		ef.dstFile.Decls = append(ef.dstFile.Decls, decl)
+		ef.newDecls = append(ef.newDecls, decl)
 	}
 
 	if ef.WithNew {
 		decl := ef.constructNew()
-		ef.dstFile.Decls = append(ef.dstFile.Decls, decl)
+		ef.newDecls = append(ef.newDecls, decl)
 	}
 
 	//if ef.withPool {
@@ -166,6 +170,8 @@ func (ef *EsimFactory) Run(v *viper.Viper) error {
 	//}
 
 	ef.extendFields()
+
+	ef.constructDecls()
 
 	if ef.withPrint {
 		ef.printResult()
@@ -202,9 +208,10 @@ func (ef *EsimFactory) loadPackages() []*decorator.Package {
 
 	pConfig := &packages.Config{}
 	pConfig.Fset = fset
-	pConfig.Mode = packages.NeedSyntax | packages.NeedName | packages.NeedFiles |
-		packages.NeedCompiledGoFiles | packages.NeedTypesInfo | packages.NeedDeps |
-		packages.NeedTypes | packages.NeedTypesSizes
+	// pConfig.Mode = packages.NeedSyntax | packages.NeedName | packages.NeedFiles |
+		//packages.NeedCompiledGoFiles | packages.NeedTypesInfo | packages.NeedDeps |
+		//packages.NeedTypes | packages.NeedTypesSizes
+	pConfig.Mode = packages.LoadAllSyntax
 	pConfig.Dir = ef.structDir
 	ps, err := decorator.Load(pConfig)
 	if err != nil {
@@ -217,8 +224,8 @@ func (ef *EsimFactory) loadPackages() []*decorator.Package {
 // check exists and extra.
 func (ef *EsimFactory) findStruct(ps []*decorator.Package) bool {
 	for _, p := range ps {
-		for k, syntax := range p.Syntax {
-			for _, decl := range syntax.Decls {
+		for _, syntax := range p.Syntax {
+			for k, decl := range syntax.Decls {
 				if genDecl, ok := decl.(*dst.GenDecl); ok {
 					if genDecl.Tok == token.TYPE {
 						for _, spec := range genDecl.Specs {
@@ -707,9 +714,21 @@ func (ef *EsimFactory) newContext() string {
 	return buf.String()
 }
 
-// printResult println file content to terminal.
-func (ef *EsimFactory) printResult() {
+func (ef *EsimFactory) constructDecls()  {
+	if ef.structIndex == len(ef.dstFile.Decls) {
+		ef.dstFile.Decls = append(ef.dstFile.Decls, ef.newDecls...)
+	} else {
+		head := ef.dstFile.Decls[:ef.structIndex + 1]
+		tail := ef.dstFile.Decls[ef.structIndex + 1:]
+		ef.dstFile.Decls = head
+		ef.dstFile.Decls = append(ef.dstFile.Decls, ef.newDecls...)
+		ef.dstFile.Decls = append(ef.dstFile.Decls, tail...)
+	}
+}
 
+// printResult println content to terminal.
+func (ef *EsimFactory) printResult() {
+	println(ef.newContext())
 }
 
 func (ef *EsimFactory) bindInput(v *viper.Viper) error {
