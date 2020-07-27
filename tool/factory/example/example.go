@@ -48,3 +48,7 @@ type Test struct {
 
 	r uintptr
 }
+
+type Test1 struct {
+	a int
+}

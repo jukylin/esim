@@ -249,14 +249,13 @@ func (ef *EsimFactory) findStruct(ps []*decorator.Package) bool {
 										continue
 									}
 
-									if typeSpec.Name.String() == ef.StructName {
+									if typeSpec.Name.String() == ef.StructName && ef.found == false {
 										ef.found = true
 										ef.typeSpec = typeSpec
 										ef.underType = underType
 										ef.structPackage = p
 										ef.dstFile = syntax
 										ef.structIndex = k
-										// return true
 									}
 								}
 							}
@@ -267,7 +266,7 @@ func (ef *EsimFactory) findStruct(ps []*decorator.Package) bool {
 		}
 	}
 
-	return false
+	return ef.found
 }
 
 func (ef *EsimFactory) constructOptionTypeFunc() *dst.GenDecl {
@@ -822,12 +821,13 @@ func (fs FieldSizes) getFields() []*dst.Field {
 // sortField ascending in byte size.
 func (ef *EsimFactory) sortField() {
 	fs := make(FieldSizes, 0)
-	var size int64
-
-	for _, field := range ef.typeSpec.Type.(*dst.StructType).Fields.List {
+	println(ef.StructName)
+	spew.Dump(ef.underType)
+	println(ef.underType.NumFields())
+	for k, field := range ef.typeSpec.Type.(*dst.StructType).Fields.List {
 		field.Decs.After = dst.EmptyLine
 		fs = append(fs, FieldSize{
-			Size:  size,
+			Size:  ef.structPackage.TypesSizes.Sizeof(ef.underType.Field(k).Type()),
 			Field: field,
 		},
 		)

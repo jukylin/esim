@@ -19,7 +19,7 @@ const (
 	testStructName = "Test"
 )
 
-var sortExpectd = `package example
+var resultExpectd = `package example
 
 import (
 	"github.com/jukylin/esim/config"
@@ -33,37 +33,79 @@ var (
 
 //nolint:unused,structcheck,maligned
 type Test struct {
-	g byte
+	b int64
 
 	c int8
 
 	i bool
 
-	d int16
-
 	f float32
 
 	a int32
 
-	n func(interface{})
+	h []int
+
+	hh []interface{}
 
 	m map[string]interface{}
 
-	b int64
-
 	e string
 
-	pkg.Fields
-
-	h []int
+	g byte
 
 	u [3]string
 
+	d int16
+
+	pkg.Fields
+
 	pkg.Field
+
+	n func(interface{})
+
+	o uint
+
+	p complex64
+
+	q rune
+
+	r uintptr
 
 	logger log.Logger
 
 	conf config.Config
+}
+
+type TestOption func(*Test)
+
+func NewTest(options ...TestOption) *Test {
+	t := testPool.Get().(*Test)
+
+	for _, option := range options {
+		option(t)
+	}
+
+	if t.h == nil {
+		t.h = make([]int, 0)
+	}
+
+	if t.hh == nil {
+		t.hh = make([]interface{}, 0)
+	}
+
+	if t.m == nil {
+		t.m = make(map[string]interface{}, 0)
+	}
+
+	if t.u == nil {
+		t.u = make([3]string, 0)
+	}
+
+	return t
+}
+
+type Test1 struct {
+	a int
 }
 `
 
@@ -152,7 +194,7 @@ func TestEsimFactory_ExtendFieldAndSortField(t *testing.T) {
 	esimfactory.withGenConfOption = true
 	esimfactory.WithNew = true
 	esimfactory.withStar = true
-	esimfactory.withPool = true
+	esimfactory.withPrint = true
 
 	esimfactory.UpStructName = templates.FirstToUpper(testStructName)
 	esimfactory.ShortenStructName = templates.Shorten(testStructName)
@@ -162,14 +204,9 @@ func TestEsimFactory_ExtendFieldAndSortField(t *testing.T) {
 
 	found := esimfactory.findStruct(ps)
 	assert.True(t, found)
-	// assert.Equal(t, extendExcept, esimfactory.newContext())
 
 	esimfactory.withSort = true
 	esimfactory.sortField()
-	// assert.Equal(t, sortExpectd, esimfactory.newContext())
-
-	// decl := esimfactory.constructVarPool()
-	//esimfactory.dstFile.Decls = append(esimfactory.dstFile.Decls, decl)
 
 	optionDecl := esimfactory.constructOptionTypeFunc()
 	esimfactory.newDecls = append(esimfactory.newDecls, optionDecl)
@@ -179,8 +216,8 @@ func TestEsimFactory_ExtendFieldAndSortField(t *testing.T) {
 
 	esimfactory.extendFields()
 	esimfactory.constructDecls()
-	esimfactory.printResult()
-	// assert.Equal(t, sortExpectd, esimfactory.newContext())
+	println(esimfactory.newContext())
+	assert.Equal(t, resultExpectd, esimfactory.newContext())
 }
 
 func TestEsimFactory_getNewFuncTypeReturn(t *testing.T) {
