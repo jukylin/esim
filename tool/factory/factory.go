@@ -249,8 +249,7 @@ func (ef *EsimFactory) findStruct(ps []*decorator.Package) bool {
 										continue
 									}
 
-									if typeSpec.Name.String() == ef.StructName && !ef.found {
-										spew.Dump(underType, ef.found)
+									if typ.Obj().Name() == ef.StructName && !ef.found {
 										ef.found = true
 										ef.typeSpec = typeSpec
 										ef.underType = underType
@@ -822,9 +821,6 @@ func (fs FieldSizes) getFields() []*dst.Field {
 // sortField ascending in byte size.
 func (ef *EsimFactory) sortField() {
 	fs := make(FieldSizes, 0)
-	println(ef.StructName)
-	spew.Dump(ef.underType)
-	println(ef.underType.NumFields())
 	for k, field := range ef.typeSpec.Type.(*dst.StructType).Fields.List {
 		field.Decs.After = dst.EmptyLine
 		fs = append(fs, FieldSize{

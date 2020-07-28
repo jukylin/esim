@@ -9,9 +9,7 @@ import (
 
 	"github.com/dave/dst"
 	"github.com/jukylin/esim/log"
-	filedir "github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
-	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -33,43 +31,43 @@ var (
 
 //nolint:unused,structcheck,maligned
 type Test struct {
-	b int64
-
 	c int8
 
 	i bool
 
-	f float32
-
-	a int32
-
-	h []int
-
-	hh []interface{}
-
-	m map[string]interface{}
-
-	e string
-
 	g byte
-
-	u [3]string
 
 	d int16
 
-	pkg.Fields
-
-	pkg.Field
-
-	n func(interface{})
-
-	o uint
-
-	p complex64
+	a int32
 
 	q rune
 
+	f float32
+
+	p complex64
+
+	m map[string]interface{}
+
+	o uint
+
+	n func(interface{})
+
+	b int64
+
 	r uintptr
+
+	e string
+
+	hh []interface{}
+
+	h []int
+
+	pkg.Fields
+
+	u [3]string
+
+	pkg.Field
 
 	logger log.Logger
 
@@ -79,22 +77,22 @@ type Test struct {
 type TestOption func(*Test)
 
 func NewTest(options ...TestOption) *Test {
-	t := testPool.Get().(*Test)
+	t := &Test{}
 
 	for _, option := range options {
 		option(t)
 	}
 
-	if t.h == nil {
-		t.h = make([]int, 0)
+	if t.m == nil {
+		t.m = make(map[string]interface{}, 0)
 	}
 
 	if t.hh == nil {
 		t.hh = make([]interface{}, 0)
 	}
 
-	if t.m == nil {
-		t.m = make(map[string]interface{}, 0)
+	if t.h == nil {
+		t.h = make([]int, 0)
 	}
 
 	if t.u == nil {
@@ -163,23 +161,6 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func TestEsimFactory_NotFound(t *testing.T) {
-	loggerOptions := log.LoggerOptions{}
-	logger := log.NewLogger(loggerOptions.WithDebug(true))
-	esimfactory := NewEsimFactory(
-		WithEsimFactoryLogger(logger),
-		WithEsimFactoryWriter(filedir.NewEsimWriter()),
-	)
-
-	v := viper.New()
-	v.Set("sname", testStructName+"1")
-	v.Set("sdir", "./example")
-
-	assert.Panics(t, func() {
-		esimfactory.Run(v)
-	})
-}
-
 func TestEsimFactory_ExtendFieldAndSortField(t *testing.T) {
 	loggerOptions := log.LoggerOptions{}
 	logger := log.NewLogger(loggerOptions.WithDebug(true))
@@ -216,7 +197,6 @@ func TestEsimFactory_ExtendFieldAndSortField(t *testing.T) {
 
 	esimfactory.extendFields()
 	esimfactory.constructDecls()
-	println(esimfactory.newContext())
 	assert.Equal(t, resultExpectd, esimfactory.newContext())
 }
 
