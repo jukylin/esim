@@ -184,7 +184,7 @@ func (ef *EsimFactory) Run(v *viper.Viper) error {
 				err.Error())
 		}
 
-		originContent := ""
+		originContent := ef.newContext()
 		res, err := imports.Process("", []byte(originContent), nil)
 		if err != nil {
 			ef.logger.Panicf("%s : %s", err.Error(), originContent)
@@ -249,7 +249,8 @@ func (ef *EsimFactory) findStruct(ps []*decorator.Package) bool {
 										continue
 									}
 
-									if typeSpec.Name.String() == ef.StructName && ef.found == false {
+									if typeSpec.Name.String() == ef.StructName && !ef.found {
+										spew.Dump(underType, ef.found)
 										ef.found = true
 										ef.typeSpec = typeSpec
 										ef.underType = underType
