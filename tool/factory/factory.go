@@ -148,11 +148,10 @@ func (ef *EsimFactory) Run(v *viper.Viper) error {
 		ef.sortField()
 	}
 
-	//
-	//if ef.withPool {
+	// if ef.withPool {
 	//	decl := ef.constructVarPool()
 	//	ef.dstFile.Decls = append(ef.dstFile.Decls, decl)
-	//}
+	// }
 
 	if ef.withOption {
 		decl := ef.constructOptionTypeFunc()
@@ -164,10 +163,10 @@ func (ef *EsimFactory) Run(v *viper.Viper) error {
 		ef.newDecls = append(ef.newDecls, decl)
 	}
 
-	//if ef.withPool {
+	// if ef.withPool {
 	//	decl := ef.constructRelease()
 	//	ef.dstFile.Decls = append(ef.dstFile.Decls, decl)
-	//}
+	// }
 
 	ef.extendFields()
 
@@ -201,6 +200,7 @@ func (ef *EsimFactory) Run(v *viper.Viper) error {
 	return nil
 }
 
+//nolint:staticcheck
 func (ef *EsimFactory) loadPackages() []*decorator.Package {
 	var conf loader.Config
 	conf.TypeChecker.Sizes = types.SizesFor(build.Default.Compiler, build.Default.GOARCH)
@@ -209,8 +209,8 @@ func (ef *EsimFactory) loadPackages() []*decorator.Package {
 	pConfig := &packages.Config{}
 	pConfig.Fset = fset
 	// pConfig.Mode = packages.NeedSyntax | packages.NeedName | packages.NeedFiles |
-		//packages.NeedCompiledGoFiles | packages.NeedTypesInfo | packages.NeedDeps |
-		//packages.NeedTypes | packages.NeedTypesSizes
+	// packages.NeedCompiledGoFiles | packages.NeedTypesInfo | packages.NeedDeps |
+	// packages.NeedTypes | packages.NeedTypesSizes
 	pConfig.Mode = packages.LoadAllSyntax
 	pConfig.Dir = ef.structDir
 	ps, err := decorator.Load(pConfig)
@@ -350,6 +350,7 @@ func (ef *EsimFactory) constructNew() *dst.FuncDecl {
 	return funcDecl
 }
 
+//nolint:unused
 func (ef *EsimFactory) constructRelease() *dst.FuncDecl {
 	funcDecl := &dst.FuncDecl{
 		Recv: &dst.FieldList{
@@ -574,6 +575,7 @@ func (ef *EsimFactory) getNewFuncTypeReturn() *dst.FieldList {
 	return fieldList
 }
 
+//nolint:unused
 func (ef *EsimFactory) constructVarPool() *dst.GenDecl {
 	valueSpec := &dst.ValueSpec{
 		Names: []*dst.Ident{
@@ -713,12 +715,12 @@ func (ef *EsimFactory) newContext() string {
 	return buf.String()
 }
 
-func (ef *EsimFactory) constructDecls()  {
+func (ef *EsimFactory) constructDecls() {
 	if ef.structIndex == len(ef.dstFile.Decls) {
 		ef.dstFile.Decls = append(ef.dstFile.Decls, ef.newDecls...)
 	} else {
-		head := ef.dstFile.Decls[:ef.structIndex + 1]
-		tail := ef.dstFile.Decls[ef.structIndex + 1:]
+		head := ef.dstFile.Decls[:ef.structIndex+1]
+		tail := ef.dstFile.Decls[ef.structIndex+1:]
 		ef.dstFile.Decls = head
 		ef.dstFile.Decls = append(ef.dstFile.Decls, ef.newDecls...)
 		ef.dstFile.Decls = append(ef.dstFile.Decls, tail...)

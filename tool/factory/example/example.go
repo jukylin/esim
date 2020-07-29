@@ -49,6 +49,7 @@ type Test struct {
 	r uintptr
 }
 
+//nolint:unused,structcheck,maligned
 type Test1 struct {
 	a int
 }
