@@ -5,10 +5,13 @@ import (
 	"errors"
 	"go/build"
 	"go/token"
+	"go/ast"
 	"go/types"
 	"path/filepath"
 	"sort"
 	"strings"
+	"go/parser"
+	//"fmt"
 
 	"github.com/dave/dst"
 	"github.com/dave/dst/decorator"
@@ -213,6 +216,19 @@ func (ef *EsimFactory) loadPackages() []*decorator.Package {
 	// packages.NeedTypes | packages.NeedTypesSizes
 	pConfig.Mode = packages.LoadAllSyntax
 	pConfig.Dir = ef.structDir
+	absDir, err := filepath.Abs(ef.structDir)
+	if err != nil {
+		ef.logger.Warnf(err.Error())
+	}
+
+	pConfig.ParseFile = func(fset *token.FileSet, filename string, src []byte) (*ast.File, error) {
+		const mode = parser.ParseComments | parser.AllErrors
+		f, err := parser.ParseFile(fset, filename, src, mode)
+		if f.Scope.Lookup(ef.StructName) != nil && absDir == filepath.Dir(filename) {
+			ef.structFileName = filepath.Base(filename)
+		}
+		return f, err
+	}
 	ps, err := decorator.Load(pConfig)
 	if err != nil {
 		ef.logger.Panicf(err.Error())
@@ -256,6 +272,7 @@ func (ef *EsimFactory) findStruct(ps []*decorator.Package) bool {
 										ef.structPackage = p
 										ef.dstFile = syntax
 										ef.structIndex = k
+										// ef.structFileName =
 									}
 								}
 							}
