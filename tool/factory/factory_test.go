@@ -1,170 +1,233 @@
 package factory
 
 import (
+	"go/token"
 	"os"
-	"path/filepath"
+	"reflect"
+	"strings"
 	"testing"
 
+	"github.com/dave/dst"
 	"github.com/jukylin/esim/log"
-	"github.com/jukylin/esim/pkg"
-	filedir "github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
-	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMain(m *testing.M) {
-	setUp()
+const (
+	testStructName = "Test"
+)
 
+var resultExpectd = `package example
+
+import (
+	"github.com/jukylin/esim/config"
+	"github.com/jukylin/esim/log"
+	"github.com/jukylin/esim/pkg"
+)
+
+var (
+	var1 = []string{"var1"} //nolint:unused,varcheck,deadcode
+)
+
+//nolint:unused,structcheck,maligned
+type Test struct {
+	c int8
+
+	i bool
+
+	g byte
+
+	d int16
+
+	a int32
+
+	q rune
+
+	f float32
+
+	p complex64
+
+	m map[string]interface{}
+
+	o uint
+
+	n func(interface{})
+
+	b int64
+
+	r uintptr
+
+	e string
+
+	hh []interface{}
+
+	h []int
+
+	pkg.Fields
+
+	u [3]string
+
+	pkg.Field
+
+	logger log.Logger
+
+	conf config.Config
+}
+
+type TestOption func(*Test)
+
+func NewTest(options ...TestOption) *Test {
+	t := &Test{}
+
+	for _, option := range options {
+		option(t)
+	}
+
+	if t.m == nil {
+		t.m = make(map[string]interface{}, 0)
+	}
+
+	if t.hh == nil {
+		t.hh = make([]interface{}, 0)
+	}
+
+	if t.h == nil {
+		t.h = make([]int, 0)
+	}
+
+	return t
+}
+
+//nolint:unused,structcheck,maligned
+type Test1 struct {
+	a int
+}
+`
+
+func TestMain(m *testing.M) {
 	code := m.Run()
 
 	os.Exit(code)
 }
 
-var esimfactory *EsimFactory
-
-func setUp() {
+func TestEsimFactory_ExtendFieldAndSortField(t *testing.T) {
 	loggerOptions := log.LoggerOptions{}
 	logger := log.NewLogger(loggerOptions.WithDebug(true))
-	esimfactory = NewEsimFactory(
+	esimfactory := NewEsimFactory(
 		WithEsimFactoryLogger(logger),
-		WithEsimFactoryWriter(filedir.NewEsimWriter()),
-		WithEsimFactoryTpl(templates.NewTextTpl()),
-	)
-}
-
-func TestEsimFactory_Run(t *testing.T) {
-	v := viper.New()
-	v.Set("sname", testStructName)
-	v.Set("option", true)
-	v.Set("sort", true)
-	v.Set("ol", true)
-	v.Set("oc", true)
-	v.Set("sdir", "./example")
-	v.Set("pool", true)
-	v.Set("plural", true)
-	v.Set("new", true)
-	v.Set("print", false)
-
-	err := esimfactory.Run(v)
-	assert.Nil(t, err)
-	esimfactory.Close()
-
-	err = filedir.EsimRecoverFile(esimfactory.structDir +
-		string(filepath.Separator) + esimfactory.structFileName)
-	assert.Nil(t, err)
-}
-
-func TestEsimFactory_InputBind(t *testing.T) {
-	v := viper.New()
-	v.Set("sname", testStructName)
-	v.Set("option", true)
-	v.Set("sort", true)
-	v.Set("ol", true)
-	v.Set("oc", true)
-	v.Set("print", true)
-
-	v.Set("sdir", "./example")
-	err := esimfactory.bindInput(v)
-	assert.Nil(t, err)
-}
-
-//nolint:goconst
-func TestCopyOldStructInfo(t *testing.T) {
-	esimfactory.oldStructInfo.imports = esimfactory.oldStructInfo.imports[:0]
-	esimfactory.oldStructInfo.imports = append(esimfactory.oldStructInfo.imports,
-		pkg.Import{Path: "fmt"})
-	esimfactory.oldStructInfo.structFileContent = "package main"
-	esimfactory.copyOldStructInfo()
-	assert.Equal(t, "fmt", esimfactory.NewStructInfo.imports[0].Path)
-
-	esimfactory.NewStructInfo.varStr = "var ()"
-	assert.NotEqual(t, esimfactory.oldStructInfo.varStr, esimfactory.NewStructInfo.varStr)
-}
-
-var replaceStructContent = `package main
-
-import (
-	"github.com/jukylin/esim/config"
-	"github.com/jukylin/esim/log"
-)
-
-type test struct {
-	logger log.Logger
-
-	conf config.Config
-
-	a int
-
-	b string
-}
-`
-
-//nolint:goconst
-func TestExtendFieldAndReplaceStructContent(t *testing.T) {
-	loggerOptions := log.LoggerOptions{}
-	logger := log.NewLogger(loggerOptions.WithDebug(true))
-	esimfactory = NewEsimFactory(
-		WithEsimFactoryLogger(logger),
-		WithEsimFactoryWriter(filedir.NewEsimWriter()),
-		WithEsimFactoryTpl(templates.NewTextTpl()),
 	)
 
+	esimfactory.structDir = "./example"
+	esimfactory.StructName = testStructName
 	esimfactory.withOption = true
 	esimfactory.withGenLoggerOption = true
 	esimfactory.withGenConfOption = true
+	esimfactory.WithNew = true
+	esimfactory.withStar = true
+	esimfactory.withPrint = true
+	esimfactory.withSort = true
 
-	result := esimfactory.extendField()
-	assert.True(t, result)
+	esimfactory.UpStructName = templates.FirstToUpper(testStructName)
+	esimfactory.ShortenStructName = templates.Shorten(testStructName)
+	esimfactory.LowerStructName = strings.ToLower(testStructName)
 
-	assert.Equal(t, 2, len(esimfactory.NewStructInfo.Fields))
-	assert.Equal(t, 2, len(esimfactory.NewStructInfo.imports))
+	ps := esimfactory.loadPackages()
 
-	esimfactory.writer = filedir.NewNullWrite()
+	found := esimfactory.findStruct(ps)
+	assert.True(t, found)
 
-	afield := pkg.Field{}
-	afield.Field = "a int"
-	bfield := pkg.Field{}
-	bfield.Field = "b string"
-	esimfactory.NewStructInfo.Fields = append(esimfactory.NewStructInfo.Fields,
-		afield, bfield)
+	esimfactory.withSort = true
+	esimfactory.sortField()
 
-	esimfactory.oldStructInfo.structFileContent = `package main
+	optionDecl := esimfactory.constructOptionTypeFunc()
+	esimfactory.newDecls = append(esimfactory.newDecls, optionDecl)
 
-import (
-	"fmt"
-	"sync"
-)
+	funcDecl := esimfactory.constructNew()
+	esimfactory.newDecls = append(esimfactory.newDecls, funcDecl)
 
-type test struct {
-	a int
-
-	b string
+	esimfactory.extendFields()
+	esimfactory.constructDecls()
+	assert.Equal(t, resultExpectd, esimfactory.newContext())
 }
 
-`
-	esimfactory.oldStructInfo.importStr = `
-import (
-	"fmt"
-	"sync"
-)
-`
-
-	esimfactory.oldStructInfo.structStr = `
-type test struct {
-	a int
-
-	b string
+func TestEsimFactory_getNewFuncTypeReturn(t *testing.T) {
+	tests := []struct {
+		name          string
+		structName    string
+		withPool      bool
+		withStar      bool
+		withInterface bool
+		InterName     string
+		want          interface{}
+	}{
+		{"normal", "Test", false, false, false, "",
+			dst.NewIdent("Test")},
+		{"with pool", "Test", true,
+			false, false, "", &dst.StarExpr{
+				X: dst.NewIdent("Test")}},
+		{"with star", "Test", false,
+			true, false, "", &dst.StarExpr{
+				X: dst.NewIdent("Test")}},
+		{"with interface", "", false,
+			false, true, "Test", dst.NewIdent("Test")},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ef := NewEsimFactory()
+			ef.withStar = tt.withStar
+			ef.withPool = tt.withPool
+			ef.StructName = tt.structName
+			ef.withImpIface = tt.InterName
+			got := ef.getNewFuncTypeReturn()
+			assert.True(t, reflect.DeepEqual(got.List[0].Type, tt.want))
+		})
+	}
 }
-`
-	esimfactory.StructName = "test"
-	err := esimfactory.buildNewStructFileContent()
-	assert.Nil(t, err)
-	assert.Equal(t, replaceStructContent, esimfactory.NewStructInfo.structFileContent)
 
-	esimfactory.oldStructInfo.importStr = ""
-	esimfactory.packStr = "package main"
-	err = esimfactory.buildNewStructFileContent()
-	assert.Nil(t, err)
-	assert.Equal(t, replaceStructContent, esimfactory.NewStructInfo.structFileContent)
+func TestEsimFactory_getStructInstan(t *testing.T) {
+	tests := []struct {
+		name       string
+		structName string
+		withPool   bool
+		withStar   bool
+		want       interface{}
+	}{
+		{"normal", "Test", false, false,
+			&dst.CompositeLit{
+				Type: dst.NewIdent("Test"),
+			}},
+		{"with pool", "Test", true,
+			false, &dst.TypeAssertExpr{
+				X: &dst.CallExpr{
+					Fun: &dst.SelectorExpr{
+						X:   dst.NewIdent("testPool"),
+						Sel: dst.NewIdent("Get"),
+					},
+				},
+				Type: &dst.StarExpr{
+					X: dst.NewIdent("Test"),
+				},
+			}},
+		{"with star", "Test", false,
+			true, &dst.UnaryExpr{
+				Op: token.AND,
+				X: &dst.CompositeLit{
+					Type: dst.NewIdent("Test"),
+				},
+			}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ef := NewEsimFactory()
+			ef.withStar = tt.withStar
+			ef.withPool = tt.withPool
+			ef.ShortenStructName = "t"
+			ef.LowerStructName = "test"
+			ef.StructName = tt.structName
+			ef.UpStructName = "Test"
+			got := ef.getStructInstan()
+
+			assert.True(t, reflect.DeepEqual(got.(*dst.AssignStmt).Rhs[0], tt.want))
+		})
+	}
 }

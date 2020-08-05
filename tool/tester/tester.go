@@ -213,7 +213,7 @@ func (tester *Tester) checkIsIgnoreFile(fileName string) bool {
 // runGoTest run go test when the directory be changed.
 // There are exceptions：is wire file，mock.
 func (tester *Tester) runGoTest(dir string) {
-	if !tester.notRunTest && atomic.CompareAndSwapInt32(&tester.runningTest, 0, 1) {
+	if atomic.CompareAndSwapInt32(&tester.runningTest, 0, 1) {
 		go func() {
 			tester.logger.Infof("Go file modified %s", dir)
 
@@ -236,7 +236,6 @@ func (tester *Tester) checkAndRunWire(fileName, dir string) {
 		atomic.CompareAndSwapInt32(&tester.runningWire, 0, 1) {
 		for _, provideFile := range wireProvidersFiles {
 			if provideFile == fileName {
-				tester.notRunTest = true
 				go func() {
 					// Avoid redundant execution
 					time.Sleep(tester.waitTime)
@@ -246,12 +245,10 @@ func (tester *Tester) checkAndRunWire(fileName, dir string) {
 					if err != nil {
 						tester.logger.Errorf(err.Error())
 					}
-
-					tester.notRunTest = false
-					atomic.StoreInt32(&tester.runningWire, 0)
 				}()
 			}
 		}
+		atomic.StoreInt32(&tester.runningWire, 0)
 	}
 }
 
@@ -259,7 +256,6 @@ func (tester *Tester) checkAndRunMock(dir string) {
 	absDir, _ := filepath.Abs(dir)
 	if tester.withMockery && tester.checkNeedRunMockDir(dir) &&
 		atomic.CompareAndSwapInt32(&tester.runningMock, 0, 1) {
-		tester.notRunTest = true
 		go func() {
 			// Avoid redundant execution
 			time.Sleep(tester.waitTime)
@@ -270,7 +266,6 @@ func (tester *Tester) checkAndRunMock(dir string) {
 				tester.logger.Errorf(err.Error())
 			}
 
-			tester.notRunTest = false
 			atomic.StoreInt32(&tester.runningMock, 0)
 		}()
 	}

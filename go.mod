@@ -21,6 +21,7 @@ require (
 	github.com/hashicorp/go-hclog v0.12.0
 	github.com/hashicorp/go-plugin v1.0.1
 	github.com/hashicorp/yamux v0.0.0-20181012175058-2f1d1f20f75d // indirect
+	github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a
 	github.com/jinzhu/gorm v1.9.10
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/martinusso/inflect v0.0.0-20161215184957-e234d1ee70de

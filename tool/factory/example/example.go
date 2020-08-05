@@ -22,6 +22,8 @@ type Test struct {
 
 	h []int
 
+	hh []interface{}
+
 	m map[string]interface{}
 
 	e string
@@ -37,4 +39,17 @@ type Test struct {
 	pkg.Field
 
 	n func(interface{})
+
+	o uint
+
+	p complex64
+
+	q rune
+
+	r uintptr
+}
+
+//nolint:unused,structcheck,maligned
+type Test1 struct {
+	a int
 }
