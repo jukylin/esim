@@ -95,10 +95,6 @@ func NewTest(options ...TestOption) *Test {
 		t.h = make([]int, 0)
 	}
 
-	if t.u == nil {
-		t.u = make([3]string, 0)
-	}
-
 	return t
 }
 
@@ -129,6 +125,7 @@ func TestEsimFactory_ExtendFieldAndSortField(t *testing.T) {
 	esimfactory.WithNew = true
 	esimfactory.withStar = true
 	esimfactory.withPrint = true
+	esimfactory.withSort = true
 
 	esimfactory.UpStructName = templates.FirstToUpper(testStructName)
 	esimfactory.ShortenStructName = templates.Shorten(testStructName)

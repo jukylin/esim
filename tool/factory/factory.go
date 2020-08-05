@@ -298,15 +298,7 @@ func (ef *EsimFactory) constructOptionTypeFunc() *dst.GenDecl {
 				Name: dst.NewIdent(ef.StructName + "Option"),
 				Type: &dst.FuncType{
 					Func: true,
-					Params: &dst.FieldList{
-						List: []*dst.Field{
-							{
-								Type: &dst.StarExpr{
-									X: dst.NewIdent(ef.StructName),
-								},
-							},
-						},
-					},
+					Params: ef.constructOptionTypeFuncParam(),
 				},
 			},
 		},
@@ -318,6 +310,28 @@ func (ef *EsimFactory) constructOptionTypeFunc() *dst.GenDecl {
 	}
 
 	return genDecl
+}
+
+
+func (ef *EsimFactory) constructOptionTypeFuncParam() *dst.FieldList {
+	fieldList := &dst.FieldList{}
+	if ef.withPool || ef.withStar {
+		fieldList.List = []*dst.Field{
+			{
+				Type: &dst.StarExpr{
+					X: dst.NewIdent(ef.StructName),
+				},
+			},
+		}
+	} else {
+		fieldList.List = []*dst.Field{
+			{
+				Type: dst.NewIdent(ef.StructName),
+			},
+		}
+	}
+
+	return fieldList
 }
 
 func (ef *EsimFactory) constructNew() *dst.FuncDecl {
@@ -491,13 +505,14 @@ func (ef *EsimFactory) getOptionBody() dst.Stmt {
 	}
 }
 
+// map,slice are special field
 func (ef *EsimFactory) getSpecialFieldStmt() []dst.Stmt {
 	stmts := make([]dst.Stmt, 0)
 	for _, field := range ef.typeSpec.Type.(*dst.StructType).Fields.List {
 		field.Decs.After = dst.EmptyLine
 		switch _typ := field.Type.(type) {
 		case *dst.ArrayType:
-			if len(field.Names) != 0 {
+			if len(field.Names) != 0 && _typ.Len == nil{
 				cloned := dst.Clone(_typ).(*dst.ArrayType)
 				stmts = append(stmts, ef.constructSpecialFieldStmt(ef.ShortenStructName,
 					field.Names[0].String(), cloned))
