@@ -121,9 +121,7 @@ func (edf *entityDomainFile) ParseCloumns(cs Columns, info *ShareInfo) {
 	}
 
 	edf.tableName = info.DbConf.Table
-
-	tpl.Imports = append(tpl.Imports, pkg.Import{Path: "github.com/jinzhu/gorm"})
-
+	
 	tpl.StructName = info.CamelStruct
 
 	structInfo := templates.NewStructInfo()
