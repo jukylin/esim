@@ -136,6 +136,9 @@ func TestEsimFactory_ExtendFieldAndSortField(t *testing.T) {
 	found := esimfactory.findStruct(ps)
 	assert.True(t, found)
 
+	found = esimfactory.checkNewStruct(ps)
+	assert.False(t, found)
+
 	esimfactory.withSort = true
 	esimfactory.sortField()
 

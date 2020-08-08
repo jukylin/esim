@@ -10,8 +10,8 @@ import (
 	"github.com/jukylin/esim/pkg"
 	filedir "github.com/jukylin/esim/pkg/file-dir"
 	"github.com/jukylin/esim/pkg/templates"
-	"github.com/spf13/viper"
 	"github.com/serenize/snaker"
+	"github.com/spf13/viper"
 )
 
 type daoDomainFile struct {

@@ -3,15 +3,14 @@ package factory
 import (
 	"bytes"
 	"errors"
-	"go/build"
-	"go/token"
 	"go/ast"
+	"go/build"
+	"go/parser"
+	"go/token"
 	"go/types"
 	"path/filepath"
 	"sort"
 	"strings"
-	"go/parser"
-	//"fmt"
 
 	"github.com/dave/dst"
 	"github.com/dave/dst/decorator"
@@ -162,6 +161,10 @@ func (ef *EsimFactory) Run(v *viper.Viper) error {
 	}
 
 	if ef.WithNew {
+		if ef.checkNewStruct(ps) {
+			ef.logger.Panicf("%s is exists.", "New"+ef.UpStructName)
+		}
+
 		decl := ef.constructNew()
 		ef.newDecls = append(ef.newDecls, decl)
 	}
@@ -222,8 +225,9 @@ func (ef *EsimFactory) loadPackages() []*decorator.Package {
 	}
 
 	pConfig.ParseFile = func(fset *token.FileSet, filename string, src []byte) (*ast.File, error) {
+		var f *ast.File
 		const mode = parser.ParseComments | parser.AllErrors
-		f, err := parser.ParseFile(fset, filename, src, mode)
+		f, err = parser.ParseFile(fset, filename, src, mode)
 		if f.Scope.Lookup(ef.StructName) != nil && absDir == filepath.Dir(filename) {
 			ef.structFileName = filepath.Base(filename)
 		}
@@ -297,7 +301,7 @@ func (ef *EsimFactory) constructOptionTypeFunc() *dst.GenDecl {
 			&dst.TypeSpec{
 				Name: dst.NewIdent(ef.StructName + "Option"),
 				Type: &dst.FuncType{
-					Func: true,
+					Func:   true,
 					Params: ef.constructOptionTypeFuncParam(),
 				},
 			},
@@ -311,7 +315,6 @@ func (ef *EsimFactory) constructOptionTypeFunc() *dst.GenDecl {
 
 	return genDecl
 }
-
 
 func (ef *EsimFactory) constructOptionTypeFuncParam() *dst.FieldList {
 	fieldList := &dst.FieldList{}
@@ -332,6 +335,22 @@ func (ef *EsimFactory) constructOptionTypeFuncParam() *dst.FieldList {
 	}
 
 	return fieldList
+}
+
+func (ef *EsimFactory) checkNewStruct(ps []*decorator.Package) bool {
+	for _, p := range ps {
+		for _, syntax := range p.Syntax {
+			for _, decl := range syntax.Decls {
+				if genDecl, ok := decl.(*dst.FuncDecl); ok {
+					if genDecl.Name.String() == "New"+ef.UpStructName {
+						return true
+					}
+				}
+			}
+		}
+	}
+
+	return false
 }
 
 func (ef *EsimFactory) constructNew() *dst.FuncDecl {
@@ -505,14 +524,14 @@ func (ef *EsimFactory) getOptionBody() dst.Stmt {
 	}
 }
 
-// map,slice are special field
+// map,slice are special field.
 func (ef *EsimFactory) getSpecialFieldStmt() []dst.Stmt {
 	stmts := make([]dst.Stmt, 0)
 	for _, field := range ef.typeSpec.Type.(*dst.StructType).Fields.List {
 		field.Decs.After = dst.EmptyLine
 		switch _typ := field.Type.(type) {
 		case *dst.ArrayType:
-			if len(field.Names) != 0 && _typ.Len == nil{
+			if len(field.Names) != 0 && _typ.Len == nil {
 				cloned := dst.Clone(_typ).(*dst.ArrayType)
 				stmts = append(stmts, ef.constructSpecialFieldStmt(ef.ShortenStructName,
 					field.Names[0].String(), cloned))
