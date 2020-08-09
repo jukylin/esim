@@ -12,6 +12,19 @@ import (
 	"github.com/jukylin/esim/proxy"
 )
 
+// GlobalStub is test double and it is used when we cannot or don’t want to involve real server.
+// Instead of the real server, we introduced a stub and defined what data should be returned.
+// Example:
+//	func(request *http.Request) *http.Response {
+//		resp := &http.Response{}
+//		if request.URL.String() == "127.0.0.1" {
+//			resp.StatusCode = http.StatusOK
+//			resp.Body = ioutil.NopCloser(bytes.NewReader([]byte{}))
+//		}
+//		return resp
+//	}
+var GlobalStub func(*http.Request) *http.Response
+
 type Client struct {
 	client *http.Client
 
@@ -31,9 +44,18 @@ func NewClient(options ...Option) *Client {
 
 	client := &http.Client{}
 	Client.client = client
-
+	
 	for _, option := range options {
 		option(Client)
+	}
+
+	if Client.logger == nil {
+		Client.logger = log.NewLogger()
+	}
+
+	if GlobalStub != nil {
+		// It is the last transports.
+		Client.transports = append(Client.transports, newGlobalStub(GlobalStub, Client.logger))
 	}
 
 	if Client.transports == nil {
@@ -46,10 +68,6 @@ func NewClient(options ...Option) *Client {
 
 	if Client.client.Timeout <= 0 {
 		Client.client.Timeout = 30 * time.Second
-	}
-
-	if Client.logger == nil {
-		Client.logger = log.NewLogger()
 	}
 
 	return Client
@@ -117,4 +135,17 @@ func (c *Client) Head(ctx context.Context, addr string) (resp *http.Response, er
 
 func (c *Client) CloseIdleConnections(ctx context.Context) {
 	c.client.CloseIdleConnections()
+}
+
+func newGlobalStub(stubFunc func(*http.Request) *http.Response, logger log.Logger) func() interface{} {
+	return 	func() interface{} {
+		stubsProxyOptions := StubsProxyOptions{}
+		stubsProxy := NewStubsProxy(
+			stubsProxyOptions.WithRespFunc(stubFunc),
+			stubsProxyOptions.WithName("global stub"),
+			stubsProxyOptions.WithLogger(logger),
+		)
+
+		return stubsProxy
+	}
 }

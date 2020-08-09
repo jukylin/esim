@@ -23,13 +23,17 @@ type StubsProxyOptions struct{}
 type RespFunc func(*http.Request) *http.Response
 
 func NewStubsProxy(options ...StubsProxyOption) *StubsProxy {
-	StubsProxy := &StubsProxy{}
+	stubsProxy := &StubsProxy{}
 
 	for _, option := range options {
-		option(StubsProxy)
+		option(stubsProxy)
 	}
 
-	return StubsProxy
+	if stubsProxy.logger == nil {
+		stubsProxy.logger = log.NewLogger()
+	}
+
+	return stubsProxy
 }
 
 func (StubsProxyOptions) WithRespFunc(respFunc RespFunc) StubsProxyOption {
@@ -60,5 +64,6 @@ func (sp *StubsProxy) ProxyName() string {
 
 // RoundTrip implements the RoundTripper interface.
 func (sp *StubsProxy) RoundTrip(req *http.Request) (*http.Response, error) {
+	sp.logger.Infoc(req.Context(), "Call %s", sp.name)
 	return sp.respFunc(req), nil
 }

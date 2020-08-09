@@ -206,3 +206,26 @@ func TestTimeoutProxy(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, resp.StatusCode, http.StatusOK)
 }
+
+func TestGlobalSubs(t *testing.T) {
+	GlobalStub = func(request *http.Request) *http.Response {
+		resp := &http.Response{}
+		if request.URL.String() == "127.0.0.1" {
+			resp.StatusCode = http.StatusOK
+			resp.Body = ioutil.NopCloser(bytes.NewReader([]byte{}))
+		}
+
+		return resp
+	}
+
+	clientOptions := ClientOptions{}
+	httpClient := NewClient(
+		clientOptions.WithLogger(logger))
+
+	ctx := context.Background()
+	resp, err := httpClient.Get(ctx, host1)
+	resp.Body.Close()
+
+	assert.Nil(t, err)
+	assert.Equal(t, resp.StatusCode, http.StatusOK)
+}
