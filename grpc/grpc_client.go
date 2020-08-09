@@ -16,6 +16,21 @@ import (
 	"google.golang.org/grpc/keepalive"
 )
 
+// GlobalStub is test double and it is used when we cannot or don’t want to involve real server.
+// Instead of the real server, we introduced a stub and defined what data should be returned.
+// Example:
+// func(ctx context.Context,
+// 		method string, req, reply interface{}, cc *grpc.ClientConn,
+// 		invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+// 		if method == "/helloworld.Greeter/SayHello" {
+// 			reply.(*pb.HelloReply).Message = "hello"
+// 		}
+// 		return nil
+// }
+var GlobalStub func(ctx context.Context, method string, req, reply interface{},
+	cc *grpc.ClientConn, invoker grpc.UnaryInvoker,
+	opts ...grpc.CallOption) error
+
 type Client struct {
 	conn *grpc.ClientConn
 
@@ -105,6 +120,10 @@ func NewClientOptions(options ...ClientOptional) *ClientOptions {
 		opts = append(opts, grpc.WithChainUnaryInterceptor(clientOptions.clientDebug()))
 	}
 
+	if GlobalStub != nil {
+		opts = append(opts, grpc.WithChainUnaryInterceptor(ClientStubs(GlobalStub)))
+	}
+
 	clientOptions.opts = append(opts, clientOptions.opts...)
 
 	return clientOptions
@@ -142,12 +161,23 @@ func (ClientOptionals) WithDialOptions(options ...grpc.DialOption) ClientOptiona
 
 // NewClient create Client for business.
 // clientOptions clientOptions can not nil.
+// Deprecated: use NewClientWithOptionals instead.
 func NewClient(clientOptions *ClientOptions) *Client {
-	Client := &Client{}
+	client := &Client{}
 
-	Client.clientOpts = clientOptions
+	client.clientOpts = clientOptions
 
-	return Client
+	return client
+}
+
+func NewClientWithOptionals(options ...ClientOptional) *Client {
+	client := &Client{}
+
+	clientOptions := NewClientOptions(options...)
+
+	client.clientOpts = clientOptions
+
+	return client
 }
 
 func (gc *Client) DialContext(ctx context.Context, target string) *grpc.ClientConn {
