@@ -168,3 +168,39 @@ func TestSubsReply(t *testing.T) {
 		assert.Equal(t, esim, r.Message)
 	}
 }
+
+func TestGlobalSubs(t *testing.T) {
+	memConfig := config.NewMemConfig()
+	memConfig.Set("debug", true)
+	memConfig.Set("grpc_client_debug", true)
+
+	clientOptional := ClientOptionals{}
+	GlobalStub = func(ctx context.Context,
+				method string, req, reply interface{}, cc *grpc.ClientConn,
+				invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+				if method == "/helloworld.Greeter/SayHello" {
+					reply.(*pb.HelloReply).Message = esim
+				}
+				return nil
+			}
+
+	ctx := context.Background()
+	client := NewClientWithOptionals(
+		clientOptional.WithLogger(logger),
+		clientOptional.WithConf(memConfig),
+	)
+	conn := client.DialContext(ctx, tcpAddr.String())
+
+	defer conn.Close()
+	c := pb.NewGreeterClient(conn)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	r, err := c.SayHello(ctx, &pb.HelloRequest{Name: esim})
+	if err != nil {
+		logger.Errorf(err.Error())
+	} else {
+		assert.Equal(t, esim, r.Message)
+	}
+}
+
