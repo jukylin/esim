@@ -117,9 +117,9 @@ func NewGinServer(app *{{.PackageName}}.App) *GinServer {
 		httpport = ":"+httpport
 	}
 
-	if app.Conf.GetString("runmode") != "pro"{
+	if app.Conf.GetBool("debug") {
 		gin.SetMode(gin.DebugMode)
-	}else{
+	} else {
 		gin.SetMode(gin.ReleaseMode)
 	}
 

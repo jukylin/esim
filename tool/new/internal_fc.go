@@ -56,10 +56,6 @@ func NewApp(options ...Option) *App {
 			conf.Set("runmode", "dev")
 		}
 
-		if conf.GetString("runmode") != "pro" {
-			conf.Set("debug", true)
-		}
-
 		return conf
 	})
 

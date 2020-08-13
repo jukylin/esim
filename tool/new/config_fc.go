@@ -4,9 +4,9 @@ var (
 	configfc1 = &FileContent{
 		FileName: "conf.yaml",
 		Dir:      "conf",
-		Content: `
-runmode : '${ENV}'
+		Content: `runmode : '${ENV}'
 appname : {{.ServerName}}
+debug : '${DEBUG}'
 
 #HTTP 服务
 httpport : 8080

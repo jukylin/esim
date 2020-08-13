@@ -36,7 +36,9 @@ func tearDown() {
 }
 
 func TestLog(t *testing.T) {
-	logger := NewLogger(WithDebug(true))
+	logger := NewLogger(
+		WithDebug(true),
+		WithJSON(true))
 
 	sp := tracer.StartSpan("test")
 	ctx := opentracing.ContextWithSpan(context.Background(), sp)
@@ -139,3 +141,4 @@ func TestNewLogger(t *testing.T) {
 		})
 	}
 }
+
