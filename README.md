@@ -1,6 +1,6 @@
 # Esim文档
 
-> &nbsp;&nbsp;&nbsp;&nbsp;Esim专注解决业务问题：业务复杂度，如何测试，代码组织，扩展等问题。不会提供微服务整套技术体系，服务自理、服务注册、服务发现等都不是它专注解决的问题，这部分问题我们交给了Service Mesh。
+> &nbsp;&nbsp;&nbsp;&nbsp;Esim专注解决业务问题：业务复杂度，如何测试，代码组织，扩展等问题。不会提供微服务整套技术体系，服务治理、服务注册、服务发现等都不是它专注解决的问题，这部分问题我们交给了Service Mesh。
 
 > &nbsp;&nbsp;&nbsp;&nbsp;做为业务框架，Esim默认集成了gin和grpc两个技术框架，但吸收了业务和技术分离思想，所以为集成其他技术框架提供了接口，只要实现[Transports](https://github.com/jukylin/esim/blob/master/transports/interface.go#L3)接口，再把实例注册到```App.trans```就可以很轻松的集成其他技术框架。
 
@@ -161,7 +161,7 @@ infra/dao|数据访问对象| index.go| IndexDao |无
 > &nbsp;&nbsp;&nbsp;&nbsp;Esim将wire用于业务与基础设施之间。将基础设施的初始化从业务抽离出来，集中管理。
 
 ### Esim使用wire示例
-> &nbsp;&nbsp;&nbsp;&nbsp;基础设施的依赖和初始化都在 ```infra/infra.go``` 文件下。wire的使用主要分2步，以增加mysqlClient：
+> &nbsp;&nbsp;&nbsp;&nbsp;基础设施的依赖和初始化都在 ```infra/infra.go``` 文件下。wire的使用主要分2步，以增加mysqlClient为例：
 
 #### provide
 ##### before
