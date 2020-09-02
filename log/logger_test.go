@@ -1,75 +1,144 @@
 package log
 
 import (
-	"testing"
-	opentracing "github.com/opentracing/opentracing-go"
 	"context"
-	jaegerConfig "github.com/uber/jaeger-client-go/config"
+	"os"
+	"reflect"
+	"testing"
+
+	tracerid "github.com/jukylin/esim/pkg/tracer-id"
+	"github.com/opentracing/opentracing-go"
 	"github.com/stretchr/testify/assert"
-	jaeger "github.com/uber/jaeger-client-go"
+	"github.com/uber/jaeger-client-go"
+	jaegerConfig "github.com/uber/jaeger-client-go/config"
 )
 
-func initJaeger() (opentracing.Tracer, error) {
-	cfg, err := jaegerConfig.FromEnv()
-	if err != nil{
-		return nil, err
-	}
+var tracer opentracing.Tracer
 
-	cfg.ServiceName = "logger"
-	tracer, _, err := cfg.NewTracer()
+func TestMain(m *testing.M) {
+	setUp()
 
-	return tracer, err
+	code := m.Run()
+
+	tearDown()
+
+	os.Exit(code)
 }
 
-func TestLog(t *testing.T)  {
+func setUp() {
+	cfg, _ := jaegerConfig.FromEnv()
+	cfg.ServiceName = "logger"
+	tracer, _, _ = cfg.NewTracer()
+}
 
-	loggerOptions := LoggerOptions{}
+func tearDown() {
 
-	logger := NewLogger(loggerOptions.WithDebug(false))
+}
 
-	tracer, err := initJaeger()
-	assert.Nil(t, err)
+func TestLog(t *testing.T) {
+	logger := NewLogger(
+		WithDebug(true),
+		WithJSON(true))
 
 	sp := tracer.StartSpan("test")
-	ctx := opentracing.ContextWithSpan(context.Background() , sp)
+	ctx := opentracing.ContextWithSpan(context.Background(), sp)
 
 	logger.Debugf("debug")
-
 	logger.Debugc(ctx, "debug")
 
 	logger.Infof("info")
-
 	logger.Infoc(ctx, "info")
 
 	logger.Warnf("warn")
-
 	logger.Warnc(ctx, "warn")
+
+	logger.Error("Error")
+	logger.Errorf("Errorf")
+	logger.Errorc(ctx, "Errorf")
+
+	assert.Panics(t, func() {
+		logger.Panicf("Panicf")
+		logger.DPanicf("DPanicf")
+	})
+
+	assert.Panics(t, func() {
+		logger.Panicc(ctx, "Panicc")
+		logger.DPanicc(ctx, "DPanicf")
+	})
+
+	//logger.Fatalf("Fatalf")
+	//logger.Fatalc(ctx, "Fatalc")
+
 }
 
-func TestGetTracerId(t *testing.T)  {
+func Test_logger_getArgs(t *testing.T) {
+	type args struct {
+		ctx context.Context
+	}
 
-	loggerOptions := LoggerOptions{}
-
-	log := NewLogger(loggerOptions.WithDebug(false))
-
-	tracer, err := initJaeger()
-	assert.Nil(t, err)
-
+	log := new(logger)
 	sp := tracer.StartSpan("test")
-	ctx := opentracing.ContextWithSpan(context.Background() , sp)
+	jaegerCtx := opentracing.ContextWithSpan(context.Background(), sp)
 
-	assert.Equal(t, sp.Context().(jaeger.SpanContext).TraceID().String(),
-		log.(*logger).getTracerId(ctx))
+	esimTracerID := tracerid.TracerID()()
+	esimCtx := context.WithValue(context.Background(), tracerid.ActiveEsimKey, esimTracerID)
+
+	tests := []struct {
+		name string
+		args args
+		want []interface{}
+	}{
+		{"jaeger_tracer_id", args{jaegerCtx},
+			[]interface{}{
+				"caller", "testing/testing.go:991", "tracer_id",
+				sp.Context().(jaeger.SpanContext).TraceID().String(),
+			}},
+		{"esim_tracer_id", args{esimCtx},
+			[]interface{}{
+				"caller", "testing/testing.go:991", "tracer_id", esimTracerID,
+			}},
+		{"empty_tracer_id", args{context.Background()},
+			[]interface{}{
+				"caller", "testing/testing.go:991",
+			}},
+		{"nil_ctx", args{nil},
+			[]interface{}{
+				"caller", "testing/testing.go:991",
+			}},
+	}
+
+	for k := range tests {
+		test := tests[k]
+		t.Run(test.name, func(t *testing.T) {
+			if got := log.getArgs(test.args.ctx); !reflect.DeepEqual(got, test.want) {
+				t.Errorf("logger.getArgs() = %v, want %v", got, test.want)
+			}
+		})
+	}
 }
 
-
-func TestGetTracerIdEmpty(t *testing.T)  {
+func TestNewLogger(t *testing.T) {
+	type args struct {
+		options []Option
+	}
 
 	loggerOptions := LoggerOptions{}
+	tests := []struct {
+		name string
+		args args
+	}{
+		{"debug with json", args{[]Option{WithDebug(true), WithJSON(true)}}},
+		{"debug not with json", args{[]Option{WithDebug(true), WithJSON(true)}}},
+		{"json", args{[]Option{WithJSON(true)}}},
+		{"no options", args{}},
+		{"object-oriented options", args{[]Option{loggerOptions.WithJSON(true),
+			loggerOptions.WithDebug(true)}}},
+	}
 
-	log := NewLogger(loggerOptions.WithDebug(false))
-
-	ctx := context.Background()
-	assert.Empty(t, log.(*logger).getTracerId(ctx))
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			NewLogger(tt.args.options...)
+		})
+	}
 }
 

@@ -3,142 +3,171 @@ package protoc
 import (
 	"bufio"
 	"fmt"
-	"github.com/spf13/viper"
-	"github.com/jukylin/esim/pkg/file-dir"
-	logger "github.com/jukylin/esim/log"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/jukylin/esim/log"
+	filedir "github.com/jukylin/esim/pkg/file-dir"
+	"github.com/spf13/viper"
 )
 
-var (
-	log logger.Logger
+const (
+	protocCmd = "protoc"
 )
 
-func init() {
-	log = logger.NewLogger()
+type Protocer struct {
+	target string
+
+	fromProto string
+
+	protoPath string
+
+	packageName string
+
+	logger log.Logger
 }
 
-func Gen(v *viper.Viper) {
+type Option func(*Protocer)
 
+func NewProtocer(options ...Option) *Protocer {
+	p := &Protocer{}
+
+	for _, option := range options {
+		option(p)
+	}
+
+	return p
+}
+
+func WithProtocLogger(logger log.Logger) Option {
+	return func(p *Protocer) {
+		p.logger = logger
+	}
+}
+
+func (p *Protocer) Run(v *viper.Viper) bool {
+	p.bindInput(v)
+
+	p.logger.Infof("Please confirm that protoc is installed")
+
+	p.parseProtoPath()
+
+	p.execCmd()
+
+	return true
+}
+
+func (p *Protocer) bindInput(v *viper.Viper) bool {
 	target := v.GetString("target")
 
-	ex, err := file_dir.IsExistsDir(target)
+	ex, err := filedir.IsExistsDir(target)
 	if err != nil {
-		log.Errorf(err.Error())
-		return
+		p.logger.Fatalf(err.Error())
 	}
 
-	if ex == false {
-		log.Errorf(target + " 目录不存在")
-		return
+	if !ex {
+		p.logger.Fatalf("Dir not exists %s", target)
+	}
+	if target != string(filepath.Separator) {
+		p.target = strings.TrimRight(target, string(filepath.Separator))
+	} else {
+		p.target = target
 	}
 
-	from_proto := v.GetString("from_proto")
-	if from_proto == "" {
-		log.Errorf("没有指定proto文件")
-		return
+	fromProto := v.GetString("from_proto")
+	if fromProto == "" {
+		p.logger.Fatalf("Please special proto file")
 	}
+	p.fromProto = fromProto
 
-	pkg_name := v.GetString("package")
-	if pkg_name == "" {
-		pkg_name = getPkgName(from_proto)
+	pkgName := v.GetString("package")
+	if pkgName == "" {
+		pkgName, err = p.parsePkgName(fromProto)
+		if err != nil {
+			p.logger.Fatalf(err.Error())
+		}
 	}
+	p.packageName = pkgName
 
-	err = file_dir.CreateDir(target + "/" + pkg_name)
+	err = filedir.CreateDir(target + string(filepath.Separator) + pkgName)
 	if err != nil {
-		log.Errorf("创建 "+target+"/"+pkg_name+" 失败", err.Error())
-		return
+		p.logger.Fatalf("Create fail % : %s", target+string(filepath.Separator)+pkgName, err.Error())
 	}
 
-	log.Infof("请确认已安装protoc")
-	pwd, _ := os.Getwd()
+	return true
+}
 
-	cmd_line := fmt.Sprintf("protoc --go_out=plugins=grpc:%s %s", target+"/"+pkg_name, from_proto)
+func (p *Protocer) parseProtoPath() {
+	strs := strings.Split(p.fromProto, string(filepath.Separator))
+	protoPath := strs[0 : len(strs)-1]
+	p.protoPath = strings.Join(protoPath, string(filepath.Separator))
+}
 
-	log.Infof(cmd_line)
+func (p *Protocer) execCmd() bool {
+	pwd, err := os.Getwd()
+	if err != nil {
+		p.logger.Fatalf(err.Error())
+	}
 
-	args := strings.Split(cmd_line, " ")
+	cmdLine := fmt.Sprintf("--go_out=plugins=grpc:%s --proto_path %s %s",
+		p.target+string(filepath.Separator)+p.packageName, p.protoPath, p.fromProto)
 
-	cmd := exec.Command(args[0], args[1:]...)
+	p.logger.Infof("%s %s", protocCmd, cmdLine)
+
+	args := strings.Split(cmdLine, " ")
+
+	cmd := exec.Command(protocCmd, args...)
 	cmd.Dir = pwd
 
 	cmd.Env = os.Environ()
-
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err = cmd.Run()
 	if err != nil {
-		log.Errorf(err.Error())
+		p.logger.Fatalf(err.Error())
 	}
 
-	if v.GetBool("mock") == true {
-		log.Infof("请确认已安装 mockery")
-
-		_, fileName := filepath.Split(from_proto)
-		fileStrs := strings.Split(fileName, ".")
-		file_name := fileStrs[0]
-
-		destination := target + "/" + pkg_name + "/mock_" + file_name + ".go"
-		source := target + "/" + pkg_name + "/" + file_name + ".pb.go"
-
-		mockgen_cmd_line := fmt.Sprintf("mockgen -destination %s -package %s -source %s",
-			destination, pkg_name, source)
-
-		log.Infof(mockgen_cmd_line)
-
-		args := strings.Split(mockgen_cmd_line, " ")
-		cmdMock := exec.Command(args[0], args[1:]...)
-		cmdMock.Dir = pwd
-
-		cmdMock.Env = os.Environ()
-
-		cmdMock.Stdout = os.Stdout
-		cmdMock.Stderr = os.Stderr
-
-		err = cmdMock.Run()
-		if err != nil {
-			log.Errorf(err.Error())
-		}
-	}
-
-	return
+	return true
 }
 
-func getPkgName(proto_file string) string {
-	f, err := os.Open(proto_file)
+// parsePkgName parse the package name from protoc file
+// if not found stop the run.
+func (p *Protocer) parsePkgName(protoFile string) (string, error) {
+	if filepath.Ext(protoFile) != ".proto" {
+		return "", fmt.Errorf("it is not the proto file : %s", protoFile)
+	}
+
+	f, err := os.Open(protoFile)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 	defer f.Close()
 
-	var pkgName string
-
 	rd := bufio.NewReader(f)
 	for {
-		line, err := rd.ReadString('\n') //以'\n'为结束符读入一行
+		line, err := rd.ReadString('\n')
 
 		if err != nil || io.EOF == err {
 			break
 		}
+		reg := regexp.MustCompile("^package")
 
-		match, err := regexp.MatchString("^package", line)
-		if err != nil {
-			log.Errorf(err.Error())
-		}
-		if match {
-			reg, err := regexp.Compile(`\w+`)
+		if reg.FindString(line) != "" {
+			reg := regexp.MustCompile(`\w+`)
 			if err != nil {
-				log.Errorf(err.Error())
-			} else {
-				strs := reg.FindAllString(line, -1)
-				return strs[1]
+				return "", err
+			}
+
+			strs := reg.FindAllString(line, -1)
+			if len(strs) > 1 {
+				return strs[1], nil
 			}
 		}
 	}
 
-	return pkgName
+	return "", fmt.Errorf("not found the package name from protoc file")
 }

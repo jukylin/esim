@@ -1,23 +1,22 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
+	filedir "github.com/jukylin/esim/pkg/file-dir"
+	"github.com/jukylin/esim/pkg/templates"
 	"github.com/jukylin/esim/tool/new"
-	"github.com/jukylin/esim/log"
+	"github.com/spf13/cobra"
 )
 
-// grpcCmd represents the grpc command
 var newCmd = &cobra.Command{
 	Use:   "new",
-	Short: "",
-	Long: ``,
+	Short: "create a new project",
+	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		loggerOptions := log.LoggerOptions{}
-		log := log.NewLogger(loggerOptions.WithDebug(true))
-		err := new.Build(v, log)
-		if err != nil {
-			log.Fatalf(err.Error())
-		}
+		new.InitProject(
+			new.WithProjectLogger(logger),
+			new.WithProjectWriter(filedir.NewEsimWriter()),
+			new.WithProjectTpl(templates.NewTextTpl()),
+		).Run(v)
 	},
 }
 
@@ -32,7 +31,10 @@ func init() {
 
 	newCmd.Flags().BoolP("monitoring", "m", true, "enable monitoring")
 
-	newCmd.Flags().StringP("service_name", "s", "", "service name")
+	newCmd.Flags().StringP("server_name", "s", "", "server name")
 
-	v.BindPFlags(newCmd.Flags())
+	err := v.BindPFlags(newCmd.Flags())
+	if err != nil {
+		logger.Errorf(err.Error())
+	}
 }

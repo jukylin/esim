@@ -2,21 +2,22 @@ package container
 
 import (
 	"sync"
+
 	"github.com/google/wire"
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
+	eot "github.com/jukylin/esim/opentracing"
 	"github.com/jukylin/esim/prometheus"
 	"github.com/opentracing/opentracing-go"
-	eot "github.com/jukylin/esim/opentracing"
 )
 
 var esimOnce sync.Once
 var onceEsim *Esim
 
-const DEFAULT_APPNAME = "esim"
-const DEFAULT_PROMETHEUS_HTTP_ADDR = "9002"
+const defaultAppname = "esim"
+const defaultPrometheusHTTPArrd = "9002"
 
-//esim init start
+// Esim init start.
 type Esim struct {
 	prometheus *prometheus.Prometheus
 
@@ -27,6 +28,7 @@ type Esim struct {
 	Tracer opentracing.Tracer
 }
 
+//nolint:varcheck,unused,deadcode
 var esimSet = wire.NewSet(
 	wire.Struct(new(Esim), "*"),
 	provideConf,
@@ -35,9 +37,10 @@ var esimSet = wire.NewSet(
 	provideTracer,
 )
 
-var confFunc  = func() config.Config {
+var confFunc = func() config.Config {
 	return config.NewMemConfig()
 }
+
 func SetConfFunc(conf func() config.Config) {
 	confFunc = conf
 }
@@ -45,49 +48,48 @@ func provideConf() config.Config {
 	return confFunc()
 }
 
-
 var prometheusFunc = func(conf config.Config, logger log.Logger) *prometheus.Prometheus {
-	var http_addr string
-	if conf.GetString("prometheus_http_addr") != ""{
-		http_addr = conf.GetString("prometheus_http_addr")
-	}else{
-		http_addr = DEFAULT_PROMETHEUS_HTTP_ADDR
+	var httpAddr string
+	if conf.GetString("prometheus_http_addr") != "" {
+		httpAddr = conf.GetString("prometheus_http_addr")
+	} else {
+		httpAddr = defaultPrometheusHTTPArrd
 	}
-	return prometheus.NewPrometheus(http_addr, logger)
+	return prometheus.NewPrometheus(httpAddr, logger)
 }
-func SetPrometheusFunc(prometheus func(config.Config, log.Logger) *prometheus.Prometheus) {
-	prometheusFunc = prometheus
+
+func SetPrometheusFunc(pt func(config.Config, log.Logger) *prometheus.Prometheus) {
+	prometheusFunc = pt
 }
 func providePrometheus(conf config.Config, logger log.Logger) *prometheus.Prometheus {
 	return prometheusFunc(conf, logger)
 }
 
-
 var loggerFunc = func(conf config.Config) log.Logger {
-	var loggerOptions log.LoggerOptions
-
 	logger := log.NewLogger(
-		loggerOptions.WithDebug(conf.GetBool("debug")),
+		log.WithDebug(conf.GetBool("debug")),
+		log.WithJSON(conf.GetString("runmode") == "pro"),
 	)
 	return logger
 }
-func SetLogger(log func(config.Config) log.Logger) {
-	loggerFunc = log
+
+func SetLogger(logger func(config.Config) log.Logger) {
+	loggerFunc = logger
 }
 func provideLogger(conf config.Config) log.Logger {
 	return loggerFunc(conf)
 }
 
-
 var tracerFunc = func(conf config.Config, logger log.Logger) opentracing.Tracer {
 	var appname string
-	if conf.GetString("appname") != ""{
+	if conf.GetString("appname") != "" {
 		appname = conf.GetString("appname")
-	}else{
-		appname = DEFAULT_APPNAME
+	} else {
+		appname = defaultAppname
 	}
 	return eot.NewTracer(appname, logger)
 }
+
 func SetTracer(tracer func(config.Config, log.Logger) opentracing.Tracer) {
 	tracerFunc = tracer
 }
@@ -95,9 +97,8 @@ func provideTracer(conf config.Config, logger log.Logger) opentracing.Tracer {
 	return tracerFunc(conf, logger)
 }
 
-//esim init end
+// Esim init end.
 
-//使用单例模式，基础设施为全局资源
 func NewEsim() *Esim {
 	esimOnce.Do(func() {
 		onceEsim = initEsim()
@@ -106,6 +107,6 @@ func NewEsim() *Esim {
 	return onceEsim
 }
 
-func (this *Esim) String() string {
+func (e *Esim) String() string {
 	return "相信，相信自己！！！"
 }

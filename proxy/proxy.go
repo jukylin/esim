@@ -2,36 +2,31 @@ package proxy
 
 import (
 	"sync"
+
 	"github.com/jukylin/esim/log"
 )
 
-
 type Proxy interface {
-	//set next proxy
+	// set next proxy.
 	NextProxy(proxy interface{})
 
-	//get proxy name
+	// get proxy name.
 	ProxyName() string
 }
 
-var proxyFactoryOnce sync.Once
+var factoryOnce sync.Once
 
-var proxyFactory *ProxyFactory
+var proxyFactory *Factory
 
-type ProxyFactory struct{
+type Factory struct {
 	logger log.Logger
 }
 
-type ProxyFactoryOption func(c *ProxyFactory)
+type FactoryOption func(c *Factory)
 
-type ProxyFactoryOptions struct{}
-
-
-func NewProxyFactory(options ...ProxyFactoryOption) *ProxyFactory {
-
-	proxyFactoryOnce.Do(func() {
-
-		proxyFactory = &ProxyFactory{}
+func NewProxyFactory(options ...FactoryOption) *Factory {
+	factoryOnce.Do(func() {
+		proxyFactory = &Factory{}
 
 		for _, option := range options {
 			option(proxyFactory)
@@ -45,21 +40,20 @@ func NewProxyFactory(options ...ProxyFactoryOption) *ProxyFactory {
 	return proxyFactory
 }
 
-func (ProxyFactoryOptions) WithLogger(log log.Logger) ProxyFactoryOption {
-	return func(p *ProxyFactory) {
-		p.logger = log
+func WithLogger(logger log.Logger) FactoryOption {
+	return func(p *Factory) {
+		p.logger = logger
 	}
 }
 
 // GetFirstInstance implement init mul level proxy,
 // RealInstance and proxys make sure both implement the same interface
-// return firstProxy | realInstance
-func (this *ProxyFactory) GetFirstInstance(realName string, realInstance interface{}, proxys ...func() interface{}) interface{} {
-
+// return firstProxy | realInstance.
+func (pf *Factory) GetFirstInstance(realName string, realInstance interface{},
+	proxys ...func() interface{}) interface{} {
 	var firstProxy interface{}
-	var proxyInses []interface{}
 
-	proxyInses = this.GetInstances(realName, proxys...)
+	proxyInses := pf.GetInstances(realName, proxys...)
 
 	proxyNum := len(proxyInses)
 	if proxyNum > 0 {
@@ -68,36 +62,32 @@ func (this *ProxyFactory) GetFirstInstance(realName string, realInstance interfa
 		if realInstance != nil {
 			proxyInses[len(proxyInses)-1].(Proxy).NextProxy(realInstance)
 		}
-	}else{
+	} else {
 		firstProxy = realInstance
 	}
 
 	return firstProxy
 }
 
-
-func (this *ProxyFactory) GetInstances(realName string, proxys ...func() interface{}) []interface{} {
-
+func (pf *Factory) GetInstances(realName string, proxys ...func() interface{}) []interface{} {
 	proxyNum := len(proxys)
 	var proxyInses []interface{}
 	if proxyNum > 0 {
 		proxyInses = make([]interface{}, proxyNum)
 		for k, proxyFunc := range proxys {
-			if _, ok := proxyFunc().(Proxy); ok == false {
-				this.logger.Panicf("[%s] not implement the Proxy interface", realName)
+			if _, ok := proxyFunc().(Proxy); !ok {
+				pf.logger.Panicf("[%s] not implement the Proxy interface", realName)
 			} else {
 				proxyInses[k] = proxyFunc()
 			}
 		}
 
 		for k, proxyIns := range proxyInses {
-			if proxyNum == 1 {
-				proxyIns.(Proxy).NextProxy(proxyInses[k])
-				this.logger.Infof("[%s] %s init [%p]", realName, proxyIns.(Proxy).ProxyName(), proxyIns)
-			} else if k+1 < proxyNum{
+			if k+1 < proxyNum {
 				proxyIns.(Proxy).NextProxy(proxyInses[k+1])
-				this.logger.Infof("[%s] %s init [%p]", realName, proxyIns.(Proxy).ProxyName(), proxyIns)
-			}else{
+				pf.logger.Infof("[%s] %s init [%p]", realName, proxyIns.(Proxy).ProxyName(),
+					proxyIns)
+			} else {
 				continue
 			}
 		}

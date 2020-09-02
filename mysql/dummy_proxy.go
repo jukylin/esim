@@ -1,22 +1,23 @@
+//nolint:unused,deadcode
 package mysql
 
 import (
 	"context"
 	"database/sql"
+
 	"github.com/jukylin/esim/log"
 )
 
-//last proxy
+// dummyProxy must as last proxy.
 type dummyProxy struct {
-	nextProxy SqlCommon
+	nextProxy ConnPool
 
 	logger log.Logger
 
 	name string
 }
 
-
-func newDummyProxy(logger log.Logger, name string) *dummyProxy {
+func newDummyProxy(logger log.Logger, name string) ConnPool {
 	dummyProxy := &dummyProxy{}
 
 	dummyProxy.logger = logger
@@ -25,14 +26,14 @@ func newDummyProxy(logger log.Logger, name string) *dummyProxy {
 	return dummyProxy
 }
 
-//implement Proxy interface
-func (this *dummyProxy) NextProxy(db interface{}) {
-	this.nextProxy = db.(SqlCommon)
+// Implement Proxy interface.
+func (dp *dummyProxy) NextProxy(db interface{}) {
+	dp.nextProxy = db.(ConnPool)
 }
 
-//implement Proxy interface
-func (this *dummyProxy) ProxyName() string {
-	return this.name
+// Implement Proxy interface.
+func (dp *dummyProxy) ProxyName() string {
+	return dp.name
 }
 
 func (this *dummyProxy) ExecContext(query string, args ...interface{}) (sql.Result, error) {
@@ -61,20 +62,18 @@ func (this *dummyProxy) Close() error {
 }
 
 
-func (this *dummyProxy) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error){
-	return &sql.Tx{}, nil
+
+
+// Implement sql.Result interface.
+type dummySQLResult struct {
 }
 
-// implement sql.Result interface
-type dummySqlResult struct {
-}
-
-// implement sql.Result interface
-func (this *dummySqlResult) LastInsertId() (int64, error){
+// Implement sql.Result interface.
+func (dp *dummySQLResult) LastInsertId() (int64, error) {
 	return 0, nil
 }
 
-// implement sql.Result interface
-func (this *dummySqlResult) RowsAffected() (int64, error){
+// Implement sql.Result interface.
+func (dp *dummySQLResult) RowsAffected() (int64, error) {
 	return 0, nil
 }

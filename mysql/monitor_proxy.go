@@ -3,19 +3,20 @@ package mysql
 import (
 	"context"
 	"database/sql"
-	opentracing2 "github.com/opentracing/opentracing-go"
-	"github.com/prometheus/client_golang/prometheus"
+	"time"
+
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/opentracing"
-	"time"
+	opentracing2 "github.com/opentracing/opentracing-go"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
-type monitorProxy struct {
-	//proxy name
+type MonitorProxy struct {
+	// proxy name
 	name string
 
-	nextProxy SqlCommon
+	nextProxy ConnPool
 
 	tracer opentracing2.Tracer
 
@@ -28,155 +29,138 @@ type monitorProxy struct {
 
 type afterEvents func(context.Context, string, time.Time, time.Time)
 
-type MonitorProxyOption func(c *monitorProxy)
+type MonitorProxyOption func(c *MonitorProxy)
 
 type MonitorProxyOptions struct{}
 
-func NewMonitorProxy(options ...MonitorProxyOption) *monitorProxy {
-	monitorProxy := &monitorProxy{}
+func NewMonitorProxy(options ...MonitorProxyOption) *MonitorProxy {
+	MonitorProxy := &MonitorProxy{}
 
 	for _, option := range options {
-		option(monitorProxy)
+		option(MonitorProxy)
 	}
 
-	if monitorProxy.conf == nil {
-		monitorProxy.conf = config.NewNullConfig()
+	if MonitorProxy.conf == nil {
+		MonitorProxy.conf = config.NewNullConfig()
 	}
 
-	if monitorProxy.logger == nil {
-		monitorProxy.logger = log.NewLogger()
+	if MonitorProxy.logger == nil {
+		MonitorProxy.logger = log.NewLogger()
 	}
 
-	if monitorProxy.tracer == nil {
-		monitorProxy.tracer = opentracing.NewTracer("mysql", monitorProxy.logger)
+	if MonitorProxy.tracer == nil {
+		MonitorProxy.tracer = opentracing.NewTracer("mysql", MonitorProxy.logger)
 	}
 
-	monitorProxy.name = "monitor_proxy"
+	MonitorProxy.name = "monitor_proxy"
 
-	monitorProxy.registerAfterEvent()
-	
-	return monitorProxy
+	MonitorProxy.registerAfterEvent()
+
+	return MonitorProxy
 }
 
 func (MonitorProxyOptions) WithConf(conf config.Config) MonitorProxyOption {
-	return func(r *monitorProxy) {
+	return func(r *MonitorProxy) {
 		r.conf = conf
 	}
 }
 
 func (MonitorProxyOptions) WithLogger(logger log.Logger) MonitorProxyOption {
-	return func(r *monitorProxy) {
+	return func(r *MonitorProxy) {
 		r.logger = logger
 	}
 }
 
 func (MonitorProxyOptions) WithTracer(tracer opentracing2.Tracer) MonitorProxyOption {
-	return func(r *monitorProxy) {
+	return func(r *MonitorProxy) {
 		r.tracer = tracer
 	}
 }
 
-
-//implement Proxy interface
-func (this *monitorProxy) NextProxy(db interface{}) {
-	this.nextProxy = db.(SqlCommon)
+// Implement Proxy interface.
+func (mp *MonitorProxy) NextProxy(db interface{}) {
+	mp.nextProxy = db.(ConnPool)
 }
 
-
-//implement Proxy interface
-func (this *monitorProxy) ProxyName() string {
-	return this.name
+// Implement Proxy interface.
+func (mp *MonitorProxy) ProxyName() string {
+	return mp.name
 }
 
-
-func (this *monitorProxy) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
+func (mp *MonitorProxy) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
 	startTime := time.Now()
-	result, err := this.nextProxy.ExecContext(ctx, query, args...)
-	this.after(ctx, query, startTime)
+	result, err := mp.nextProxy.ExecContext(ctx, query, args...)
+	mp.after(ctx, query, startTime)
 	return result, err
 }
 
 
-func (this *monitorProxy) PrepareContext(ctx context.Context, query string) (*sql.Stmt, error) {
+func (mp *MonitorProxy) PrepareContext(ctx context.Context, query string) (*sql.Stmt, error) {
 	startTime := time.Now()
-	stmt, err := this.nextProxy.PrepareContext(ctx, query)
-	this.after(ctx, query, startTime)
+	stmt, err := mp.nextProxy.PrepareContext(ctx, query)
+	mp.after(ctx, query, startTime)
 
 	return stmt, err
 }
 
-
-func (this *monitorProxy) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
+func (mp *MonitorProxy) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
 	startTime := time.Now()
-	rows, err := this.nextProxy.QueryContext(ctx, query, args...)
-	this.after(ctx, query, startTime)
+	rows, err := mp.nextProxy.QueryContext(ctx, query, args...)
+	mp.after(ctx, query, startTime)
 
 	return rows, err
 }
 
-
-func (this *monitorProxy) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
+func (mp *MonitorProxy) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
 	startTime := time.Now()
-	row := this.nextProxy.QueryRowContext(ctx, query, args...)
-	this.after(ctx, query, startTime)
+	row := mp.nextProxy.QueryRowContext(ctx, query, args...)
+	mp.after(ctx, query, startTime)
 
 	return row
 }
 
-
-func (this *monitorProxy) Close() error {
-	return this.nextProxy.Close()
+func (mp *MonitorProxy) Close() error {
+	return mp.nextProxy.Close()
 }
 
-
-func (this *monitorProxy) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error){
-	return this.nextProxy.BeginTx(ctx, opts)
-}
-
-
-func (this *monitorProxy) registerAfterEvent() {
-	if this.conf.GetBool("mysql_tracer") == true {
-		this.afterEvents = append(this.afterEvents, this.withMysqlTracer)
+func (mp *MonitorProxy) registerAfterEvent() {
+	if mp.conf.GetBool("mysql_trace") {
+		mp.afterEvents = append(mp.afterEvents, mp.withMysqlTracer)
 	}
 
-	if this.conf.GetBool("mysql_check_slow") == true {
-		this.afterEvents = append(this.afterEvents, this.withSlowSql)
+	if mp.conf.GetBool("mysql_check_slow") {
+		mp.afterEvents = append(mp.afterEvents, mp.withSlowSQL)
 	}
 
-	if this.conf.GetBool("mysql_metrics") == true {
-		this.afterEvents = append(this.afterEvents, this.withMysqlMetrics)
+	if mp.conf.GetBool("mysql_metrics") {
+		mp.afterEvents = append(mp.afterEvents, mp.withMysqlMetrics)
 	}
 }
 
-
-func (this *monitorProxy) after(ctx context.Context, query string, beginTime time.Time) {
+func (mp *MonitorProxy) after(ctx context.Context, query string, beginTime time.Time) {
 	now := time.Now()
-	for _, event := range this.afterEvents {
+	for _, event := range mp.afterEvents {
 		event(ctx, query, beginTime, now)
 	}
 }
 
-
-func (this *monitorProxy) withSlowSql(ctx context.Context, query string, beginTime, endTime time.Time) {
-	mysql_slow_time := this.conf.GetInt64("mysql_slow_time")
-
-	if mysql_slow_time != 0 {
-		if endTime.Sub(beginTime) > time.Duration(mysql_slow_time)*time.Millisecond {
-			this.logger.Warnf("slow sql %s", query)
+func (mp *MonitorProxy) withSlowSQL(ctx context.Context, query string, beginTime, endTime time.Time) {
+	mysqlSlowTime := mp.conf.GetInt64("mysql_slow_time")
+	if mysqlSlowTime != 0 {
+		if endTime.Sub(beginTime) > time.Duration(mysqlSlowTime)*time.Millisecond {
+			mp.logger.Warnf("slow sql %s", query)
 		}
 	}
 }
 
-
-func (this *monitorProxy) withMysqlMetrics(ctx context.Context, query string, beginTime, endTime time.Time) {
+func (mp *MonitorProxy) withMysqlMetrics(ctx context.Context, query string, beginTime, endTime time.Time) {
 	lab := prometheus.Labels{"sql": query}
 	mysqlTotal.With(lab).Inc()
 	mysqlDuration.With(lab).Observe(endTime.Sub(beginTime).Seconds())
 }
 
-
-func (this *monitorProxy) withMysqlTracer(ctx context.Context, query string, beginTime, endTime time.Time) {
-	span := opentracing.GetSpan(ctx, this.tracer, query, beginTime)
+func (mp *MonitorProxy) withMysqlTracer(ctx context.Context, query string, beginTime, endTime time.Time) {
+	span := opentracing.GetSpan(ctx, mp.tracer, query, beginTime)
 	span.LogKV("sql", query)
 	span.FinishWithOptions(opentracing2.FinishOptions{FinishTime: endTime})
 }

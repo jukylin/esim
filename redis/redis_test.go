@@ -1,32 +1,31 @@
 package redis
 
 import (
-	"testing"
 	"context"
-	"sync"
-	"time"
 	"os"
-	"github.com/stretchr/testify/assert"
-	"github.com/jukylin/esim/log"
+	"sync"
+	"testing"
+	"time"
+
 	"github.com/jukylin/esim/config"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_model/go"
+	"github.com/jukylin/esim/log"
 	"github.com/ory/dockertest/v3"
 	dc "github.com/ory/dockertest/v3/docker"
+	"github.com/prometheus/client_golang/prometheus"
+	io_prometheus_client "github.com/prometheus/client_model/go"
+	"github.com/stretchr/testify/assert"
 )
-
-var client *RedisClient
 
 func TestMain(m *testing.M) {
 	logger := log.NewLogger()
 
 	pool, err := dockertest.NewPool("")
 	if err != nil {
-		logger.Fatalf("Could not connect to docker: %s", err)
+		logger.Fatalf("Could not connect to docker : %s", err)
 	}
 	opt := &dockertest.RunOptions{
 		Repository: "redis",
-		Tag: "latest",
+		Tag:        "latest",
 	}
 
 	resource, err := pool.RunWithOptions(opt, func(hostConfig *dc.HostConfig) {
@@ -35,30 +34,15 @@ func TestMain(m *testing.M) {
 		}
 	})
 	if err != nil {
-		logger.Fatalf("Could not start resource: %s", err)
+		logger.Fatalf("Could not start resource: %s", err.Error())
 	}
 
-	resource.Expire(10)
-
-	if err = pool.Retry(func() error {
-		client = NewRedisClient()
-		err = client.Ping()
-		if err != nil{
-			return err
-		}
-		ctx := context.Background()
-		conn := client.GetCtxRedisConn()
-		conn.Do( ctx, "set", "name", "test")
-		conn.Do( ctx, "set", "version", "2.0")
-		conn.Close()
-		return nil
-	}); err != nil {
-		logger.Fatalf("Could not connect to docker: %s", err)
+	err = resource.Expire(60)
+	if err != nil {
+		logger.Fatalf(err.Error())
 	}
 
 	code := m.Run()
-
-	client.Close()
 
 	// You can't defer this because os.Exit doesn't care for defer
 	if err := pool.Purge(resource); err != nil {
@@ -68,52 +52,12 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-//使用 proxyConn 代理请求
-func TestGetProxyConn(t *testing.T){
-	poolRedisOnce = sync.Once{}
-
-	redisClientOptions := RedisClientOptions{}
-	redisClent := NewRedisClient(
+func TestGetProxyConn(t *testing.T) {
+	poolOnce = sync.Once{}
+	redisClientOptions := ClientOptions{}
+	redisClent := NewClient(
 		redisClientOptions.WithProxy(
 			func() interface{} {
-				monitorProxyOptions := MonitorProxyOptions{}
-				return NewMonitorProxy(
-					monitorProxyOptions.WithLogger(log.NewLogger()),
-				)
-			},
-			),
-	)
-
-	conn := redisClent.GetCtxRedisConn()
-	assert.IsTypef(t, NewMonitorProxy(), conn, "MonitorProxy type")
-	assert.NotNil(t, conn)
-	conn.Close()
-	redisClent.Close()
-}
-
-
-func TestGetNotProxyConn(t *testing.T){
-	poolRedisOnce = sync.Once{}
-
-	conn := client.GetCtxRedisConn()
-
-	assert.IsTypef(t, NewFacadeProxy(), conn, "MediatorProxy type")
-	assert.NotNil(t, conn)
-	conn.Close()
-	client.Close()
-}
-
-func TestMonitorProxy_Do(t *testing.T) {
-	poolRedisOnce = sync.Once{}
-
-	redisClientOptions := RedisClientOptions{}
-	memConfig := config.NewMemConfig()
-	memConfig.Set("debug", true)
-
-	redisClent := NewRedisClient(
-		redisClientOptions.WithConf(memConfig),
-		redisClientOptions.WithProxy(
-			func() interface {} {
 				monitorProxyOptions := MonitorProxyOptions{}
 				return NewMonitorProxy(
 					monitorProxyOptions.WithLogger(log.NewLogger()),
@@ -122,36 +66,63 @@ func TestMonitorProxy_Do(t *testing.T) {
 		),
 	)
 
-	ctx := context.Background()
-
 	conn := redisClent.GetCtxRedisConn()
-
-	_, err := String(conn.Do(ctx, "get", "name"))
+	assert.IsTypef(t, NewMonitorProxy(), conn, "MonitorProxy type")
+	assert.NotNil(t, conn)
+	err := conn.Close()
 	assert.Nil(t, err)
-	//conn.Close()
-	//redisClent.Close()
+
+	err = redisClent.Close()
+	assert.Nil(t, err)
 }
 
-
-func TestMulLevelProxy_Do(t *testing.T) {
-	poolRedisOnce = sync.Once{}
-
-	redisClientOptions := RedisClientOptions{}
+func TestGetNotProxyConn(t *testing.T) {
+	poolOnce = sync.Once{}
+	redisClientOptions := ClientOptions{}
 	memConfig := config.NewMemConfig()
 	memConfig.Set("debug", true)
 
-	spyProxy := NewSpyProxy(log.NewLogger(), "spyProxy")
-
-	redisClent := NewRedisClient(
+	redisClent := NewClient(
 		redisClientOptions.WithConf(memConfig),
 		redisClientOptions.WithProxy(
-			func() interface {} {
+			func() interface{} {
 				monitorProxyOptions := MonitorProxyOptions{}
 				return NewMonitorProxy(
 					monitorProxyOptions.WithLogger(log.NewLogger()),
 				)
 			},
-			func() interface {} {
+		),
+	)
+
+	conn := redisClent.GetCtxRedisConn()
+
+	assert.IsTypef(t, NewMonitorProxy(), conn, "MonitorProxy type")
+	assert.NotNil(t, conn)
+	err := conn.Close()
+	assert.Nil(t, err)
+
+	err = redisClent.Close()
+	assert.Nil(t, err)
+}
+
+func TestMulLevelProxy_Do(t *testing.T) {
+	poolOnce = sync.Once{}
+	redisClientOptions := ClientOptions{}
+	memConfig := config.NewMemConfig()
+	memConfig.Set("debug", true)
+
+	spyProxy := newSpyProxy(log.NewLogger(), "spyProxy")
+
+	redisClent := NewClient(
+		redisClientOptions.WithConf(memConfig),
+		redisClientOptions.WithProxy(
+			func() interface{} {
+				monitorProxyOptions := MonitorProxyOptions{}
+				return NewMonitorProxy(
+					monitorProxyOptions.WithLogger(log.NewLogger()),
+				)
+			},
+			func() interface{} {
 				return spyProxy
 			},
 		),
@@ -160,63 +131,24 @@ func TestMulLevelProxy_Do(t *testing.T) {
 	ctx := context.Background()
 
 	conn := redisClent.GetCtxRedisConn()
-	conn.Do(ctx, "get", "name")
+	_, err := conn.Do(ctx, "get", "name")
+	assert.Nil(t, err)
+
 	assert.True(t, spyProxy.DoWasCalled)
-	conn.Close()
+	err = conn.Close()
+	assert.Nil(t, err)
 
-	redisClent.Close()
-}
-
-
-func TestMulGo_Do(t *testing.T) {
-	poolRedisOnce = sync.Once{}
-
-	redisClientOptions := RedisClientOptions{}
-	memConfig := config.NewMemConfig()
-	memConfig.Set("debug", true)
-
-	redisClent := NewRedisClient(
-		redisClientOptions.WithConf(memConfig),
-		//redisClientOptions.WithProxy(
-		//	func() ContextConn {
-		//		return NewStubsProxy(log.NewLogger(), "stubsProxy")
-		//	},
-		//),
-	)
-
-	wg := sync.WaitGroup{}
-	//ctx := context.Background()
-	wg.Add(2)
-
-	go func() {
-		conn := redisClent.GetRedisConn()
-		name, err := String(conn.Do( "get", "name"))
-		assert.Nil(t, err)
-		assert.Equal(t, "test", name)
-		conn.Close()
-		wg.Done()
-	}()
-
-	go func() {
-		conn := redisClent.GetRedisConn()
-		version, err := String(conn.Do("get", "version"))
-		assert.Nil(t, err)
-		assert.Equal(t, "2.0", version)
-		conn.Close()
-		wg.Done()
-	}()
-	wg.Wait()
-
-	redisClent.Close()
+	err = redisClent.Close()
+	assert.Nil(t, err)
 }
 
 func Benchmark_MulGo_Do(b *testing.B) {
-
-	redisClientOptions := RedisClientOptions{}
+	poolOnce = sync.Once{}
+	redisClientOptions := ClientOptions{}
 	memConfig := config.NewMemConfig()
 	memConfig.Set("debug", true)
 
-	redisClent := NewRedisClient(
+	redisClent := NewClient(
 		redisClientOptions.WithConf(memConfig),
 	)
 
@@ -225,62 +157,69 @@ func Benchmark_MulGo_Do(b *testing.B) {
 			wg := sync.WaitGroup{}
 			ctx := context.Background()
 			wg.Add(b.N * 2)
+
+			testFunc := func(args, expected string) {
+				conn := redisClent.GetCtxRedisConn()
+				name, err := String(conn.Do(ctx, "get", args))
+				assert.Nil(b, err)
+				assert.Equal(b, expected, name)
+
+				err = conn.Close()
+				assert.Nil(b, err)
+				wg.Done()
+			}
+
 			for j := 0; j < b.N; j++ {
 				go func() {
-					conn := redisClent.GetCtxRedisConn()
-					name, err := String(conn.Do(ctx, "get", "name"))
-					assert.Nil(b, err)
-					assert.Equal(b, "test", name)
-					conn.Close()
-					wg.Done()
+					testFunc("name", "test")
 				}()
 
 				go func() {
-					conn := redisClent.GetCtxRedisConn()
-					version, err := String(conn.Do(ctx, "get", "version"))
-					assert.Nil(b, err)
-					assert.Equal(b, "2.0", version)
-					conn.Close()
-					wg.Done()
+					testFunc("version", "2.0")
 				}()
 			}
 			wg.Wait()
 		}
 	})
-	redisClent.Close()
+
+	err := redisClent.Close()
+	assert.Nil(b, err)
 }
 
 func TestRedisClient_Stats(t *testing.T) {
-
-	redisClientOptions := RedisClientOptions{}
+	poolOnce = sync.Once{}
+	redisClientOptions := ClientOptions{}
 	memConfig := config.NewMemConfig()
 	memConfig.Set("debug", true)
 
-	redisClent := NewRedisClient(
+	redisClent := NewClient(
 		redisClientOptions.WithConf(memConfig),
-		redisClientOptions.WithStateTicker(10 * time.Microsecond),
+		redisClientOptions.WithStateTicker(10*time.Microsecond),
 	)
 
 	time.Sleep(100 * time.Millisecond)
 
 	ctx := context.Background()
 	conn := redisClent.GetCtxRedisConn()
-	conn.Do(ctx, "get", "name")
-	conn.Close()
+	_, err := conn.Do(ctx, "get", "name")
+	assert.Nil(t, err)
 
-	conn.Do(ctx, "get", "name")
-	conn.Close()
+	_, err = conn.Do(ctx, "get", "name")
+	assert.Nil(t, err)
 
-	conn.Do(ctx, "get", "name")
-	conn.Close()
+	_, err = conn.Do(ctx, "get", "name")
+	assert.Nil(t, err)
+	err = conn.Close()
+	assert.Nil(t, err)
 
 	lab := prometheus.Labels{"stats": "active_count"}
 	c, _ := redisStats.GetMetricWith(lab)
 	metric := &io_prometheus_client.Metric{}
-	c.Write(metric)
+	err = c.Write(metric)
+	assert.Nil(t, err)
+
 	assert.True(t, metric.Gauge.GetValue() >= 0)
 
-
-	redisClent.Close()
+	err = redisClent.Close()
+	assert.Nil(t, err)
 }
-

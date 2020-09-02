@@ -1,42 +1,44 @@
 package mysql
 
 import (
-	"testing"
 	"context"
-	"sync"
-	"time"
-	"os"
 	"database/sql"
+	"os"
+	"sync"
+	"testing"
+	"time"
+
+	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
-	"github.com/stretchr/testify/assert"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_model/go"
 	"github.com/ory/dockertest/v3"
 	dc "github.com/ory/dockertest/v3/docker"
+	"github.com/prometheus/client_golang/prometheus"
+	io_prometheus_client "github.com/prometheus/client_model/go"
+	"github.com/stretchr/testify/assert"
 )
 
 var (
 	test1Config = DbConfig{
-		Db : "test_1",
-		Dsn : "root:123456@tcp(localhost:3306)/test_1?charset=utf8&parseTime=True&loc=Local",
-		MaxIdle : 10,
-		MaxOpen : 100}
+		Db:      "test_1",
+		Dsn:     "root:123456@tcp(localhost:3306)/test_1?charset=utf8&parseTime=True&loc=Local",
+		MaxIdle: 10,
+		MaxOpen: 100}
 
 	test2Config = DbConfig{
-		Db : "test_2",
-		Dsn : "root:123456@tcp(localhost:3306)/test_1?charset=utf8&parseTime=True&loc=Local",
-		MaxIdle : 10,
-		MaxOpen : 100}
+		Db:      "test_2",
+		Dsn:     "root:123456@tcp(localhost:3306)/test_1?charset=utf8&parseTime=True&loc=Local",
+		MaxIdle: 10,
+		MaxOpen: 100}
 )
 
-type TestStruct struct{
-	Id int `json:"id"`
+type TestStruct struct {
+	ID    int    `json:"id"`
 	Title string `json:"title"`
 }
 
-type UserStruct struct{
-	Id int `json:"id"`
+type UserStruct struct {
+	ID       int    `json:"id"`
 	Username string `json:"username"`
 }
 
@@ -52,25 +54,29 @@ func TestMain(m *testing.M) {
 
 	opt := &dockertest.RunOptions{
 		Repository: "mysql",
-		Tag: "latest",
-		Env: []string{"MYSQL_ROOT_PASSWORD=123456"},
-		}
+		Tag:        "latest",
+		Env:        []string{"MYSQL_ROOT_PASSWORD=123456"},
+	}
 
 	// pulls an image, creates a container based on it and runs it
 	resource, err := pool.RunWithOptions(opt, func(hostConfig *dc.HostConfig) {
-					hostConfig.PortBindings = map[dc.Port][]dc.PortBinding{
-						"3306/tcp": {{HostIP: "", HostPort: "3306"}},
-					}
-				})
+		hostConfig.PortBindings = map[dc.Port][]dc.PortBinding{
+			"3306/tcp": {{HostIP: "", HostPort: "3306"}},
+		}
+	})
 	if err != nil {
-		logger.Fatalf("Could not start resource: %s", err)
+		logger.Fatalf("Could not start resource: %s", err.Error())
 	}
 
-	resource.Expire(60)
+	err = resource.Expire(120)
+	if err != nil {
+		logger.Fatalf(err.Error())
+	}
 
 	if err := pool.Retry(func() error {
 		var err error
-		db, err = sql.Open("mysql", "root:123456@tcp(localhost:3306)/mysql?charset=utf8&parseTime=True&loc=Local")
+		db, err = sql.Open("mysql",
+			"root:123456@tcp(localhost:3306)/mysql?charset=utf8&parseTime=True&loc=Local")
 		if err != nil {
 			return err
 		}
@@ -93,10 +99,10 @@ func TestMain(m *testing.M) {
 		  id int not NULL auto_increment,
 		  username VARCHAR(10) not NULL DEFAULT '',
 			PRIMARY KEY (id)
-		)engine=innodb;`,}
+		)engine=innodb;`}
 
-	for _, execSql := range sqls {
-		res, err := db.Exec(execSql)
+	for _, execSQL := range sqls {
+		res, err := db.Exec(execSQL)
 		if err != nil {
 			logger.Errorf(err.Error())
 		}
@@ -115,47 +121,45 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func TestInitAndSingleInstance(t *testing.T)  {
+func TestInitAndSingleInstance(t *testing.T) {
+	clientOptions := ClientOptions{}
 
-	mysqlClientOptions := MysqlClientOptions{}
-
-	mysqlClient := NewMysqlClient(
-		mysqlClientOptions.WithDbConfig([]DbConfig{test1Config}),
+	client := NewClient(
+		clientOptions.WithDbConfig([]DbConfig{test1Config}),
+		clientOptions.WithDB(db),
 	)
 	ctx := context.Background()
-	db1 := mysqlClient.GetCtxDb(ctx, "test_1")
+	db1 := client.GetCtxDb(ctx, "test_1")
 	db1.Exec("use test_1;")
 	assert.NotNil(t, db1)
 
-	_, ok := mysqlClient.gdbs["test_1"]
+	_, ok := client.gdbs["test_1"]
 	assert.True(t, ok)
 
-	assert.Equal(t, mysqlClient, NewMysqlClient())
+	assert.Equal(t, client, NewClient())
 
-	mysqlClient.Close()
+	client.Close()
 }
 
+func TestProxyPatternWithTwoInstance(t *testing.T) {
+	clientOnce = sync.Once{}
 
-func TestProxyPatternWithTwoInstance(t *testing.T)  {
-	mysqlOnce = sync.Once{}
-
-	mysqlClientOptions := MysqlClientOptions{}
+	clientOptions := ClientOptions{}
 	monitorProxyOptions := MonitorProxyOptions{}
 	memConfig := config.NewMemConfig()
-	//memConfig.Set("debug", true)
 
-	mysqlClient := NewMysqlClient(
-		mysqlClientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
-		mysqlClientOptions.WithConf(memConfig),
-		mysqlClientOptions.WithProxy(func() interface{} {
+	client := NewClient(
+		clientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
+		clientOptions.WithConf(memConfig),
+		clientOptions.WithProxy(func() interface{} {
 			return NewMonitorProxy(
 				monitorProxyOptions.WithConf(memConfig),
 				monitorProxyOptions.WithLogger(log.NewLogger()))
 		}),
-		)
+	)
 
 	ctx := context.Background()
-	db1 := mysqlClient.GetCtxDb(ctx, "test_1")
+	db1 := client.GetCtxDb(ctx, "test_1")
 	db1.Exec("use test_1;")
 	assert.NotNil(t, db1)
 
@@ -164,7 +168,7 @@ func TestProxyPatternWithTwoInstance(t *testing.T)  {
 
 	assert.Nil(t, db1.Error)
 
-	db2 := mysqlClient.GetCtxDb(ctx, "test_2")
+	db2 := client.GetCtxDb(ctx, "test_2")
 	db2.Exec("use test_2;")
 	assert.NotNil(t, db2)
 
@@ -172,16 +176,16 @@ func TestProxyPatternWithTwoInstance(t *testing.T)  {
 	db2.Table("user").First(us)
 	assert.Nil(t, db1.Error)
 
-	mysqlClient.Close()
+	client.Close()
 }
 
-func TestMulProxyPatternWithOneInstance(t *testing.T)  {
-	mysqlOnce = sync.Once{}
+func TestMulProxyPatternWithOneInstance(t *testing.T) {
+	clientOnce = sync.Once{}
 
-	mysqlClientOptions := MysqlClientOptions{}
+	clientOptions := ClientOptions{}
 	monitorProxyOptions := MonitorProxyOptions{}
 	memConfig := config.NewMemConfig()
-	//memConfig.Set("debug", true)
+	// memConfig.Set("debug", true)
 
 	spyProxy1 := newSpyProxy(log.NewLogger(), "spyProxy1")
 	spyProxy2 := newSpyProxy(log.NewLogger(), "spyProxy2")
@@ -189,10 +193,10 @@ func TestMulProxyPatternWithOneInstance(t *testing.T)  {
 		monitorProxyOptions.WithConf(memConfig),
 		monitorProxyOptions.WithLogger(log.NewLogger()))
 
-	mysqlClient := NewMysqlClient(
-		mysqlClientOptions.WithDbConfig([]DbConfig{test1Config}),
-		mysqlClientOptions.WithConf(memConfig),
-		mysqlClientOptions.WithProxy(
+	client := NewClient(
+		clientOptions.WithDbConfig([]DbConfig{test1Config}),
+		clientOptions.WithConf(memConfig),
+		clientOptions.WithProxy(
 			func() interface{} {
 				return spyProxy1
 			},
@@ -205,7 +209,7 @@ func TestMulProxyPatternWithOneInstance(t *testing.T)  {
 		))
 
 	ctx := context.Background()
-	db1 := mysqlClient.GetCtxDb(ctx, "test_1")
+	db1 := client.GetCtxDb(ctx, "test_1")
 	db1.Exec("use test_1;")
 	assert.NotNil(t, db1)
 
@@ -224,22 +228,20 @@ func TestMulProxyPatternWithOneInstance(t *testing.T)  {
 	assert.True(t, spyProxy2.ExecWasCalled)
 	assert.False(t, spyProxy2.PrepareWasCalled)
 
-	mysqlClient.Close()
+	client.Close()
 }
 
+func TestMulProxyPatternWithTwoInstance(t *testing.T) {
+	clientOnce = sync.Once{}
 
-
-func TestMulProxyPatternWithTwoInstance(t *testing.T)  {
-	mysqlOnce = sync.Once{}
-
-	mysqlClientOptions := MysqlClientOptions{}
+	clientOptions := ClientOptions{}
 	memConfig := config.NewMemConfig()
-	//memConfig.Set("debug", true)
+	// memConfig.Set("debug", true)
 
-	mysqlClient := NewMysqlClient(
-		mysqlClientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
-		mysqlClientOptions.WithConf(memConfig),
-		mysqlClientOptions.WithProxy(
+	client := NewClient(
+		clientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
+		clientOptions.WithConf(memConfig),
+		clientOptions.WithProxy(
 			func() interface{} {
 				return newSpyProxy(log.NewLogger(), "spyProxy1")
 			},
@@ -256,7 +258,7 @@ func TestMulProxyPatternWithTwoInstance(t *testing.T)  {
 	)
 
 	ctx := context.Background()
-	db1 := mysqlClient.GetCtxDb(ctx, "test_1")
+	db1 := client.GetCtxDb(ctx, "test_1")
 	db1.Exec("use test_1;")
 	assert.NotNil(t, db1)
 
@@ -265,7 +267,7 @@ func TestMulProxyPatternWithTwoInstance(t *testing.T)  {
 
 	assert.Nil(t, db1.Error)
 
-	db2 := mysqlClient.GetCtxDb(ctx, "test_2")
+	db2 := client.GetCtxDb(ctx, "test_2")
 	db2.Exec("use test_2;")
 	assert.NotNil(t, db2)
 
@@ -274,25 +276,23 @@ func TestMulProxyPatternWithTwoInstance(t *testing.T)  {
 
 	assert.Nil(t, db1.Error)
 
-	mysqlClient.Close()
+	client.Close()
 }
 
-
-
 func BenchmarkParallelGetDB(b *testing.B) {
-	mysqlOnce = sync.Once{}
+	clientOnce = sync.Once{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
 
-	mysqlClientOptions := MysqlClientOptions{}
+	clientOptions := ClientOptions{}
 	monitorProxyOptions := MonitorProxyOptions{}
 	memConfig := config.NewMemConfig()
 
-	mysqlClient := NewMysqlClient(
-		mysqlClientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
-		mysqlClientOptions.WithConf(memConfig),
-		mysqlClientOptions.WithProxy(func() interface{} {
+	client := NewClient(
+		clientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
+		clientOptions.WithConf(memConfig),
+		clientOptions.WithProxy(func() interface{} {
 			spyProxy := newSpyProxy(log.NewLogger(), "spyProxy")
 			spyProxy.NextProxy(NewMonitorProxy(
 				monitorProxyOptions.WithConf(memConfig),
@@ -305,39 +305,38 @@ func BenchmarkParallelGetDB(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			ctx := context.Background()
-			mysqlClient.GetCtxDb(ctx, "test_1")
+			client.GetCtxDb(ctx, "test_1")
 
-			mysqlClient.GetCtxDb(ctx, "test_2")
-
+			client.GetCtxDb(ctx, "test_2")
 		}
 	})
 
-	mysqlClient.Close()
+	client.Close()
 
 	b.StopTimer()
 }
 
 func TestDummyProxy_Exec(t *testing.T) {
-	mysqlOnce = sync.Once{}
+	clientOnce = sync.Once{}
 
-	mysqlClientOptions := MysqlClientOptions{}
+	clientOptions := ClientOptions{}
 	memConfig := config.NewMemConfig()
-	//memConfig.Set("debug", true)
+	// memConfig.Set("debug", true)
 
-	mysqlClient := NewMysqlClient(
-		mysqlClientOptions.WithDbConfig([]DbConfig{test1Config}),
-		mysqlClientOptions.WithConf(memConfig),
-		mysqlClientOptions.WithProxy(
+	client := NewClient(
+		clientOptions.WithDbConfig([]DbConfig{test1Config}),
+		clientOptions.WithConf(memConfig),
+		clientOptions.WithProxy(
 			func() interface{} {
 				return newSpyProxy(log.NewLogger(), "spyProxy")
 			},
-			//func() interface{} {
-			//	return newDummyProxy(log.NewLogger(), "dummyProxy")
-			//},
-			),
-		)
+		// func() interface{} {
+		//	return newDummyProxy(log.NewLogger(), "dummyProxy")
+		// },
+		),
+	)
 	ctx := context.Background()
-	db1 := mysqlClient.GetCtxDb(ctx, "test_1")
+	db1 := client.GetCtxDb(ctx, "test_1")
 	db1.Exec("use test_1;")
 	assert.NotNil(t, db1)
 
@@ -345,27 +344,27 @@ func TestDummyProxy_Exec(t *testing.T) {
 
 	assert.Equal(t, db1.RowsAffected, int64(0))
 
-	mysqlClient.Close()
+	client.Close()
 }
 
-func TestMysqlClient_GetStats(t *testing.T) {
-	mysqlOnce = sync.Once{}
+func TestClient_GetStats(t *testing.T) {
+	clientOnce = sync.Once{}
 
-	mysqlClientOptions := MysqlClientOptions{}
+	clientOptions := ClientOptions{}
 
-	mysqlClient := NewMysqlClient(
-		mysqlClientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
-		mysqlClientOptions.WithStateTicker(10 * time.Millisecond),
-		mysqlClientOptions.WithProxy(func() interface{} {
+	client := NewClient(
+		clientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
+		clientOptions.WithStateTicker(10*time.Millisecond),
+		clientOptions.WithProxy(func() interface{} {
 			memConfig := config.NewMemConfig()
 			monitorProxyOptions := MonitorProxyOptions{}
 			return NewMonitorProxy(
 				monitorProxyOptions.WithConf(memConfig),
 				monitorProxyOptions.WithLogger(log.NewLogger()))
 		}),
-		)
+	)
 	ctx := context.Background()
-	db1 := mysqlClient.GetCtxDb(ctx, "test_1")
+	db1 := client.GetCtxDb(ctx, "test_1")
 	db1.Exec("use test_1;")
 	assert.NotNil(t, db1)
 
@@ -374,31 +373,29 @@ func TestMysqlClient_GetStats(t *testing.T) {
 	lab := prometheus.Labels{"db": "test_1", "stats": "max_open_conn"}
 	c, _ := mysqlStats.GetMetricWith(lab)
 	metric := &io_prometheus_client.Metric{}
-	c.Write(metric)
+	err := c.Write(metric)
+	assert.Nil(t, err)
+
 	assert.Equal(t, float64(100), metric.Gauge.GetValue())
 
 	labIdle := prometheus.Labels{"db": "test_1", "stats": "idle"}
 	c, _ = mysqlStats.GetMetricWith(labIdle)
 	metric = &io_prometheus_client.Metric{}
-	c.Write(metric)
+	err = c.Write(metric)
+	assert.Nil(t, err)
+
 	assert.Equal(t, float64(1), metric.Gauge.GetValue())
 
-	mysqlClient.Close()
+	client.Close()
 }
 
-
-func TestMysqlClient_TxCommit(t *testing.T) {
-	mysqlOnce = sync.Once{}
-
-	memConfig := config.NewMemConfig()
-	memConfig.Set("debug", true)
-
-	mysqlClientOptions := MysqlClientOptions{}
-
-	mysqlClient := NewMysqlClient(
-		mysqlClientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
-		mysqlClientOptions.WithConf(memConfig),
-		mysqlClientOptions.WithProxy(func() interface{} {
+//nolint:dupl
+func TestClient_TxCommit(t *testing.T) {
+	clientOnce = sync.Once{}
+	clientOptions := ClientOptions{}
+	client := NewClient(
+		clientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
+		clientOptions.WithProxy(func() interface{} {
 			memConfig := config.NewMemConfig()
 			monitorProxyOptions := MonitorProxyOptions{}
 			return NewMonitorProxy(
@@ -407,61 +404,50 @@ func TestMysqlClient_TxCommit(t *testing.T) {
 		}),
 	)
 	ctx := context.Background()
-	//db1 := mysqlClient.GetCtxDb(ctx, "test_1").Table("test")
-	//
-	//test := TestStruct{}
-	//test.Id = 1
-	//test.Title = "test"
-	//
-	//tx := db1.Begin()
-	//tx.Create(&test)
-	//tx.Commit()
-	//assert.Nil(t, db1.Error)
-
-	test2 := TestStruct{}
-	mysqlClient.GetCtxDb(ctx, "test_1").Table("test").First(&test2)
-	assert.Equal(t, 1, test2.Id)
-
-	mysqlClient.Close()
-}
-
-
-
-func TestMysqlClient_TxRollBack(t *testing.T) {
-	mysqlOnce = sync.Once{}
-
-	memConfig := config.NewMemConfig()
-	memConfig.Set("debug", true)
-
-	mysqlClientOptions := MysqlClientOptions{}
-
-	mysqlClient := NewMysqlClient(
-		mysqlClientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
-		mysqlClientOptions.WithConf(memConfig),
-		mysqlClientOptions.WithProxy(func() interface{} {
-			memConfig := config.NewMemConfig()
-			monitorProxyOptions := MonitorProxyOptions{}
-			return NewMonitorProxy(
-				monitorProxyOptions.WithConf(memConfig),
-				monitorProxyOptions.WithLogger(log.NewLogger()))
-		}),
-	)
-	ctx := context.Background()
-	ctx, _ = context.WithTimeout(ctx, 1 * time.Second)
-	db1 := mysqlClient.GetCtxDb(ctx, "test_1").Table("test")
-
-	test := TestStruct{}
-	test.Id = 1
-	test.Title = "test"
+	db1 := client.GetCtxDb(ctx, "test_1")
+	db1.Exec("use test_1;")
+	assert.NotNil(t, db1)
 
 	tx := db1.Begin()
-	tx.Create(&test)
+	tx.Exec("insert into test values (3, 'test')")
+	tx.Commit()
+	if len(tx.GetErrors()) > 0 {
+		assert.Error(t, tx.GetErrors()[0])
+	}
+
+	test := &TestStruct{}
+
+	db1.Table("test").First(test)
+
+	assert.Equal(t, 1, test.ID)
+
+	client.Close()
+}
+
+//nolint:dupl
+func TestClient_TxRollBack(t *testing.T) {
+	clientOnce = sync.Once{}
+	clientOptions := ClientOptions{}
+	client := NewClient(
+		clientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
+		clientOptions.WithProxy(func() interface{} {
+			memConfig := config.NewMemConfig()
+			monitorProxyOptions := MonitorProxyOptions{}
+			return NewMonitorProxy(
+				monitorProxyOptions.WithConf(memConfig),
+				monitorProxyOptions.WithLogger(log.NewLogger()))
+		}),
+	)
+	ctx := context.Background()
+	db1 := client.GetCtxDb(ctx, "test_1")
+	db1.Exec("use test_1;")
+	assert.NotNil(t, db1)
+
+	tx := db1.Begin()
+	tx.Exec("insert into test values (2, 'test')")
 	tx.Rollback()
 	assert.Nil(t, db1.Error)
+	assert.Equal(t, 1, test.ID)
 
-	test2 := TestStruct{}
-	mysqlClient.GetCtxDb(ctx, "test_1").Table("test").First(&test2)
-	assert.Equal(t, 0, test2.Id)
-
-	mysqlClient.Close()
+	client.Close()
 }

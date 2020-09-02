@@ -2,7 +2,7 @@ package mongodb
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
-	)
+)
 
 var mongodbTotal = prometheus.NewCounterVec(
 	prometheus.CounterOpts{

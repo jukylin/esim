@@ -2,7 +2,7 @@ package http
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
-	)
+)
 
 var httpTotal = prometheus.NewCounterVec(
 	prometheus.CounterOpts{

@@ -1,78 +1,113 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
-	//"log"
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/jukylin/esim/tool/db2entity"
 	"os"
+
+	"github.com/spf13/cobra"
+
+	"github.com/jukylin/esim/infra"
+	"github.com/jukylin/esim/pkg"
+	filedir "github.com/jukylin/esim/pkg/file-dir"
+	"github.com/jukylin/esim/pkg/templates"
+	"github.com/jukylin/esim/tool/db2entity"
+	domainfile "github.com/jukylin/esim/tool/db2entity/domain-file"
 )
 
 var db2entityCmd = &cobra.Command{
 	Use:   "db2entity",
-	Short: "将数据库表结构生成实体",
-	Long: `1：需要在项目根目录下执行
-生成的实体文件会被放到项目的 domain/entity/table.go,
-CRUD文件被放到 infra/dao/table.go下
-`,
+	Short: "table's fields to entity",
+	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		v.Set("debug", true)
-		db2entity.GenEntity(v)
+		dbConf := domainfile.NewDbConfig()
+		dbConf.ParseConfig(v, logger)
+
+		// select table's columns from db
+		columnsInter := domainfile.NewDBColumnsInter(logger)
+
+		tpl := templates.NewTextTpl()
+
+		daoDomainFile := domainfile.NewDaoDomainFile(
+			domainfile.WithDaoDomainFileLogger(logger),
+			domainfile.WithDaoDomainFileTpl(tpl),
+		)
+
+		entityDomainFile := domainfile.NewEntityDomainFile(
+			domainfile.WithEntityDomainFileLogger(logger),
+			domainfile.WithEntityDomainFileTpl(tpl),
+		)
+
+		repoDomainFile := domainfile.NewRepoDomainFile(
+			domainfile.WithRepoDomainFileLogger(logger),
+			domainfile.WithRepoDomainFileTpl(tpl),
+		)
+
+		writer := filedir.NewEsimWriter()
+
+		shareInfo := domainfile.NewShareInfo()
+		shareInfo.DbConf = dbConf
+
+		db2EntityOptions := db2entity.Db2EnOptions{}
+		db2Entity := db2entity.NewDb2Entity(
+			db2EntityOptions.WithLogger(logger),
+			db2EntityOptions.WithDbConf(dbConf),
+			db2EntityOptions.WithColumnsInter(columnsInter),
+			db2EntityOptions.WithWriter(writer),
+			db2EntityOptions.WithShareInfo(shareInfo),
+
+			db2EntityOptions.WithExecer(pkg.NewCmdExec()),
+			db2EntityOptions.WithDomainFile(entityDomainFile, daoDomainFile, repoDomainFile),
+			db2EntityOptions.WithInfraer(infra.NewInfraer(
+				infra.WithIfacerLogger(logger),
+				infra.WithIfacerWriter(writer),
+				infra.WithIfacerExecer(pkg.NewCmdExec()),
+			)),
+		)
+
+		err := db2Entity.Run(v)
+		if err != nil {
+			logger.Errorf(err.Error())
+		}
 	},
 }
 
+//nolint:lll
 func init() {
 	rootCmd.AddCommand(db2entityCmd)
 
-	db2entityCmd.Flags().StringP("host", "H", os.Getenv("ESIM_DB_HOST"), "Host to check mariadb status of")
+	db2entityCmd.Flags().StringP("host", "H", os.Getenv("ESIM_DB_HOST"), "Specify a host to connect to")
 
 	db2entityCmd.Flags().StringP("port", "P", os.Getenv("ESIM_DB_PORT"), "Specify a port to connect to")
 
-	db2entityCmd.Flags().StringP("table", "t", "", "Table to build struct from")
+	db2entityCmd.Flags().StringP("table", "t", "", "Database's table")
 
 	db2entityCmd.Flags().StringP("database", "d", "", "Database to for connection")
 
-	db2entityCmd.Flags().StringP("user", "u", os.Getenv("ESIM_DB_USER"), "user to connect to database")
+	db2entityCmd.Flags().StringP("user", "u", os.Getenv("ESIM_DB_USER"), "User to connect to database")
 
-	db2entityCmd.Flags().StringP("password", "p", os.Getenv("ESIM_DB_PASSWORD"), "password to connect to database")
+	db2entityCmd.Flags().StringP("password", "p", os.Getenv("ESIM_DB_PASSWORD"), "Password to connect to database")
 
-	db2entityCmd.Flags().StringP("boubcxt", "b", "", "name to set for bounded context")
+	db2entityCmd.Flags().StringP("boubctx", "b", "", "Name to set for bounded context")
 
-	db2entityCmd.Flags().StringP("package", "", "", "name to set for package")
+	db2entityCmd.Flags().StringP("package", "", "", "Name to set for package")
 
-	db2entityCmd.Flags().StringP("struct", "s", "", "name to set for struct")
-
-	db2entityCmd.Flags().BoolP("json", "j", false, "Add json annotations (default) Disable json annotations")
+	db2entityCmd.Flags().StringP("struct", "s", "", "Name to set for struct")
 
 	db2entityCmd.Flags().BoolP("gorm", "g", true, "Add gorm annotations (tags)")
 
-	db2entityCmd.Flags().StringP("target", "", "", "Save file path")
+	db2entityCmd.Flags().StringP("entity_target", "", "", "Save entity file path")
 
-	db2entityCmd.Flags().BoolP("guregu", "", false, "Add guregu null types")
+	db2entityCmd.Flags().BoolP("disable_entity", "", false, "Disable Save entity")
 
-	db2entityCmd.Flags().BoolP("valid", "", false, "Add valid annotations")
+	db2entityCmd.Flags().StringP("dao_target", "", "internal/infra/dao", "Save dao file path")
 
-	db2entityCmd.Flags().BoolP("mod", "", false, "Add mod annotations")
+	db2entityCmd.Flags().BoolP("disable_dao", "", false, "Disable Save dao")
 
-	db2entityCmd.Flags().BoolP("mar", "", true, "Marshaler to json")
+	db2entityCmd.Flags().StringP("repo_target", "", "internal/infra/repo", "Save dao file path")
 
-	db2entityCmd.Flags().StringP("etar", "", "", "Save entity file path")
+	db2entityCmd.Flags().BoolP("disable_repo", "", false, "Disable Save repo")
 
-	db2entityCmd.Flags().BoolP("disetar", "", false, "disable Save model")
-
-	db2entityCmd.Flags().StringP("daotar", "", "internal/infra/dao", "Save dao file path")
-
-	db2entityCmd.Flags().BoolP("disdaotar", "", false, "disable Save dao")
-
-	db2entityCmd.Flags().StringP("repotar", "", "internal/infra/repo", "Save dao file path")
-
-	db2entityCmd.Flags().BoolP("disrepotar", "", false, "disable Save repo")
-
-	db2entityCmd.Flags().BoolP("inject", "i", true, "automatic inject")
-
-	db2entityCmd.Flags().StringP("injtar", "", "infra", "inject target, target must in wire dir")
-
-	db2entityCmd.Flags().BoolP("hasdata", "", true, "check hasdata after find")
-
-	v.BindPFlags(db2entityCmd.Flags())
+	err := v.BindPFlags(db2entityCmd.Flags())
+	if err != nil {
+		logger.Errorf(err.Error())
+	}
 }

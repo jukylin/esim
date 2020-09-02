@@ -2,10 +2,11 @@ package proxy
 
 import (
 	"testing"
+
+	"fmt"
 	"github.com/jukylin/esim/log"
 	"github.com/stretchr/testify/assert"
 )
-
 
 type DbRepo interface {
 	Get(str string) string
@@ -17,7 +18,7 @@ type filterProxy struct {
 	logger log.Logger
 }
 
-func NewFilterProxy() *filterProxy {
+func newFilterProxy() *filterProxy {
 	filterProxy := &filterProxy{}
 
 	filterProxy.logger = log.NewLogger()
@@ -25,17 +26,17 @@ func NewFilterProxy() *filterProxy {
 	return filterProxy
 }
 
-func (this *filterProxy) Get(str string) string {
-	this.logger.Infof("filterProxy")
-	result := this.nextProxy.Get(str)
+func (fp *filterProxy) Get(str string) string {
+	fp.logger.Infof("filterProxy")
+	result := fp.nextProxy.Get(str)
 	return result
 }
 
-func (this *filterProxy) NextProxy(proxy interface{}) {
-	this.nextProxy = proxy.(DbRepo)
+func (fp *filterProxy) NextProxy(proxy interface{}) {
+	fp.nextProxy = proxy.(DbRepo)
 }
 
-func (this *filterProxy) ProxyName() string {
+func (fp *filterProxy) ProxyName() string {
 	return "filter_proxy"
 }
 
@@ -45,7 +46,7 @@ type cacheProxy struct {
 	logger log.Logger
 }
 
-func NewCacheProxy() *cacheProxy {
+func newCacheProxy() *cacheProxy {
 	cacheProxy := &cacheProxy{}
 
 	cacheProxy.logger = log.NewLogger()
@@ -53,82 +54,118 @@ func NewCacheProxy() *cacheProxy {
 	return cacheProxy
 }
 
-func (this *cacheProxy) Get(str string) string {
-	this.logger.Infof("cacheProxy")
-	result := this.nextProxy.Get(str)
+func (fp *cacheProxy) Get(str string) string {
+	fp.logger.Infof("cacheProxy")
+	result := fp.nextProxy.Get(str)
 	return result
 }
 
-func (this *cacheProxy) NextProxy(proxy interface{}) {
-	this.nextProxy = proxy.(DbRepo)
+func (fp *cacheProxy) NextProxy(proxy interface{}) {
+	fp.nextProxy = proxy.(DbRepo)
 }
 
-func (this *cacheProxy) ProxyName() string {
+func (fp *cacheProxy) ProxyName() string {
 	return "cache_proxy"
 }
 
-type realDb struct {
-}
+type realDb struct{}
 
-func NewRealDb() *realDb {
+func newRealDb() *realDb {
 	return &realDb{}
 }
 
-func (this *realDb) Get(str string) string {
+func (fp *realDb) Get(str string) string {
 	return "1.0.0"
 }
 
-func TestProxyFactory(t *testing.T)  {
-	firstProxy := NewProxyFactory().GetFirstInstance("db_repo", NewRealDb(),
+type notProxy struct{}
+
+func newNotProxy() *notProxy {
+	return &notProxy{}
+}
+
+func (np *notProxy) Get(str string) string {
+	return "1.0.0"
+}
+
+func TestProxyFactory(t *testing.T) {
+	realDb := newRealDb()
+	firstProxy := NewProxyFactory().GetFirstInstance("db_repo", realDb,
 		func() interface{} {
-			return NewFilterProxy()
+			return newFilterProxy()
 		},
 		func() interface{} {
-			return NewCacheProxy()
+			return newCacheProxy()
 		}).(DbRepo)
-
 	assert.Equal(t, firstProxy.(Proxy).ProxyName(), "filter_proxy")
 
 	result := firstProxy.Get("version")
 	assert.Equal(t, result, "1.0.0")
+	assert.Equal(t, fmt.Sprintf("%p", firstProxy.(*filterProxy).nextProxy.(*cacheProxy).nextProxy),
+		fmt.Sprintf("%p", realDb))
 }
 
-
-func TestProxyFactoryNotProxy(t *testing.T)  {
-	firstProxy := NewProxyFactory().GetFirstInstance("db_repo", NewRealDb())
+func TestProxyFactoryNotProxy(t *testing.T) {
+	firstProxy := NewProxyFactory().GetFirstInstance("db_repo", newRealDb())
 	assert.IsType(t, firstProxy, &realDb{})
 
 	result := firstProxy.(DbRepo).Get("version")
 	assert.Equal(t, result, "1.0.0")
 }
 
-
-func TestProxyFactoryNotRealInstanceNotProxy(t *testing.T)  {
+func TestProxyFactoryNotRealInstanceNotProxy(t *testing.T) {
 	firstProxy := NewProxyFactory().GetFirstInstance("db_repo", nil)
 	assert.Nil(t, firstProxy)
 }
 
-
-func TestProxyFactoryNotRealInstanceButProxy(t *testing.T)  {
+func TestProxyFactoryNotRealInstanceButProxy(t *testing.T) {
 	firstProxy := NewProxyFactory().GetFirstInstance("db_repo", nil,
 		func() interface{} {
-			return NewFilterProxy()
+			return newFilterProxy()
 		},
 		func() interface{} {
-			return NewCacheProxy()
+			return newCacheProxy()
 		})
 	assert.IsType(t, &filterProxy{}, firstProxy)
 }
 
-
-func TestProxyFactoryGetInstances(t *testing.T)  {
+func TestProxyFactoryGetInstances(t *testing.T) {
+	filterProxyObj := newFilterProxy()
+	cacheProxyObj := newCacheProxy()
 	firstProxy := NewProxyFactory().GetInstances("db_repo",
 		func() interface{} {
-			return NewFilterProxy()
+			return filterProxyObj
 		},
 		func() interface{} {
-			return NewCacheProxy()
+			return cacheProxyObj
 		})
 	assert.IsType(t, &filterProxy{}, firstProxy[0])
 	assert.IsType(t, &cacheProxy{}, firstProxy[1])
+
+	assert.Equal(t, fmt.Sprintf("%p", filterProxyObj.nextProxy),
+		fmt.Sprintf("%p", cacheProxyObj))
+	assert.Nil(t, cacheProxyObj.nextProxy)
+}
+
+func TestProxyFactoryGetOneInstances(t *testing.T) {
+	firstProxy := NewProxyFactory(WithLogger(log.NewNullLogger())).GetInstances("db_repo",
+		func() interface{} {
+			return newFilterProxy()
+		})
+	assert.IsType(t, &filterProxy{}, firstProxy[0])
+	assert.Nil(t, firstProxy[0].(*filterProxy).nextProxy)
+}
+
+func TestProxyFactoryGetZoreInstances(t *testing.T) {
+	firstProxy := NewProxyFactory().GetInstances("zore_proxy")
+	assert.Nil(t, firstProxy)
+}
+
+func TestProxyFactory_GetInstancesNotImplementTheProxyInterface(t *testing.T) {
+	assert.Panics(t, func() {
+		NewProxyFactory().GetInstances("not_implement_proxy",
+			func() interface{} {
+				return newNotProxy()
+			})
+	})
 }

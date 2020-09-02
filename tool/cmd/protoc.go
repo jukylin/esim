@@ -1,22 +1,22 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
-	//"log"
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/jukylin/esim/tool/protoc"
+	"github.com/spf13/cobra"
 )
 
 var protocCmd = &cobra.Command{
 	Use:   "protoc",
-	Short: "将数据库表结构生成struct",
+	Short: "grpc protoc",
 	Long: `1：在执行前需要注意，先把proto 文件 复制到项目下，
 2：需要在项目根目录下执行
 生成的protobuf文件会被放到项目的 internal/infra/third_party/package/*.pb.go,
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		v.Set("debug", false)
-		protoc.Gen(v)
+		protocer := protoc.NewProtocer(
+			protoc.WithProtocLogger(logger),
+		)
+		protocer.Run(v)
 	},
 }
 
@@ -31,5 +31,8 @@ func init() {
 
 	protocCmd.Flags().StringP("package", "p", "", "package名称")
 
-	v.BindPFlags(protocCmd.Flags())
+	err := v.BindPFlags(protocCmd.Flags())
+	if err != nil {
+		logger.Errorf(err.Error())
+	}
 }

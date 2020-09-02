@@ -1,30 +1,24 @@
 package grpc
 
 import (
-	"google.golang.org/grpc"
 	"github.com/jukylin/esim/log"
+	"google.golang.org/grpc"
 )
 
-// Collect the grpc.ClientConn instances
-type ClientConn struct{
+// Collect the grpc.ClientConn instances.
+type ClientConn struct {
 	conns []*grpc.ClientConn
 
 	logger log.Logger
 }
 
-
-type ClientState struct{
-	stats []string
-}
-
-
 func NewClientConn(logger log.Logger) *ClientConn {
 	connClose := &ClientConn{
-		logger:logger,
+		logger: logger,
 	}
+
 	return connClose
 }
-
 
 // Examples：
 // 		client := grpc.NewClient(clientOptions)
@@ -32,28 +26,27 @@ func NewClientConn(logger log.Logger) *ClientConn {
 // 		conn := client.DialContext(ctx, ":50051")
 //
 // 		clientConn := NewClientConn()
-// 		clientConn.CollectConn(conn)
-func (this *ClientConn) CollectConn(conn *grpc.ClientConn)  {
-	this.conns = append(this.conns, conn)
+// 		clientConn.CollectConn(conn).
+func (cc *ClientConn) CollectConn(conn *grpc.ClientConn) {
+	cc.conns = append(cc.conns, conn)
 }
 
-
-//Close unity closes the grpc.ClientConn instances
-func (this *ClientConn) Close()  {
+// Close unity closes the grpc.ClientConn instances.
+func (cc *ClientConn) Close() {
 	var err error
-	for _, conn := range this.conns {
+	for _, conn := range cc.conns {
 		err = conn.Close()
 		if err != nil {
-			this.logger.Errorf("%s colse err : %s", conn.Target(), err.Error())
+			cc.logger.Errorf("%s colse err : %s", conn.Target(), err.Error())
 		}
 	}
 }
 
-//State unity show the grpc.ClientConn state
-func (this *ClientConn) State() []string {
-	var state []string
-	for _, conn := range this.conns {
-		state = append(state, conn.Target() + ":" + conn.GetState().String())
+// State unity show the grpc.ClientConn state.
+func (cc *ClientConn) State() []string {
+	state := make([]string, len(cc.conns))
+	for k, conn := range cc.conns {
+		state[k] = conn.Target() + ":" + conn.GetState().String()
 	}
 
 	return state

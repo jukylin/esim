@@ -1,18 +1,20 @@
 package cmd
 
 import (
-	"fmt"
-	"github.com/spf13/cobra"
 	"os"
 
-	homedir "github.com/mitchellh/go-homedir"
+	"github.com/spf13/cobra"
+
+	"github.com/jukylin/esim/log"
+	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
 )
 
 var cfgFile string
 var v = viper.New()
+var logger = log.NewLogger(log.WithDebug(os.Getenv("ESIM_DEBUG") == "true"))
 
-// rootCmd represents the base command when called without any subcommands
+// rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
 	Use:   "esim",
 	Short: "A brief description of your application",
@@ -31,11 +33,12 @@ to quickly create a Cobra application.`,
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
+		logger.Errorf(err.Error())
 		os.Exit(1)
 	}
 }
 
+//nolint:lll
 func init() {
 	cobra.OnInitialize(initConfig)
 
@@ -45,9 +48,27 @@ func init() {
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.esim.yaml)")
 
+	rootCmd.PersistentFlags().BoolP("inject", "", true, "Automatic inject instance to infra")
+
+	rootCmd.PersistentFlags().StringP("infra_dir", "", "internal/infra/", "Infra dir")
+
+	rootCmd.PersistentFlags().StringP("infra_file", "", "infra.go", "Infra file name")
+
+	rootCmd.PersistentFlags().BoolP("star", "", false, "With star")
+
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+
+	err := v.BindPFlags(rootCmd.PersistentFlags())
+	if err != nil {
+		logger.Errorf(err.Error())
+	}
+
+	err = v.BindPFlags(rootCmd.Flags())
+	if err != nil {
+		logger.Errorf(err.Error())
+	}
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -59,7 +80,7 @@ func initConfig() {
 		// Find home directory.
 		home, err := homedir.Dir()
 		if err != nil {
-			fmt.Println(err)
+			logger.Errorf(err.Error())
 			os.Exit(1)
 		}
 
@@ -72,6 +93,6 @@ func initConfig() {
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println("Using config file:", viper.ConfigFileUsed())
+		logger.Errorf("Using config file: %s", viper.ConfigFileUsed())
 	}
 }

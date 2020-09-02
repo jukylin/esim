@@ -2,10 +2,19 @@ package redis
 
 import (
 	"context"
+	"sync"
 	"time"
 )
 
-type RedisExecInfo struct {
+var (
+	execInfoPool = sync.Pool{
+		New: func() interface{} {
+			return &execInfo{}
+		},
+	}
+)
+
+type execInfo struct {
 	err error
 
 	commandName string
@@ -15,6 +24,26 @@ type RedisExecInfo struct {
 	endTime time.Time
 
 	args []interface{}
+}
+
+func newExecInfo() *execInfo {
+	ei := execInfoPool.Get().(*execInfo)
+
+	if ei.args == nil {
+		ei.args = make([]interface{}, 0)
+	}
+
+	return ei
+}
+
+// Release initializes the variable and put that to tool.
+func (ei *execInfo) Release() {
+	ei.err = nil
+	ei.commandName = ""
+	ei.startTime = time.Time{}
+	ei.endTime = time.Time{}
+	ei.args = ei.args[:0]
+	execInfoPool.Put(ei)
 }
 
 //  CtxConn redefine redis.Conn, Implemented by *redis.Conn..

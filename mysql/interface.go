@@ -1,21 +1,17 @@
 package mysql
 
 import (
-	"github.com/jinzhu/gorm"
+	"github.com/go-gorm/gorm"
 )
 
-type SqlCommon interface {
+type ConnPool interface {
 	gorm.ConnPool
 
-	gorm.TxBeginner
 
-	sqlClose
+
+	SQLClose
 }
 
-type sqlClose interface {
+type SQLClose interface {
 	Close() error
-}
-
-type sqlPing interface {
-	Ping() error
 }

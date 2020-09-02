@@ -4,18 +4,15 @@ import (
 	"context"
 )
 
-type nullLogger struct {}
-
+type nullLogger struct{}
 
 func NewNullLogger() Logger {
-
 	logger := &nullLogger{}
 
 	Log = logger
 
 	return logger
 }
-
 
 func (log *nullLogger) Error(msg string) {}
 

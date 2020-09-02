@@ -3,23 +3,24 @@ package http
 import (
 	"net/http"
 	"time"
-	"github.com/opentracing-contrib/go-stdlib/nethttp"
-	opentracing2 "github.com/opentracing/opentracing-go"
-	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/opentracing"
+	"github.com/opentracing-contrib/go-stdlib/nethttp"
+	opentracing2 "github.com/opentracing/opentracing-go"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
-// monitorProxy wraps a RoundTripper.
-type monitorProxy struct {
+// MonitorProxy wraps a RoundTripper.
+type MonitorProxy struct {
 	nextTransport http.RoundTripper
 
 	logger log.Logger
 
 	conf config.Config
 
-	//use nethttp.Tracer
+	// use nethttp.Tracer
 	tracer opentracing2.Tracer
 
 	afterEvents []afterEvents
@@ -27,149 +28,143 @@ type monitorProxy struct {
 	name string
 }
 
-type afterEvents func(beginTime time.Time, endTime time.Time,
+type afterEvents func(beginTime, endTime time.Time,
 	res *http.Request, resp *http.Response)
 
-type MonitorProxyOption func(c *monitorProxy)
+type MonitorProxyOption func(c *MonitorProxy)
 
 type MonitorProxyOptions struct{}
 
-func NewMonitorProxy(options ...MonitorProxyOption) *monitorProxy {
-
-	monitorProxy := &monitorProxy{}
+func NewMonitorProxy(options ...MonitorProxyOption) *MonitorProxy {
+	MonitorProxy := &MonitorProxy{}
 
 	for _, option := range options {
-		option(monitorProxy)
+		option(MonitorProxy)
 	}
 
-	if monitorProxy.conf == nil {
-		monitorProxy.conf = config.NewNullConfig()
+	if MonitorProxy.conf == nil {
+		MonitorProxy.conf = config.NewNullConfig()
 	}
 
-	if monitorProxy.logger == nil {
-		monitorProxy.logger = log.NewLogger()
+	if MonitorProxy.logger == nil {
+		MonitorProxy.logger = log.NewLogger()
 	}
 
-	if monitorProxy.tracer == nil {
-		monitorProxy.tracer = opentracing.NewTracer("http",
-			monitorProxy.logger)
+	if MonitorProxy.tracer == nil {
+		MonitorProxy.tracer = opentracing.NewTracer("http",
+			MonitorProxy.logger)
 	}
 
-	monitorProxy.registerAfterEvent()
+	MonitorProxy.registerAfterEvent()
 
-	monitorProxy.name = "monitor_proxy"
+	MonitorProxy.name = "monitor_proxy"
 
-	return monitorProxy
+	return MonitorProxy
 }
 
 func (MonitorProxyOptions) WithConf(conf config.Config) MonitorProxyOption {
-	return func(pt *monitorProxy) {
+	return func(pt *MonitorProxy) {
 		pt.conf = conf
 	}
 }
 
 func (MonitorProxyOptions) WithLogger(logger log.Logger) MonitorProxyOption {
-	return func(pt *monitorProxy) {
+	return func(pt *MonitorProxy) {
 		pt.logger = logger
 	}
 }
 
-//use nethttp.Tracer
+// Use nethttp.Tracer.
 func (MonitorProxyOptions) WithTracer(tracer opentracing2.Tracer) MonitorProxyOption {
-	return func(c *monitorProxy) {
+	return func(c *MonitorProxy) {
 		c.tracer = tracer
 	}
 }
 
-func (this *monitorProxy) NextProxy(tripper interface{})  {
-	this.nextTransport = tripper.(http.RoundTripper)
+func (mp *MonitorProxy) NextProxy(tripper interface{}) {
+	mp.nextTransport = tripper.(http.RoundTripper)
 }
 
-func (this *monitorProxy) ProxyName() string {
-	return this.name
+func (mp *MonitorProxy) ProxyName() string {
+	return mp.name
 }
 
 // RoundTrip implements the RoundTripper interface.
-func (this *monitorProxy) RoundTrip(req *http.Request) (*http.Response, error) {
-	if this.nextTransport == nil {
-		this.nextTransport = http.DefaultTransport
+func (mp *MonitorProxy) RoundTrip(req *http.Request) (*http.Response, error) {
+	if mp.nextTransport == nil {
+		mp.nextTransport = http.DefaultTransport
 	}
 
-	this.logger.Debugc(req.Context(), "Url : %s", req.URL)
+	mp.logger.Debugc(req.Context(), "Url : %s", req.URL)
 
 	beginTime := time.Now()
 
 	var resp *http.Response
 	var err error
 
-	if this.conf.GetBool("http_client_tracer") == true {
-		req, ht := nethttp.TraceRequest(this.tracer, req)
+	if mp.conf.GetBool("http_client_trace") {
+		tracerReq, ht := nethttp.TraceRequest(mp.tracer, req)
 
 		transport := nethttp.Transport{}
-		transport.RoundTripper = this.nextTransport
-		resp, err = transport.RoundTrip(req)
+		transport.RoundTripper = mp.nextTransport
+		resp, err = transport.RoundTrip(tracerReq)
 
 		ht.Finish()
-	}else{
-		resp, err = this.nextTransport.RoundTrip(req)
+	} else {
+		resp, err = mp.nextTransport.RoundTrip(req)
 	}
 
 	if err != nil {
 		return resp, err
 	}
 
-	this.after(beginTime, req, resp)
-
+	mp.after(beginTime, req, resp)
 
 	return resp, nil
 }
 
-func (this *monitorProxy) registerAfterEvent() {
-
-	if this.conf.GetBool("http_client_check_slow") == true {
-		this.afterEvents = append(this.afterEvents, this.slowHttpRequest)
+func (mp *MonitorProxy) registerAfterEvent() {
+	if mp.conf.GetBool("http_client_check_slow") {
+		mp.afterEvents = append(mp.afterEvents, mp.slowHTTPRequest)
 	}
 
-	if this.conf.GetBool("http_client_metrics") == true {
-		this.afterEvents = append(this.afterEvents, this.httpClientMetrice)
+	if mp.conf.GetBool("http_client_metrics") {
+		mp.afterEvents = append(mp.afterEvents, mp.httpClientMetrice)
 	}
 
-	if this.conf.GetBool("debug") == true {
-		this.afterEvents = append(this.afterEvents, this.debugHttp)
+	if mp.conf.GetBool("debug") {
+		mp.afterEvents = append(mp.afterEvents, mp.debugHTTP)
 	}
 }
 
-func (this *monitorProxy) after(beginTime time.Time, res *http.Request, resp *http.Response) {
+func (mp *MonitorProxy) after(beginTime time.Time, res *http.Request, resp *http.Response) {
 	endTime := time.Now()
-	for _, event := range this.afterEvents {
+	for _, event := range mp.afterEvents {
 		event(beginTime, endTime, res, resp)
 	}
 }
 
-
-func (this *monitorProxy) slowHttpRequest(beginTime time.Time, endTime time.Time,
+func (mp *MonitorProxy) slowHTTPRequest(beginTime, endTime time.Time,
 	res *http.Request, resp *http.Response) {
-	http_client_slow_time := this.conf.GetInt64("http_client_slow_time")
+	httpClientSlowTime := mp.conf.GetInt64("http_client_slow_time")
 
-	if http_client_slow_time != 0 {
-		if endTime.Sub(beginTime) > time.Duration(http_client_slow_time)*time.Millisecond {
-			this.logger.Warnf("slow http request [%s] ：%s", endTime.Sub(beginTime).String(),
+	if httpClientSlowTime != 0 {
+		if endTime.Sub(beginTime) > time.Duration(httpClientSlowTime)*time.Millisecond {
+			mp.logger.Warnf("slow http request [%s] ：%s", endTime.Sub(beginTime).String(),
 				res.RequestURI)
 		}
 	}
 }
 
-
-func (this *monitorProxy) httpClientMetrice(beginTime time.Time, endTime time.Time,
+func (mp *MonitorProxy) httpClientMetrice(beginTime, endTime time.Time,
 	res *http.Request, resp *http.Response) {
 	lab := prometheus.Labels{"url": res.URL.String(), "method": res.Method}
 	httpTotal.With(lab).Inc()
 	httpDuration.With(lab).Observe(endTime.Sub(beginTime).Seconds())
 }
 
-
-func (this *monitorProxy) debugHttp(beginTime time.Time, endTime time.Time,
+func (mp *MonitorProxy) debugHTTP(beginTime, endTime time.Time,
 	req *http.Request, resp *http.Response) {
-	this.logger.Debugf("http [%d] [%s] %s ： %s", resp.StatusCode, endTime.Sub(beginTime).String(),
+	mp.logger.Debugf("http [%d] [%s] %s ： %s", resp.StatusCode, endTime.Sub(beginTime).String(),
 		req.Method, req.URL.String())
 }

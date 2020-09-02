@@ -1,5 +1,24 @@
 # Esim文档
 
+> &nbsp;&nbsp;&nbsp;&nbsp;Esim专注解决业务问题：业务复杂度，如何测试，代码组织，扩展等问题。不会提供微服务整套技术体系，服务治理、服务注册、服务发现等都不是它专注解决的问题，这部分问题我们交给了Service Mesh。
+
+> &nbsp;&nbsp;&nbsp;&nbsp;做为业务框架，Esim默认集成了gin和grpc两个技术框架，但吸收了业务和技术分离思想，所以为集成其他技术框架提供了接口，只要实现[Transports](https://github.com/jukylin/esim/blob/master/transports/interface.go#L3)接口，再把实例注册到```App.trans```就可以很轻松的集成其他技术框架。
+
+```
+type Transports interface {
+	// start server
+	Start()
+
+	// graceful shutdown server
+	GracefulShutDown()
+}
+
+func (app *App) RegisterTran(tran transports.Transports) {
+	app.trans = append(app.trans, tran)
+}
+
+```
+
 ## 安装
 
 > 环境 go 1.3 及以上
@@ -10,7 +29,7 @@
 
 > cd github.com/jukylin/esim
 
-> go build -o esim ./tool
+> go build -o esim ./tool && mv ./esim $GOPATH/bin
 
 ## 创建项目
 
@@ -36,19 +55,21 @@ go run main.go
 
 ```
 cd  test/internal/transports/http/component-test/
-go test -v -tags="component_test"
+go test
 ```
 
 ## 架构
 
-> Esim的架构来源于《实现领域驱动设计》的六边形架构和阿里的COLA架构，这2个架构有一个共同点：业务与技术分离。也正是这点解决了微服务开发下业务依赖远程服务的问题。所以才决定由原来的三层架构转为四层架构。
+> &nbsp;&nbsp;&nbsp;&nbsp;Esim的架构来源于《实现领域驱动设计》的六边形架构和阿里的COLA架构，这2个架构有一个共同点：业务与技术分离。这点很好的解决了由于微服务架构增加的网络通讯和事件导致service层越来越胖的问题。所以才决定由原来的三层架构转为四层架构。
 
 
 ![此处输入图片的描述][1]
 
 ## 分层
 
-> Esim使用松散的分层架构，上层可以任意调用下层。
+> &nbsp;&nbsp;&nbsp;&nbsp;Esim使用松散的分层架构，上层可以任意调用下层。使用松散的分层架构的原因，是因为我们在使用四层架构的过程中发现：一些简单的场景，app层的service只是增加了一层调用，并没有起到协调的作用，反而增加了一些不必要的工作，所以使用松散的架构，让controller直接调用domain的逻辑。
+
+> **不能因为使用松散的架构，把原有app层的service职责都放到了controller里面！！！**
 
 ![此处输入图片的描述][2]
 
@@ -67,29 +88,47 @@ infrastructure|为各层提供技术支持，持久化，领域事件等
 
 - 函数第一个参数是ctx！函数第一个参数是ctx！函数第一个参数是ctx！
 
+- 禁止在defer内做逻辑运算
+
+- 业务代码形参、实参、返回值的类型不允许使用interface
+
 - 命名
 
 &emsp; | Jaeger
 ---|---
 目录名 |小写/中横线
-函数名 |小驼峰
+函数名 |驼峰
 文件名 |下划线
-变量 | 小驼峰
-常量 | 小驼峰
+变量 | 驼峰
+常量 | 驼峰
 包名 | 当前目录名
 请求地址 | *小写
 请求参数 | 小驼峰
 返回参数 | 小驼峰
 
 
+### v1 目录 + 文件名
+
+目录 | 定义 | 文件 | 类 | 接口
+---|---|---|---|---
+application/service |应用层|index_service.go | IndexService|无
+domain/service|领域服务 | index_service.go | IndexService|无
+domain/entity |实体| index_entity.go | IndexEntity|无
+infra/event |领域事件|index_event.go | PubIndexEvent | IndexEvent
+infra/repo|资源库|index_repo.go| DBIndexRepo |IndexRepo
+infra/dao|数据访问对象| index_dao.go| IndexDao |无
+
+### v2 目录
+
 目录 | 定义 | 文件 | 类 | 接口
 ---|---|---|---|---
 application/service |应用层|index.go | IndexService|无
 domain/service|领域服务 | index.go | IndexService|无
-domain/entity |实体| index.go | Index|无
-infra/event |领域事件|index.go | couponEventPub | IndexEvent
-infra/repo|资源库|index.go| IndexDbRepo |IndexRepo
+domain/entity |实体| index.go | IndexEntity|无
+infra/event |领域事件|index.go | PubIndexEvent | IndexEvent
+infra/repo|资源库|index.go| DBIndexRepo |IndexRepo
 infra/dao|数据访问对象| index.go| IndexDao |无
+
 
 
 ### 数据库设计规范小三样
@@ -112,17 +151,17 @@ infra/dao|数据访问对象| index.go| IndexDao |无
 
 
 ## 依赖注入
-> Esim 使用[wire](https://github.com/google/wire)实现编译时的依赖注入，它有以下优点：
+> &nbsp;&nbsp;&nbsp;&nbsp;Esim 使用[wire](https://github.com/google/wire)实现编译时的依赖注入，它有以下优点：
 
 - 当依赖关系图变得复杂时，运行时依赖注入很难跟踪和调试。 使用代码生成意味着在运行时执行的初始化代码是常规的，惯用的Go代码，易于理解和调试。不会因为框架的各种奇技淫巧而变得生涩难懂。特别重要的是，忘记依赖项等问题会成为编译时错误，而不是运行时错误。
 - 与服务定位器不同，不需要费心编造名称来注册服务。 Wire使用Go语法中的类型将组件与其依赖项连接起来。
 - 更容易防止依赖项变得臃肿。Wire生成的代码只会导入您需要的依赖项，因此您的二进制文件将不会有未使用的导入。 运行时依赖注入在运行之前无法识别未使用的依赖项。
 - Wire的依赖图是静态可知的，这为工具化和可视化提供了可能。
 
-> Esim将wire用于业务与基础设施之间。将基础设施的初始化从业务抽离出来，集中管理。
+> &nbsp;&nbsp;&nbsp;&nbsp;Esim将wire用于业务与基础设施之间。将基础设施的初始化从业务抽离出来，集中管理。
 
 ### Esim使用wire示例
-> 基础设施的依赖和初始化都在 ```infra/infra.go``` 文件下。wire的使用主要分2步，以增加mysqlClient：
+> &nbsp;&nbsp;&nbsp;&nbsp;基础设施的依赖和初始化都在 ```infra/infra.go``` 文件下。wire的使用主要分2步，以增加mysqlClient为例：
 
 #### provide
 ##### before
@@ -174,8 +213,7 @@ infra.NewInfra().DB
 ```
 
 ## 依赖倒置
-> 依赖倒置和依赖注入一样，都是应用于业务与基础设施之间。主要的作用是让业务与技术实现分离。
-> 在实际的使用中我们把涉及io操作都放到了基础设施的资源库上。这样做的好处：
+> &nbsp;&nbsp;&nbsp;&nbsp;依赖倒置和依赖注入一样，主要应用于业务与基础设施之间。主要的作用是让业务与技术实现分离。在实际的使用中我们把涉及io操作都放到了基础设施的资源库上。这样做的好处：
 
 - 单元测试变简单，使用mock代替数据源
 - 不用学习各种 mock sdk，只针对 app 和 domain写单元测试
@@ -183,33 +221,57 @@ infra.NewInfra().DB
 
 ## 工具
 
-- esim db2entity -d db_name -d table_name
+- esim db2entity -d db_name -t table_name
 
 > 前置条件：
 > 1. 在项目根目录下
-> 2. 配置环境变量 
+> 2. 配置环境变量
 
 ```linux
 export ESIM_DB_HOST=127.0.0.1
 export ESIM_DB_PORT=3306
-export ESIM_DB_USER=root 
+export ESIM_DB_USER=root
 export ESIM_DB_PASSWORD=123456
 ```
-> 由于DDD开发方式多了很多目录，文件，导致这部分工作变得很繁琐，所以```db2entity``` 从mysql数据库的表开始，自动建立实体，生成简单的CRUD语句和资源库的接口与实现，并把生成的资源库注入到基础设施。
+> &nbsp;&nbsp;&nbsp;&nbsp;由于DDD开发方式多了很多目录、文件，导致这部分工作变得很繁琐，所以```db2entity``` 从mysql数据库的表开始，自动建立实体，生成简单的CRUD语句和资源库的接口与实现，并把生成的资源库注入到基础设施。一气呵成。
 
-- esim model -m modelname
+- esim factory --sname struct_name -n
 
 > 前置条件:
 > 1. 在模型目录下
 > 2. 开启 module， ```export GO111MODULE=on```
 
-> 当项目进入到调优阶段，由于DDD将模型和数据分离，可以单独对模型进行优化。```model``` 命令可以自动对模型进行初始化，内存对齐，生成临时对象池，reset和释放model。很大程度的减少调优花费的时间和心智负担。
+> &nbsp;&nbsp;&nbsp;&nbsp;```factory``` 命令可以自动对结构体进行初始化，内存对齐，生成临时对象池，reset和释放资源等操作，减少一些繁杂操作。
+
+- esim ifacer --iname 接口名称
+
+> 前置条件:
+> 1. 在接口目录下
+
+> &nbsp;&nbsp;&nbsp;&nbsp;```ifacer``` 命令根据接口的定义生成空实例
+
+- esim test
+
+![esim test](https://s1.ax1x.com/2020/06/06/tc9qS0.gif)
+
+> 前置条件:
+> 1. 项目目录下
+> 2. 推荐使用[gotests](https://github.com/cweill/gotests)
+
+> &nbsp;&nbsp;&nbsp;&nbsp;```test``` 命令监听项目被修改文件，并在文件目录下执行```go test``` 自动运行单元测试。当然为了减轻一些繁杂的工作，```esim test```还会执行[wire](https://github.com/google/wire), [mockery](https://github.com/vektra/mockery)等命令
 
 
 ## 配置
+
+- 环境设置
+
+> esim 默认为 dev 环境，esim主要由 dev 和 pro 环境
+
+> export ENV=pro
+
 - 配置文件
 
-> 配置文件在项目的conf目录下，分3个环境配置文件
+> 配置文件在项目的conf目录下
 
 > conf/conf.yaml
 
@@ -234,8 +296,8 @@ service_name := infra.NewInfra().Conf.GetString("appname")
 ```
 
 ## 日志
-> 日志会根据不同环境打印，开发和测试环境会把所以日志打印到终端，生产只会打印warn及以上的日志。
-> Esim提供了2套日志接口，一套没有上下文，一套有。使用上下文是为了把分布式环境下的日志通过tracer_id串起来。
+> &nbsp;&nbsp;&nbsp;&nbsp;日志会根据不同环境打印日志，开发和测试环境会把所有日志打印到终端，生产只会打印warn及以上的日志。
+> &nbsp;&nbsp;&nbsp;&nbsp;2套日志接口，一套没有上下文，一套有。使用上下文是为了把分布式环境下的日志通过tracer_id串起来。
 
 - provide
 
@@ -405,8 +467,6 @@ func provideRedis(esim *container.Esim) *redis.RedisClient {
 
 ```golang
 
-"gitlab.etcchebao.cn/go_service/esim/pkg/redis"
-
 conn := infra.NewInfra().Redis.GetCtxRedisConn()
 defer conn.Close()
 key := "username:"+username
@@ -420,7 +480,6 @@ exists, err := redis.Bool(conn.Do(ctx, "exists", key))
 
 ```golang
 func provideDb(esim *container.Esim) *mysql.MysqlClient {
-
     mysqlClientOptions := mysql.MysqlClientOptions{}
 	mysqlClent := mysql.NewMysqlClient(
 		mysqlClientOptions.WithConf(esim.Conf),
@@ -450,9 +509,7 @@ infra.NewInfra().DB.GetDb(ctx, "db").Table("table").Where("username = ?", userna
 ```
 
 ## Opentracing
-> Esim使用[Jaeger](https://www.jaegertracing.io/)实现分布式追踪，默认为关闭状态。
-
->开启需要使用jaeger-client-go自带的[环境变量](https://github.com/jaegertracing/jaeger-client-go#environment-variables)
+> &nbsp;&nbsp;&nbsp;&nbsp; Esim使用[Jaeger](https://www.jaegertracing.io/)实现分布式追踪，默认为关闭状态。开启需要使用jaeger-client-go自带的[环境变量](https://github.com/jaegertracing/jaeger-client-go#environment-variables)
 
 
   [1]: https://imgconvert.csdnimg.cn/aHR0cHM6Ly9hdGEyLWltZy5jbi1oYW5nemhvdS5vc3MtcHViLmFsaXl1bi1pbmMuY29tL2EzM2I4MGJjYWM1ZWM3M2QwZDEzNThkNmI0OWExMTljLnBuZw?x-oss-process=image/format,png

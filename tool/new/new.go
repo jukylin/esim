@@ -1,17 +1,19 @@
 package new
 
 import (
-	"errors"
-	"github.com/spf13/viper"
-	"github.com/jukylin/esim/pkg/file-dir"
-	logger "github.com/jukylin/esim/log"
-	"io/ioutil"
-	"os"
+	"path/filepath"
+	"regexp"
 	"strings"
+
+	"github.com/jukylin/esim/log"
+	filedir "github.com/jukylin/esim/pkg/file-dir"
+	"github.com/jukylin/esim/pkg/templates"
+	"github.com/spf13/viper"
+	"golang.org/x/tools/imports"
 )
 
 var (
-	Files []*FileContent
+	Files = make([]*FileContent, 0)
 )
 
 type FileContent struct {
@@ -20,123 +22,286 @@ type FileContent struct {
 	Content  string `json:"context"`
 }
 
-func Build(v *viper.Viper, log logger.Logger) error {
+// Project
+type Project struct {
+	ServerName string
 
-	var err error
-	serviceName := v.GetString("service_name")
-	if serviceName == "" {
-		return errors.New("请输入 service_name")
-	}
+	PackageName string
 
-	if strings.Contains(serviceName, ".") == true{
-		return errors.New("服务名称不能包含【.】")
-	}
+	RunTrans []string
 
-	exists, err := file_dir.IsExistsDir("./" + serviceName)
-	if exists {
-		return errors.New("创建目录 " + serviceName + " 失败：目录已存在")
-	}
+	ProPath string
 
-	if err != nil {
-		return errors.New("检查目录失败：" + err.Error())
-	}
+	ImportServer []string
 
-	err = file_dir.CreateDir(serviceName)
-	if err != nil {
-		return errors.New("创建目录 " + serviceName + " 失败：" + err.Error())
-	}
+	SingleMark string
 
-	run_server, import_server := tmpInit(v)
+	withMonitoring bool
 
-	currentDir := file_dir.GetCurrentDir()
-	if currentDir != ""{
-		currentDir = currentDir + "/"
-	}
-	for _, file := range Files {
-		dir := serviceName + "/" + file.Dir
+	// "true" or "false"
+	Monitoring string
 
-		exists, err := file_dir.IsExistsDir(dir)
-		if err != nil {
-			//半路创建失败，全删除
-			os.Remove(serviceName)
-			return err
-		}
+	logger log.Logger
 
-		if exists == false {
-			err = file_dir.CreateDir(dir)
-			if err != nil {
-				//半路创建失败，全删除
-				os.Remove(serviceName)
-				return err
-			}
-		}
-		fileName := dir + "/" + file.FileName
-		//before all replace
-		file.Content = strings.ReplaceAll(file.Content, "{{IMPORT_SERVER}}", import_server)
+	withGin bool
 
-		file.Content = strings.ReplaceAll(file.Content, "{{service_name}}", serviceName)
-		file.Content = strings.ReplaceAll(file.Content, "{{!}}", "`")
-		file.Content = strings.ReplaceAll(file.Content, "{{PROPATH}}", currentDir)
+	withBeego bool
 
-		file.Content = strings.ReplaceAll(file.Content, "{{RUN_SERVER}}", run_server)
+	withGrpc bool
 
-		if file.FileName == "monitoring.yaml" {
-			if v.GetBool("monitoring") == false {
-				log.Infof("关闭监控")
-				file.Content = strings.ReplaceAll(file.Content, "{{bool}}", "false")
-			} else {
-				log.Infof("开启监控")
-				file.Content = strings.ReplaceAll(file.Content, "{{bool}}", "true")
-			}
-		}
+	writer filedir.IfaceWriter
 
-		//写内容
-		err = ioutil.WriteFile(fileName, []byte(file.Content), 0666)
-		if err != nil {
-			//半路创建失败，全删除
-			os.Remove(serviceName)
-			return err
-		}
-		log.Infof(fileName + " 写入完成")
-	}
-
-	return nil
+	tpl templates.Tpl
 }
 
-func tmpInit(v *viper.Viper) (string, string) {
-	CmdInit()
-	ConfigInit()
-	DaoInit()
-	GitIgnoreInit()
-	MainInit()
-	ModInit()
-	ModelInit()
-	ProtoBufInit()
-	ServiceInit()
-	ThirdPartyInit()
-	InfraInit()
-	RepoInit()
-	InternalInit()
-	var run_server string
-	var import_server string
+type ProjectOption func(*Project)
 
-	if v.GetBool("gin") == true {
-		GinInit()
-		run_server = "		app.Trans = append(app.Trans, http.NewGinServer(app))\n"
-		import_server += "	\"{{PROPATH}}{{service_name}}/internal/transports/http\"\n"
+func InitProject(options ...ProjectOption) *Project {
+	project := &Project{}
+
+	for _, option := range options {
+		option(project)
 	}
 
-	if v.GetBool("beego") == true {
-		BeegoInit()
-		run_server += "		app.Trans = append(app.Trans, http.NewBeegoServer(app.Esim))\n"
-		import_server += "	\"{{PROPATH}}{{service_name}}/internal/transports/http\"\n"
+	project.RunTrans = make([]string, 0)
+
+	project.ImportServer = make([]string, 0)
+
+	project.SingleMark = "`"
+
+	return project
+}
+
+func WithProjectLogger(logger log.Logger) ProjectOption {
+	return func(pj *Project) {
+		pj.logger = logger
+	}
+}
+
+func WithProjectWriter(writer filedir.IfaceWriter) ProjectOption {
+	return func(pj *Project) {
+		pj.writer = writer
+	}
+}
+
+func WithProjectTpl(tpl templates.Tpl) ProjectOption {
+	return func(pj *Project) {
+		pj.tpl = tpl
+	}
+}
+
+func (pj *Project) Run(v *viper.Viper) {
+	pj.bindInput(v)
+
+	pj.getProPath()
+
+	pj.getPackName()
+
+	pj.initTransport()
+
+	pj.initFiles()
+
+	pj.createDir()
+
+	pj.build()
+}
+
+func (pj *Project) bindInput(v *viper.Viper) {
+	serverName := v.GetString("server_name")
+	if serverName == "" {
+		pj.logger.Panicf("The server_name is empty")
+	}
+	pj.ServerName = serverName
+
+	if !pj.checkServerName() {
+		pj.logger.Panicf("The server_name only supports【a-z0-9_-】")
 	}
 
-	if v.GetBool("grpc") == true {
-		GrpcInit()
-		run_server += "		app.Trans = append(app.Trans, grpc.NewGrpcServer(app))\n"
-		import_server += "	\"{{PROPATH}}{{service_name}}/internal/transports/grpc\"\n"
+	pj.withGin = v.GetBool("gin")
+
+	pj.withBeego = v.GetBool("beego")
+
+	if pj.withGin && pj.withBeego {
+		pj.logger.Panicf("Either gin or beego")
 	}
 
-	return run_server, import_server
+	if !pj.withGin && !pj.withBeego {
+		pj.withGin = true
+	}
+
+	pj.withGrpc = v.GetBool("grpc")
+
+	pj.withMonitoring = v.GetBool("monitoring")
+	if pj.withMonitoring {
+		pj.Monitoring = "true"
+	} else {
+		pj.Monitoring = "false"
+	}
+}
+
+// checkServerName ServerName only support lowercase, number ,"_", "-"
+func (pj *Project) checkServerName() bool {
+	match, err := regexp.MatchString("^[a-z0-9_-]+$", pj.ServerName)
+	if err != nil {
+		pj.logger.Fatalf(err.Error())
+	}
+
+	return match
+}
+
+func (pj *Project) createDir() bool {
+	exists, err := filedir.IsExistsDir(pj.ServerName)
+	if err != nil {
+		pj.logger.Fatalf(err.Error())
+	}
+
+	if exists {
+		pj.logger.Fatalf("The %s is exists can't be create", pj.ServerName)
+	}
+
+	err = filedir.CreateDir(pj.ServerName)
+	if err != nil {
+		pj.logger.Fatalf(err.Error())
+	}
+
+	return true
+}
+
+func (pj *Project) delDir() bool {
+	dirExists, err := filedir.IsExistsDir(pj.ServerName)
+	if err != nil {
+		pj.logger.Errorf(err.Error())
+	}
+
+	if dirExists {
+		err = filedir.RemoveDir(pj.ServerName)
+		if err != nil {
+			pj.logger.Errorf("remove err : %s", err.Error())
+		}
+		pj.logger.Infof("remove %s success", pj.ServerName)
+	}
+
+	return true
+}
+
+func (pj *Project) getProPath() {
+	currentDir := filedir.GetGoProPath()
+	if currentDir != "" {
+		currentDir += string(filepath.Separator)
+	}
+	pj.ProPath = currentDir
+}
+
+// getPackName in most cases,  ServerName eq PackageName
+func (pj *Project) getPackName() {
+	pj.PackageName = strings.Replace(pj.ServerName, "-", "_", -1)
+}
+
+// initTransport initialization Transport mode
+func (pj *Project) initTransport() {
+	if pj.withGin {
+		initGinFiles()
+		pj.RunTrans = append(pj.RunTrans, "app.RegisterTran(http.NewGinServer(app))")
+		pj.ImportServer = append(pj.ImportServer,
+			pj.ProPath+pj.ServerName+"/internal/transports/http")
+	}
+
+	if pj.withBeego {
+		initBeegoFiles()
+		pj.RunTrans = append(pj.RunTrans, "app.RegisterTran(http.NewBeegoServer(app.Esim))")
+		pj.ImportServer = append(pj.ImportServer,
+			pj.ProPath+pj.ServerName+"/internal/transports/http")
+	}
+
+	if pj.withGrpc {
+		initGrpcFiles()
+		pj.RunTrans = append(pj.RunTrans, "app.RegisterTran(grpc.NewGrpcServer(app))")
+		pj.ImportServer = append(pj.ImportServer,
+			pj.ProPath+pj.ServerName+"/internal/transports/grpc")
+	}
+}
+
+func (pj *Project) initFiles() {
+	initAppFiles()
+
+	initCmdFiles()
+
+	initConfigFiles()
+
+	initInfraFiles()
+
+	initInternalFiles()
+
+	initMainFiles()
+
+	initModFiles()
+
+	initProtobufFiles()
+
+	initRepoFiles()
+
+	initDaoFiles()
+
+	initDomainFiles()
+
+	initGitIgnoreFiles()
+
+	initThirdParthFiles()
+
+	initGolangCiFiles()
+}
+
+// build create a new project locally
+// if an error occurred, remove the project
+func (pj *Project) build() bool {
+	pj.logger.Infof("starting create %s, package name %s", pj.ServerName, pj.PackageName)
+
+	defer func() {
+		if err := recover(); err != nil {
+			pj.delDir()
+		}
+	}()
+
+	for _, file := range Files {
+		dir := pj.ServerName + string(filepath.Separator) + file.Dir
+
+		exists, err := filedir.IsExistsDir(dir)
+		if err != nil {
+			pj.logger.Panicf("%s : %s", file.FileName, err.Error())
+		}
+
+		if !exists {
+			err = filedir.CreateDir(dir)
+			if err != nil {
+				pj.logger.Panicf("%s : %s", file.FileName, err.Error())
+			}
+		}
+
+		fileName := dir + string(filepath.Separator) + file.FileName
+
+		content, err := pj.tpl.Execute(file.FileName, file.Content, pj)
+		if err != nil {
+			pj.logger.Panicf("%s : %s", file.FileName, err.Error())
+		}
+
+		var src []byte
+		if filepath.Ext(fileName) == ".go" {
+			src, err = imports.Process("", []byte(content), nil)
+			if err != nil {
+				pj.logger.Panicf("%s : %s", file.FileName, err.Error())
+			}
+		} else {
+			src = []byte(content)
+		}
+
+		err = pj.writer.Write(fileName, string(src))
+		if err != nil {
+			pj.logger.Panicf("%s : %s", file.FileName, err.Error())
+		}
+
+		pj.logger.Infof("wrote success : %s", fileName)
+	}
+
+	pj.logger.Infof("creation complete : %s ", pj.ServerName)
+	return true
 }

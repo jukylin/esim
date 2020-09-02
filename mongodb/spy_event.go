@@ -2,12 +2,13 @@ package mongodb
 
 import (
 	"context"
+
 	"github.com/jukylin/esim/log"
 	"go.mongodb.org/mongo-driver/event"
 )
 
 type spyEvent struct {
-	nextEvent MonitorEvent
+	nextEvent MgoEvent
 
 	StartWasCalled bool
 
@@ -16,51 +17,44 @@ type spyEvent struct {
 	FailedEventWasCalled bool
 
 	logger log.Logger
-
 }
 
-
-func NewSpyEvent(logger log.Logger) *spyEvent {
-
+func newSpyEvent(logger log.Logger) MgoEvent {
 	spyEvent := &spyEvent{}
 	spyEvent.logger = logger
 
 	return spyEvent
 }
 
-
-func (this *spyEvent) NextEvent(event MonitorEvent) {
-	this.nextEvent = event
+func (se *spyEvent) NextEvent(me MgoEvent) {
+	se.nextEvent = me
 }
 
-func (this *spyEvent) EventName() string {
+func (se *spyEvent) EventName() string {
 	return "spy_proxy"
 }
 
-func (this *spyEvent) Start(ctx context.Context, starEv *event.CommandStartedEvent) {
-	this.StartWasCalled = true
-	this.logger.Infof("StartWasCalled")
-	if this.nextEvent != nil {
-		this.nextEvent.Start(ctx, starEv)
+func (se *spyEvent) Start(ctx context.Context, starEv *event.CommandStartedEvent) {
+	se.StartWasCalled = true
+	se.logger.Infof("StartWasCalled")
+	if se.nextEvent != nil {
+		se.nextEvent.Start(ctx, starEv)
 	}
 }
 
-
-func (this *spyEvent) SucceededEvent(ctx context.Context,
+func (se *spyEvent) SucceededEvent(ctx context.Context,
 	succEvent *event.CommandSucceededEvent) {
-	this.logger.Infof("SucceededEvent")
-	this.SucceededEventWasCalled = true
-	if this.nextEvent != nil {
-		this.nextEvent.SucceededEvent(ctx, succEvent)
+	se.logger.Infof("SucceededEvent")
+	se.SucceededEventWasCalled = true
+	if se.nextEvent != nil {
+		se.nextEvent.SucceededEvent(ctx, succEvent)
 	}
-
 }
 
-
-func (this *spyEvent) FailedEvent(ctx context.Context, failedEvent *event.CommandFailedEvent) {
-	this.logger.Infof("FailedEvent")
-	this.FailedEventWasCalled = true
-	if this.nextEvent != nil {
-		this.nextEvent.FailedEvent(ctx, failedEvent)
+func (se *spyEvent) FailedEvent(ctx context.Context, failedEvent *event.CommandFailedEvent) {
+	se.logger.Infof("FailedEvent")
+	se.FailedEventWasCalled = true
+	if se.nextEvent != nil {
+		se.nextEvent.FailedEvent(ctx, failedEvent)
 	}
 }
