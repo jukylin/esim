@@ -2,7 +2,6 @@
 package mysql
 
 import (
-	"context"
 	"database/sql"
 
 	"github.com/jukylin/esim/log"
@@ -37,7 +36,7 @@ func (dp *dummyProxy) ProxyName() string {
 }
 
 func (this *dummyProxy) ExecContext(query string, args ...interface{}) (sql.Result, error) {
-	result := &dummySqlResult{}
+	result := &dummySQLResult{}
 	return result, nil
 }
 

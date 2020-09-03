@@ -7,10 +7,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-gorm/gorm"
+	"gorm.io/gorm"
+	"gorm.io/driver/mysql"
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
-	// "github.com/jukylin/esim/proxy"
+	"github.com/jukylin/esim/proxy"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -36,9 +37,6 @@ type Client struct {
 	stateTicker time.Duration
 
 	gormConfig *gorm.Config
-
-	// for integration tests
-	db *sql.DB
 }
 
 type Option func(c *Client)
@@ -111,9 +109,9 @@ func (ClientOptions) WithStateTicker(stateTicker time.Duration) Option {
 	}
 }
 
-func (ClientOptions) WithDB(db *sql.DB) Option {
+func (ClientOptions) WithGormConfig(gormConfig *gorm.Config) Option {
 	return func(m *Client) {
-		m.db = db
+		m.gormConfig = gormConfig
 	}
 }
 
@@ -132,10 +130,7 @@ func (c *Client) init() {
 	for _, dbConfig := range dbConfigs {
 		if len(c.proxy) == 0 {
 			var DB *gorm.DB
-
-			DB, err = gorm.Open(nil, c.gormConfig)
-
-
+			DB, err = gorm.Open(mysql.Open(dbConfig.Dsn), c.gormConfig)
 			if err != nil {
 				c.logger.Panicf("[db] %s init error : %s", dbConfig.Db, err.Error())
 			}
@@ -148,28 +143,16 @@ func (c *Client) init() {
 				DB = DB.Debug()
 			}
 
-			c.setDb(dbConfig.Db, DB, nil)
-
+			c.setDb(dbConfig.Db, DB)
 		} else {
 			var DB *gorm.DB
-
-			var dbSQL *sql.DB
-
-			if c.db == nil {
-				dbSQL, err = sql.Open("mysql", dbConfig.Dsn)
-				if err != nil {
-					c.logger.Panicf("[db] %s init error : %s", dbConfig.Db, err.Error())
-				}
-			} else {
-				dbSQL = c.db
-			}
-
-			//firstProxy := proxy.NewProxyFactory().
-			//	GetFirstInstance("db_"+dbConfig.Db, dbSQL, c.proxy...)
-
-			DB, err = gorm.Open(nil, c.gormConfig)
+			DB, err = gorm.Open(mysql.Open(dbConfig.Dsn), c.gormConfig)
 			if err != nil {
 				c.logger.Panicf("[db] %s ping error : %s", dbConfig.Db, err.Error())
+			}
+
+			if c.conf.GetBool("debug") {
+				DB = DB.Debug()
 			}
 
 			sqlDb := DB.ConnPool.(*sql.DB)
@@ -178,18 +161,12 @@ func (c *Client) init() {
 				c.logger.Panicf("[db] %s ping error : %s", dbConfig.Db, err.Error())
 			}
 
-			//firstProxy := proxy.NewProxyFactory().GetFirstInstance("db_" + dbConfig.Db, DB.ConnPool, this.proxy...)
+			firstProxy := proxy.NewProxyFactory().GetFirstInstance("db_" + dbConfig.Db,
+				DB.ConnPool, c.proxy...)
 
-			//DB.ConnPool = firstProxy.(gorm.ConnPool)
+			DB.ConnPool = firstProxy.(gorm.ConnPool)
 
-
-			c.setDb(dbConfig.Db, DB, dbSQL)
-
-			if c.conf.GetBool("debug") {
-				// DB.LogMode(true)
-			}
-
-			c.setDb(dbConfig.Db, DB, nil)
+			c.setDb(dbConfig.Db, DB)
 		}
 
 		go c.Stats()
@@ -197,11 +174,9 @@ func (c *Client) init() {
 	}
 }
 
-func (c *Client) setDb(dbName string, gdb *gorm.DB, db *sql.DB) {
+func (c *Client) setDb(dbName string, gdb *gorm.DB) {
 	dbName = strings.ToLower(dbName)
-
 	c.gdbs[dbName] = gdb
-	c.sqlDbs[dbName] = db
 }
 
 func (c *Client) GetDb(dbName string) *gorm.DB {
@@ -262,8 +237,8 @@ func (c *Client) Stats() {
 	for {
 		select {
 		case <-ticker.C:
-			for dbName, db := range c.sqlDbs {
-				stats = db.Stats()
+			for dbName, db := range c.gdbs {
+				stats = db.ConnPool.(*sql.DB).Stats()
 
 				maxOpenConnLab := prometheus.Labels{"db": dbName, "stats": "max_open_conn"}
 				mysqlStats.With(maxOpenConnLab).Set(float64(stats.MaxOpenConnections))
