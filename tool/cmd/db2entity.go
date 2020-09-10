@@ -15,7 +15,7 @@ import (
 
 var db2entityCmd = &cobra.Command{
 	Use:   "db2entity",
-	Short: "table's fields to entity",
+	Short: "将对应的表生成实体",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		dbConf := domainfile.NewDbConfig()
@@ -74,37 +74,37 @@ var db2entityCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(db2entityCmd)
 
-	db2entityCmd.Flags().StringP("host", "H", os.Getenv("ESIM_DB_HOST"), "Specify a host to connect to")
+	db2entityCmd.Flags().StringP("host", "H", os.Getenv("ESIM_DB_HOST"), "数据库 host")
 
-	db2entityCmd.Flags().StringP("port", "P", os.Getenv("ESIM_DB_PORT"), "Specify a port to connect to")
+	db2entityCmd.Flags().StringP("port", "P", os.Getenv("ESIM_DB_PORT"), "数据库 port")
 
-	db2entityCmd.Flags().StringP("table", "t", "", "Database's table")
+	db2entityCmd.Flags().StringP("table", "t", "", "数据表表")
 
-	db2entityCmd.Flags().StringP("database", "d", "", "Database to for connection")
+	db2entityCmd.Flags().StringP("database", "d", "", "数据库名")
 
-	db2entityCmd.Flags().StringP("user", "u", os.Getenv("ESIM_DB_USER"), "User to connect to database")
+	db2entityCmd.Flags().StringP("user", "u", os.Getenv("ESIM_DB_USER"), "链接数据库的用户")
 
-	db2entityCmd.Flags().StringP("password", "p", os.Getenv("ESIM_DB_PASSWORD"), "Password to connect to database")
+	db2entityCmd.Flags().StringP("password", "p", os.Getenv("ESIM_DB_PASSWORD"), "链接数据库的密码")
 
-	db2entityCmd.Flags().StringP("boubctx", "b", "", "Name to set for bounded context")
+	db2entityCmd.Flags().StringP("boubctx", "b", "", "用于界限上下文")
 
-	db2entityCmd.Flags().StringP("package", "", "", "Name to set for package")
+	db2entityCmd.Flags().StringP("package", "", "", "包名，空使用数据表名")
 
-	db2entityCmd.Flags().StringP("struct", "s", "", "Name to set for struct")
+	db2entityCmd.Flags().StringP("struct", "s", "", "实体的名称，空使用数据表名")
 
-	db2entityCmd.Flags().BoolP("gorm", "g", true, "Add gorm annotations (tags)")
+	db2entityCmd.Flags().BoolP("gorm", "g", true, "增加grom注解")
 
-	db2entityCmd.Flags().StringP("entity_target", "", "", "Save entity file path")
+	db2entityCmd.Flags().StringP("entity_target", "", "", "实体保存的路径")
 
-	db2entityCmd.Flags().BoolP("disable_entity", "", false, "Disable Save entity")
+	db2entityCmd.Flags().BoolP("disable_entity", "", false, "不生成实体")
 
-	db2entityCmd.Flags().StringP("dao_target", "", "internal/infra/dao", "Save dao file path")
+	db2entityCmd.Flags().StringP("dao_target", "", "internal/infra/dao", "DAO存放路径")
 
-	db2entityCmd.Flags().BoolP("disable_dao", "", false, "Disable Save dao")
+	db2entityCmd.Flags().BoolP("disable_dao", "", false, "关闭DAO的生成")
 
-	db2entityCmd.Flags().StringP("repo_target", "", "internal/infra/repo", "Save dao file path")
+	db2entityCmd.Flags().StringP("repo_target", "", "internal/infra/repo", "repo的存放路径")
 
-	db2entityCmd.Flags().BoolP("disable_repo", "", false, "Disable Save repo")
+	db2entityCmd.Flags().BoolP("disable_repo", "", false, "关闭repo的生成")
 
 	err := v.BindPFlags(db2entityCmd.Flags())
 	if err != nil {

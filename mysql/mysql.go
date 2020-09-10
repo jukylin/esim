@@ -168,9 +168,6 @@ func (c *Client) getDb(ctx context.Context, dbName string) *gorm.DB {
 	dbName = strings.ToLower(dbName)
 	if db, ok := c.gdbs[dbName]; ok {
 		return db.WithContext(ctx)
-	} else {
-		c.logger.Errorf("[db] %s not found", dbName)
-		return nil
 	}
 
 	c.logger.Errorf("[db] %s not found", dbName)

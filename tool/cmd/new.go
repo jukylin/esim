@@ -9,7 +9,7 @@ import (
 
 var newCmd = &cobra.Command{
 	Use:   "new",
-	Short: "create a new project",
+	Short: "创建一个新项目",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		new.InitProject(
@@ -23,15 +23,15 @@ var newCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(newCmd)
 
-	newCmd.Flags().BoolP("beego", "", false, "init beego server")
+	newCmd.Flags().BoolP("beego", "", false, "使用Beego")
 
-	newCmd.Flags().BoolP("gin", "", true, "init gin server")
+	newCmd.Flags().BoolP("gin", "", true, "使用Gin")
 
-	newCmd.Flags().BoolP("grpc", "", false, "init grpc server")
+	newCmd.Flags().BoolP("grpc", "", false, "使用GRPC")
 
-	newCmd.Flags().BoolP("monitoring", "m", true, "enable monitoring")
+	newCmd.Flags().BoolP("monitoring", "m", true, "监控配置设置为true")
 
-	newCmd.Flags().StringP("server_name", "s", "", "server name")
+	newCmd.Flags().StringP("server_name", "s", "", "服务名称")
 
 	err := v.BindPFlags(newCmd.Flags())
 	if err != nil {

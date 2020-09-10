@@ -147,8 +147,9 @@ func (mp *MonitorProxy) after(ctx context.Context, query string, beginTime time.
 func (mp *MonitorProxy) withSlowSQL(ctx context.Context, query string, beginTime, endTime time.Time) {
 	mysqlSlowTime := mp.conf.GetInt64("mysql_slow_time")
 	if mysqlSlowTime != 0 {
-		if endTime.Sub(beginTime) > time.Duration(mysqlSlowTime)*time.Millisecond {
-			mp.logger.Warnf("slow sql %s", query)
+		diffTime := endTime.Sub(beginTime)
+		if diffTime > time.Duration(mysqlSlowTime)*time.Millisecond {
+			mp.logger.Warnf("Slow sql %d : %s", diffTime, query)
 		}
 	}
 }
@@ -160,7 +161,7 @@ func (mp *MonitorProxy) withMysqlMetrics(ctx context.Context, query string, begi
 }
 
 func (mp *MonitorProxy) withMysqlTracer(ctx context.Context, query string, beginTime, endTime time.Time) {
-	span := opentracing.GetSpan(ctx, mp.tracer, query, beginTime)
+	span := opentracing.GetSpan(ctx, mp.tracer, "sql", beginTime)
 	span.LogKV("sql", query)
 	span.FinishWithOptions(opentracing2.FinishOptions{FinishTime: endTime})
 }

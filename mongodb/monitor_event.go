@@ -154,7 +154,7 @@ func (m *MonitorEvent) withSlowCommand(ctx context.Context, backEvent *mongoBack
 
 	if ok && durNan != 0 && mgoSlowTime != 0 {
 		if durNan/1000000 >= mgoSlowTime {
-			m.logger.Warnc(ctx, "Slow command %s : [%d]ms", *execCommand, durNan/1000000)
+			m.logger.Warnc(ctx, "Slow command %d : %s", durNan/1000000, *execCommand)
 		}
 	}
 }

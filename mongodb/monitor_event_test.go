@@ -65,4 +65,3 @@ func TestMonitorEvent_withSlowCommand(t *testing.T) {
 		})
 	}
 }
-
