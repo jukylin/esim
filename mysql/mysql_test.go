@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
 	"github.com/ory/dockertest/v3"
@@ -43,9 +42,10 @@ type UserStruct struct {
 }
 
 var db *sql.DB
+var logger log.Logger
 
 func TestMain(m *testing.M) {
-	logger := log.NewLogger()
+	logger = log.NewLogger()
 
 	pool, err := dockertest.NewPool("")
 	if err != nil {
@@ -126,7 +126,6 @@ func TestInitAndSingleInstance(t *testing.T) {
 
 	client := NewClient(
 		clientOptions.WithDbConfig([]DbConfig{test1Config}),
-		clientOptions.WithDB(db),
 	)
 	ctx := context.Background()
 	db1 := client.GetCtxDb(ctx, "test_1")
@@ -165,7 +164,6 @@ func TestProxyPatternWithTwoInstance(t *testing.T) {
 
 	ts := &TestStruct{}
 	db1.Table("test").First(ts)
-
 	assert.Nil(t, db1.Error)
 
 	db2 := client.GetCtxDb(ctx, "test_2")
@@ -210,12 +208,13 @@ func TestMulProxyPatternWithOneInstance(t *testing.T) {
 
 	ctx := context.Background()
 	db1 := client.GetCtxDb(ctx, "test_1")
+	logger.Infof("db1.ConnPool %p", db1.ConnPool)
+
 	db1.Exec("use test_1;")
 	assert.NotNil(t, db1)
 
 	ts := &TestStruct{}
 	db1.Table("test").First(ts)
-
 	assert.Nil(t, db1.Error)
 
 	assert.True(t, spyProxy1.QueryWasCalled)
@@ -349,7 +348,6 @@ func TestDummyProxy_Exec(t *testing.T) {
 
 func TestClient_GetStats(t *testing.T) {
 	clientOnce = sync.Once{}
-
 	clientOptions := ClientOptions{}
 
 	client := NewClient(

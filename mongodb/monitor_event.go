@@ -121,6 +121,7 @@ func (m *MonitorEvent) FailedEvent(ctx context.Context, failedEvent *event.Comma
 	}
 }
 
+// 注册后置事件
 func (m *MonitorEvent) registerAfterEvent() {
 	if m.conf.GetBool("mgo_trace") {
 		m.afterEvents = append(m.afterEvents, m.withTracer)
@@ -142,7 +143,7 @@ func (m *MonitorEvent) registerAfterEvent() {
 func (m *MonitorEvent) withSlowCommand(ctx context.Context, backEvent *mongoBackEvent,
 	beginTime, endTime time.Time) {
 	mgoSlowTime := m.conf.GetInt64("mgo_slow_time")
-	execCommand, ok := ctx.Value("command").(*string)
+	execCommand, ok := ctx.Value(keyCtx).(*string)
 
 	var durNan int64
 	if backEvent.succEvent != nil {
@@ -153,14 +154,14 @@ func (m *MonitorEvent) withSlowCommand(ctx context.Context, backEvent *mongoBack
 
 	if ok && durNan != 0 && mgoSlowTime != 0 {
 		if durNan/1000000 >= mgoSlowTime {
-			m.logger.Warnf("slow command %s", execCommand)
+			m.logger.Warnc(ctx, "Slow command %s : [%d]ms", *execCommand, durNan/1000000)
 		}
 	}
 }
 
 func (m *MonitorEvent) withTracer(ctx context.Context, backEvent *mongoBackEvent,
 	beginTime, endTime time.Time) {
-	execCommand, ok := ctx.Value("command").(*string)
+	execCommand, ok := ctx.Value(keyCtx).(*string)
 
 	if ok {
 		var commandName string
@@ -205,13 +206,13 @@ func (m *MonitorEvent) withMetrics(ctx context.Context, backEvent *mongoBackEven
 
 func (m *MonitorEvent) withDebug(ctx context.Context, backEvent *mongoBackEvent,
 	beginTime, endTime time.Time) {
-	command, ok := ctx.Value("command").(*string)
+	command, ok := ctx.Value(keyCtx).(*string)
 	if ok {
 		if backEvent.succEvent != nil {
-			m.logger.Debugf("mongodb success [%v] %s",
+			m.logger.Debugc(ctx, "mongodb success [%v] %s",
 				endTime.Sub(beginTime).String(), *command)
 		} else if backEvent.failedEvent != nil {
-			m.logger.Debugf("mongodb fail [%v] %s",
+			m.logger.Debugc(ctx, "mongodb fail [%v] %s",
 				endTime.Sub(beginTime).String(), *command)
 		}
 	}

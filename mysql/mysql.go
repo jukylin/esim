@@ -128,46 +128,27 @@ func (c *Client) init() {
 	}
 
 	for _, dbConfig := range dbConfigs {
-		if len(c.proxy) == 0 {
-			var DB *gorm.DB
-			DB, err = gorm.Open(mysql.Open(dbConfig.Dsn), c.gormConfig)
-			if err != nil {
-				c.logger.Panicf("[db] %s init error : %s", dbConfig.Db, err.Error())
-			}
-
-			//DB.DB().SetMaxIdleConns(dbConfig.MaxIdle)
-			//DB.DB().SetMaxOpenConns(dbConfig.MaxOpen)
-			//DB.DB().SetConnMaxLifetime(time.Duration(dbConfig.MaxLifetime))
-
-			if c.conf.GetBool("debug") == true {
-				DB = DB.Debug()
-			}
-
-			c.setDb(dbConfig.Db, DB)
-		} else {
-			var DB *gorm.DB
-			DB, err = gorm.Open(mysql.Open(dbConfig.Dsn), c.gormConfig)
-			if err != nil {
-				c.logger.Panicf("[db] %s ping error : %s", dbConfig.Db, err.Error())
-			}
-
-			if c.conf.GetBool("debug") {
-				DB = DB.Debug()
-			}
-
-			sqlDb := DB.ConnPool.(*sql.DB)
-			err = sqlDb.Ping()
-			if err != nil {
-				c.logger.Panicf("[db] %s ping error : %s", dbConfig.Db, err.Error())
-			}
-
-			firstProxy := proxy.NewProxyFactory().GetFirstInstance("db_" + dbConfig.Db,
-				DB.ConnPool, c.proxy...)
-
-			DB.ConnPool = firstProxy.(gorm.ConnPool)
-
-			c.setDb(dbConfig.Db, DB)
+		var DB *gorm.DB
+		DB, err = gorm.Open(mysql.Open(dbConfig.Dsn), c.gormConfig)
+		if err != nil {
+			c.logger.Panicf("[db] %s open error : %s", dbConfig.Db, err.Error())
 		}
+
+		DB.ConnPool.(*sql.DB).SetMaxOpenConns(dbConfig.MaxOpen)
+		DB.ConnPool.(*sql.DB).SetMaxIdleConns(dbConfig.MaxIdle)
+		DB.ConnPool.(*sql.DB).SetConnMaxLifetime(time.Duration(dbConfig.MaxLifetime))
+
+		if c.conf.GetBool("debug") {
+			DB = DB.Debug()
+		}
+
+		if len(c.proxy) > 0 {
+			firstProxy := proxy.NewProxyFactory().GetFirstInstance("db_" + dbConfig.Db,
+				DB.Statement.ConnPool, c.proxy...)
+			DB.Statement.ConnPool = firstProxy.(gorm.ConnPool)
+		}
+
+		c.setDb(dbConfig.Db, DB)
 
 		go c.Stats()
 		c.logger.Infof("[mysql] %s init success", dbConfig.Db)
@@ -215,13 +196,13 @@ func (c *Client) Ping() []error {
 }
 
 func (c *Client) Close() {
-	//var err error
-	//for _, db := range c.gdbs {
-	//	err = db.Close()
-	//	if err != nil {
-	//		c.logger.Errorf(err.Error())
-	//	}
-	//}
+	var err error
+	for _, db := range c.gdbs {
+		err = db.ConnPool.(*sql.DB).Close()
+		if err != nil {
+			c.logger.Errorf(err.Error())
+		}
+	}
 }
 
 func (c *Client) Stats() {
