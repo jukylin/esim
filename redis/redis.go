@@ -174,6 +174,7 @@ func (c *Client) initPool() {
 		MaxIdle:     c.redisMaxIdle,
 		MaxActive:   c.redisMaxActive,
 		IdleTimeout: time.Duration(c.redisIdleTimeout) * time.Second,
+		Wait:true,
 		Dial: func() (redis.Conn, error) {
 			conn, err := redis.Dial("tcp", c.redisHost+":"+c.redisPort,
 				redis.DialReadTimeout(time.Duration(c.redisReadTimeOut)*time.Millisecond),
