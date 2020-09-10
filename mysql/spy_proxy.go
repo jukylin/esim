@@ -8,7 +8,7 @@ import (
 )
 
 type spyProxy struct {
-	nextProxy SQLCommon
+	nextProxy ConnPool
 
 	ExecWasCalled bool
 
@@ -18,6 +18,10 @@ type spyProxy struct {
 
 	QueryRowWasCalled bool
 
+	CloseWasCalled bool
+
+	BeginTxWasCalled bool
+
 	logger log.Logger
 
 	name string
@@ -25,60 +29,52 @@ type spyProxy struct {
 
 func newSpyProxy(logger log.Logger, name string) *spyProxy {
 	spyProxy := &spyProxy{}
-
 	spyProxy.logger = logger
-
 	spyProxy.name = name
 	return spyProxy
 }
 
-// Implement Proxy interface.
+// implement Proxy interface
 func (sp *spyProxy) NextProxy(db interface{}) {
-	sp.nextProxy = db.(SQLCommon)
+	sp.nextProxy = db.(ConnPool)
 }
 
-// Implement Proxy interface.
+
+// implement Proxy interface
 func (sp *spyProxy) ProxyName() string {
 	return sp.name
 }
 
-func (sp *spyProxy) Exec(query string, args ...interface{}) (sql.Result, error) {
+func (sp *spyProxy) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
 	sp.ExecWasCalled = true
-	sp.logger.Infof("%s ExecWasCalled %s", sp.name, query)
-	result, err := sp.nextProxy.Exec(query, args...)
+	sp.logger.Infof("%s ExecContextWasCalled %s", sp.name, query)
+	result, err := sp.nextProxy.ExecContext(ctx, query, args...)
 	return result, err
 }
 
-func (sp *spyProxy) Prepare(query string) (*sql.Stmt, error) {
+func (sp *spyProxy) PrepareContext(ctx context.Context, query string) (*sql.Stmt, error) {
 	sp.PrepareWasCalled = true
-	sp.logger.Infof("%s PrepareWasCalled %s", sp.name, query)
-	stmt, err := sp.nextProxy.Prepare(query)
-
+	sp.logger.Infof("%s PrepareContextWasCalled %s", sp.name, query)
+	stmt, err := sp.nextProxy.PrepareContext(ctx, query)
 	return stmt, err
 }
 
-func (sp *spyProxy) Query(query string, args ...interface{}) (*sql.Rows, error) {
+func (sp *spyProxy) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
 	sp.QueryWasCalled = true
-	sp.logger.Infof("%s QueryWasCalled %s", sp.name, query)
-	rows, err := sp.nextProxy.Query(query, args...)
+	sp.logger.Infof("%s QueryContextWasCalled %s", sp.name, query)
+	rows, err := sp.nextProxy.QueryContext(ctx, query, args...)
 	return rows, err
 }
 
-func (sp *spyProxy) QueryRow(query string, args ...interface{}) *sql.Row {
+func (sp *spyProxy) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
 	sp.QueryRowWasCalled = true
-	sp.logger.Infof("%s QueryRowWasCalled %s", sp.name, query)
-	row := sp.nextProxy.QueryRow(query, args...)
+	sp.logger.Infof("%s QueryContextRowWasCalled %s", sp.name, query)
+	row := sp.nextProxy.QueryRowContext(ctx, query, args...)
 	return row
 }
 
 func (sp *spyProxy) Close() error {
+	sp.CloseWasCalled = true
+	sp.logger.Infof("%s CloseWasCalled %s", sp.name)
 	return sp.nextProxy.Close()
-}
-
-func (sp *spyProxy) Begin() (*sql.Tx, error) {
-	return sp.nextProxy.Begin()
-}
-
-func (sp *spyProxy) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error) {
-	return sp.nextProxy.BeginTx(ctx, opts)
 }

@@ -23,7 +23,9 @@ var client *Client
 var logger log.Logger
 
 func TestMain(m *testing.M) {
-	logger = log.NewLogger()
+	logger = log.NewLogger(
+		log.WithDebug(true),
+	)
 
 	pool, err := dockertest.NewPool("")
 	if err != nil {
@@ -46,7 +48,7 @@ func TestMain(m *testing.M) {
 		logger.Fatalf("Could not start resource: %s", err.Error())
 	}
 
-	err = resource.Expire(10)
+	err = resource.Expire(30)
 	if err != nil {
 		logger.Fatalf(err.Error())
 	}
@@ -181,7 +183,6 @@ func TestMulEvent(t *testing.T) {
 
 	ctx := mongoClient.GetCtx(context.Background())
 	coll := mongoClient.GetColl("test", "coll")
-	mongoClient.GetCtx(ctx)
 
 	u := User{}
 	filter := bson.M{"name": "test"}
