@@ -14,6 +14,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	io_prometheus_client "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
+	"fmt"
 )
 
 func TestMain(m *testing.M) {
@@ -37,7 +38,7 @@ func TestMain(m *testing.M) {
 		logger.Fatalf("Could not start resource: %s", err.Error())
 	}
 
-	err = resource.Expire(60)
+	err = resource.Expire(20)
 	if err != nil {
 		logger.Fatalf(err.Error())
 	}
@@ -222,4 +223,23 @@ func TestRedisClient_Stats(t *testing.T) {
 
 	err = redisClent.Close()
 	assert.Nil(t, err)
+}
+
+func TestClient_GetCtxRedisConn(t *testing.T) {
+	poolOnce = sync.Once{}
+	redisClientOptions := ClientOptions{}
+	redisClent := NewClient(
+		redisClientOptions.WithProxy(
+			func() interface{} {
+				monitorProxyOptions := MonitorProxyOptions{}
+				return NewMonitorProxy(
+					monitorProxyOptions.WithLogger(log.NewLogger()),
+				)
+			},
+		),
+	)
+
+	conn1 := redisClent.GetCtxRedisConn();
+	conn2 := redisClent.GetCtxRedisConn();
+	assert.NotEqual(t, fmt.Sprintf("%p", conn1), fmt.Sprintf("%p", conn2))
 }

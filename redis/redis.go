@@ -27,8 +27,6 @@ type Client struct {
 
 	proxyNum int
 
-	proxyInses []interface{}
-
 	stateTicker time.Duration
 
 	closeChan chan bool
@@ -77,10 +75,10 @@ func NewClient(options ...Option) *Client {
 		}
 
 		onceClient.proxyNum = len(onceClient.proxyConn)
-		if onceClient.proxyNum > 0 {
-			onceClient.proxyInses = proxy.NewProxyFactory().
-				GetInstances("redis", onceClient.proxyConn...)
-		}
+		//if onceClient.proxyNum > 0 {
+		//	onceClient.proxyInses = proxy.NewProxyFactory().
+		//		GetInstances("redis", onceClient.proxyConn...)
+		//}
 
 		onceClient.redisMaxActive = onceClient.conf.GetInt("redis_max_active")
 		if onceClient.redisMaxActive == 0 {
@@ -227,8 +225,8 @@ func (c *Client) GetCtxRedisConn() ContextConn {
 
 	var firstProxy ContextConn
 	if c.proxyNum > 0 && rc.Err() == nil {
-		firstProxy = c.proxyInses[len(c.proxyInses)-1].(ContextConn)
-		firstProxy.(proxy.Proxy).NextProxy(facadeProxy)
+		firstProxy = proxy.NewProxyFactory().
+			GetFirstInstance("redis", facadeProxy, c.proxyConn...).(ContextConn)
 	} else {
 		firstProxy = facadeProxy
 	}
