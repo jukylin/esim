@@ -24,7 +24,6 @@ type entityDomainFile struct {
 
 	template string
 
-	// data object of parsed template
 	data entityTpl
 
 	logger log.Logger
@@ -63,7 +62,7 @@ func WithEntityDomainFileTpl(tpl templates.Tpl) EntityDomainFileOption {
 }
 
 // Disabled implements DomainFile.
-// EntityDomainFile never disable.
+// 不推荐关闭实体文件.
 func (edf *entityDomainFile) Disabled() bool {
 	return edf.withDisbleEntity
 }

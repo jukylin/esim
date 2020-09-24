@@ -180,15 +180,15 @@ func (c *Client) initPool() {
 				redis.DialConnectTimeout(time.Duration(c.redisConnTimeOut)*time.Millisecond))
 
 			if err != nil {
-				c.logger.Panicf("redis.Dial err: %s", err.Error())
+				c.logger.Errorf("redis.Dial err: %s", err.Error())
 				return nil, err
 			}
 
 			if c.redisPassword != "" {
 				if _, err = conn.Do("AUTH", c.redisPassword); err != nil {
+					c.logger.Errorf("redis.AUTH err: %s", err.Error())
 					err = conn.Close()
-					c.logger.Panicf(err.Error())
-					c.logger.Panicf("redis.AUTH err: %s", err.Error())
+					c.logger.Errorf(err.Error())
 					return nil, err
 				}
 			}
@@ -196,7 +196,7 @@ func (c *Client) initPool() {
 			// select db
 			_, err = conn.Do("SELECT", 0)
 			if err != nil {
-				c.logger.Panicf("Select err: %s", err.Error())
+				c.logger.Errorf("Select err: %s", err.Error())
 				return nil, err
 			}
 

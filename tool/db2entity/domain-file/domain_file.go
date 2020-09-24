@@ -16,19 +16,18 @@ const (
 )
 
 type DomainFile interface {
-	// if true not need this domain file
+	// 不需要生成这个文件
 	Disabled() bool
 
 	BindInput(*viper.Viper) error
 
-	// parse columns information for domain file object
+	// 解析字段信息
 	ParseCloumns(Columns, *ShareInfo)
 
-	// applies a parsed template to the domain file object
-	// return Parsed content
+	// 使用模板解析领域内容，返回解析后的内容
 	Execute() string
 
-	// save the domain file content path
+	// 保存路径
 	GetSavePath() string
 
 	GetName() string
@@ -89,8 +88,7 @@ func (dc *DbConfig) ParseConfig(v *viper.Viper, logger log.Logger) {
 	dc.Table = table
 }
 
-// Share information for all domain files
-// avoid import cycle not allowed.
+// 和其他领域文件共享信息，避免"import cycle not allowed".
 type ShareInfo struct {
 	// Camel Form
 	CamelStruct string

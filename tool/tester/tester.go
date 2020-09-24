@@ -25,13 +25,13 @@ var (
 )
 
 type Tester struct {
-	// If true, run wire command in the changed directory.
+	// 在被修改的目录下运行wire.
 	withWire bool
 
-	// If true, run mockery command in the changed directory.
+	// 在被修改的目录下运行 mockery.
 	withMockery bool
 
-	// If true, run golangci-lint command in the changed directory.
+	// 在被修改的目录下运行 golangci-lint.
 	withLint bool
 
 	runningTest int32
@@ -44,14 +44,14 @@ type Tester struct {
 
 	notRunTest bool
 
-	// Wait a few seconds before run command.
+	// 运行命令前等待一下.
 	waitTime time.Duration
 
 	receiveEvent map[string]int64
 
 	execer pkg.Exec
 
-	// Watching the directory, default current directory.
+	// 监听的目录，默认当前.
 	withWatchDir string
 
 	logger log.Logger
@@ -142,7 +142,7 @@ func (tester *Tester) bindInput(v *viper.Viper) {
 	}
 }
 
-// Run read directory recursively by withWatchDir and watching them.
+// 递归读取目录，并监听它们.
 func (tester *Tester) Run(v *viper.Viper) {
 	tester.bindInput(v)
 
@@ -162,7 +162,7 @@ func (tester *Tester) Run(v *viper.Viper) {
 	tester.watcher.watch(paths, tester.receiver)
 }
 
-// receiver receive go file path of be changed and run command in the path.
+// 接收被修改的go文件路径并在对应路径运行命令
 // Run :
 // 	1. go test (under all paths)
 //  2. wire (infra/controllers)
@@ -210,8 +210,7 @@ func (tester *Tester) checkIsIgnoreFile(fileName string) bool {
 	return false
 }
 
-// runGoTest run go test when the directory be changed.
-// There are exceptions：is wire file，mock.
+// runGoTest 运行 go test.
 func (tester *Tester) runGoTest(dir string) {
 	if atomic.CompareAndSwapInt32(&tester.runningTest, 0, 1) {
 		go func() {
@@ -230,7 +229,7 @@ func (tester *Tester) runGoTest(dir string) {
 	}
 }
 
-// checkAndRunWire If fileName is provider file then run wire command in directory.
+// 对指定文件，运行wire命令.
 func (tester *Tester) checkAndRunWire(fileName, dir string) {
 	if len(wireProvidersFiles) != 0 && tester.withWire &&
 		atomic.CompareAndSwapInt32(&tester.runningWire, 0, 1) {

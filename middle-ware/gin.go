@@ -10,6 +10,7 @@ import (
 	opentracing2 "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/uber/jaeger-client-go"
 )
 
 func GinMonitor() gin.HandlerFunc {
@@ -48,12 +49,11 @@ func GinTracer(tracer opentracing2.Tracer) gin.HandlerFunc {
 }
 
 // GinTracerId If not found opentracing's tracer_id then generate a new tracer_id.
-// Recommend to the end of the gin middleware.
 func GinTracerID() gin.HandlerFunc {
 	tracerID := tracerid.TracerID()
 	return func(c *gin.Context) {
 		sp := opentracing2.SpanFromContext(c.Request.Context())
-		if sp == nil {
+		if _, ok := sp.Context().(jaeger.SpanContext); !ok {
 			c.Request = c.Request.WithContext(context.WithValue(c.Request.Context(),
 				tracerid.ActiveEsimKey, tracerID()))
 		}

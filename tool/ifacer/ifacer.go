@@ -372,7 +372,7 @@ func (f *Ifacer) getReturnStr(tuple *types.Tuple, m *Method) {
 	}
 }
 
-// Process parsed template and formats and adjusts imports for the parsed content.
+// Process 解析模板并美化.
 func (f *Ifacer) Process() error {
 	content, err := f.tpl.Execute("ifacer", ifacerTemplate, f)
 	if err != nil {

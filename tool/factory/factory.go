@@ -29,24 +29,23 @@ import (
 var fset = token.NewFileSet()
 
 type EsimFactory struct {
-	// struct name which be search.
+	// 需要被处理的结构体名称.
 	StructName string
 
-	// First letter uppercase of StructName.
+	// 首字母大写.
 	UpStructName string
 
 	LowerStructName string
 
 	ShortenStructName string
 
-	// struct Absolute path
+	// 结构体绝对路径.
 	structDir string
 
-	// File where the Struct is located
+	// 结构体所在文件名
 	structFileName string
 
-	// true if find the StructName
-	// false if not
+	// 是否找到结构体.
 	found bool
 
 	withPlural bool
@@ -77,7 +76,6 @@ type EsimFactory struct {
 
 	typeSpec *dst.TypeSpec
 
-	// underlying type of a type.
 	underType *types.Struct
 
 	structPackage *decorator.Package
@@ -123,8 +121,8 @@ func WithEsimFactoryWriter(writer filedir.IfaceWriter) Option {
 	}
 }
 
-// getPluralWord Struct plural form.
-// If plural is not obtained, add "s" at the end of the word.
+// getPluralWord 复数形式.
+// 如果没找到复数形式，在结尾增加"s".
 //nolint:unused
 func (ef *EsimFactory) getPluralForm(word string) string {
 	newWord := inflect.Pluralize(word)
@@ -241,7 +239,7 @@ func (ef *EsimFactory) loadPackages() []*decorator.Package {
 	return ps
 }
 
-// check exists and extra.
+// 查找要被处理的结构体.
 func (ef *EsimFactory) findStruct(ps []*decorator.Package) bool {
 	for _, p := range ps {
 		for _, syntax := range p.Syntax {
@@ -778,7 +776,7 @@ func (ef *EsimFactory) constructDecls() {
 	}
 }
 
-// printResult println content to terminal.
+// printResult 在终端打印内容.
 func (ef *EsimFactory) printResult() {
 	println(ef.newContext())
 }
@@ -830,8 +828,8 @@ func (ef *EsimFactory) bindInput(v *viper.Viper) error {
 	return nil
 }
 
-// Extend logger and conf for new struct field.
-// It must after constructs.
+// 为结构体扩展 logger 和 conf 属性.
+// 必须在构造后.
 func (ef *EsimFactory) extendFields() {
 	if ef.withOption {
 		if ef.withGenLoggerOption {
@@ -871,7 +869,7 @@ func (fs FieldSizes) getFields() []*dst.Field {
 	return dstFields
 }
 
-// sortField ascending in byte size.
+// sortField 以字节大小排序.
 func (ef *EsimFactory) sortField() {
 	fs := make(FieldSizes, 0)
 	for k, field := range ef.typeSpec.Type.(*dst.StructType).Fields.List {

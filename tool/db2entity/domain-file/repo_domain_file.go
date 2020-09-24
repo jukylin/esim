@@ -23,7 +23,6 @@ type repoDomainFile struct {
 
 	template string
 
-	// data object of parsed template
 	data *repoTpl
 
 	logger log.Logger

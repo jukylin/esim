@@ -20,7 +20,7 @@ import (
 )
 
 type Db2Entity struct {
-	// Camel Form
+	// 驼峰格式
 	CamelStruct string
 
 	ColumnsRepo domainfile.ColumnsRepo
@@ -33,10 +33,10 @@ type Db2Entity struct {
 
 	domainFiles []domainfile.DomainFile
 
-	// parsed content
+	// 记录解析的内容
 	domainContent map[string]string
 
-	// record wrote content, if an error occurred rollback the file
+	// 用于记录已经写入本地的文件，如果发生错误回滚
 	wroteContent map[string]string
 
 	tpl templates.Tpl
@@ -47,7 +47,7 @@ type Db2Entity struct {
 
 	infraer *infra.Infraer
 
-	// if true inject repo to infra
+	// 把资源注入到基础设施
 	withInject bool
 
 	logger log.Logger
@@ -166,17 +166,17 @@ func (de *Db2Entity) Run(v *viper.Viper) error {
 	de.shareInfo.CamelStruct = de.CamelStruct
 
 	if len(de.domainFiles) == 0 {
-		return errors.New("have not domain file")
+		return errors.New("没有找到领域文件")
 	}
 
-	// select table's columns from repository
+	// 从仓库中读取表字段信息
 	cs, err := de.ColumnsRepo.SelectColumns(de.DbConf)
 	if err != nil {
 		return err
 	}
 
 	if !cs.IsEntity() {
-		return errors.New("it is not the entity")
+		return errors.New("非实体")
 	}
 
 	err = de.generateDomainFile(v, cs)
@@ -184,10 +184,10 @@ func (de *Db2Entity) Run(v *viper.Viper) error {
 		return err
 	}
 
-	// save domain content
+	// 保存领域内容
 	if len(de.domainContent) > 0 {
 		for path, content := range de.domainContent {
-			de.logger.Debugf("writing %s", path)
+			de.logger.Debugf("正在写入 %s", path)
 			err = de.writer.Write(path, content)
 			if err != nil {
 				de.logger.Panicf(err.Error())
@@ -217,7 +217,7 @@ func (de *Db2Entity) bindInput(v *viper.Viper) {
 	de.withStruct = stuctName
 	de.CamelStruct = snaker.SnakeToCamel(stuctName)
 
-	de.logger.Debugf("CamelStruct : %s", de.CamelStruct)
+	de.logger.Debugf("驼峰法 : %s", de.CamelStruct)
 
 	de.bindInfra(v)
 }
@@ -245,14 +245,14 @@ func (de *Db2Entity) bindInfra(v *viper.Viper) {
 	}
 
 	if !exists {
-		de.logger.Fatalf("%s not exists", de.withInfraDir+de.withInfraFile)
+		de.logger.Fatalf("%s 不存在", de.withInfraDir+de.withInfraFile)
 	}
 }
 
-// injectToInfra inject repo to infra.go and execute wire command.
+// injectToInfra 把资源注入到基础设施，并运行wire
 func (de *Db2Entity) injectToInfra(v *viper.Viper) {
 	if !de.withInject {
-		de.logger.Infof("disable inject")
+		de.logger.Infof("自动注入被关闭")
 		return
 	}
 
@@ -268,7 +268,7 @@ func (de *Db2Entity) makeCodeBeautiful(src string) string {
 
 	result, err := imports.Process("", []byte(src), options)
 	if err != nil {
-		de.logger.Panicf("err %s : %s", err.Error(), src)
+		de.logger.Panicf("错误 %s : %s", err.Error(), src)
 		return ""
 	}
 
@@ -278,7 +278,7 @@ func (de *Db2Entity) makeCodeBeautiful(src string) string {
 func (de *Db2Entity) generateDomainFile(v *viper.Viper, cs domainfile.Columns) error {
 	var content string
 
-	// loop domainFiles to generate domain file
+	// 生成领域文件
 	for _, df := range de.domainFiles {
 		err := df.BindInput(v)
 		if err != nil {
@@ -290,7 +290,7 @@ func (de *Db2Entity) generateDomainFile(v *viper.Viper, cs domainfile.Columns) e
 
 			df.ParseCloumns(cs, de.shareInfo)
 
-			// parsed template
+			// 解析模板
 			content = df.Execute()
 
 			content = de.makeCodeBeautiful(content)
@@ -303,7 +303,7 @@ func (de *Db2Entity) generateDomainFile(v *viper.Viper, cs domainfile.Columns) e
 				de.injectInfos = append(de.injectInfos, injectInfo)
 			}
 		} else {
-			de.logger.Infof("disabled %s", df.GetName())
+			de.logger.Infof("关闭 %s", df.GetName())
 		}
 	}
 

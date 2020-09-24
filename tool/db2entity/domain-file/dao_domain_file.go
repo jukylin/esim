@@ -113,7 +113,7 @@ func (ddf *daoDomainFile) ParseCloumns(cs Columns, shareInfo *ShareInfo) {
 
 	daoTpl.Imports = append(daoTpl.Imports,
 		pkg.Import{Path: "context"},
-		pkg.Import{Path: "github.com/jinzhu/gorm"},
+		pkg.Import{Path: "gorm.io/gorm"},
 		pkg.Import{Path: "errors"},
 		pkg.Import{Path: "github.com/jukylin/esim/mysql"},
 		pkg.Import{Path: filedir.GetGoProPath() +

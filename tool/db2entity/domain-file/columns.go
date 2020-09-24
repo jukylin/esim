@@ -8,7 +8,6 @@ import (
 	"github.com/jukylin/esim/log"
 )
 
-// Constants for return types of golang.
 //nolint:deadcode,varcheck
 const (
 	golangByteArray  = "[]byte"
@@ -180,7 +179,7 @@ func (c *Column) IsOnUpdate() bool {
 	return c.Extra == upCurrentTimestamp
 }
 
-// filterComment filter and escaping speckial string.
+// filterComment 过滤和转义特殊字符.
 func (c *Column) FilterComment() string {
 	if c.ColumnComment != "" {
 		c.ColumnComment = strings.Replace(c.ColumnComment, "\r", "\\r", -1)
@@ -194,7 +193,7 @@ func (c *Column) IsPri() bool {
 	return c.ColumnKey == pri
 }
 
-// GetDefCol get default tag.
+// GetDefCol 默认标签.
 func (c *Column) GetDefCol() string {
 	if c.ColumnDefault != currentTimestamp && c.ColumnDefault != "" {
 		return ";default:'" + c.ColumnDefault + "'"

@@ -8,7 +8,7 @@ var (
 
 import (
 	"context"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 	"github.com/jukylin/esim/mysql"
 	"{{.ProPath}}{{.ServerName}}/internal/domain/user/entity"
 )

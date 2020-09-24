@@ -20,6 +20,7 @@ import (
 	"google.golang.org/grpc/examples/helloworld/helloworld"
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/reflection"
+	"github.com/uber/jaeger-client-go"
 )
 
 const (
@@ -199,8 +200,9 @@ func (gs *Server) checkServerSlow() grpc.UnaryServerInterceptor {
 
 		grpcClientSlowTime := gs.conf.GetInt64("grpc_server_slow_time")
 		if grpcClientSlowTime != 0 {
+			diffTime := endTime.Sub(beginTime)
 			if endTime.Sub(beginTime) > time.Duration(grpcClientSlowTime)*time.Millisecond {
-				gs.logger.Warnc(ctx, "Slow server %s", info.FullMethod)
+				gs.logger.Warnc(ctx, "Slow server %d %s", diffTime, info.FullMethod)
 			}
 		}
 
@@ -237,7 +239,6 @@ func (gs *Server) handelPanic() grpc_recovery.RecoveryHandlerFuncContext {
 }
 
 // tracerId If not found opentracing's tracer_id then generate a new tracer_id.
-// Recommend to the end of the Interceptor.
 func (gs *Server) tracerID() grpc.UnaryServerInterceptor {
 	tracerID := tracerid.TracerID()
 	return func(
@@ -247,7 +248,7 @@ func (gs *Server) tracerID() grpc.UnaryServerInterceptor {
 		handler grpc.UnaryHandler,
 	) (resp interface{}, err error) {
 		sp := opentracing2.SpanFromContext(ctx)
-		if sp == nil {
+		if _, ok := sp.Context().(jaeger.SpanContext); !ok {
 			ctx = context.WithValue(ctx, tracerid.ActiveEsimKey, tracerID())
 		}
 
