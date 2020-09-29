@@ -69,7 +69,7 @@ func TestMain(m *testing.M) {
 	clientOptions := mysql.ClientOptions{}
 
 	options := config.ViperConfOptions{}
-	confFile := "../../../conf/dev.yaml"
+	confFile := "../../../conf/conf.yaml"
 	file := []string{confFile}
 	conf := config.NewViperConfig(options.WithConfigType("yaml"),
 		options.WithConfFile(file))

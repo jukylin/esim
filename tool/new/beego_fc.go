@@ -242,7 +242,7 @@ import (
 	"testing"
 	"context"
 	"github.com/jukylin/esim/grpc"
-	_grpc "google.golang.org/grpc"
+	ggrpc "google.golang.org/grpc"
 	"github.com/jukylin/esim/container"
 	{{.PackageName}} "{{.ProPath}}{{.ServerName}}/internal"
 	"{{.ProPath}}{{.ServerName}}/internal/infra"
@@ -267,10 +267,10 @@ func provideStubsGrpcClient(esim *container.Esim) *grpc.Client {
 	clientOptions := grpc.NewClientOptions(
 		clientOptional.WithLogger(esim.Logger),
 		clientOptional.WithConf(esim.Conf),
-		clientOptional.WithDialOptions(_grpc.WithUnaryInterceptor(
+		clientOptional.WithDialOptions(ggrpc.WithUnaryInterceptor(
 			grpc.ClientStubs(func(ctx context.Context, method string, req,
-				reply interface{}, cc *_grpc.ClientConn, invoker _grpc.UnaryInvoker,
-				opts ..._grpc.CallOption) error {
+				reply interface{}, cc *ggrpc.ClientConn, invoker ggrpc.UnaryInvoker,
+				opts ...ggrpc.CallOption) error {
 				esim.Logger.Infof(method)
 				err := invoker(ctx, method, req, reply, cc, opts...)
 				return err
