@@ -108,8 +108,7 @@ func TestDb2Entity_ErrWrite(t *testing.T) {
 	v.Set("database", "user")
 	v.Set("table", "test_history")
 
-	loggerOptions := log.LoggerOptions{}
-	logger := log.NewLogger(loggerOptions.WithDebug(true))
+	logger := log.NewLogger(log.WithDebug(true))
 	tpl := templates.NewTextTpl()
 
 	dbConf := domainfile.NewDbConfig()

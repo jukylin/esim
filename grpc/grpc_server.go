@@ -1,9 +1,10 @@
 package grpc
 
 import (
-	"errors"
 	"net"
 	"time"
+
+	"fmt"
 
 	"github.com/davecgh/go-spew/spew"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
@@ -20,7 +21,6 @@ import (
 	"google.golang.org/grpc/examples/helloworld/helloworld"
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/reflection"
-	"github.com/uber/jaeger-client-go"
 )
 
 const (
@@ -232,9 +232,9 @@ func (gs *Server) serverDebug() grpc.UnaryServerInterceptor {
 }
 
 func (gs *Server) handelPanic() grpc_recovery.RecoveryHandlerFuncContext {
-	return func(ctx context.Context, p interface{}) (err error) {
-		gs.logger.Errorc(ctx, spew.Sdump(p))
-		return errors.New(spew.Sdump("Server panic : ", p))
+	return func(ctx context.Context, p interface{}) error {
+		gs.logger.Errorc(ctx, "panic recovered %s", spew.Sdump(p))
+		return fmt.Errorf("server panic %v", p)
 	}
 }
 
@@ -247,8 +247,7 @@ func (gs *Server) tracerID() grpc.UnaryServerInterceptor {
 		info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler,
 	) (resp interface{}, err error) {
-		sp := opentracing2.SpanFromContext(ctx)
-		if _, ok := sp.Context().(jaeger.SpanContext); !ok {
+		if tracerid.ExtractTracerID(ctx) == "" {
 			ctx = context.WithValue(ctx, tracerid.ActiveEsimKey, tracerID())
 		}
 

@@ -176,13 +176,13 @@ func TestGlobalSubs(t *testing.T) {
 
 	clientOptional := ClientOptionals{}
 	GlobalStub = func(ctx context.Context,
-				method string, req, reply interface{}, cc *grpc.ClientConn,
-				invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-				if method == "/helloworld.Greeter/SayHello" {
-					reply.(*pb.HelloReply).Message = esim
-				}
-				return nil
-			}
+		method string, req, reply interface{}, cc *grpc.ClientConn,
+		invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		if method == "/helloworld.Greeter/SayHello" {
+			reply.(*pb.HelloReply).Message = esim
+		}
+		return nil
+	}
 
 	ctx := context.Background()
 	client := NewClientWithOptionals(
@@ -203,4 +203,3 @@ func TestGlobalSubs(t *testing.T) {
 		assert.Equal(t, esim, r.Message)
 	}
 }
-

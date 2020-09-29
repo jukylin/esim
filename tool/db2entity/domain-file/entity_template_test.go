@@ -39,6 +39,7 @@ func TestEntityTemplate(t *testing.T) {
 
 	tpl.OnUpdateTimeStampStr = append(tpl.OnUpdateTimeStampStr,
 		"last_update_time1", "last_update_time2")
+	tpl.EntitySign = "id"
 
 	tpl.Imports = imports
 	tpl.DelField = delField
@@ -50,5 +51,6 @@ func TestEntityTemplate(t *testing.T) {
 	tpl.StructInfo = structInfo
 
 	err = tmpl.Execute(&buf, tpl)
+	println(buf.String())
 	assert.Nil(t, err)
 }

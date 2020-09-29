@@ -87,15 +87,16 @@ func (mp *MonitorProxy) ProxyName() string {
 	return mp.name
 }
 
-func (mp *MonitorProxy) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
+func (mp *MonitorProxy) ExecContext(ctx context.Context, query string,
+	args ...interface{}) (sql.Result, error) {
 	startTime := time.Now()
 	result, err := mp.nextProxy.ExecContext(ctx, query, args...)
 	mp.after(ctx, query, startTime)
 	return result, err
 }
 
-
-func (mp *MonitorProxy) PrepareContext(ctx context.Context, query string) (*sql.Stmt, error) {
+func (mp *MonitorProxy) PrepareContext(ctx context.Context,
+	query string) (*sql.Stmt, error) {
 	startTime := time.Now()
 	stmt, err := mp.nextProxy.PrepareContext(ctx, query)
 	mp.after(ctx, query, startTime)
@@ -103,7 +104,8 @@ func (mp *MonitorProxy) PrepareContext(ctx context.Context, query string) (*sql.
 	return stmt, err
 }
 
-func (mp *MonitorProxy) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
+func (mp *MonitorProxy) QueryContext(ctx context.Context, query string,
+	args ...interface{}) (*sql.Rows, error) {
 	startTime := time.Now()
 	rows, err := mp.nextProxy.QueryContext(ctx, query, args...)
 	mp.after(ctx, query, startTime)
@@ -111,7 +113,8 @@ func (mp *MonitorProxy) QueryContext(ctx context.Context, query string, args ...
 	return rows, err
 }
 
-func (mp *MonitorProxy) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
+func (mp *MonitorProxy) QueryRowContext(ctx context.Context, query string,
+	args ...interface{}) *sql.Row {
 	startTime := time.Now()
 	row := mp.nextProxy.QueryRowContext(ctx, query, args...)
 	mp.after(ctx, query, startTime)
@@ -144,7 +147,8 @@ func (mp *MonitorProxy) after(ctx context.Context, query string, beginTime time.
 	}
 }
 
-func (mp *MonitorProxy) withSlowSQL(ctx context.Context, query string, beginTime, endTime time.Time) {
+func (mp *MonitorProxy) withSlowSQL(ctx context.Context, query string,
+	beginTime, endTime time.Time) {
 	mysqlSlowTime := mp.conf.GetInt64("mysql_slow_time")
 	if mysqlSlowTime != 0 {
 		diffTime := endTime.Sub(beginTime)
@@ -154,13 +158,15 @@ func (mp *MonitorProxy) withSlowSQL(ctx context.Context, query string, beginTime
 	}
 }
 
-func (mp *MonitorProxy) withMysqlMetrics(ctx context.Context, query string, beginTime, endTime time.Time) {
+func (mp *MonitorProxy) withMysqlMetrics(ctx context.Context, query string,
+	beginTime, endTime time.Time) {
 	lab := prometheus.Labels{"sql": query}
 	mysqlTotal.With(lab).Inc()
 	mysqlDuration.With(lab).Observe(endTime.Sub(beginTime).Seconds())
 }
 
-func (mp *MonitorProxy) withMysqlTracer(ctx context.Context, query string, beginTime, endTime time.Time) {
+func (mp *MonitorProxy) withMysqlTracer(ctx context.Context, query string,
+	beginTime, endTime time.Time) {
 	span := opentracing.GetSpan(ctx, mp.tracer, "sql", beginTime)
 	span.LogKV("sql", query)
 	span.FinishWithOptions(opentracing2.FinishOptions{FinishTime: endTime})

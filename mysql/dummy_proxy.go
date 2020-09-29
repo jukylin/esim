@@ -17,6 +17,7 @@ type dummyProxy struct {
 	name string
 }
 
+//nolint:unused
 func newDummyProxy(logger log.Logger, name string) ConnPool {
 	dummyProxy := &dummyProxy{}
 
@@ -36,23 +37,27 @@ func (dp *dummyProxy) ProxyName() string {
 	return dp.name
 }
 
-func (dp *dummyProxy) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
+func (dp *dummyProxy) ExecContext(ctx context.Context,
+	query string, args ...interface{}) (sql.Result, error) {
 	result := &dummySQLResult{}
 	return result, nil
 }
 
-func (dp *dummyProxy) PrepareContext(ctx context.Context, query string) (*sql.Stmt, error) {
+func (dp *dummyProxy) PrepareContext(ctx context.Context,
+	query string) (*sql.Stmt, error) {
 	stmt := &sql.Stmt{}
 
 	return stmt, nil
 }
 
-func (dp *dummyProxy) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
+func (dp *dummyProxy) QueryContext(ctx context.Context, query string,
+	args ...interface{}) (*sql.Rows, error) {
 	rows := &sql.Rows{}
 	return rows, nil
 }
 
-func (dp *dummyProxy) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
+func (dp *dummyProxy) QueryRowContext(ctx context.Context, query string,
+	args ...interface{}) *sql.Row {
 	row := &sql.Row{}
 	return row
 }

@@ -134,7 +134,7 @@ func (p *Protocer) execCmd() bool {
 	return true
 }
 
-// 从protoc文件，解析包名，如果没有找到，停止运行
+// 从protoc文件，解析包名，如果没有找到，停止运行.
 func (p *Protocer) parsePkgName(protoFile string) (string, error) {
 	if filepath.Ext(protoFile) != ".proto" {
 		return "", fmt.Errorf("it is not the proto file : %s", protoFile)

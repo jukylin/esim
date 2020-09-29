@@ -10,6 +10,8 @@ type entityTpl struct {
 
 	StructName string
 
+	EntitySign string
+
 	// CURRENT_TIMESTAMP
 	CurTimeStamp []string
 
@@ -29,8 +31,16 @@ var entityTemplate = `package entity
 
 {{.StructInfo.String}}
 
+{{if .DelField}}
 // delete field
-func ({{.StructName | shorten}} *{{.StructName}}) DelKey() string {
+func ({{.StructName | shorten}} {{.StructName}}) DelKey() string {
 	return "{{.DelField}}"
 }
+{{end}}
+
+{{if .EntitySign}}
+func ({{.StructName | shorten}} {{.StructName}}) IsEmpty() bool {
+	return {{.StructName | shorten}}.{{.EntitySign}} == 0
+}
+{{end}}
 `

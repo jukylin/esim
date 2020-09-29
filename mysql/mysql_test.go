@@ -15,6 +15,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	io_prometheus_client "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
+	"gorm.io/gorm"
 )
 
 var (
@@ -126,6 +127,13 @@ func TestInitAndSingleInstance(t *testing.T) {
 
 	client := NewClient(
 		clientOptions.WithDbConfig([]DbConfig{test1Config}),
+		clientOptions.WithGormConfig(&gorm.Config{
+			Logger: log.NewGormLogger(
+				log.WithGLogEsimZap(log.NewEsimZap(
+					log.WithEsimZapDebug(true),
+				)),
+			),
+		}),
 	)
 	ctx := context.Background()
 	db1 := client.GetCtxDb(ctx, "test_1")
@@ -146,10 +154,18 @@ func TestProxyPatternWithTwoInstance(t *testing.T) {
 	clientOptions := ClientOptions{}
 	monitorProxyOptions := MonitorProxyOptions{}
 	memConfig := config.NewMemConfig()
+	memConfig.Set("debug", true)
 
 	client := NewClient(
 		clientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
 		clientOptions.WithConf(memConfig),
+		clientOptions.WithGormConfig(&gorm.Config{
+			Logger: log.NewGormLogger(
+				log.WithGLogEsimZap(log.NewEsimZap(
+					log.WithEsimZapDebug(true),
+				)),
+			),
+		}),
 		clientOptions.WithProxy(func() interface{} {
 			return NewMonitorProxy(
 				monitorProxyOptions.WithConf(memConfig),
@@ -183,7 +199,6 @@ func TestMulProxyPatternWithOneInstance(t *testing.T) {
 	clientOptions := ClientOptions{}
 	monitorProxyOptions := MonitorProxyOptions{}
 	memConfig := config.NewMemConfig()
-	// memConfig.Set("debug", true)
 
 	spyProxy1 := newSpyProxy(log.NewLogger(), "spyProxy1")
 	spyProxy2 := newSpyProxy(log.NewLogger(), "spyProxy2")
@@ -194,6 +209,13 @@ func TestMulProxyPatternWithOneInstance(t *testing.T) {
 	client := NewClient(
 		clientOptions.WithDbConfig([]DbConfig{test1Config}),
 		clientOptions.WithConf(memConfig),
+		clientOptions.WithGormConfig(&gorm.Config{
+			Logger: log.NewGormLogger(
+				log.WithGLogEsimZap(log.NewEsimZap(
+					log.WithEsimZapDebug(true),
+				)),
+			),
+		}),
 		clientOptions.WithProxy(
 			func() interface{} {
 				return spyProxy1
@@ -235,11 +257,17 @@ func TestMulProxyPatternWithTwoInstance(t *testing.T) {
 
 	clientOptions := ClientOptions{}
 	memConfig := config.NewMemConfig()
-	// memConfig.Set("debug", true)
 
 	client := NewClient(
 		clientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
 		clientOptions.WithConf(memConfig),
+		clientOptions.WithGormConfig(&gorm.Config{
+			Logger: log.NewGormLogger(
+				log.WithGLogEsimZap(log.NewEsimZap(
+					log.WithEsimZapDebug(true),
+				)),
+			),
+		}),
 		clientOptions.WithProxy(
 			func() interface{} {
 				return newSpyProxy(log.NewLogger(), "spyProxy1")
@@ -291,6 +319,13 @@ func BenchmarkParallelGetDB(b *testing.B) {
 	client := NewClient(
 		clientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
 		clientOptions.WithConf(memConfig),
+		clientOptions.WithGormConfig(&gorm.Config{
+			Logger: log.NewGormLogger(
+				log.WithGLogEsimZap(log.NewEsimZap(
+					log.WithEsimZapDebug(true),
+				)),
+			),
+		}),
 		clientOptions.WithProxy(func() interface{} {
 			spyProxy := newSpyProxy(log.NewLogger(), "spyProxy")
 			spyProxy.NextProxy(NewMonitorProxy(
@@ -320,18 +355,21 @@ func TestDummyProxy_Exec(t *testing.T) {
 
 	clientOptions := ClientOptions{}
 	memConfig := config.NewMemConfig()
-	// memConfig.Set("debug", true)
 
 	client := NewClient(
 		clientOptions.WithDbConfig([]DbConfig{test1Config}),
 		clientOptions.WithConf(memConfig),
+		clientOptions.WithGormConfig(&gorm.Config{
+			Logger: log.NewGormLogger(
+				log.WithGLogEsimZap(log.NewEsimZap(
+					log.WithEsimZapDebug(true),
+				)),
+			),
+		}),
 		clientOptions.WithProxy(
 			func() interface{} {
 				return newSpyProxy(log.NewLogger(), "spyProxy")
 			},
-		// func() interface{} {
-		//	return newDummyProxy(log.NewLogger(), "dummyProxy")
-		// },
 		),
 	)
 	ctx := context.Background()
@@ -353,6 +391,13 @@ func TestClient_GetStats(t *testing.T) {
 	client := NewClient(
 		clientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
 		clientOptions.WithStateTicker(10*time.Millisecond),
+		clientOptions.WithGormConfig(&gorm.Config{
+			Logger: log.NewGormLogger(
+				log.WithGLogEsimZap(log.NewEsimZap(
+					log.WithEsimZapDebug(true),
+				)),
+			),
+		}),
 		clientOptions.WithProxy(func() interface{} {
 			memConfig := config.NewMemConfig()
 			monitorProxyOptions := MonitorProxyOptions{}
@@ -393,6 +438,13 @@ func TestClient_TxCommit(t *testing.T) {
 	clientOptions := ClientOptions{}
 	client := NewClient(
 		clientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
+		clientOptions.WithGormConfig(&gorm.Config{
+			Logger: log.NewGormLogger(
+				log.WithGLogEsimZap(log.NewEsimZap(
+					log.WithEsimZapDebug(true),
+				)),
+			),
+		}),
 		clientOptions.WithProxy(func() interface{} {
 			memConfig := config.NewMemConfig()
 			monitorProxyOptions := MonitorProxyOptions{}
@@ -409,9 +461,6 @@ func TestClient_TxCommit(t *testing.T) {
 	tx := db1.Begin()
 	tx.Exec("insert into test values (3, 'test')")
 	tx.Commit()
-	// if len(tx.GetErrors()) > 0 {
-	//	 assert.Error(t, tx.GetErrors()[0])
-	// }
 
 	test := &TestStruct{}
 
@@ -428,6 +477,13 @@ func TestClient_TxRollBack(t *testing.T) {
 	clientOptions := ClientOptions{}
 	client := NewClient(
 		clientOptions.WithDbConfig([]DbConfig{test1Config, test2Config}),
+		clientOptions.WithGormConfig(&gorm.Config{
+			Logger: log.NewGormLogger(
+				log.WithGLogEsimZap(log.NewEsimZap(
+					log.WithEsimZapDebug(true),
+				)),
+			),
+		}),
 		clientOptions.WithProxy(func() interface{} {
 			memConfig := config.NewMemConfig()
 			monitorProxyOptions := MonitorProxyOptions{}
@@ -445,7 +501,6 @@ func TestClient_TxRollBack(t *testing.T) {
 	tx.Exec("insert into test values (2, 'test')")
 	tx.Rollback()
 	assert.Nil(t, db1.Error)
-	// assert.Equal(t, 1, test.ID)
 
 	client.Close()
 }

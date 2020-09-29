@@ -2,9 +2,10 @@ package grpc
 
 import (
 	"context"
+	"testing"
+
 	"github.com/jukylin/esim/log"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestClientConn_Close(t *testing.T) {

@@ -111,8 +111,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestEsimFactory_ExtendFieldAndSortField(t *testing.T) {
-	loggerOptions := log.LoggerOptions{}
-	logger := log.NewLogger(loggerOptions.WithDebug(true))
+	logger := log.NewLogger(log.WithDebug(true))
 	esimfactory := NewEsimFactory(
 		WithEsimFactoryLogger(logger),
 	)

@@ -7,12 +7,12 @@ import (
 	"sync"
 	"time"
 
-	"gorm.io/gorm"
-	"gorm.io/driver/mysql"
 	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/log"
 	"github.com/jukylin/esim/proxy"
 	"github.com/prometheus/client_golang/prometheus"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
 var clientOnce sync.Once
@@ -21,8 +21,6 @@ var onceClient *Client
 
 type Client struct {
 	gdbs map[string]*gorm.DB
-
-	sqlDbs map[string]*sql.DB
 
 	proxy []func() interface{}
 
@@ -55,7 +53,6 @@ func NewClient(options ...Option) *Client {
 	clientOnce.Do(func() {
 		onceClient = &Client{
 			gdbs:        make(map[string]*gorm.DB),
-			sqlDbs:      make(map[string]*sql.DB),
 			proxy:       make([]func() interface{}, 0),
 			stateTicker: 10 * time.Second,
 			closeChan:   make(chan bool, 1),
@@ -143,7 +140,7 @@ func (c *Client) init() {
 		}
 
 		if len(c.proxy) > 0 {
-			firstProxy := proxy.NewProxyFactory().GetFirstInstance("db_" + dbConfig.Db,
+			firstProxy := proxy.NewProxyFactory().GetFirstInstance("db_"+dbConfig.Db,
 				DB.Statement.ConnPool, c.proxy...)
 			DB.Statement.ConnPool = firstProxy.(gorm.ConnPool)
 		}
@@ -182,8 +179,8 @@ func (c *Client) GetCtxDb(ctx context.Context, dbName string) *gorm.DB {
 func (c *Client) Ping() []error {
 	var errs []error
 	var err error
-	for _, db := range c.sqlDbs {
-		err = db.Ping()
+	for _, db := range c.gdbs {
+		err = db.ConnPool.(*sql.DB).Ping()
 		if err != nil {
 			errs = append(errs, err)
 		}

@@ -8,6 +8,9 @@ var (
 appname : {{.ServerName}}
 debug : '${DEBUG}'
 
+logger :
+  json : false
+
 #HTTP 服务
 httpport : 8080
 

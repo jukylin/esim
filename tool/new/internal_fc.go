@@ -10,11 +10,19 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/jukylin/esim/config"
 	"github.com/jukylin/esim/transports"
 	"{{.ProPath}}{{.ServerName}}/internal/infra"
 	"github.com/jukylin/esim/container"
 	"github.com/jukylin/esim/config"
+	eot "github.com/jukylin/esim/opentracing"
+	"github.com/jukylin/esim/prometheus"
+	"github.com/jukylin/esim/log"
 )
+
+const defaultAppname = "esim"
+const defaultPrometheusHTTPArrd = "9002"
 
 type App struct{
 	*container.Esim
@@ -37,29 +45,52 @@ func NewApp(options ...Option) *App {
 		option(app)
 	}
 
-	if app.confPath == ""{
+	if app.confPath == "" {
 		app.confPath = "conf/"
 	}
 
-	container.SetConfFunc(func() config.Config {
-		options := config.ViperConfOptions{}
+	monitFile := app.confPath + "monitoring.yaml"
+	confFile := app.confPath + "conf.yaml"
+	file := []string{monitFile, confFile}
 
-		monitFile := app.confPath + "monitoring.yaml"
-		confFile := app.confPath + "conf.yaml"
+	confOps := config.ViperConfOptions{}
+	conf := config.NewViperConfig(
+		confOps.WithConfigType("yaml"),
+		confOps.WithConfFile(file))
 
-		file := []string{monitFile, confFile}
-		conf := config.NewViperConfig(options.WithConfigType("yaml"),
-			options.WithConfFile(file))
+	env := os.Getenv("ENV")
+	if env == "" {
+		conf.Set("runmode", "dev")
+	}
 
-		env := os.Getenv("ENV")
-		if env == "" {
-			conf.Set("runmode", "dev")
-		}
+	ez := log.NewEsimZap(
+		log.WithEsimZapDebug(conf.GetBool("debug")),
+		log.WithEsimZapJSON(conf.GetBool("logger.json")),
+	)
 
-		return conf
-	})
+	logger := log.NewLogger(
+		log.WithEsimZap(ez),
+	)
 
-	app.Esim = container.NewEsim()
+	appname := defaultAppname
+	if conf.GetString("appname") != "" {
+		appname = conf.GetString("appname")
+	}
+	tracer := eot.NewTracer(appname, logger)
+
+	httpAddr := defaultPrometheusHTTPArrd
+	if conf.GetString("prometheus_http_addr") != "" {
+		httpAddr = conf.GetString("prometheus_http_addr")
+	}
+	promer := prometheus.NewPrometheus(httpAddr, logger)
+
+	app.Esim = container.NewEsim(
+		container.WithEsimZap(ez),
+		container.WithLogger(logger),
+		container.WithConf(conf),
+		container.WithTracer(tracer),
+		container.WithPromer(promer),
+	)
 
 	return app
 }

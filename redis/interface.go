@@ -24,6 +24,10 @@ type execInfo struct {
 	endTime time.Time
 
 	args []interface{}
+
+	reply interface{}
+
+	method string
 }
 
 func newExecInfo() *execInfo {
@@ -40,6 +44,8 @@ func newExecInfo() *execInfo {
 func (ei *execInfo) Release() {
 	ei.err = nil
 	ei.commandName = ""
+	ei.method = ""
+	ei.reply = nil
 	ei.startTime = time.Time{}
 	ei.endTime = time.Time{}
 	ei.args = ei.args[:0]

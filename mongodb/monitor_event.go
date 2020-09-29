@@ -121,7 +121,7 @@ func (m *MonitorEvent) FailedEvent(ctx context.Context, failedEvent *event.Comma
 	}
 }
 
-// 注册后置事件
+// 注册后置事件.
 func (m *MonitorEvent) registerAfterEvent() {
 	if m.conf.GetBool("mgo_trace") {
 		m.afterEvents = append(m.afterEvents, m.withTracer)

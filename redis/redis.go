@@ -1,8 +1,6 @@
 package redis
 
 import (
-	"log"
-	"os"
 	"sync"
 	"time"
 
@@ -75,10 +73,6 @@ func NewClient(options ...Option) *Client {
 		}
 
 		onceClient.proxyNum = len(onceClient.proxyConn)
-		//if onceClient.proxyNum > 0 {
-		//	onceClient.proxyInses = proxy.NewProxyFactory().
-		//		GetInstances("redis", onceClient.proxyConn...)
-		//}
 
 		onceClient.redisMaxActive = onceClient.conf.GetInt("redis_max_active")
 		if onceClient.redisMaxActive == 0 {
@@ -172,7 +166,7 @@ func (c *Client) initPool() {
 		MaxIdle:     c.redisMaxIdle,
 		MaxActive:   c.redisMaxActive,
 		IdleTimeout: time.Duration(c.redisIdleTimeout) * time.Second,
-		Wait:true,
+		Wait:        true,
 		Dial: func() (redis.Conn, error) {
 			conn, err := redis.Dial("tcp", c.redisHost+":"+c.redisPort,
 				redis.DialReadTimeout(time.Duration(c.redisReadTimeOut)*time.Millisecond),
@@ -200,11 +194,6 @@ func (c *Client) initPool() {
 				return nil, err
 			}
 
-			if c.conf.GetBool("debug") {
-				conn = redis.NewLoggingConn(
-					conn, log.New(os.Stdout, "",
-						log.Ldate|log.Ltime|log.Lshortfile), "")
-			}
 			return conn, nil
 		},
 	}

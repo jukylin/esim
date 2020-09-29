@@ -23,8 +23,7 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	loggerOptions := log.LoggerOptions{}
-	logger := log.NewLogger(loggerOptions.WithDebug(true))
+	logger := log.NewLogger(log.WithDebug(true))
 
 	tpl := templates.NewTextTpl()
 

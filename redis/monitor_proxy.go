@@ -1,7 +1,9 @@
 package redis
 
 import (
+	"bytes"
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/jukylin/esim/config"
@@ -10,6 +12,9 @@ import (
 	opentracing2 "github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 )
+
+const sendMethod = "Send"
+const receiveMethod = "Receive"
 
 type MonitorProxy struct {
 	name string
@@ -85,7 +90,21 @@ func (mp *MonitorProxy) ProxyName() string {
 }
 
 func (mp *MonitorProxy) Close() error {
+	now := time.Now()
+
 	err := mp.nextConn.Close()
+
+	execInfo := newExecInfo()
+	execInfo.err = err
+	execInfo.startTime = now
+	execInfo.endTime = time.Now()
+	execInfo.commandName = ""
+	execInfo.method = "Close"
+	execInfo.args = nil
+	execInfo.reply = nil
+
+	mp.after(context.Background(), execInfo)
+	execInfo.Release()
 
 	return err
 }
@@ -106,7 +125,9 @@ func (mp *MonitorProxy) Do(ctx context.Context, commandName string,
 	execInfo.startTime = now
 	execInfo.endTime = time.Now()
 	execInfo.commandName = commandName
+	execInfo.method = "Do"
 	execInfo.args = args
+	execInfo.reply = reply
 
 	mp.after(ctx, execInfo)
 	execInfo.Release()
@@ -123,8 +144,10 @@ func (mp *MonitorProxy) Send(ctx context.Context, commandName string,
 	execInfo.err = err
 	execInfo.startTime = now
 	execInfo.endTime = time.Now()
+	execInfo.method = sendMethod
 	execInfo.commandName = commandName
 	execInfo.args = args
+	execInfo.reply = nil
 
 	mp.after(ctx, execInfo)
 	execInfo.Release()
@@ -139,8 +162,10 @@ func (mp *MonitorProxy) Flush(ctx context.Context) (err error) {
 	execInfo := newExecInfo()
 	execInfo.err = err
 	execInfo.startTime = now
+	execInfo.method = "Flush"
 	execInfo.endTime = time.Now()
-	execInfo.commandName = "flush"
+	execInfo.commandName = ""
+	execInfo.reply = nil
 
 	mp.after(ctx, execInfo)
 	execInfo.Release()
@@ -156,7 +181,9 @@ func (mp *MonitorProxy) Receive(ctx context.Context) (reply interface{}, err err
 	execInfo.err = err
 	execInfo.startTime = now
 	execInfo.endTime = time.Now()
-	execInfo.commandName = "receive"
+	execInfo.method = receiveMethod
+	execInfo.commandName = ""
+	execInfo.reply = reply
 
 	mp.after(ctx, execInfo)
 	execInfo.Release()
@@ -175,6 +202,10 @@ func (mp *MonitorProxy) registerAfterEvent() {
 
 	if mp.conf.GetBool("redis_metrics") {
 		mp.afterEvents = append(mp.afterEvents, mp.redisMetrics)
+	}
+
+	if mp.conf.GetBool("debug") {
+		mp.afterEvents = append(mp.afterEvents, mp.redisDebug)
 	}
 }
 
@@ -210,4 +241,65 @@ func (mp *MonitorProxy) redisMetrics(ctx context.Context, info *execInfo) {
 
 	redisTotal.With(redisTotalLab).Inc()
 	redisDuration.With(redisDurationLab).Observe(info.endTime.Sub(info.startTime).Seconds())
+}
+
+func (mp *MonitorProxy) redisDebug(ctx context.Context, info *execInfo) {
+	mp.print(ctx, info.method, info.commandName, info.args, info.reply, info.err)
+}
+
+func (mp *MonitorProxy) printValue(buf *bytes.Buffer, v interface{}) {
+	const chop = 32
+	switch v := v.(type) {
+	case []byte:
+		if len(v) > chop {
+			fmt.Fprintf(buf, "%q...", v[:chop])
+		} else {
+			fmt.Fprintf(buf, "%q", v)
+		}
+	case string:
+		if len(v) > chop {
+			fmt.Fprintf(buf, "%q...", v[:chop])
+		} else {
+			fmt.Fprintf(buf, "%q", v)
+		}
+	case []interface{}:
+		if len(v) == 0 {
+			buf.WriteString("[]")
+		} else {
+			sep := "["
+			fin := "]"
+			if len(v) > chop {
+				v = v[:chop]
+				fin = "...]"
+			}
+			for _, vv := range v {
+				buf.WriteString(sep)
+				mp.printValue(buf, vv)
+				sep = ", "
+			}
+			buf.WriteString(fin)
+		}
+	default:
+		fmt.Fprint(buf, v)
+	}
+}
+
+func (mp *MonitorProxy) print(ctx context.Context, method, commandName string,
+	args []interface{}, reply interface{}, err error) {
+	var buf bytes.Buffer
+	fmt.Fprintf(&buf, "%s(", method)
+	if method != receiveMethod {
+		buf.WriteString(commandName)
+		for _, arg := range args {
+			buf.WriteString(", ")
+			mp.printValue(&buf, arg)
+		}
+	}
+	buf.WriteString(") -> (")
+	if method != sendMethod {
+		mp.printValue(&buf, reply)
+		buf.WriteString(", ")
+	}
+	fmt.Fprintf(&buf, "%v)", err)
+	mp.logger.Debugc(ctx, buf.String())
 }

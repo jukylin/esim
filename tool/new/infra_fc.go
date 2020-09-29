@@ -12,6 +12,7 @@ import (
 	"github.com/jukylin/esim/container"
 	"github.com/jukylin/esim/mysql"
 	"github.com/jukylin/esim/grpc"
+	"github.com/jukylin/esim/log"
 	"{{.ProPath}}{{.ServerName}}/internal/infra/repo"
 )
 
@@ -80,9 +81,17 @@ func (infraer *Infra) HealthCheck() []error {
 
 func provideDb(esim *container.Esim) *mysql.Client {
 	clientOptions := mysql.ClientOptions{}
+	glogger := log.NewGormLogger(
+		log.WithGLogEsimZap(esim.Z),
+	)
+
 	mysqlClent := mysql.NewClient(
 		clientOptions.WithConf(esim.Conf),
 		clientOptions.WithLogger(esim.Logger),
+		clientOptions.WithGormConfig(&gorm.Config{
+			Logger:glogger,
+		}),
+
 		clientOptions.WithProxy(
 			func() interface{} {
 				monitorProxyOptions := mysql.MonitorProxyOptions{}

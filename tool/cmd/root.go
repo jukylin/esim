@@ -8,11 +8,18 @@ import (
 	"github.com/jukylin/esim/log"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
+	"go.uber.org/zap/zapcore"
 )
 
 var cfgFile string
 var v = viper.New()
-var logger = log.NewLogger(log.WithDebug(os.Getenv("ESIM_DEBUG") == "true"))
+var logger = log.NewLogger(
+	log.WithEsimZap(
+		log.NewEsimZap(
+			log.WithLogLevel(zapcore.InfoLevel),
+		),
+	),
+)
 
 // rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{

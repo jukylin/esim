@@ -44,7 +44,7 @@ func NewClient(options ...Option) *Client {
 
 	client := &http.Client{}
 	Client.client = client
-	
+
 	for _, option := range options {
 		option(Client)
 	}
@@ -55,7 +55,8 @@ func NewClient(options ...Option) *Client {
 
 	if GlobalStub != nil {
 		// It is the last transports.
-		Client.transports = append(Client.transports, newGlobalStub(GlobalStub, Client.logger))
+		Client.transports = append(Client.transports, newGlobalStub(GlobalStub,
+			Client.logger))
 	}
 
 	if Client.transports == nil {
@@ -91,12 +92,14 @@ func (ClientOptions) WithLogger(logger log.Logger) Option {
 	}
 }
 
-func (c *Client) Do(ctx context.Context, req *http.Request) (*http.Response, error) {
+func (c *Client) Do(ctx context.Context, req *http.Request) (*http.Response,
+	error) {
 	resp, err := c.client.Do(req)
 	return resp, err
 }
 
-func (c *Client) Get(ctx context.Context, addr string) (resp *http.Response, err error) {
+func (c *Client) Get(ctx context.Context, addr string) (resp *http.Response,
+	err error) {
 	req, err := http.NewRequest("GET", addr, nil)
 	if err != nil {
 		return nil, err
@@ -124,7 +127,8 @@ func (c *Client) PostForm(ctx context.Context, addr string,
 		strings.NewReader(data.Encode()))
 }
 
-func (c *Client) Head(ctx context.Context, addr string) (resp *http.Response, err error) {
+func (c *Client) Head(ctx context.Context, addr string) (resp *http.Response,
+	err error) {
 	req, err := http.NewRequest("HEAD", addr, nil)
 	if err != nil {
 		return nil, err
@@ -137,8 +141,9 @@ func (c *Client) CloseIdleConnections(ctx context.Context) {
 	c.client.CloseIdleConnections()
 }
 
-func newGlobalStub(stubFunc func(*http.Request) *http.Response, logger log.Logger) func() interface{} {
-	return 	func() interface{} {
+func newGlobalStub(stubFunc func(*http.Request) *http.Response,
+	logger log.Logger) func() interface{} {
+	return func() interface{} {
 		stubsProxyOptions := StubsProxyOptions{}
 		stubsProxy := NewStubsProxy(
 			stubsProxyOptions.WithRespFunc(stubFunc),

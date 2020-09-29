@@ -249,7 +249,7 @@ func (de *Db2Entity) bindInfra(v *viper.Viper) {
 	}
 }
 
-// injectToInfra 把资源注入到基础设施，并运行wire
+// injectToInfra 把资源注入到基础设施，并运行wire.
 func (de *Db2Entity) injectToInfra(v *viper.Viper) {
 	if !de.withInject {
 		de.logger.Infof("自动注入被关闭")
@@ -278,7 +278,7 @@ func (de *Db2Entity) makeCodeBeautiful(src string) string {
 func (de *Db2Entity) generateDomainFile(v *viper.Viper, cs domainfile.Columns) error {
 	var content string
 
-	// 生成领域文件
+	// 生成领域文件.
 	for _, df := range de.domainFiles {
 		err := df.BindInput(v)
 		if err != nil {
@@ -290,7 +290,7 @@ func (de *Db2Entity) generateDomainFile(v *viper.Viper, cs domainfile.Columns) e
 
 			df.ParseCloumns(cs, de.shareInfo)
 
-			// 解析模板
+			// 解析模板.
 			content = df.Execute()
 
 			content = de.makeCodeBeautiful(content)

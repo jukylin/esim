@@ -89,12 +89,13 @@ import (
 	"net/http"
 	"context"
 	"time"
+
 	"github.com/gin-gonic/gin"
-	"{{.ProPath}}{{.ServerName}}/internal/transports/http/routers"
-	middleware "github.com/jukylin/esim/middle-ware"
 	"github.com/jukylin/esim/log"
-	"{{.ProPath}}{{.ServerName}}/internal/transports/http/controllers"
+	middleware "github.com/jukylin/esim/middle-ware"
 	{{.PackageName}} "{{.ProPath}}{{.ServerName}}/internal"
+	"{{.ProPath}}{{.ServerName}}/internal/transports/http/routers"
+	"{{.ProPath}}{{.ServerName}}/internal/transports/http/controllers"
 )
 
 type GinServer struct{
@@ -123,17 +124,22 @@ func NewGinServer(app *{{.PackageName}}.App) *GinServer {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	en := gin.Default()
+	en := gin.New()
+	en.Use(gin.Recovery())
 
-	if app.Conf.GetBool("http_trace"){
+	if app.Conf.GetBool("http_trace") {
 		en.Use(middleware.GinTracer(app.Tracer))
 	}
+
+	en.Use(middleware.GinTracerID())
+
+	en.Use(gin.LoggerWithFormatter(middleware.GinLogFormatter))
+
+	en.Use(middleware.GinRecovery(app.Logger))
 
 	if app.Conf.GetBool("http_metrics") {
 		en.Use(middleware.GinMonitor())
 	}
-
-	en.Use(middleware.GinTracerID())
 
 	server := &GinServer{
 		en : en,

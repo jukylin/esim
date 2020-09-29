@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"go.mongodb.org/mongo-driver/event"
 	"github.com/jukylin/esim/config"
+	"go.mongodb.org/mongo-driver/event"
 )
 
 func TestMonitorEvent_withSlowCommand(t *testing.T) {
@@ -23,8 +23,8 @@ func TestMonitorEvent_withSlowCommand(t *testing.T) {
 	ctx = context.WithValue(ctx, keyCtx, &command)
 
 	tests := []struct {
-		name   string
-		args   args
+		name string
+		args args
 	}{
 		{"慢查询-成功", args{ctx, &mongoBackEvent{
 			&event.CommandSucceededEvent{
@@ -39,7 +39,7 @@ func TestMonitorEvent_withSlowCommand(t *testing.T) {
 			nil,
 		}, time.Now(), time.Now()}},
 		{"慢查询-失败", args{ctx, &mongoBackEvent{
-			failedEvent : &event.CommandFailedEvent{
+			failedEvent: &event.CommandFailedEvent{
 				event.CommandFinishedEvent{
 					1000000000,
 					"test",
@@ -59,7 +59,6 @@ func TestMonitorEvent_withSlowCommand(t *testing.T) {
 			m := NewMonitorEvent(
 				monitorEventOptions.WithLogger(logger),
 				monitorEventOptions.WithConf(conf),
-
 			)
 			m.(*MonitorEvent).withSlowCommand(tt.args.ctx, tt.args.backEvent, tt.args.beginTime, tt.args.endTime)
 		})
