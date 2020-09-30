@@ -65,7 +65,7 @@ func NewApp(options ...Option) *App {
 
 	ez := log.NewEsimZap(
 		log.WithEsimZapDebug(conf.GetBool("debug")),
-		log.WithEsimZapJSON(conf.GetBool("logger.json")),
+		log.WithEsimZapJSON(conf.GetString("runmode") == "pro"),
 	)
 
 	logger := log.NewLogger(

@@ -8,9 +8,6 @@ var (
 appname : {{.ServerName}}
 debug : '${DEBUG}'
 
-logger :
-  json : false
-
 #HTTP 服务
 httpport : 8080
 
@@ -34,7 +31,7 @@ jaeger_local_agent_host_port: '0.0.0.0:6831'
 #mysql
 dbs:
 #- {db: 'test', dsn: 'root:123456@tcp(:3306)/config?charset=utf8&parseTime=True&loc=Local',
-#  maxidle: 10, maxopen: 100, maxlifetime : 10}
+#  maxidle: 10, maxopen: 100}
 #- {db: 'test_slave', dsn: 'root:123456@tcp(:3306)/config?charset=utf8&parseTime=True&loc=Local',
 
 
