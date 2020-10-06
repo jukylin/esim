@@ -170,7 +170,7 @@ func (edf *entityDomainFile) ParseCloumns(cs Columns, info *ShareInfo) {
 		primary := ""
 		if column.IsPri() {
 			primary = ";primary_key"
-			tpl.EntitySign = column.ColumnName
+			tpl.EntitySign = field.Name
 		}
 
 		if !nullable {
