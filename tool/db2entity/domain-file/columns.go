@@ -196,7 +196,11 @@ func (c *Column) IsPri() bool {
 // GetDefCol 默认标签.
 func (c *Column) GetDefCol() string {
 	if c.ColumnDefault != currentTimestamp && c.ColumnDefault != "" {
-		return ";default:'" + c.ColumnDefault + "'"
+		if strings.Contains(c.DataType, "int") {
+			return ";default:" + c.ColumnDefault
+		} else {
+			return ";default:'" + c.ColumnDefault + "'"
+		}
 	}
 
 	return ""

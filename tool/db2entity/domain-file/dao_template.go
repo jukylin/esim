@@ -121,7 +121,7 @@ func ({{.StructName | shorten}} *{{.StructName}}) DelById(ctx context.Context,
 {{end}}
 	del{{.EntityName}}.ID = id
 	db := {{.StructName | shorten}}.GetDb(ctx).Where("id = ?", id).
-		Update(delMap)
+		Updates(delMap)
 	if db.Error != nil{
 		return false, db.Error
 	}else{

@@ -30,7 +30,10 @@ func NewLogger(options ...Option) Logger {
 	}
 
 	if logger.ez == nil {
-		logger.ez = NewEsimZap()
+		logger.ez = NewEsimZap(
+			WithEsimZapDebug(logger.debug),
+			WithEsimZapJSON(logger.json),
+		)
 	}
 
 	logger.logger = logger.ez.Logger
