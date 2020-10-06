@@ -5,11 +5,11 @@ import (
 	"runtime"
 	"strings"
 	"time"
+	"strconv"
 
 	tracerid "github.com/jukylin/esim/pkg/tracer-id"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"gorm.io/gorm/utils"
 )
 
 type EsimZap struct {
@@ -102,9 +102,17 @@ func (ez *EsimZap) getArgs(ctx context.Context) []interface{} {
 
 func (ez *EsimZap) getGormArgs(ctx context.Context) []interface{} {
 	args := make([]interface{}, 0)
-
+	var fullPath string
 	var offidx int
-	fullPath := utils.FileWithLineNum()
+
+	for i := 0; i < 15; i++ {
+		_, file, line, ok := runtime.Caller(i)
+		if ok && (strings.Index(file, "esim") == -1) {
+			fullPath = file + ":" + strconv.FormatInt(int64(line), 10)
+			break
+		}
+	}
+
 	offidx = len(fullPath)
 	idx := strings.LastIndexByte(fullPath, '/')
 	if idx != -1 {
