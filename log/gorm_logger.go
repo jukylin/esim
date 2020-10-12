@@ -6,6 +6,7 @@ import (
 
 	"go.uber.org/zap"
 	glogger "gorm.io/gorm/logger"
+	"gorm.io/gorm"
 )
 
 type gormLogger struct {
@@ -62,7 +63,7 @@ func (gl *gormLogger) Trace(ctx context.Context, begin time.Time,
 		elapsed := time.Since(begin)
 		sql, rows := fc()
 		switch {
-		case err != nil && gl.logLevel >= glogger.Error:
+		case err != nil && err != gorm.ErrRecordNotFound && gl.logLevel >= glogger.Error:
 			gl.sugar.With(gl.ez.getGormArgs(ctx)...).Errorf("%.2fms [%d] %s : %s",
 				float64(elapsed.Nanoseconds())/1e6, rows, sql, err.Error())
 		case gl.logLevel >= glogger.Info:

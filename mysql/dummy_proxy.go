@@ -62,6 +62,10 @@ func (dp *dummyProxy) QueryRowContext(ctx context.Context, query string,
 	return row
 }
 
+func (dp *dummyProxy) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error) {
+	return dp.nextProxy.BeginTx(ctx, opts)
+}
+
 func (dp *dummyProxy) Close() error {
 	return nil
 }

@@ -75,6 +75,10 @@ func (sp *spyProxy) QueryRowContext(ctx context.Context, query string,
 	return row
 }
 
+func (sp *spyProxy) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error) {
+	return sp.nextProxy.BeginTx(ctx, opts)
+}
+
 func (sp *spyProxy) Close() error {
 	sp.CloseWasCalled = true
 	sp.logger.Infof("%s CloseWasCalled %s", sp.name)

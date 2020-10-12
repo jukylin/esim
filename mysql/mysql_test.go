@@ -459,8 +459,10 @@ func TestClient_TxCommit(t *testing.T) {
 	assert.NotNil(t, db1)
 
 	tx := db1.Begin()
+	assert.Nil(t, tx.Error)
 	tx.Exec("insert into test values (3, 'test')")
 	tx.Commit()
+	assert.Nil(t, tx.Error)
 
 	test := &TestStruct{}
 
@@ -489,7 +491,9 @@ func TestClient_TxRollBack(t *testing.T) {
 			monitorProxyOptions := MonitorProxyOptions{}
 			return NewMonitorProxy(
 				monitorProxyOptions.WithConf(memConfig),
-				monitorProxyOptions.WithLogger(log.NewLogger()))
+				monitorProxyOptions.WithLogger(log.NewLogger(
+					log.WithDebug(true),
+				)))
 		}),
 	)
 	ctx := context.Background()
@@ -498,9 +502,15 @@ func TestClient_TxRollBack(t *testing.T) {
 	assert.NotNil(t, db1)
 
 	tx := db1.Begin()
-	tx.Exec("insert into test values (2, 'test')")
+	assert.Nil(t, tx.Error)
+	tx.Exec("insert into test values (100, 'test')")
 	tx.Rollback()
-	assert.Nil(t, db1.Error)
+
+	assert.Nil(t, tx.Error)
+
+	ts := TestStruct{}
+	db1.Table("test").Where("id = 100").First(&ts)
+	assert.Equal(t, 0, ts.ID)
 
 	client.Close()
 }

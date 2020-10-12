@@ -122,13 +122,18 @@ func (mp *MonitorProxy) QueryRowContext(ctx context.Context, query string,
 	return row
 }
 
+func (mp *MonitorProxy) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error) {
+	mp.logger.Debugc(ctx, "BeginTx")
+	return mp.nextProxy.BeginTx(ctx, opts)
+}
+
 func (mp *MonitorProxy) Close() error {
 	return mp.nextProxy.Close()
 }
 
 func (mp *MonitorProxy) registerAfterEvent() {
 	if mp.conf.GetBool("mysql_trace") {
-		mp.afterEvents = append(mp.afterEvents, mp.withMysqlTracer)
+		mp.afterEvents = append(mp.afterEvents, mp.withTracer)
 	}
 
 	if mp.conf.GetBool("mysql_check_slow") {
@@ -136,7 +141,7 @@ func (mp *MonitorProxy) registerAfterEvent() {
 	}
 
 	if mp.conf.GetBool("mysql_metrics") {
-		mp.afterEvents = append(mp.afterEvents, mp.withMysqlMetrics)
+		mp.afterEvents = append(mp.afterEvents, mp.withMetrics)
 	}
 }
 
@@ -158,16 +163,17 @@ func (mp *MonitorProxy) withSlowSQL(ctx context.Context, query string,
 	}
 }
 
-func (mp *MonitorProxy) withMysqlMetrics(ctx context.Context, query string,
+func (mp *MonitorProxy) withMetrics(ctx context.Context, query string,
 	beginTime, endTime time.Time) {
 	lab := prometheus.Labels{"sql": query}
 	mysqlTotal.With(lab).Inc()
 	mysqlDuration.With(lab).Observe(endTime.Sub(beginTime).Seconds())
 }
 
-func (mp *MonitorProxy) withMysqlTracer(ctx context.Context, query string,
+func (mp *MonitorProxy) withTracer(ctx context.Context, query string,
 	beginTime, endTime time.Time) {
 	span := opentracing.GetSpan(ctx, mp.tracer, "sql", beginTime)
 	span.LogKV("sql", query)
 	span.FinishWithOptions(opentracing2.FinishOptions{FinishTime: endTime})
 }
+
