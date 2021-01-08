@@ -8,6 +8,7 @@ var (
 
 import (
 	"sync"
+	"gorm.io/gorm"
 	"github.com/google/wire"
 	"github.com/jukylin/esim/container"
 	"github.com/jukylin/esim/mysql"

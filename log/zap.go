@@ -91,7 +91,7 @@ func (ez *EsimZap) standardTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEn
 func (ez *EsimZap) getArgs(ctx context.Context) []interface{} {
 	args := make([]interface{}, 0)
 
-	args = append(args, "caller", ez.getCaller(runtime.Caller(2)))
+	args = append(args, "caller", ez.getCaller())
 	tracerID := tracerid.ExtractTracerID(ctx)
 	if tracerID != "" {
 		args = append(args, "tracer_id", tracerID)
@@ -100,14 +100,14 @@ func (ez *EsimZap) getArgs(ctx context.Context) []interface{} {
 	return args
 }
 
-func (ez *EsimZap) getGormArgs(ctx context.Context) []interface{} {
-	args := make([]interface{}, 0)
+func (ez *EsimZap) getCaller() string {
 	var fullPath string
 	var offidx int
 
 	for i := 0; i < 15; i++ {
 		_, file, line, ok := runtime.Caller(i)
-		if ok && (strings.Index(file, "esim") == -1) {
+		if ok && (strings.Index(file, "esim") == -1 && strings.Index(file, "gorm") == -1 &&
+		strings.Index(file, "redigo") == -1) {
 			fullPath = file + ":" + strconv.FormatInt(int64(line), 10)
 			break
 		}
@@ -124,15 +124,5 @@ func (ez *EsimZap) getGormArgs(ctx context.Context) []interface{} {
 		offidx = idx
 	}
 
-	args = append(args, "caller", fullPath[offidx+1:])
-	tracerID := tracerid.ExtractTracerID(ctx)
-	if tracerID != "" {
-		args = append(args, "tracer_id", tracerID)
-	}
-
-	return args
-}
-
-func (ez *EsimZap) getCaller(pc uintptr, file string, line int, ok bool) string {
-	return zapcore.NewEntryCaller(pc, file, line, ok).TrimmedPath()
+	return fullPath[offidx+1:]
 }

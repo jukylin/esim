@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func Test_esimZap_getGormArgs(t *testing.T) {
+func Test_esimZap_getArgs(t *testing.T) {
 	type args struct {
 		ctx context.Context
 	}
@@ -23,8 +23,8 @@ func Test_esimZap_getGormArgs(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ez := NewEsimZap()
-			if got := ez.getGormArgs(tt.args.ctx); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("esimZap.getGormArgs() = %v, want %v", got, tt.want)
+			if got := ez.getArgs(tt.args.ctx); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("esimZap.getArgs() = %v, want %v", got, tt.want)
 			}
 		})
 	}

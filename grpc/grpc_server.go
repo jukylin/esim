@@ -111,6 +111,8 @@ func NewServer(target string, options ...ServerOption) *Server {
 			otgrpc.OpenTracingServerInterceptor(Server.tracer))
 	}
 
+	unaryServerInterceptors = append(unaryServerInterceptors, Server.tracerID())
+
 	if Server.conf.GetBool("grpc_server_metrics") {
 		ggp.EnableHandlingTimeHistogram()
 		serverMetrics := ggp.DefaultServerMetrics
@@ -126,8 +128,6 @@ func NewServer(target string, options ...ServerOption) *Server {
 	if Server.conf.GetBool("grpc_server_debug") {
 		unaryServerInterceptors = append(unaryServerInterceptors, Server.serverDebug())
 	}
-
-	unaryServerInterceptors = append(unaryServerInterceptors, Server.tracerID())
 
 	// handle panic
 	opts := []grpc_recovery.Option{

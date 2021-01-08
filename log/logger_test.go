@@ -9,7 +9,6 @@ import (
 )
 
 func TestLog(t *testing.T) {
-
 	ez := NewEsimZap(
 		WithEsimZapDebug(true),
 		WithEsimZapJSON(true),
